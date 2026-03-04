@@ -75,4 +75,13 @@ describe("doc topics", () => {
     const topics = parsed.topics.map((entry) => entry.topic);
     expect(topics).toEqual(Object.keys(DOC_TOPICS));
   });
+
+  it("documents npm-based Tilt extension loading for CI", async () => {
+    const docPath = path.join(docsRoot, "tilt.md");
+    const contents = await Bun.file(docPath).text();
+    expect(contents).toContain(
+      "load('./node_modules/@0xbigboss/silo/tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')"
+    );
+    expect(contents).toContain("CI environments");
+  });
 });
