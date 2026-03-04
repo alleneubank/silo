@@ -1,5 +1,11 @@
 # @0xbigboss/silo
 
+## 0.5.7
+
+### Patch Changes
+
+- b148243: Document npm-based Tilt extension loading for CI environments and add a regression test to keep the guidance in bundled docs.
+
 ## 0.5.6
 
 ### Patch Changes
