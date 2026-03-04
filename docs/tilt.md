@@ -51,11 +51,20 @@ local registry without `default_registry()`. See `silo doc k3d` for details.
 If your Tiltfile must only run under `silo up`, you can load the bundled
 side-effect extension and enforce it with one line.
 
-Local (bundled with this repo):
+Local (this repo):
 
 ```
 load('./tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
 ```
+
+From npm (recommended for CI and other non-interactive environments):
+
+```
+load('./node_modules/@0xbigboss/silo/tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
+```
+
+CI environments often run without GitHub HTTPS clone credentials, so this local
+`node_modules` path avoids `extension_repo()` clone/auth failures.
 
 From a GitHub-hosted extension repo:
 
@@ -66,6 +75,7 @@ load('ext://silo-require', 'SILO_REQUIRE')
 ```
 
 Note: `repo_path` belongs on `v1alpha1.extension()`, not `extension_repo()`.
+This pattern requires Git credentials for HTTPS clone access.
 
 If the extension is published to the default Tilt extensions repo, you can
 skip `extension_repo` and just use the `load('ext://...')` line.

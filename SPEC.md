@@ -415,6 +415,15 @@ Local (bundled with this repo):
 load('./tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
 ```
 
+From npm (recommended for CI):
+
+```python
+load('./node_modules/@0xbigboss/silo/tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
+```
+
+CI runners often cannot authenticate HTTPS clones for `extension_repo()`, so
+prefer the npm-local path in non-interactive environments.
+
 From a GitHub-hosted extension repo:
 
 ```python
@@ -1156,6 +1165,8 @@ hooks.post-up = ["./scripts/configure-remote.sh"]
 load('ext://dotenv', 'dotenv')
 dotenv('.localnet.env')
 load('./tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
+# Or, in CI after installing @0xbigboss/silo as a dependency:
+# load('./node_modules/@0xbigboss/silo/tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
 # Or, if using a GitHub-hosted extension repo:
 # v1alpha1.extension_repo(name='default', url='https://github.com/<org>/<tilt-extensions-repo>')
 # load('ext://silo/require', 'SILO_REQUIRE')

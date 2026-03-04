@@ -80,6 +80,13 @@ CI (or when `--export-ci` is provided):
 silo ci e2e --timeout 300s
 ```
 
+If your `Tiltfile` uses the silo requirement extension in CI, prefer loading it
+from installed dependencies instead of `v1alpha1.extension_repo()`:
+
+```python
+load('./node_modules/@0xbigboss/silo/tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
+```
+
 ## License
 
 MIT

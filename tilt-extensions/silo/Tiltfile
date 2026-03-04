@@ -3,6 +3,9 @@
 #   load('./tilt-extensions/silo/Tiltfile', 'require_silo')
 #   require_silo()
 #
+# From npm (recommended for CI):
+#   load('./node_modules/@0xbigboss/silo/tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
+#
 # Remote (GitHub extension repo):
 #   v1alpha1.extension_repo(name='silo', url='https://github.com/0xBigBoss/silo')
 #   v1alpha1.extension(name='silo-require', repo_name='silo', repo_path='tilt-extensions/silo/require')
