@@ -11,21 +11,36 @@ const isPortInRange = (port: number): boolean => port >= 1 && port <= 65535;
 
 type PortCheckFn = (port: number) => Promise<boolean>;
 
+// Hostnames to check — a port is only free if binding succeeds on all of them.
+// 0.0.0.0 catches wildcard listeners; 127.0.0.1 catches loopback-only listeners
+// (e.g. Tilt). Checking only 0.0.0.0 misses ports bound exclusively to 127.0.0.1,
+// which causes "address already in use" when another process binds loopback.
+const PORT_CHECK_HOSTNAMES = ["0.0.0.0", "127.0.0.1"] as const;
+
+const tryBind = async (hostname: string, port: number): Promise<boolean> => {
+  try {
+    const server = Bun.listen({
+      hostname,
+      port,
+      socket: {
+        data() {},
+      },
+    });
+    server.stop();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const checkPortFree: PortCheckFn = async (port: number): Promise<boolean> => {
   const attempt = async (): Promise<boolean> => {
-    try {
-      const server = Bun.listen({
-        hostname: "0.0.0.0",
-        port,
-        socket: {
-          data() {},
-        },
-      });
-      server.stop();
-      return true;
-    } catch {
-      return false;
+    for (const hostname of PORT_CHECK_HOSTNAMES) {
+      if (!(await tryBind(hostname, port))) {
+        return false;
+      }
     }
+    return true;
   };
 
   return await withTimeout(attempt(), PORT_CHECK_TIMEOUT_MS, `port check ${port}`);

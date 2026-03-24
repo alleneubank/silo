@@ -653,8 +653,8 @@ for each port_key in config.ports (in declaration order):
 
 - **Duplicate defaults**: If two ports have the same default (e.g., both 8080), second one gets ephemeral
 - **Invalid range**: Ports must be 1-65535 (or `random`/`0`); values outside this range are errors
-- **Availability check**: TCP bind test with 100ms timeout (for CI compatibility)
-- **IPv4 only**: Bind to `0.0.0.0` to avoid IPv6 dual-stack complications
+- **Availability check**: TCP bind test on both `0.0.0.0` and `127.0.0.1` with 100ms timeout (for CI compatibility). A port is free only if binding succeeds on both addresses — checking only `0.0.0.0` misses ports bound exclusively to loopback (e.g. Tilt on `127.0.0.1`).
+- **IPv4 only**: Check `0.0.0.0` and `127.0.0.1` to avoid IPv6 dual-stack complications
 - **Deterministic order**: Ports allocated in config declaration order for reproducibility
 
 ### Port Reuse from Lockfile
@@ -1848,10 +1848,14 @@ switch (command) {
 
 ```typescript
 // src/core/ports.ts
-async function isPortFree(port: number): Promise<boolean> {
+// Check both wildcard and loopback — a port bound only on 127.0.0.1
+// (e.g. Tilt) would appear free on 0.0.0.0 alone.
+const PORT_CHECK_HOSTNAMES = ["0.0.0.0", "127.0.0.1"] as const;
+
+async function tryBind(hostname: string, port: number): Promise<boolean> {
   try {
     const server = Bun.listen({
-      hostname: "0.0.0.0",
+      hostname,
       port,
       socket: {
         data() {},
@@ -1862,6 +1866,15 @@ async function isPortFree(port: number): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function isPortFree(port: number): Promise<boolean> {
+  for (const hostname of PORT_CHECK_HOSTNAMES) {
+    if (!(await tryBind(hostname, port))) {
+      return false;
+    }
+  }
+  return true;
 }
 ```
 
