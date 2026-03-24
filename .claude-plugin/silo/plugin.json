@@ -1,7 +1,7 @@
 {
   "name": "silo",
   "description": "Isolated local development environments for Tilt and k3d projects",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "author": {
     "name": "0xBigBoss",
     "email": "github@0xbigboss.dev"

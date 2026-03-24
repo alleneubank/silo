@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Isolated local development environments for Tilt and k3d projects",
-    "version": "0.5.7"
+    "version": "0.5.8"
   },
   "plugins": [
     {
       "name": "silo",
       "source": "./.claude-plugin/silo",
       "description": "CLI skill for managing isolated local development environments",
-      "version": "0.5.7",
+      "version": "0.5.8",
       "keywords": [
         "cli",
         "dev-environment",
