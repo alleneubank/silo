@@ -29,7 +29,7 @@ first one wins and the next one will fall back to an ephemeral port.
 ## Multi-Instance Isolation
 
 silo maintains a machine-wide registry of live instances at
-`~/.silo/instances/` (one JSON file per project, keyed on a hash of the
+`~/.silo/instances/` (one JSON file per project, keyed on the SHA-256 of the
 absolute project root). Each file records the instance name and the ports
 currently allocated to it.
 

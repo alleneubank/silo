@@ -1,5 +1,6 @@
 import path from "path";
 import os from "os";
+import crypto from "crypto";
 import { promises as fs } from "fs";
 import { z } from "zod";
 
@@ -21,25 +22,15 @@ const PortRegistryEntrySchema = z.object({
 
 type PortRegistryEntry = z.infer<typeof PortRegistryEntrySchema>;
 
-// FNV-1a 32-bit — non-cryptographic, deterministic, short filesystem-safe
-// key. Only used for locating the registry file; collisions between two
-// different project roots are vanishingly rare at 32 bits and would
-// manifest as one instance overwriting the other's entry, which the
-// liveness check (below) would then heal on next read.
-const fnv1a32Hex = (input: string): string => {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i += 1) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return (hash >>> 0).toString(16).padStart(8, "0");
-};
-
 const resolveRegistryDir = (): string =>
   process.env.SILO_PORT_REGISTRY_DIR ?? DEFAULT_REGISTRY_DIR;
 
+// SHA-256 of the absolute project root, hex-encoded. 64 chars, zero
+// collision probability in practice. A truncated or non-cryptographic
+// hash (e.g. 32-bit FNV) would let two real project paths land in the
+// same registry file, destroying isolation — see review cycle 3.
 const registryKey = (projectRoot: string): string =>
-  fnv1a32Hex(path.resolve(projectRoot));
+  crypto.createHash("sha256").update(path.resolve(projectRoot)).digest("hex");
 
 const entryPath = (projectRoot: string, dir: string): string =>
   path.join(dir, `${registryKey(projectRoot)}.json`);

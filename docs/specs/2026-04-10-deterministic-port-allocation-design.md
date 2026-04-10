@@ -11,8 +11,15 @@ Status: Proposed (rev 2)
   identical port sets because the free-port probe has nothing to detect
   (reproduced with `wt-8` / `wt-20`). Birthday collisions are fundamental
   to any slot-based approach.
-- **rev 2** — this document. Machine-wide port registry as the
-  correctness layer.
+- **rev 2** — machine-wide port registry. Initial version used a
+  32-bit FNV-1a hash of the project root for registry filenames.
+- **rev 3** — Rejected in review cycle 3: 32-bit FNV-1a has real
+  collisions at ~65k project roots and trivial constructible collisions
+  (reviewer reproduced with two paths both hashing to `fcd32db2`). Two
+  colliding projects would write to the same registry file and both
+  treat it as "self", silently breaking isolation. Switched the
+  filename key to SHA-256 hex (64 chars), and tightened `silo env` +
+  `prepare.ts` ordering (fixes from cycle 2 remain).
 
 ## Problem
 
@@ -64,7 +71,7 @@ silo maintains a directory of JSON files, one per live silo instance on
 the machine:
 
 ```
-~/.silo/instances/<fnv1a32-of-abs-project-root>.json
+~/.silo/instances/<sha256-of-abs-project-root>.json
 ```
 
 Each file:
