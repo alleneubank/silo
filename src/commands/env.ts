@@ -2,6 +2,10 @@ import { loadConfig } from "../core/config";
 import { buildInstanceState, resolveInstanceName } from "../core/instance";
 import { appendGithubEnv, writeEnvAndLockfile } from "../core/env";
 import { readLockfile } from "../core/lockfile";
+import {
+  readPeerPorts,
+  registerInstance,
+} from "../core/port_registry";
 import { resolveAndApplyProfile } from "../core/profile";
 import { logger, logPortAllocations } from "../utils/logger";
 import { resolveGithubEnvPath, shouldExportCiEnv } from "../utils/ci";
@@ -41,6 +45,14 @@ export const env = async (
   logger.info(`Resolved instance name: ${name} (${nameSource})`);
 
   logger.info("Allocating ports");
+  const excludedPorts = await readPeerPorts({
+    excludeProjectRoot: config.projectRoot,
+  });
+  if (excludedPorts.size > 0) {
+    logger.verbose(
+      `Excluding ${excludedPorts.size} port(s) owned by peer silo instances`
+    );
+  }
   const portEvents: PortAllocationEvent[] = [];
 
   const { state, urls, hostOrder, portOrder, urlOrder } = await buildInstanceState({
@@ -49,12 +61,23 @@ export const env = async (
     profile: profileName,
     lockfile,
     force: options.force,
+    excludedPorts,
     onPortAllocation: (event) => portEvents.push(event),
   });
 
   logPortAllocations(portEvents);
 
   await writeEnvAndLockfile({ state, config, urls, hostOrder, portOrder, urlOrder });
+
+  // Register AFTER the lockfile is on disk — registry liveness is tied to
+  // `.silo.lock` presence, so a peer read between register() and lockfile
+  // write would GC us and race-steal our ports. Order must stay:
+  // allocate → write lockfile → register.
+  await registerInstance({
+    projectRoot: config.projectRoot,
+    name: state.name,
+    ports: Object.values(state.ports),
+  });
 
   if (shouldExportCiEnv(options.exportCi)) {
     const githubEnvPath = resolveGithubEnvPath();

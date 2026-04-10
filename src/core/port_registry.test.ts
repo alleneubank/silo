@@ -148,6 +148,48 @@ describe("port_registry", () => {
     expect(files.includes("corrupt.json")).toBe(false);
   });
 
+  test("entry registered before lockfile exists is GC'd on peer read", async () => {
+    // Regression test for the register-before-lockfile race: if an instance
+    // registers its ports before writing .silo.lock, a concurrent peer read
+    // would see no lockfile and GC the entry. The fix is to register AFTER
+    // the lockfile is on disk — but this test locks in the invariant that
+    // callers must respect the order.
+    const projectX = await tmpRoot("silo-no-lock-");
+    try {
+      await registerInstance({
+        projectRoot: projectX,
+        name: "wt-x",
+        ports: [51000],
+        registryDir,
+      });
+      // No lockfile at projectX — the entry is "stale" by definition.
+      const seen = await readPeerPorts({
+        excludeProjectRoot: projectA,
+        registryDir,
+      });
+      expect(seen.has(51000)).toBe(false);
+    } finally {
+      await fs.rm(projectX, { recursive: true, force: true });
+    }
+  });
+
+  test("entry registered AFTER lockfile exists survives peer read", async () => {
+    // The correct ordering: write lockfile first, then register. Peer
+    // reads then see the entry as live and include its ports.
+    await registerInstance({
+      projectRoot: projectA,
+      name: "wt-a",
+      ports: [52000, 52001],
+      registryDir,
+    });
+    const seen = await readPeerPorts({
+      excludeProjectRoot: projectB,
+      registryDir,
+    });
+    expect(seen.has(52000)).toBe(true);
+    expect(seen.has(52001)).toBe(true);
+  });
+
   test("re-registering the same project overwrites the prior entry", async () => {
     await registerInstance({
       projectRoot: projectA,

@@ -133,15 +133,6 @@ export const prepareTiltEnvironment = async (params: {
 
   logPortAllocations(portEvents);
 
-  // Register this instance in the machine-wide port registry before writing
-  // the lockfile, so peer instances that read the registry next see our
-  // ports even if we're slow to finish writing the lockfile.
-  await registerInstance({
-    projectRoot: config.projectRoot,
-    name: state.name,
-    ports: Object.values(state.ports),
-  });
-
   const envFilePath = resolveEnvPath(config);
   const siloEnv = buildSiloProcessEnv({ state, envFilePath });
   const envVars = { ...baseEnvVars, ...siloEnv };
@@ -158,6 +149,16 @@ export const prepareTiltEnvironment = async (params: {
     hostOrder,
     portOrder,
     urlOrder,
+  });
+
+  // Register AFTER the lockfile is on disk. Registry liveness is keyed on
+  // `.silo.lock` presence, so registering before the lockfile exists would
+  // let a concurrent peer read GC our entry immediately and steal our
+  // ports. Order must be: allocate → write lockfile → register.
+  await registerInstance({
+    projectRoot: config.projectRoot,
+    name: currentState.name,
+    ports: Object.values(currentState.ports),
   });
 
   logger.info(`Running pre-up hooks (${config.hooks["pre-up"]?.length ?? 0})`);
@@ -215,6 +216,14 @@ export const prepareTiltEnvironment = async (params: {
           hostOrder,
           portOrder,
           urlOrder,
+        });
+        // K3D_REGISTRY_PORT drifted — refresh the registry entry so peer
+        // instances see the actually-bound port rather than the originally
+        // allocated one.
+        await registerInstance({
+          projectRoot: config.projectRoot,
+          name: currentState.name,
+          ports: Object.values(currentState.ports),
         });
       }
     }
