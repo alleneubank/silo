@@ -8,6 +8,10 @@ export const LOCKFILE_NAME = ".silo.lock";
 
 export const EPHEMERAL_PORT_START = 49152;
 export const EPHEMERAL_PORT_END = 65535;
+// Slot size for name-derived ephemeral port seeding. Larger than the typical
+// port count per silo instance so two instances that hash to neighbouring
+// slots still get disjoint windows.
+export const EPHEMERAL_PORT_SLOT_SIZE = 64;
 
 export const PORT_CHECK_TIMEOUT_MS = 100;
 export const TOOL_CHECK_TIMEOUT_MS = 2000;

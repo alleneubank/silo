@@ -1,5 +1,6 @@
 import {
   EPHEMERAL_PORT_END,
+  EPHEMERAL_PORT_SLOT_SIZE,
   EPHEMERAL_PORT_START,
   PORT_CHECK_TIMEOUT_MS,
 } from "./constants";
@@ -56,13 +57,44 @@ export type PortAllocationEvent = {
   source: PortAllocationSource;
 };
 
+// FNV-1a 32-bit hash. Non-cryptographic; deterministic across platforms.
+// Used to seed the ephemeral-port scan from a name-derived slot so two silo
+// instances with different names get disjoint port windows on a cold machine.
+const fnv1a32 = (input: string): number => {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    // 32-bit FNV prime multiply; keep result unsigned.
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash >>> 0;
+};
+
+const EPHEMERAL_RANGE_SIZE = EPHEMERAL_PORT_END - EPHEMERAL_PORT_START + 1;
+
+// Compute the ephemeral-scan start for an instance name. Slotting the start
+// to multiples of EPHEMERAL_PORT_SLOT_SIZE keeps two instances that differ in
+// a single character from landing one port apart.
+export const computeEphemeralStart = (instanceName: string | undefined): number => {
+  if (!instanceName) {
+    return EPHEMERAL_PORT_START;
+  }
+  const numSlots = Math.floor(EPHEMERAL_RANGE_SIZE / EPHEMERAL_PORT_SLOT_SIZE);
+  const slotIndex = fnv1a32(instanceName) % numSlots;
+  return EPHEMERAL_PORT_START + slotIndex * EPHEMERAL_PORT_SLOT_SIZE;
+};
+
+// Scan the ephemeral range starting at startAt and wrap around to
+// EPHEMERAL_PORT_START after hitting EPHEMERAL_PORT_END, so a hash-seeded
+// start near the tail still has the full range available.
 const findEphemeralPort = async (params: {
   used: Set<number>;
   startAt: number;
   isPortFree: PortCheckFn;
 }): Promise<number> => {
   const { used, startAt, isPortFree } = params;
-  for (let port = startAt; port <= EPHEMERAL_PORT_END; port += 1) {
+  for (let offset = 0; offset < EPHEMERAL_RANGE_SIZE; offset += 1) {
+    const port = EPHEMERAL_PORT_START + ((startAt - EPHEMERAL_PORT_START + offset) % EPHEMERAL_RANGE_SIZE);
     if (used.has(port)) {
       continue;
     }
@@ -78,14 +110,18 @@ export const allocatePorts = async (params: {
   order: string[];
   lockfilePorts: Record<string, number> | undefined;
   force: boolean;
+  // Seeds the ephemeral scan so two instances with different names land in
+  // disjoint port windows on a cold machine. Omit in tests that expect the
+  // historical 49152 start.
+  instanceName?: string;
   onEvent?: (event: PortAllocationEvent) => void;
   isPortFree?: PortCheckFn;
 }): Promise<Record<string, number>> => {
-  const { ports, order, lockfilePorts, force, onEvent, isPortFree } = params;
+  const { ports, order, lockfilePorts, force, instanceName, onEvent, isPortFree } = params;
   const portFree = isPortFree ?? checkPortFree;
   const allocated: Record<string, number> = {};
   const used = new Set<number>();
-  let nextEphemeral = EPHEMERAL_PORT_START;
+  let nextEphemeral = computeEphemeralStart(instanceName);
 
   for (const key of order) {
     const defaultPort = ports[key];
@@ -124,7 +160,10 @@ export const allocatePorts = async (params: {
         startAt: nextEphemeral,
         isPortFree: portFree,
       });
-      nextEphemeral = assigned + 1;
+      // Advance past the assigned port, wrapping to the range start when we
+      // fall off the end so the next allocation keeps searching contiguously.
+      nextEphemeral =
+        assigned >= EPHEMERAL_PORT_END ? EPHEMERAL_PORT_START : assigned + 1;
       source = "ephemeral";
     }
 

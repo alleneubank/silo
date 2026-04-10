@@ -68,6 +68,7 @@ export const buildInstanceState = async (params: {
     order: config.portOrder,
     lockfilePorts: lockfile?.instance?.ports,
     force,
+    instanceName: name,
     ...(onPortAllocation ? { onEvent: onPortAllocation } : {}),
   });
 
