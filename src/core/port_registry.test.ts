@@ -5,8 +5,22 @@ import { promises as fs } from "fs";
 import {
   readPeerPorts,
   registerInstance,
+  registryKey,
   unregisterInstance,
 } from "./port_registry";
+
+// FNV-1a 32-bit of an input, hex-encoded. This mirrors the removed
+// implementation from review cycle 3 and is kept here ONLY so tests
+// can assert that the specific inputs which USED TO collide under
+// FNV-1a no longer collide under the new SHA-256 key.
+const fnv1a32Hex = (input: string): string => {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+};
 
 const tmpRoot = async (prefix: string): Promise<string> =>
   await fs.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -190,6 +204,41 @@ describe("port_registry", () => {
     expect(seen.has(52001)).toBe(true);
   });
 
+  test("registryKey: exact paths that collided under FNV-1a 32-bit produce distinct SHA-256 keys", () => {
+    // Regression test for review cycle 3. These two absolute paths were
+    // reported by the reviewer as producing identical 32-bit FNV-1a
+    // hashes (both -> `fcd32db2`), which under the old implementation
+    // meant both projects wrote to the same `fcd32db2.json` file and
+    // silently lost isolation. This is a PURE unit test on the literal
+    // path strings — not mkdtemp fixtures — so it actually reproduces
+    // the FNV-1a collision input and then asserts the new key function
+    // produces different outputs for them.
+    const pathX = "/Users/allen/collision-test/hirjqfoz3x2c9l";
+    const pathY = "/Users/allen/collision-test/2wblm5976j31rg";
+
+    // Sanity: these inputs genuinely collide under the old FNV-1a 32-bit
+    // key. If either of these assertions fails, this test is measuring
+    // the wrong thing and the regression coverage is not real.
+    const fnvX = fnv1a32Hex(pathX);
+    const fnvY = fnv1a32Hex(pathY);
+    expect(fnvX).toBe("fcd32db2");
+    expect(fnvY).toBe("fcd32db2");
+    expect(fnvX).toBe(fnvY);
+
+    // Real invariant: under the current SHA-256 key, they must NOT
+    // collide.
+    const sha256X = registryKey(pathX);
+    const sha256Y = registryKey(pathY);
+    expect(sha256X).not.toBe(sha256Y);
+    expect(sha256X).toHaveLength(64);
+    expect(sha256Y).toHaveLength(64);
+  });
+
+  test("registryKey is stable for a given canonical path", () => {
+    const p = "/abs/path/project";
+    expect(registryKey(p)).toBe(registryKey(p));
+  });
+
   test("two projects whose paths collide under FNV-1a 32-bit get distinct registry files", async () => {
     // Regression test for review cycle 3: the previous implementation
     // keyed registry files by a 32-bit FNV-1a hash. Two different absolute
@@ -256,6 +305,60 @@ describe("port_registry", () => {
       expect(seenFromQ.has(53000)).toBe(true);
     } finally {
       await fs.rm(collisionBase, { recursive: true, force: true });
+    }
+  });
+
+  test("symlinked project path is treated as the same project via realpath", async () => {
+    // Regression test for review cycle 4 (issue 6): `path.resolve` does
+    // NOT canonicalize symlinks, so the same physical repo opened via a
+    // symlinked path used to get a separate registry entry and count
+    // itself as a peer. With `fs.realpath` canonicalization, the
+    // symlinked alias and the real path share the same registry key and
+    // the real project recognizes the symlinked path as self.
+    const aliasBase = await tmpRoot("silo-symlink-");
+    const realProject = path.join(aliasBase, "real");
+    const symlinkAlias = path.join(aliasBase, "alias");
+    try {
+      await fs.mkdir(realProject, { recursive: true });
+      await writeLockfile(realProject);
+      await fs.symlink(realProject, symlinkAlias);
+
+      await registerInstance({
+        projectRoot: realProject,
+        name: "wt-real",
+        ports: [54000, 54001],
+        registryDir,
+      });
+
+      // Only ONE file should exist in the registry — the symlink alias
+      // must canonicalize to the real path.
+      const beforeAliasWrite = (await fs.readdir(registryDir)).filter((f) =>
+        f.endsWith(".json")
+      );
+      expect(beforeAliasWrite.length).toBe(1);
+
+      // Registering via the alias path must NOT create a second file.
+      await registerInstance({
+        projectRoot: symlinkAlias,
+        name: "wt-real",
+        ports: [54000, 54001],
+        registryDir,
+      });
+      const afterAliasWrite = (await fs.readdir(registryDir)).filter((f) =>
+        f.endsWith(".json")
+      );
+      expect(afterAliasWrite.length).toBe(1);
+
+      // When reading peer ports from the SYMLINK path, the entry
+      // registered under the real path must count as self — NOT a peer.
+      const seenFromAlias = await readPeerPorts({
+        excludeProjectRoot: symlinkAlias,
+        registryDir,
+      });
+      expect(seenFromAlias.has(54000)).toBe(false);
+      expect(seenFromAlias.has(54001)).toBe(false);
+    } finally {
+      await fs.rm(aliasBase, { recursive: true, force: true });
     }
   });
 

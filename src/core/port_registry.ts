@@ -5,15 +5,20 @@ import { promises as fs } from "fs";
 import { z } from "zod";
 
 // Machine-wide registry of live silo instances and the ports they own.
-// Each project gets a single file keyed on a deterministic hash of its
-// absolute project root so names can repeat across projects without
-// colliding. The registry guarantees disjoint ports across silo instances
-// on the same machine — hash/ephemeral allocation alone cannot, because on
-// a cold machine the free-port probe has nothing to detect.
+// Each project gets a single file keyed on the SHA-256 of its canonical
+// (realpath-resolved) absolute project root, so names can repeat across
+// projects without colliding AND the same physical repo opened via a
+// symlinked path gets a single entry. The registry guarantees disjoint
+// ports across silo instances on the same machine — hash/ephemeral
+// allocation alone cannot, because on a cold machine the free-port probe
+// has nothing to detect.
 
 const DEFAULT_REGISTRY_DIR = path.join(os.homedir(), ".silo", "instances");
 
 const PortRegistryEntrySchema = z.object({
+  // Canonical (realpath-resolved) absolute path. Used both for liveness
+  // (its `.silo.lock` must still exist) and for self-comparison across
+  // symlink aliases.
   projectRoot: z.string(),
   name: z.string(),
   ports: z.array(z.number().int().min(1).max(65535)),
@@ -25,15 +30,30 @@ type PortRegistryEntry = z.infer<typeof PortRegistryEntrySchema>;
 const resolveRegistryDir = (): string =>
   process.env.SILO_PORT_REGISTRY_DIR ?? DEFAULT_REGISTRY_DIR;
 
-// SHA-256 of the absolute project root, hex-encoded. 64 chars, zero
-// collision probability in practice. A truncated or non-cryptographic
-// hash (e.g. 32-bit FNV) would let two real project paths land in the
-// same registry file, destroying isolation — see review cycle 3.
-const registryKey = (projectRoot: string): string =>
-  crypto.createHash("sha256").update(path.resolve(projectRoot)).digest("hex");
+// Best-effort canonicalization. `fs.realpath` resolves symlinks so the
+// same physical repo opened via different alias paths hashes to the same
+// key. If the path doesn't exist yet (or realpath fails for any reason),
+// we fall back to the logical `path.resolve` — this is purely a
+// dedup/isolation optimization and must never fail the allocation.
+const canonicalizeProjectRoot = async (projectRoot: string): Promise<string> => {
+  try {
+    return await fs.realpath(projectRoot);
+  } catch {
+    return path.resolve(projectRoot);
+  }
+};
 
-const entryPath = (projectRoot: string, dir: string): string =>
-  path.join(dir, `${registryKey(projectRoot)}.json`);
+// Registry filename for a canonical project root. SHA-256 hex (64
+// chars) — zero collision probability in practice. A truncated or
+// non-cryptographic hash (e.g. 32-bit FNV) would let two real project
+// paths land in the same registry file, destroying isolation (see
+// review cycle 3, pair `hirjqfoz3x2c9l` / `2wblm5976j31rg` under FNV).
+// EXPORTED for unit tests that pin the non-collision invariant.
+export const registryKey = (canonicalProjectRoot: string): string =>
+  crypto.createHash("sha256").update(canonicalProjectRoot).digest("hex");
+
+const entryPath = (canonicalProjectRoot: string, dir: string): string =>
+  path.join(dir, `${registryKey(canonicalProjectRoot)}.json`);
 
 const safeAccess = async (filePath: string): Promise<boolean> => {
   try {
@@ -79,8 +99,8 @@ export const readPeerPorts = async (params: {
     return excluded;
   }
 
-  const ourKey = registryKey(params.excludeProjectRoot);
-  const ourResolvedRoot = path.resolve(params.excludeProjectRoot);
+  const ourCanonical = await canonicalizeProjectRoot(params.excludeProjectRoot);
+  const ourKey = registryKey(ourCanonical);
 
   for (const file of files) {
     if (!file.endsWith(".json")) {
@@ -96,8 +116,11 @@ export const readPeerPorts = async (params: {
     if (file === `${ourKey}.json`) {
       continue;
     }
-    if (path.resolve(entry.projectRoot) === ourResolvedRoot) {
-      // Same project via a different path (symlinks etc.) — skip, not a peer.
+    // Defense-in-depth self-check: also compare by canonical path in case
+    // two different filenames both point at our own project (e.g. an
+    // older entry written before realpath canonicalization was added).
+    const entryCanonical = await canonicalizeProjectRoot(entry.projectRoot);
+    if (entryCanonical === ourCanonical) {
       continue;
     }
     if (!(await isEntryLive(entry))) {
@@ -120,13 +143,14 @@ export const registerInstance = async (params: {
 }): Promise<void> => {
   const dir = params.registryDir ?? resolveRegistryDir();
   await fs.mkdir(dir, { recursive: true });
+  const canonical = await canonicalizeProjectRoot(params.projectRoot);
   const entry: PortRegistryEntry = {
-    projectRoot: path.resolve(params.projectRoot),
+    projectRoot: canonical,
     name: params.name,
     ports: [...params.ports].sort((a, b) => a - b),
     createdAt: new Date().toISOString(),
   };
-  await Bun.write(entryPath(params.projectRoot, dir), JSON.stringify(entry, null, 2));
+  await Bun.write(entryPath(canonical, dir), JSON.stringify(entry, null, 2));
 };
 
 export const unregisterInstance = async (params: {
@@ -134,5 +158,6 @@ export const unregisterInstance = async (params: {
   registryDir?: string;
 }): Promise<void> => {
   const dir = params.registryDir ?? resolveRegistryDir();
-  await fs.rm(entryPath(params.projectRoot, dir), { force: true });
+  const canonical = await canonicalizeProjectRoot(params.projectRoot);
+  await fs.rm(entryPath(canonical, dir), { force: true });
 };
