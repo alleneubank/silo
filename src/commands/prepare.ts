@@ -7,6 +7,10 @@ import {
   writeEnvAndLockfile,
 } from "../core/env";
 import { readLockfile, updateLockfile } from "../core/lockfile";
+import {
+  readPeerPorts,
+  registerInstance,
+} from "../core/port_registry";
 import { resolveAndApplyProfile } from "../core/profile";
 import {
   applyRegistryPortOverride,
@@ -107,6 +111,14 @@ export const prepareTiltEnvironment = async (params: {
   logger.info(`Resolved instance name: ${name} (${nameSource})`);
 
   logger.info("Allocating ports");
+  const excludedPorts = await readPeerPorts({
+    excludeProjectRoot: config.projectRoot,
+  });
+  if (excludedPorts.size > 0) {
+    logger.verbose(
+      `Excluding ${excludedPorts.size} port(s) owned by peer silo instances`
+    );
+  }
   const portEvents: PortAllocationEvent[] = [];
   const { state, urls, envVars: baseEnvVars, hostOrder, portOrder, urlOrder, k3dArgs } =
     await buildInstanceState({
@@ -115,10 +127,20 @@ export const prepareTiltEnvironment = async (params: {
       profile: profileName,
       lockfile,
       force: options.force,
+      excludedPorts,
       onPortAllocation: (event) => portEvents.push(event),
     });
 
   logPortAllocations(portEvents);
+
+  // Register this instance in the machine-wide port registry before writing
+  // the lockfile, so peer instances that read the registry next see our
+  // ports even if we're slow to finish writing the lockfile.
+  await registerInstance({
+    projectRoot: config.projectRoot,
+    name: state.name,
+    ports: Object.values(state.ports),
+  });
 
   const envFilePath = resolveEnvPath(config);
   const siloEnv = buildSiloProcessEnv({ state, envFilePath });

@@ -26,22 +26,38 @@ Ports are allocated in declaration order. For each port key:
 Ports are unique per instance. If two keys share the same default value, the
 first one wins and the next one will fall back to an ephemeral port.
 
-## Ephemeral Seeding (Multi-Instance Isolation)
+## Multi-Instance Isolation
 
-When silo needs to allocate from the ephemeral range, the scan does not always
-start at 49152. Instead, the instance name is hashed into a 64-port slot and
-the scan begins at that slot boundary, wrapping around to 49152 after it hits
-65535.
+silo maintains a machine-wide registry of live instances at
+`~/.silo/instances/` (one JSON file per project, keyed on a hash of the
+absolute project root). Each file records the instance name and the ports
+currently allocated to it.
 
-This gives two silo instances with different names — e.g. two worktrees of the
-same project — disjoint port windows even on a cold machine where nothing is
-currently bound. The free-port probe still runs, so if two names happen to
-hash to nearby slots the allocator falls through to the next free port
-normally.
+Before allocating, silo reads the registry and excludes every port owned by a
+peer instance:
 
-Allocation is deterministic: re-running `silo up` or `silo env` without a
-lockfile on a machine with nothing bound produces the same ports for the same
-instance name.
+- Configured default ports already owned by a peer fall through to the
+  ephemeral range.
+- Lockfile-restored ports already owned by a peer also fall through.
+- The ephemeral scan skips all excluded ports and wraps around the range if
+  needed.
+
+After allocating, silo writes its own registry entry with the final port
+assignments. This guarantees that two silo instances on the same machine —
+even two cold-start worktrees of the same project — get **disjoint** port sets,
+not just probabilistically disjoint.
+
+### Liveness
+
+A registry entry is considered live as long as the project's `.silo.lock`
+file exists. On every registry read, entries whose `.silo.lock` is gone (or
+whose JSON is corrupt) are garbage-collected. `silo down --clean` removes both
+the lockfile and the registry entry, releasing the ports for other instances.
+
+### Override location
+
+Set `SILO_PORT_REGISTRY_DIR` to relocate the registry directory (primarily for
+tests).
 
 ## Availability Check
 
@@ -51,9 +67,9 @@ silo checks whether a port is free by attempting to bind to `0.0.0.0` with a
 ## Force Behavior
 
 `--force` ignores the lockfile's stored ports and allocates fresh values using
-the normal default-first strategy. Since fresh ephemeral allocation is seeded
-from the instance name hash, an instance's ports may shift from their
-previously stored values when `--force` is used.
+the normal default-first strategy. Peer instances' ports (from the registry)
+are still excluded, so `--force` cannot steal ports from another live silo
+instance on the machine.
 
 ## k3d Registry Port
 

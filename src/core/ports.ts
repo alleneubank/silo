@@ -1,6 +1,5 @@
 import {
   EPHEMERAL_PORT_END,
-  EPHEMERAL_PORT_SLOT_SIZE,
   EPHEMERAL_PORT_START,
   PORT_CHECK_TIMEOUT_MS,
 } from "./constants";
@@ -57,45 +56,24 @@ export type PortAllocationEvent = {
   source: PortAllocationSource;
 };
 
-// FNV-1a 32-bit hash. Non-cryptographic; deterministic across platforms.
-// Used to seed the ephemeral-port scan from a name-derived slot so two silo
-// instances with different names get disjoint port windows on a cold machine.
-const fnv1a32 = (input: string): number => {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i += 1) {
-    hash ^= input.charCodeAt(i);
-    // 32-bit FNV prime multiply; keep result unsigned.
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash >>> 0;
-};
-
 const EPHEMERAL_RANGE_SIZE = EPHEMERAL_PORT_END - EPHEMERAL_PORT_START + 1;
 
-// Compute the ephemeral-scan start for an instance name. Slotting the start
-// to multiples of EPHEMERAL_PORT_SLOT_SIZE keeps two instances that differ in
-// a single character from landing one port apart.
-export const computeEphemeralStart = (instanceName: string | undefined): number => {
-  if (!instanceName) {
-    return EPHEMERAL_PORT_START;
-  }
-  const numSlots = Math.floor(EPHEMERAL_RANGE_SIZE / EPHEMERAL_PORT_SLOT_SIZE);
-  const slotIndex = fnv1a32(instanceName) % numSlots;
-  return EPHEMERAL_PORT_START + slotIndex * EPHEMERAL_PORT_SLOT_SIZE;
-};
-
-// Scan the ephemeral range starting at startAt and wrap around to
-// EPHEMERAL_PORT_START after hitting EPHEMERAL_PORT_END, so a hash-seeded
-// start near the tail still has the full range available.
+// Scan the ephemeral range starting at startAt, wrapping back to
+// EPHEMERAL_PORT_START after hitting EPHEMERAL_PORT_END. Skips ports in
+// `used` (already-allocated in this call) and `excluded` (owned by other
+// live silo instances, per the port registry).
 const findEphemeralPort = async (params: {
   used: Set<number>;
+  excluded: Set<number>;
   startAt: number;
   isPortFree: PortCheckFn;
 }): Promise<number> => {
-  const { used, startAt, isPortFree } = params;
+  const { used, excluded, startAt, isPortFree } = params;
   for (let offset = 0; offset < EPHEMERAL_RANGE_SIZE; offset += 1) {
-    const port = EPHEMERAL_PORT_START + ((startAt - EPHEMERAL_PORT_START + offset) % EPHEMERAL_RANGE_SIZE);
-    if (used.has(port)) {
+    const port =
+      EPHEMERAL_PORT_START +
+      ((startAt - EPHEMERAL_PORT_START + offset) % EPHEMERAL_RANGE_SIZE);
+    if (used.has(port) || excluded.has(port)) {
       continue;
     }
     if (await isPortFree(port)) {
@@ -110,18 +88,19 @@ export const allocatePorts = async (params: {
   order: string[];
   lockfilePorts: Record<string, number> | undefined;
   force: boolean;
-  // Seeds the ephemeral scan so two instances with different names land in
-  // disjoint port windows on a cold machine. Omit in tests that expect the
-  // historical 49152 start.
-  instanceName?: string;
+  // Ports reserved by other live silo instances on this machine. The
+  // caller is expected to compute this from the port registry before
+  // invoking allocation. When omitted, treated as empty (tests).
+  excludedPorts?: Set<number>;
   onEvent?: (event: PortAllocationEvent) => void;
   isPortFree?: PortCheckFn;
 }): Promise<Record<string, number>> => {
-  const { ports, order, lockfilePorts, force, instanceName, onEvent, isPortFree } = params;
+  const { ports, order, lockfilePorts, force, excludedPorts, onEvent, isPortFree } = params;
   const portFree = isPortFree ?? checkPortFree;
+  const excluded = excludedPorts ?? new Set<number>();
   const allocated: Record<string, number> = {};
   const used = new Set<number>();
-  let nextEphemeral = computeEphemeralStart(instanceName);
+  let nextEphemeral = EPHEMERAL_PORT_START;
 
   for (const key of order) {
     const defaultPort = ports[key];
@@ -144,7 +123,7 @@ export const allocatePorts = async (params: {
     let assigned: number | undefined;
     let source: PortAllocationSource = "default";
     for (const candidate of candidates) {
-      if (used.has(candidate.port)) {
+      if (used.has(candidate.port) || excluded.has(candidate.port)) {
         continue;
       }
       if (await portFree(candidate.port)) {
@@ -157,11 +136,11 @@ export const allocatePorts = async (params: {
     if (!assigned) {
       assigned = await findEphemeralPort({
         used,
+        excluded,
         startAt: nextEphemeral,
         isPortFree: portFree,
       });
-      // Advance past the assigned port, wrapping to the range start when we
-      // fall off the end so the next allocation keeps searching contiguously.
+      // Advance past the assigned port, wrapping when we fall off the end.
       nextEphemeral =
         assigned >= EPHEMERAL_PORT_END ? EPHEMERAL_PORT_START : assigned + 1;
       source = "ephemeral";

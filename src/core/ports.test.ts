@@ -1,14 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import {
-  EPHEMERAL_PORT_END,
-  EPHEMERAL_PORT_SLOT_SIZE,
-  EPHEMERAL_PORT_START,
-} from "./constants";
-import {
-  allocatePorts,
-  computeEphemeralStart,
-  type PortAllocationEvent,
-} from "./ports";
+import { EPHEMERAL_PORT_END, EPHEMERAL_PORT_START } from "./constants";
+import { allocatePorts, type PortAllocationEvent } from "./ports";
 
 const alwaysFree = async (_port: number): Promise<boolean> => true;
 
@@ -81,129 +73,6 @@ describe("allocatePorts", () => {
     expect(events[0]?.source).toBe("ephemeral");
   });
 
-  test("without instanceName, scan starts at EPHEMERAL_PORT_START (legacy behaviour)", async () => {
-    const allocated = await allocatePorts({
-      ports: { A: "random", B: "random" },
-      order: ["A", "B"],
-      lockfilePorts: undefined,
-      force: false,
-      isPortFree: alwaysFree,
-    });
-    expect(allocated.A).toBe(EPHEMERAL_PORT_START);
-    expect(allocated.B).toBe(EPHEMERAL_PORT_START + 1);
-  });
-
-  test("instanceName seeds the ephemeral scan to a slot boundary", async () => {
-    const name = "wt-a";
-    const expectedStart = computeEphemeralStart(name);
-
-    const allocated = await allocatePorts({
-      ports: { A: "random", B: "random" },
-      order: ["A", "B"],
-      lockfilePorts: undefined,
-      force: false,
-      instanceName: name,
-      isPortFree: alwaysFree,
-    });
-
-    expect(allocated.A).toBe(expectedStart);
-    expect(allocated.B).toBe(expectedStart + 1);
-    // Slot boundaries land on EPHEMERAL_PORT_SLOT_SIZE multiples.
-    expect((expectedStart - EPHEMERAL_PORT_START) % EPHEMERAL_PORT_SLOT_SIZE).toBe(0);
-  });
-
-  test("two different instance names get disjoint ephemeral windows", async () => {
-    const a = await allocatePorts({
-      ports: { P1: "random", P2: "random", P3: "random" },
-      order: ["P1", "P2", "P3"],
-      lockfilePorts: undefined,
-      force: false,
-      instanceName: "wt-a",
-      isPortFree: alwaysFree,
-    });
-    const b = await allocatePorts({
-      ports: { P1: "random", P2: "random", P3: "random" },
-      order: ["P1", "P2", "P3"],
-      lockfilePorts: undefined,
-      force: false,
-      instanceName: "wt-b",
-      isPortFree: alwaysFree,
-    });
-
-    const aPorts = new Set(Object.values(a));
-    const bPorts = Object.values(b);
-    for (const port of bPorts) {
-      expect(aPorts.has(port)).toBe(false);
-    }
-  });
-
-  test("same instance name allocates deterministic ports on repeated calls", async () => {
-    const name = "wt-deterministic";
-    const first = await allocatePorts({
-      ports: { X: "random", Y: "random" },
-      order: ["X", "Y"],
-      lockfilePorts: undefined,
-      force: false,
-      instanceName: name,
-      isPortFree: alwaysFree,
-    });
-    const second = await allocatePorts({
-      ports: { X: "random", Y: "random" },
-      order: ["X", "Y"],
-      lockfilePorts: undefined,
-      force: false,
-      instanceName: name,
-      isPortFree: alwaysFree,
-    });
-    expect(second).toEqual(first);
-  });
-
-  test("ephemeral scan wraps past EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START", async () => {
-    // Everything from the seeded start to the end of the ephemeral range is
-    // "occupied"; the scan must wrap to EPHEMERAL_PORT_START and succeed.
-    const name = "wrap-test";
-    const startAt = computeEphemeralStart(name);
-    const occupied = new Set<number>();
-    for (let p = startAt; p <= EPHEMERAL_PORT_END; p += 1) {
-      occupied.add(p);
-    }
-    const check = async (port: number): Promise<boolean> => !occupied.has(port);
-
-    const allocated = await allocatePorts({
-      ports: { A: "random" },
-      order: ["A"],
-      lockfilePorts: undefined,
-      force: false,
-      instanceName: name,
-      isPortFree: check,
-    });
-    expect(allocated.A).toBe(EPHEMERAL_PORT_START);
-  });
-
-  test("lockfile ports win over hash-seeded start", async () => {
-    const allocated = await allocatePorts({
-      ports: { APP_PORT: "random" },
-      order: ["APP_PORT"],
-      lockfilePorts: { APP_PORT: 55123 },
-      force: false,
-      instanceName: "wt-a",
-      isPortFree: alwaysFree,
-    });
-    expect(allocated.APP_PORT).toBe(55123);
-  });
-
-  test("configured default wins over hash-seeded start", async () => {
-    const allocated = await allocatePorts({
-      ports: { WEB_PORT: 3000 },
-      order: ["WEB_PORT"],
-      lockfilePorts: undefined,
-      force: false,
-      instanceName: "wt-a",
-      isPortFree: alwaysFree,
-    });
-    expect(allocated.WEB_PORT).toBe(3000);
-  });
-
   test("skips occupied ports when scanning ephemeral range", async () => {
     // First two ephemeral ports are taken
     const occupiedPorts = new Set([
@@ -222,6 +91,77 @@ describe("allocatePorts", () => {
     });
 
     expect(allocated.APP_PORT).toBe(EPHEMERAL_PORT_START + 2);
+  });
+
+  test("excludedPorts are skipped during ephemeral scan", async () => {
+    const excluded = new Set<number>([
+      EPHEMERAL_PORT_START,
+      EPHEMERAL_PORT_START + 1,
+      EPHEMERAL_PORT_START + 2,
+    ]);
+    const allocated = await allocatePorts({
+      ports: { A: "random", B: "random" },
+      order: ["A", "B"],
+      lockfilePorts: undefined,
+      force: false,
+      excludedPorts: excluded,
+      isPortFree: alwaysFree,
+    });
+    expect(allocated.A).toBe(EPHEMERAL_PORT_START + 3);
+    expect(allocated.B).toBe(EPHEMERAL_PORT_START + 4);
+  });
+
+  test("excludedPorts force the configured default to fall back to ephemeral", async () => {
+    const excluded = new Set<number>([3000]);
+    const events: PortAllocationEvent[] = [];
+    const allocated = await allocatePorts({
+      ports: { WEB_PORT: 3000 },
+      order: ["WEB_PORT"],
+      lockfilePorts: undefined,
+      force: false,
+      excludedPorts: excluded,
+      isPortFree: alwaysFree,
+      onEvent: (event) => events.push(event),
+    });
+    expect(allocated.WEB_PORT).toBe(EPHEMERAL_PORT_START);
+    expect(events[0]?.source).toBe("ephemeral");
+  });
+
+  test("excludedPorts force lockfile ports to fall back to ephemeral", async () => {
+    const excluded = new Set<number>([62000]);
+    const events: PortAllocationEvent[] = [];
+    const allocated = await allocatePorts({
+      ports: { APP_PORT: "random" },
+      order: ["APP_PORT"],
+      lockfilePorts: { APP_PORT: 62000 },
+      force: false,
+      excludedPorts: excluded,
+      isPortFree: alwaysFree,
+      onEvent: (event) => events.push(event),
+    });
+    expect(allocated.APP_PORT).toBe(EPHEMERAL_PORT_START);
+    expect(events[0]?.source).toBe("ephemeral");
+  });
+
+  test("ephemeral scan wraps past EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START", async () => {
+    // Everything except the very first port is "occupied" — scan needs to
+    // wrap from EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START (trivially,
+    // since scanning starts at EPHEMERAL_PORT_START, but we exercise the
+    // wrap path by pushing the first candidate to the tail via excluded).
+    const excluded = new Set<number>();
+    for (let p = EPHEMERAL_PORT_START; p < EPHEMERAL_PORT_END; p += 1) {
+      excluded.add(p);
+    }
+    // Only EPHEMERAL_PORT_END is free.
+    const allocated = await allocatePorts({
+      ports: { A: "random" },
+      order: ["A"],
+      lockfilePorts: undefined,
+      force: false,
+      excludedPorts: excluded,
+      isPortFree: alwaysFree,
+    });
+    expect(allocated.A).toBe(EPHEMERAL_PORT_END);
   });
 });
 
