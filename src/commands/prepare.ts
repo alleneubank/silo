@@ -7,6 +7,10 @@ import {
   writeEnvAndLockfile,
 } from "../core/env";
 import { readLockfile, updateLockfile } from "../core/lockfile";
+import {
+  readPeerPorts,
+  registerInstance,
+} from "../core/port_registry";
 import { resolveAndApplyProfile } from "../core/profile";
 import {
   applyRegistryPortOverride,
@@ -107,6 +111,14 @@ export const prepareTiltEnvironment = async (params: {
   logger.info(`Resolved instance name: ${name} (${nameSource})`);
 
   logger.info("Allocating ports");
+  const excludedPorts = await readPeerPorts({
+    excludeProjectRoot: config.projectRoot,
+  });
+  if (excludedPorts.size > 0) {
+    logger.verbose(
+      `Excluding ${excludedPorts.size} port(s) owned by peer silo instances`
+    );
+  }
   const portEvents: PortAllocationEvent[] = [];
   const { state, urls, envVars: baseEnvVars, hostOrder, portOrder, urlOrder, k3dArgs } =
     await buildInstanceState({
@@ -115,6 +127,7 @@ export const prepareTiltEnvironment = async (params: {
       profile: profileName,
       lockfile,
       force: options.force,
+      excludedPorts,
       onPortAllocation: (event) => portEvents.push(event),
     });
 
@@ -136,6 +149,16 @@ export const prepareTiltEnvironment = async (params: {
     hostOrder,
     portOrder,
     urlOrder,
+  });
+
+  // Register AFTER the lockfile is on disk. Registry liveness is keyed on
+  // `.silo.lock` presence, so registering before the lockfile exists would
+  // let a concurrent peer read GC our entry immediately and steal our
+  // ports. Order must be: allocate → write lockfile → register.
+  await registerInstance({
+    projectRoot: config.projectRoot,
+    name: currentState.name,
+    ports: Object.values(currentState.ports),
   });
 
   logger.info(`Running pre-up hooks (${config.hooks["pre-up"]?.length ?? 0})`);
@@ -193,6 +216,14 @@ export const prepareTiltEnvironment = async (params: {
           hostOrder,
           portOrder,
           urlOrder,
+        });
+        // K3D_REGISTRY_PORT drifted — refresh the registry entry so peer
+        // instances see the actually-bound port rather than the originally
+        // allocated one.
+        await registerInstance({
+          projectRoot: config.projectRoot,
+          name: currentState.name,
+          ports: Object.values(currentState.ports),
         });
       }
     }

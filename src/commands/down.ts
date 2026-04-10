@@ -1,6 +1,7 @@
 import { loadConfig } from "../core/config";
 import { buildSiloProcessEnv, resolveEnvPath } from "../core/env";
 import { readLockfile, updateLockfile } from "../core/lockfile";
+import { unregisterInstance } from "../core/port_registry";
 import { applyProfile } from "../core/profile";
 import { logger } from "../utils/logger";
 import { promises as fs } from "fs";
@@ -102,5 +103,10 @@ export const down = async (options: {
     logger.info("Removing env file and lockfile");
     await fs.rm(envFilePath, { force: true });
     await fs.rm(`${config.projectRoot}/.silo.lock`, { force: true });
+    // Release this instance's ports in the machine-wide registry so peer
+    // silo instances can claim them. When --clean is not passed, the entry
+    // stays so peer allocations continue to avoid these ports until the
+    // lockfile is removed.
+    await unregisterInstance({ projectRoot: config.projectRoot });
   }
 };

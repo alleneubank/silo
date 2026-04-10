@@ -43,6 +43,10 @@ export const buildInstanceState = async (params: {
   profile: string | undefined;
   lockfile: Lockfile | null | undefined;
   force: boolean;
+  // Ports owned by other live silo instances on this machine. The caller
+  // should read this from the port registry before invoking; omitting it
+  // loses cross-instance isolation.
+  excludedPorts?: Set<number>;
   createdAt?: string;
   onPortAllocation?: (event: PortAllocationEvent) => void;
 }): Promise<{
@@ -54,7 +58,16 @@ export const buildInstanceState = async (params: {
   urlOrder: string[];
   k3dArgs: string[];
 }> => {
-  const { config, name, profile, lockfile, force, createdAt, onPortAllocation } = params;
+  const {
+    config,
+    name,
+    profile,
+    lockfile,
+    force,
+    excludedPorts,
+    createdAt,
+    onPortAllocation,
+  } = params;
   const identityVars = buildIdentityVars(name, config.prefix);
 
   const { hosts, order: hostOrder } = resolveHosts({
@@ -68,6 +81,7 @@ export const buildInstanceState = async (params: {
     order: config.portOrder,
     lockfilePorts: lockfile?.instance?.ports,
     force,
+    ...(excludedPorts ? { excludedPorts } : {}),
     ...(onPortAllocation ? { onEvent: onPortAllocation } : {}),
   });
 

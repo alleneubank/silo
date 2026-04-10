@@ -56,14 +56,24 @@ export type PortAllocationEvent = {
   source: PortAllocationSource;
 };
 
+const EPHEMERAL_RANGE_SIZE = EPHEMERAL_PORT_END - EPHEMERAL_PORT_START + 1;
+
+// Scan the ephemeral range starting at startAt, wrapping back to
+// EPHEMERAL_PORT_START after hitting EPHEMERAL_PORT_END. Skips ports in
+// `used` (already-allocated in this call) and `excluded` (owned by other
+// live silo instances, per the port registry).
 const findEphemeralPort = async (params: {
   used: Set<number>;
+  excluded: Set<number>;
   startAt: number;
   isPortFree: PortCheckFn;
 }): Promise<number> => {
-  const { used, startAt, isPortFree } = params;
-  for (let port = startAt; port <= EPHEMERAL_PORT_END; port += 1) {
-    if (used.has(port)) {
+  const { used, excluded, startAt, isPortFree } = params;
+  for (let offset = 0; offset < EPHEMERAL_RANGE_SIZE; offset += 1) {
+    const port =
+      EPHEMERAL_PORT_START +
+      ((startAt - EPHEMERAL_PORT_START + offset) % EPHEMERAL_RANGE_SIZE);
+    if (used.has(port) || excluded.has(port)) {
       continue;
     }
     if (await isPortFree(port)) {
@@ -78,11 +88,16 @@ export const allocatePorts = async (params: {
   order: string[];
   lockfilePorts: Record<string, number> | undefined;
   force: boolean;
+  // Ports reserved by other live silo instances on this machine. The
+  // caller is expected to compute this from the port registry before
+  // invoking allocation. When omitted, treated as empty (tests).
+  excludedPorts?: Set<number>;
   onEvent?: (event: PortAllocationEvent) => void;
   isPortFree?: PortCheckFn;
 }): Promise<Record<string, number>> => {
-  const { ports, order, lockfilePorts, force, onEvent, isPortFree } = params;
+  const { ports, order, lockfilePorts, force, excludedPorts, onEvent, isPortFree } = params;
   const portFree = isPortFree ?? checkPortFree;
+  const excluded = excludedPorts ?? new Set<number>();
   const allocated: Record<string, number> = {};
   const used = new Set<number>();
   let nextEphemeral = EPHEMERAL_PORT_START;
@@ -108,7 +123,7 @@ export const allocatePorts = async (params: {
     let assigned: number | undefined;
     let source: PortAllocationSource = "default";
     for (const candidate of candidates) {
-      if (used.has(candidate.port)) {
+      if (used.has(candidate.port) || excluded.has(candidate.port)) {
         continue;
       }
       if (await portFree(candidate.port)) {
@@ -121,10 +136,13 @@ export const allocatePorts = async (params: {
     if (!assigned) {
       assigned = await findEphemeralPort({
         used,
+        excluded,
         startAt: nextEphemeral,
         isPortFree: portFree,
       });
-      nextEphemeral = assigned + 1;
+      // Advance past the assigned port, wrapping when we fall off the end.
+      nextEphemeral =
+        assigned >= EPHEMERAL_PORT_END ? EPHEMERAL_PORT_START : assigned + 1;
       source = "ephemeral";
     }
 
