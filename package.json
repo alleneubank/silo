@@ -1,6 +1,6 @@
 {
   "name": "@0xbigboss/silo",
-  "version": "0.5.8",
+  "version": "0.5.9",
   "description": "Isolated local development environments for Tilt and k3d.",
   "type": "module",
   "bin": {
