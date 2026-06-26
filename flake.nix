@@ -4,10 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
-    bun-overlay.url = "github:0xBigBoss/bun-overlay";
+    bun-overlay.url = "github:alleneubank/bun-overlay";
     bun-overlay.inputs.nixpkgs.follows = "nixpkgs";
 
-    tilt-overlay.url = "github:0xBigBoss/tilt-overlay";
+    tilt-overlay.url = "github:alleneubank/tilt-overlay";
     tilt-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 

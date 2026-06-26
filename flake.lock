@@ -9,15 +9,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1769689206,
-        "narHash": "sha256-URZKjrgcg4La2HEA0mx4lRFkpYkr1VWtR8Q1rdcL/A8=",
-        "owner": "0xBigBoss",
+        "lastModified": 1780537703,
+        "narHash": "sha256-A7I+onfi2O1TxDqVUK7J+aMQOxzp95ZIYTS2nFs2FHw=",
+        "owner": "alleneubank",
         "repo": "bun-overlay",
-        "rev": "9f40a3804ec291ee94b99fec8e5a64cb794d9976",
+        "rev": "0d724033427c59f6556108eeb084ed157d436c2b",
         "type": "github"
       },
       "original": {
-        "owner": "0xBigBoss",
+        "owner": "alleneubank",
         "repo": "bun-overlay",
         "type": "github"
       }
@@ -135,15 +135,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1769100629,
-        "narHash": "sha256-xqFbaxJuEkybdAVRcjccfToHJQ3AaP7SEWRotchyPJg=",
-        "owner": "0xBigBoss",
+        "lastModified": 1773083596,
+        "narHash": "sha256-48QrRx6+oFUX6eDzGr7bztInqVZH8IZlbWKxHQQ26dE=",
+        "owner": "alleneubank",
         "repo": "tilt-overlay",
-        "rev": "de452a2ae52666a8b8705afe6b81079d51e0e9e8",
+        "rev": "a106910a266879f40d361d60b5e4deb2df23b613",
         "type": "github"
       },
       "original": {
-        "owner": "0xBigBoss",
+        "owner": "alleneubank",
         "repo": "tilt-overlay",
         "type": "github"
       }
