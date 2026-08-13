@@ -25,6 +25,16 @@ Install the silo skill in [Claude Code](https://claude.ai/code) so your AI assis
 /plugin install silo@0xBigBoss-silo
 ```
 
+### Pi package
+
+Install silo as a [pi package](https://pi.dev/packages) to expose the `silo` skill to the pi coding agent:
+
+```bash
+pi install git:git@github.com:alleneubank/silo.git
+```
+
+The skill shells out to the `silo` binary; install it first via `npm i -g @0xbigboss/silo` or the source build.
+
 ## Quick start
 
 ```bash

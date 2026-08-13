@@ -44,6 +44,7 @@
     "SPEC.md"
   ],
   "keywords": [
+    "pi-package",
     "cli",
     "dev-environment",
     "tilt",
@@ -67,5 +68,10 @@
   "license": "MIT",
   "engines": {
     "bun": ">=1.1.0"
+  },
+  "pi": {
+    "skills": [
+      "./.claude-plugin/silo/skills"
+    ]
   }
 }
