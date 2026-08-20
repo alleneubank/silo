@@ -13,6 +13,7 @@
     "check": "bunx knip && bunx jscpd src/",
     "typecheck": "bun run tsc --noEmit",
     "test": "bun test",
+    "test:drain": "sh scripts/drain-test.sh",
     "build": "bun build --target=bun --outdir dist src/cli.ts",
     "prepublishOnly": "bun run typecheck && bun run build",
     "changeset": "changeset",

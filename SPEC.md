@@ -725,7 +725,7 @@ Next: edit the file, then run `silo up`.
 ### `silo up [name]`
 
 1. Load config from silo.toml
-2. Validate required tools exist (tilt; k3d if configured after profile merge)
+2. Validate required tools exist (tilt, janitor; k3d if configured after profile merge)
 3. Resolve profile (--profile flag -> SILO_PROFILE env -> lockfile profile -> none)
 4. If lockfile exists with different profile and no --force: error
 5. Merge profile overrides with base config
@@ -741,11 +741,37 @@ Next: edit the file, then run `silo up`.
     - Write kubeconfig to instance-specific path
     - Advertise registry via `local-registry-hosting` ConfigMap (Tilt auto-discovery)
 13. Run `post-up` hooks (base + profile.append merged)
-14. Start Tilt in foreground
-    - Write `tiltPid` and `tiltStartedAt` to lockfile
+14. Start Tilt in foreground, supervised (see [Process supervision](#process-supervision))
+    - Write the supervisor's `tiltPid` and `tiltStartedAt` to lockfile
 15. On Ctrl+C or Tilt exit:
     - Clear `tiltPid` from lockfile (indicates clean shutdown)
     - Proceed to cleanup (if needed)
+
+## Process supervision
+
+silo runs Tilt as `janitor --grace-ms <ms> -- tilt up` rather than spawning
+`tilt up` directly.
+
+**Invariant: Tilt does not outlive the silo process that started it.**
+
+`silo up` forwards SIGINT and SIGTERM to Tilt, which covers an orderly exit.
+It cannot cover the cases where no handler runs at all -- SIGKILL, SIGHUP when
+the controlling terminal closes, or a silo crash. Tilt would then reparent to
+init and keep holding the instance's allocated ports. Because silo allocates a
+distinct port per instance, such orphans never collide with a later `silo up`
+and accumulate unnoticed.
+
+janitor watches its parent and, when silo goes away, drains Tilt's process
+group with SIGTERM, a grace window, then SIGKILL.
+
+Consequences:
+
+- janitor is a required tool, validated in step 2 of `silo up`. A missing
+  supervisor fails the run rather than silently starting an unsupervised Tilt.
+- `tiltPid` in the lockfile is the **supervisor's** pid, not tilt's. It is the
+  process silo spawned and the one `silo down` stops; stopping it drains Tilt.
+  `silo status` and `silo down` therefore accept either the supervisor or tilt
+  as the tracked process.
 
 ### `silo down`
 

@@ -5,7 +5,7 @@ import { buildTemplateVars } from "../core/variables";
 import { resolveTemplateRecord } from "../core/instance";
 import { applyProfile } from "../core/profile";
 import { clusterExists } from "../backends/k3d";
-import { isPidRunning, isTiltProcess } from "../utils/process";
+import { isPidRunning, isTrackedTiltProcess } from "../utils/process";
 import { logger } from "../utils/logger";
 import { resolveRegistryAdvertiseSettings } from "../core/registry";
 import { getRegistryConfigMapStatus } from "../backends/registry";
@@ -32,7 +32,7 @@ export const status = async (options: { config: string }): Promise<void> => {
 
   const tiltPid = lockfile.instance.tiltPid;
   const tiltRunning = tiltPid
-    ? isPidRunning(tiltPid) && (await isTiltProcess(tiltPid))
+    ? isPidRunning(tiltPid) && (await isTrackedTiltProcess(tiltPid))
     : false;
 
   const clusterName = lockfile.instance.identity.k3dClusterName;

@@ -11,6 +11,15 @@ export const EPHEMERAL_PORT_END = 65535;
 
 export const PORT_CHECK_TIMEOUT_MS = 100;
 export const TOOL_CHECK_TIMEOUT_MS = 2000;
+
+// Bare `tilt up` outlives silo whenever silo dies without running its signal
+// handlers (SIGKILL, SIGHUP, crash): Tilt reparents to init and keeps holding
+// the instance's allocated ports. janitor watches its parent and drains the
+// process group when silo goes away.
+export const TILT_SUPERVISOR_BIN = "janitor";
+// Larger than janitor's CLI default: dev servers need a beat to release ports
+// and flush on SIGTERM before the supervisor escalates to SIGKILL.
+export const TILT_DRAIN_GRACE_MS = 5000;
 export const HOOK_TIMEOUT_MS = 300000;
 export const K3D_CREATE_TIMEOUT_MS = 300000;
 export const K3D_DELETE_TIMEOUT_MS = 180000;

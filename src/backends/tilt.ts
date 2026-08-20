@@ -1,12 +1,32 @@
-import { TILT_CI_TIMEOUT_MS, TILT_DOWN_TIMEOUT_MS } from "../core/constants";
+import {
+  TILT_CI_TIMEOUT_MS,
+  TILT_DOWN_TIMEOUT_MS,
+  TILT_DRAIN_GRACE_MS,
+  TILT_SUPERVISOR_BIN,
+} from "../core/constants";
 import { runCommandChecked } from "../utils/exec";
+
+/**
+ * argv that runs `tilt up` under a supervisor.
+ *
+ * The supervisor flags must precede `--`; everything after it is the command
+ * janitor supervises and drains when silo, its parent, goes away.
+ */
+export const buildSupervisedTiltArgv = (): readonly string[] => [
+  TILT_SUPERVISOR_BIN,
+  "--grace-ms",
+  String(TILT_DRAIN_GRACE_MS),
+  "--",
+  "tilt",
+  "up",
+];
 
 export const startTilt = (params: {
   cwd: string;
   env: Record<string, string>;
 }): Bun.Subprocess => {
   const { cwd, env } = params;
-  return Bun.spawn(["tilt", "up"], {
+  return Bun.spawn([...buildSupervisedTiltArgv()], {
     cwd,
     env: { ...process.env, ...env },
     stdin: "inherit",
