@@ -13,6 +13,19 @@
 
   outputs = { self, nixpkgs, bun-overlay, tilt-overlay }:
     let
+      tiltForkVersion = "0.37.7-fork.20260819.gfa564bca6";
+      tiltForkSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      tiltForkOverlay = _: prev:
+        let
+          system = prev.stdenv.hostPlatform.system;
+        in
+        prev.lib.optionalAttrs (builtins.elem system tiltForkSystems) {
+          tilt = (import "${tilt-overlay}/default.nix" {
+            inherit system;
+            pkgs = prev;
+            tiltVersion = tiltForkVersion;
+          }).tilt;
+        };
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -29,7 +42,7 @@
             inherit system;
             overlays = [
               bun-overlay.overlays.default
-              tilt-overlay.overlays.default
+              tiltForkOverlay
             ];
           };
         in
