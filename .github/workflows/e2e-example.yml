@@ -7,7 +7,7 @@ on:
       - main
 
 env:
-  BUN_VERSION: "1.3.3"
+  BUN_VERSION: "1.4.0"
   SILO_CI_TIMEOUT: "300s"
   SILO_CI_NAME: "ci-run"
   WEB_LOCAL_PORT: "18080"
