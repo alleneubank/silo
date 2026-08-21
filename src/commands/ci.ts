@@ -1,3 +1,4 @@
+import { loadConfig } from "../core/config";
 import { appendGithubEnv } from "../core/env";
 import { logger } from "../utils/logger";
 import { tiltCi } from "../backends/tilt";
@@ -15,7 +16,12 @@ export const ci = async (
     tiltArgs: string[];
   }
 ): Promise<void> => {
+  logger.info("Loading config");
+  const baseConfig = await loadConfig(options.config);
+  logger.verbose(`Config path: ${baseConfig.configPath}`);
+
   const { config, state, urls, envVars } = await prepareTiltEnvironment({
+    baseConfig,
     nameArg,
     options,
   });

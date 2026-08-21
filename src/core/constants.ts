@@ -5,6 +5,13 @@ export const DEFAULT_HOSTS = { APP_HOST: "${name}.localhost" } as const;
 export const DEFAULT_URLS: Record<string, string> = {};
 
 export const LOCKFILE_NAME = ".silo.lock";
+// Held only while a `silo up` is starting, to serialize the window where the
+// lockfile cannot yet name the Tilt being started.
+export const STARTUP_CLAIM_NAME = ".silo.startup";
+// The pid of the holding process decides staleness. This bound only resolves a
+// claim whose pid was recycled by an unrelated process, so it is far longer
+// than any startup can run — hooks alone may take HOOK_TIMEOUT_MS each.
+export const STARTUP_CLAIM_TTL_MS = 86400000;
 
 export const EPHEMERAL_PORT_START = 49152;
 export const EPHEMERAL_PORT_END = 65535;

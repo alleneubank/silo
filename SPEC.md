@@ -130,7 +130,7 @@ Help:
 
 Command Options:
   up:
-    -f, --force       Regenerate ports even if lockfile exists
+    -f, --force       Regenerate ports; start a parallel stack if one is live
     -p, --profile     Use named profile (overrides SILO_PROFILE env var)
 
   env:
@@ -342,6 +342,15 @@ interface InstanceState {
   k3dClusterCreated: boolean;
   tiltPid?: number; // Set when Tilt starts, cleared on clean exit
   tiltStartedAt?: string; // ISO timestamp when Tilt was started
+  disownedTilts?: DisownedTilt[]; // Stacks left running by `silo up --force`
+}
+
+interface DisownedTilt {
+  pid: number; // Supervisor pid of the stack that no longer owns the lockfile
+  name: string; // Instance name it was started as
+  ports: Record<string, number>; // Ports it still answers on
+  startedAt?: string; // ISO timestamp when it was started
+  disownedAt: string; // ISO timestamp when `--force` disowned it
 }
 
 interface Lockfile {
@@ -433,6 +442,19 @@ load('ext://silo/require', 'SILO_REQUIRE')
 
 If the extension is published to the default Tilt extensions repo, you can
 skip `extension_repo` and just use the `load('ext://...')` line.
+
+### Startup Claim (.silo.startup)
+
+Written by `silo up` for the duration of a startup and removed when it ends,
+including on failure. It holds `{ "pid", "nonce", "claimedAt" }` for the silo
+process that is starting a stack. A second `silo up` for the same project root
+refuses with `STARTUP_IN_PROGRESS` while the claim's pid is alive -- however
+long that takes, since hooks and k3d creation legitimately run for minutes. A
+claim left behind by a killed process is reclaimed; because reclaiming is a
+remove followed by a create, the reclaimer confirms its own `nonce` is in the
+file before proceeding, and releases the claim only while that nonce is still
+there. The 24-hour age bound exists solely to resolve a claim whose pid was
+recycled by an unrelated process.
 
 ### Lockfile (.silo.lock)
 
@@ -729,7 +751,8 @@ Next: edit the file, then run `silo up`.
 3. Resolve profile (--profile flag -> SILO_PROFILE env -> lockfile profile -> none)
 4. If lockfile exists with different profile and no --force: error
 5. Merge profile overrides with base config
-6. Check if instance already running -> error with hint
+6. Check if instance already running -> report it and exit 0 (or disown it
+   under `--force`; see [Instance State Detection](#instance-state-detection))
 7. Resolve instance name (CLI arg -> lockfile -> auto-generate)
 8. Allocate ports (profile ports merged with base, then allocated)
 9. Generate env file (includes SILO_PROFILE)
@@ -929,13 +952,47 @@ silo down:
 
 ### Instance State Detection
 
-**"Already running" detection** (checked in `silo up`):
+**"Already running" detection** (checked in `silo up`, before ports, hooks or
+k3d are touched):
 
 1. Lockfile exists with `tiltPid` set
 2. Process with that PID is still running
-3. Process is actually Tilt (check process name)
+3. Process is actually Tilt or its supervisor (check process name)
 
-If all three: error with "Instance '{name}' already running. Use `silo down` first."
+If all three, `silo up` is a no-op: it reports the running instance, its ports
+and its URLs, and exits 0. `up` is therefore idempotent -- a second `up` never
+forks a second stack, which would come up silently on ephemeral ports and leave
+two Tilts answering for one project.
+
+The check runs under an exclusive startup claim (`.silo.startup`, holding the
+starting process's pid). The lockfile can only answer for a Tilt that has
+already been recorded, so two `silo up` invocations racing through preparation
+would both see no live Tilt; the claim is what serializes that window. A claim
+whose owner is gone is reclaimed automatically.
+
+If nothing owns the lockfile but a disowned stack is still running -- a
+`--force` handover that failed partway, or a replacement that has since exited
+-- `silo up` errors with `DISOWNED_RUNNING` naming those stacks rather than
+starting beside them silently. Stop them, or pass `--force`.
+
+A reuse only happens when the live instance is the one being asked for. If the
+run names a different instance (`silo up other-name`) or a different profile
+(`--profile`/`SILO_PROFILE`), `silo up` errors with `ALREADY_RUNNING` naming
+what is actually running, rather than reporting success for something else.
+
+`silo up --force` overrides this for a deliberate parallel stack. The running
+pid moves from `tiltPid` into `disownedTilts` in the same lockfile write that
+gives the replacement stack its ports, so a failure before that write leaves the
+running stack owning the lockfile, and a failure after it leaves the stack
+recorded as disowned -- which is what the `DISOWNED_RUNNING` guard above then
+refuses to start beside. A disowned stack keeps a record of the ports
+it owns, which stay reserved in the machine-wide port registry; it is reported
+by `silo status`, is not stopped by `silo down`, and is dropped from the
+lockfile when it exits (or on the next `silo up`/`silo down` if silo was killed
+before it could).
+
+`silo ci` still errors with "Instance '{name}' already running. Use `silo down`
+first." -- a CI run has no interactive owner to reuse an environment for.
 
 **"External Tilt" detection**:
 
@@ -943,6 +1000,10 @@ If all three: error with "Instance '{name}' already running. Use `silo down` fir
 2. If found and not tracked in lockfile: error with "Tilt already running outside silo. Stop it first."
 
 ### Missing Lockfile Behavior
+
+`silo down --clean` refuses with `DISOWNED_RUNNING` while a disowned stack is
+still running: removing the lockfile would erase the only record of those pids
+and release the ports they still answer on.
 
 | Command           | Lockfile Missing | Behavior                                                 |
 | ----------------- | ---------------- | -------------------------------------------------------- |
@@ -1540,6 +1601,8 @@ The example verifies these silo features:
 | **Down command**         | `silo down` stops Tilt, keeps k3d                                |
 | **Down --clean**         | `silo down --clean` removes env and lockfile                     |
 | **Multiple instances**   | Two instances have separate k3d clusters, registries, ports      |
+| **Duplicate up**         | Second `silo up` reports the live instance and exits 0           |
+| **Forced parallel up**   | `silo up --force` records the running stack in `disownedTilts`  |
 | **Profile list**         | `silo profiles` shows available profiles                         |
 | **Profile activation**   | `silo up --profile X` applies profile overrides                  |
 | **Profile persistence**  | Lockfile stores active profile for reuse                         |

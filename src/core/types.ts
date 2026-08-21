@@ -89,6 +89,21 @@ export interface InstanceIdentity {
   kubeconfigPath?: string | undefined;
 }
 
+/**
+ * A Tilt stack that `silo up --force` started a parallel stack alongside.
+ *
+ * The lockfile tracks one instance, so the pid it was holding would otherwise
+ * be overwritten and the stack left with no record anywhere. Keeping the ports
+ * it owns is what lets `silo status` say which stack answers on which port.
+ */
+export interface DisownedTilt {
+  pid: number;
+  name: string;
+  ports: Record<string, number>;
+  startedAt?: string | undefined;
+  disownedAt: string;
+}
+
 export interface InstanceState {
   name: string;
   profile?: string | undefined;
@@ -98,6 +113,7 @@ export interface InstanceState {
   k3dClusterCreated: boolean;
   tiltPid?: number | undefined;
   tiltStartedAt?: string | undefined;
+  disownedTilts?: DisownedTilt[] | undefined;
 }
 
 export interface Lockfile {

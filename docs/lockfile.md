@@ -25,6 +25,7 @@ The lockfile allows silo to:
 - Reuse allocated ports (unless `--force` is used)
 - Remember the active profile
 - Track Tilt PID and start time
+- Track stacks disowned by `silo up --force`
 - Track k3d identity and whether a cluster was created
 
 ## Format
@@ -60,7 +61,16 @@ The lockfile is JSON with this shape:
     "createdAt": "2026-01-01T00:00:00.000Z",
     "k3dClusterCreated": true,
     "tiltPid": 12345,
-    "tiltStartedAt": "2026-01-01T00:00:05.000Z"
+    "tiltStartedAt": "2026-01-01T00:00:05.000Z",
+    "disownedTilts": [
+      {
+        "pid": 12000,
+        "name": "feature-x",
+        "ports": { "WEB_PORT": 3000, "API_PORT": 8080 },
+        "startedAt": "2026-01-01T00:00:00.000Z",
+        "disownedAt": "2026-01-01T01:00:00.000Z"
+      }
+    ]
   }
 }
 ```
@@ -68,8 +78,21 @@ The lockfile is JSON with this shape:
 Notes:
 
 - `profile`, `k3dClusterName`, `k3dRegistryName`, `kubeconfigPath`, `tiltPid`,
-  and `tiltStartedAt` are omitted when not applicable.
+  `tiltStartedAt`, and `disownedTilts` are omitted when not applicable.
+- `disownedTilts` lists stacks that `silo up --force` started a parallel stack
+  alongside. They no longer own the lockfile, so their ports are recorded here
+  and stay reserved against other projects. An entry is dropped when its `silo
+  up` exits; if silo was killed before it could, the next `silo up` or `silo
+  down` drops it. `silo down` does not stop a disowned stack.
 - `k3dRegistryName` is only present when `k3d.registry.enabled = true`.
+
+## Startup Claim (.silo.startup)
+
+While `silo up` is starting a stack it holds `.silo.startup` next to the
+lockfile, containing the starting process's pid. It exists only for that
+window -- until `tiltPid` is written -- and is removed even when startup fails.
+A concurrent `silo up` for the same project refuses while a live process holds
+it; a claim left by a killed process is reclaimed automatically.
 
 ## Editing
 

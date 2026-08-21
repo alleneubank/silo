@@ -71,14 +71,26 @@ silo up [name]
 Starts an environment (creates k3d if configured, starts Tilt). If `name` is
 omitted, silo reuses the name from the lockfile or generates a new one.
 
+If this project's Tilt is already running, `silo up` reports that instance --
+its ports and URLs -- and exits 0 without starting anything. Running `silo up`
+twice is therefore safe; use `silo down` to stop the instance.
+
+Asking for something else while an instance is live is an error rather than a
+reuse: `silo up other-name` or `silo up --profile other` reports what is
+actually running and points at `silo down`.
+
 Options:
 
-- `-f, --force` Regenerate ports even if lockfile exists
+- `-f, --force` Regenerate ports; start a parallel stack if one is live
 - `-p, --profile` Use named profile (overrides `SILO_PROFILE`)
 
 Notes:
 
 - Switching profiles on an existing instance requires `--force`.
+- `--force` against a live instance starts a second, parallel stack on new
+  ports. The running stack is recorded in the lockfile as disowned: it keeps
+  answering on its own ports (which stay reserved), `silo status` lists it, and
+  `silo down` does not stop it -- stop it with `kill <pid>`.
 - Tool validation runs before startup (`tilt`, plus `k3d`/`kubectl` if needed).
 
 ## down
@@ -89,6 +101,10 @@ silo down
 
 Stops Tilt and runs down hooks. By default, k3d clusters are kept for faster
 restarts.
+
+`--clean` refuses while a stack disowned by `silo up --force` is still running:
+the lockfile is the only record of its pid and the only thing keeping other
+projects off its ports.
 
 Options:
 

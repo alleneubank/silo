@@ -45,7 +45,7 @@ Help:
 
 Command Options:
   up:
-    -f, --force      Regenerate ports even if lockfile exists
+    -f, --force      Regenerate ports; start a parallel stack if one is live
     -p, --profile    Use named profile (overrides SILO_PROFILE env var)
 
   down:
@@ -84,11 +84,15 @@ Global Options:
 
 Start environment (creates k3d if needed, starts Tilt).
 
+If this project's Tilt is already running, up reports that instance and exits
+0 rather than starting a second stack. --force starts a parallel stack on new
+ports; the running one is recorded as disowned and must be stopped by pid.
+
 Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
 
 Options:
-  -f, --force     Regenerate ports even if lockfile exists
+  -f, --force     Regenerate ports; start a parallel stack if one is live
   -p, --profile   Use named profile (overrides SILO_PROFILE env var)
   -c, --config    Path to config file (default: silo.toml)
   -v, --verbose   Show verbose output

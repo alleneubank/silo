@@ -7,7 +7,8 @@ import {
   registerInstance,
 } from "../core/port_registry";
 import { resolveAndApplyProfile } from "../core/profile";
-import { logger, logPortAllocations } from "../utils/logger";
+import { disownedPorts, findLiveDisowned } from "../core/liveness";
+import { logKeyValues, logger, logPortAllocations } from "../utils/logger";
 import { resolveGithubEnvPath, shouldExportCiEnv } from "../utils/ci";
 import type { PortAllocationEvent } from "../core/ports";
 
@@ -53,6 +54,15 @@ export const env = async (
       `Excluding ${excludedPorts.size} port(s) owned by peer silo instances`
     );
   }
+
+  // Stacks a previous `silo up --force` left running still answer on their
+  // ports, and the registry entry this command rewrites is what keeps other
+  // projects off them.
+  const liveDisowned = await findLiveDisowned({
+    disowned: lockfile?.instance.disownedTilts,
+  });
+  disownedPorts(liveDisowned).forEach((port) => excludedPorts.add(port));
+
   const portEvents: PortAllocationEvent[] = [];
 
   const { state, urls, hostOrder, portOrder, urlOrder } = await buildInstanceState({
@@ -62,6 +72,7 @@ export const env = async (
     lockfile,
     force: options.force,
     excludedPorts,
+    disownedTilts: liveDisowned,
     onPortAllocation: (event) => portEvents.push(event),
   });
 
@@ -76,7 +87,7 @@ export const env = async (
   await registerInstance({
     projectRoot: config.projectRoot,
     name: state.name,
-    ports: Object.values(state.ports),
+    ports: [...Object.values(state.ports), ...disownedPorts(liveDisowned)],
   });
 
   if (shouldExportCiEnv(options.exportCi)) {
@@ -84,14 +95,6 @@ export const env = async (
     await appendGithubEnv({ state, urls, githubEnvPath });
   }
 
-  logger.info("Ports:");
-  Object.entries(state.ports).forEach(([key, value]) => {
-    logger.info(`  ${key}: ${value}`);
-  });
-  if (Object.keys(urls).length > 0) {
-    logger.info("URLs:");
-    Object.entries(urls).forEach(([key, value]) => {
-      logger.info(`  ${key}: ${value}`);
-    });
-  }
+  logKeyValues("Ports", state.ports);
+  logKeyValues("URLs", urls);
 };

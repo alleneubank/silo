@@ -13,6 +13,7 @@ dist/
 .env.*
 .localnet.env
 .silo.lock
+.silo.startup
 .envrc.private
 
 # IDE
