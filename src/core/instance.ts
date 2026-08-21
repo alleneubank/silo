@@ -3,7 +3,12 @@ import { buildIdentityVars, buildInstanceIdentity } from "./identity";
 import { resolveHosts } from "./hosts";
 import { interpolateTemplate } from "./interpolate";
 import { buildEnvVars } from "./env";
-import type { Lockfile, ResolvedConfig, InstanceState } from "./types";
+import type {
+  DisownedTilt,
+  Lockfile,
+  ResolvedConfig,
+  InstanceState,
+} from "./types";
 import { buildTemplateVars } from "./variables";
 import { sanitizeName, generateName } from "./name";
 
@@ -20,6 +25,25 @@ export const resolveTemplateRecord = (
     }
   });
   return resolved;
+};
+
+/**
+ * URLs an instance currently answers on, resolved from its recorded identity
+ * and ports rather than from a fresh allocation.
+ */
+export const resolveInstanceUrls = (params: {
+  config: ResolvedConfig | null | undefined;
+  instance: InstanceState;
+}): Record<string, string> => {
+  const { config, instance } = params;
+  if (!config || config.urlOrder.length === 0) {
+    return {};
+  }
+  return resolveTemplateRecord(
+    config.urls,
+    config.urlOrder,
+    buildTemplateVars({ identity: instance.identity, ports: instance.ports })
+  );
 };
 
 export const resolveInstanceName = (params: {
@@ -47,6 +71,9 @@ export const buildInstanceState = async (params: {
   // should read this from the port registry before invoking; omitting it
   // loses cross-instance isolation.
   excludedPorts?: Set<number>;
+  // Overrides the disowned stacks carried from the lockfile. Callers that
+  // already probed liveness pass the pruned list so dead stacks are dropped.
+  disownedTilts?: readonly DisownedTilt[];
   createdAt?: string;
   onPortAllocation?: (event: PortAllocationEvent) => void;
 }): Promise<{
@@ -65,6 +92,7 @@ export const buildInstanceState = async (params: {
     lockfile,
     force,
     excludedPorts,
+    disownedTilts: disownedOverride,
     createdAt,
     onPortAllocation,
   } = params;
@@ -101,6 +129,11 @@ export const buildInstanceState = async (params: {
     ? config.k3d.args.map((arg) => interpolateTemplate(arg, templateVarsWithUrls))
     : [];
 
+  // Stacks disowned by a previous `silo up --force` belong to the project, not
+  // to the instance being rebuilt: dropping them here would orphan a running
+  // Tilt with no record anywhere, which is the failure this list exists for.
+  const disownedTilts = disownedOverride ?? lockfile?.instance?.disownedTilts;
+
   const state: InstanceState = {
     name,
     ...(profile ? { profile } : {}),
@@ -108,6 +141,9 @@ export const buildInstanceState = async (params: {
     identity,
     createdAt: createdAt ?? new Date().toISOString(),
     k3dClusterCreated: false,
+    ...(disownedTilts && disownedTilts.length > 0
+      ? { disownedTilts: [...disownedTilts] }
+      : {}),
   };
 
   const envVars = buildEnvVars(state, urls);

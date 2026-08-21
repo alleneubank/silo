@@ -1,12 +1,11 @@
 import path from "path";
 import { loadConfig } from "../core/config";
 import { readLockfile } from "../core/lockfile";
-import { buildTemplateVars } from "../core/variables";
-import { resolveTemplateRecord } from "../core/instance";
+import { resolveInstanceUrls } from "../core/instance";
 import { applyProfile } from "../core/profile";
 import { clusterExists } from "../backends/k3d";
-import { isPidRunning, isTrackedTiltProcess } from "../utils/process";
-import { logger } from "../utils/logger";
+import { findLiveDisowned, probeTilt } from "../core/liveness";
+import { logKeyValues, logger } from "../utils/logger";
 import { resolveRegistryAdvertiseSettings } from "../core/registry";
 import { getRegistryConfigMapStatus } from "../backends/registry";
 
@@ -31,9 +30,10 @@ export const status = async (options: { config: string }): Promise<void> => {
     config && profileName ? applyProfile(config, profileName) : config;
 
   const tiltPid = lockfile.instance.tiltPid;
-  const tiltRunning = tiltPid
-    ? isPidRunning(tiltPid) && (await isTrackedTiltProcess(tiltPid))
-    : false;
+  const tiltRunning = tiltPid !== undefined ? await probeTilt(tiltPid) : false;
+  const liveDisowned = await findLiveDisowned({
+    disowned: lockfile.instance.disownedTilts,
+  });
 
   const clusterName = lockfile.instance.identity.k3dClusterName;
   const k3dRunning = clusterName
@@ -48,20 +48,26 @@ export const status = async (options: { config: string }): Promise<void> => {
   if (tiltPid) {
     logger.info(`Tilt: ${tiltRunning ? `pid ${tiltPid}` : "not running"}`);
   }
+  if (liveDisowned.length > 0) {
+    // Stacks a `silo up --force` left running. They answer on their own ports
+    // and 'silo down' does not stop them, so naming them is the only way to
+    // tell which Tilt owns which port.
+    logger.warn(`Disowned stacks still running: ${liveDisowned.length}`);
+    liveDisowned.forEach((entry) => {
+      const ports = Object.values(entry.ports).join(", ");
+      logger.warn(
+        `  pid ${entry.pid} (instance '${entry.name}', disowned ${entry.disownedAt}, ports ${ports})`
+      );
+    });
+    logger.warn("Stop a disowned stack with 'kill <pid>'.");
+  }
   if (clusterName) {
     logger.info(`k3d: ${clusterName} (${k3dRunning ? "running" : "missing"})`);
   }
-  const urls =
-    resolvedConfig && resolvedConfig.urlOrder.length > 0
-      ? resolveTemplateRecord(
-          resolvedConfig.urls,
-          resolvedConfig.urlOrder,
-          buildTemplateVars({
-            identity: lockfile.instance.identity,
-            ports: lockfile.instance.ports,
-          })
-        )
-      : {};
+  const urls = resolveInstanceUrls({
+    config: resolvedConfig,
+    instance: lockfile.instance,
+  });
 
   const registrySettings = resolvedConfig
     ? resolveRegistryAdvertiseSettings({
@@ -82,10 +88,7 @@ export const status = async (options: { config: string }): Promise<void> => {
     logger.info(`Kubeconfig: ${lockfile.instance.identity.kubeconfigPath}`);
   }
 
-  logger.info("Ports:");
-  Object.entries(lockfile.instance.ports).forEach(([key, value]) => {
-    logger.info(`  ${key}: ${value}`);
-  });
+  logKeyValues("Ports", lockfile.instance.ports);
 
   if (registrySettings) {
     const registryStatus = await getRegistryConfigMapStatus({
@@ -97,10 +100,5 @@ export const status = async (options: { config: string }): Promise<void> => {
     logger.info(`Registry ConfigMap: ${registryStatus}`);
   }
 
-  if (resolvedConfig && resolvedConfig.urlOrder.length > 0) {
-    logger.info("URLs:");
-    Object.entries(urls).forEach(([key, value]) => {
-      logger.info(`  ${key}: ${value}`);
-    });
-  }
+  logKeyValues("URLs", urls);
 };

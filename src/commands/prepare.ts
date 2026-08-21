@@ -1,4 +1,3 @@
-import { loadConfig } from "../core/config";
 import { buildInstanceState, resolveInstanceName } from "../core/instance";
 import {
   buildEnvVars,
@@ -22,14 +21,11 @@ import { runHooks } from "../hooks/runner";
 import { ensureCluster, writeKubeconfig } from "../backends/k3d";
 import { advertiseLocalRegistry } from "../backends/registry";
 import { resolveRegistryHostPort } from "../backends/registry-port";
-import {
-  findTiltPidsInDir,
-  isPidRunning,
-  isTrackedTiltProcess,
-} from "../utils/process";
+import { findTiltPidsInDir } from "../utils/process";
+import { disownedPorts, findLiveDisowned, probeTilt } from "../core/liveness";
 import { SiloError } from "../utils/errors";
 import type { PortAllocationEvent } from "../core/ports";
-import type { InstanceState, ResolvedConfig } from "../core/types";
+import type { DisownedTilt, InstanceState, ResolvedConfig } from "../core/types";
 import {
   REGISTRY_ADVERTISE_RETRY_BASE_DELAY_MS,
   REGISTRY_ADVERTISE_RETRY_COUNT,
@@ -51,31 +47,41 @@ type PrepareOptions = {
 };
 
 export const prepareTiltEnvironment = async (params: {
+  baseConfig: ResolvedConfig;
   nameArg: string | undefined;
   options: PrepareOptions;
+  // The live stack this run is replacing, decided by the caller. Its record is
+  // written as part of the same lockfile write that hands ownership to the new
+  // stack, so a failure before that write leaves the live stack owning it.
+  disowning?: DisownedTilt | null;
 }): Promise<PrepareResult> => {
-  const { nameArg, options } = params;
+  const { baseConfig, nameArg, options, disowning = null } = params;
   process.env.SILO_ACTIVE = "1";
 
-  logger.info("Loading config");
-  const baseConfig = await loadConfig(options.config);
-  logger.verbose(`Config path: ${baseConfig.configPath}`);
-
   const lockfile = await readLockfile(baseConfig.projectRoot);
+  const instance = lockfile?.instance;
 
-  if (lockfile?.instance?.tiltPid && isPidRunning(lockfile.instance.tiltPid)) {
-    const isTilt = await isTrackedTiltProcess(lockfile.instance.tiltPid);
-    if (isTilt) {
-      throw new SiloError(
-        `Instance '${lockfile.instance.name}' already running. Use 'silo down' first.`,
-        "ALREADY_RUNNING"
-      );
-    }
+  if (
+    disowning === null &&
+    instance?.tiltPid !== undefined &&
+    (await probeTilt(instance.tiltPid))
+  ) {
+    throw new SiloError(
+      `Instance '${instance.name}' already running. Use 'silo down' first.`,
+      "ALREADY_RUNNING"
+    );
   }
 
+  // Stacks silo started are not "external", including ones a previous
+  // `silo up --force` disowned — refusing on those would make --force
+  // unusable a second time.
+  const knownPids = new Set<number>([
+    ...(instance?.tiltPid !== undefined ? [instance.tiltPid] : []),
+    ...(instance?.disownedTilts ?? []).map((entry) => entry.pid),
+    ...(disowning ? [disowning.pid] : []),
+  ]);
   const externalTilt = await findTiltPidsInDir(baseConfig.projectRoot);
-  const trackedPid = lockfile?.instance?.tiltPid;
-  const external = externalTilt.filter((pid) => pid !== trackedPid);
+  const external = externalTilt.filter((pid) => !knownPids.has(pid));
   if (external.length > 0) {
     throw new SiloError("Tilt already running outside silo. Stop it first.", "TILT_RUNNING");
   }
@@ -124,6 +130,20 @@ export const prepareTiltEnvironment = async (params: {
       `Excluding ${excludedPorts.size} port(s) owned by peer silo instances`
     );
   }
+
+  // A disowned stack keeps serving on ports it may not have bound yet, and the
+  // port registry only covers other project roots. Without this, a parallel
+  // `--force` stack can probe one of those ports free and take it.
+  const liveDisowned = [
+    ...(await findLiveDisowned({ disowned: instance?.disownedTilts })),
+    ...(disowning ? [disowning] : []),
+  ];
+  disownedPorts(liveDisowned).forEach((port) => excludedPorts.add(port));
+  if (liveDisowned.length > 0) {
+    logger.verbose(
+      `Excluding port(s) owned by ${liveDisowned.length} disowned stack(s)`
+    );
+  }
   const portEvents: PortAllocationEvent[] = [];
   const { state, urls, envVars: baseEnvVars, hostOrder, portOrder, urlOrder, k3dArgs } =
     await buildInstanceState({
@@ -133,6 +153,7 @@ export const prepareTiltEnvironment = async (params: {
       lockfile,
       force: options.force,
       excludedPorts,
+      disownedTilts: liveDisowned,
       onPortAllocation: (event) => portEvents.push(event),
     });
 
@@ -160,10 +181,18 @@ export const prepareTiltEnvironment = async (params: {
   // `.silo.lock` presence, so registering before the lockfile exists would
   // let a concurrent peer read GC our entry immediately and steal our
   // ports. Order must be: allocate → write lockfile → register.
+  // The registry holds one entry per project root, so it must name every port
+  // this project still owns — a disowned stack's included. Registering only the
+  // new stack would let another project allocate a port the disowned one uses.
+  const reservedPorts = (state: InstanceState): number[] => [
+    ...Object.values(state.ports),
+    ...disownedPorts(liveDisowned),
+  ];
+
   await registerInstance({
     projectRoot: config.projectRoot,
     name: currentState.name,
-    ports: Object.values(currentState.ports),
+    ports: reservedPorts(currentState),
   });
 
   logger.info(`Running pre-up hooks (${config.hooks["pre-up"]?.length ?? 0})`);
@@ -228,7 +257,7 @@ export const prepareTiltEnvironment = async (params: {
         await registerInstance({
           projectRoot: config.projectRoot,
           name: currentState.name,
-          ports: Object.values(currentState.ports),
+          ports: reservedPorts(currentState),
         });
       }
     }

@@ -19,6 +19,14 @@ const IdentitySchema = z.object({
   kubeconfigPath: z.string().optional(),
 });
 
+const DisownedTiltSchema = z.object({
+  pid: z.number().int(),
+  name: z.string(),
+  ports: PortsSchema,
+  startedAt: z.string().optional(),
+  disownedAt: z.string(),
+});
+
 const InstanceStateSchema = z.object({
   name: z.string(),
   profile: z.string().optional(),
@@ -28,6 +36,7 @@ const InstanceStateSchema = z.object({
   k3dClusterCreated: z.boolean(),
   tiltPid: z.number().int().optional(),
   tiltStartedAt: z.string().optional(),
+  disownedTilts: z.array(DisownedTiltSchema).optional(),
 });
 
 const LockfileSchema = z.object({

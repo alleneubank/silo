@@ -40,3 +40,18 @@ export const logPortAllocations = (events: PortAllocationEvent[]): void => {
     logger.verbose(`Port ${event.key} source: ${event.source} (${event.assigned})`);
   });
 };
+
+/** Prints a labelled block of `  key: value` lines, or nothing when empty. */
+export const logKeyValues = (
+  label: string,
+  entries: Record<string, string | number>
+): void => {
+  const rows = Object.entries(entries);
+  if (rows.length === 0) {
+    return;
+  }
+  logger.info(`${label}:`);
+  rows.forEach(([key, value]) => {
+    logger.info(`  ${key}: ${value}`);
+  });
+};

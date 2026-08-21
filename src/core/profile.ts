@@ -26,6 +26,12 @@ const normalizeProfileName = (value?: string): string | undefined => {
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+/** The profile the caller asked for explicitly: `--profile` first, then env. */
+export const resolveExplicitProfile = (
+  profileFlag: string | undefined
+): string | undefined =>
+  normalizeProfileName(profileFlag) ?? normalizeProfileName(process.env.SILO_PROFILE);
+
 const resolveProfileName = (params: {
   profileFlag: string | undefined;
   envProfile: string | undefined;
@@ -68,7 +74,7 @@ export const resolveAndApplyProfile = (params: {
 }): { config: ResolvedConfig; profileName: string | undefined } => {
   const { baseConfig, profileFlag, lockfile, force } = params;
 
-  const explicitProfile = profileFlag ?? process.env.SILO_PROFILE;
+  const explicitProfile = resolveExplicitProfile(profileFlag);
   const lockfileProfileForResolution =
     force && !explicitProfile ? undefined : lockfile?.instance?.profile;
 

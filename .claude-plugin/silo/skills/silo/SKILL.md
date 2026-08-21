@@ -11,7 +11,10 @@ Use this Skill when a project uses `silo.toml` or the user asks about `silo` com
 
 1. Prefer bundled docs for authoritative behavior: `silo doc <topic>` (see topics below).
 2. Use CLI commands directly; keep changes minimal and aligned with current config:
-   - `silo up [name]` starts an instance (k3d optional, Tilt starts).
+   - `silo up [name]` starts an instance (k3d optional, Tilt starts). It is
+     idempotent: if this project's Tilt is already running it reports that
+     instance and exits 0. `--force` starts a parallel stack on new ports and
+     leaves the running one disowned (stop it with `kill <pid>`).
    - `silo down` stops Tilt; `--delete-cluster` removes k3d; `--clean` removes env/lockfile.
    - `silo env [name]` generates env + lockfile only.
    - `silo profiles` lists profile names.
