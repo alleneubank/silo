@@ -21,7 +21,11 @@ import { runHooks } from "../hooks/runner";
 import { ensureCluster, writeKubeconfig } from "../backends/k3d";
 import { advertiseLocalRegistry } from "../backends/registry";
 import { resolveRegistryHostPort } from "../backends/registry-port";
-import { findTiltPidsInDir } from "../utils/process";
+import {
+  excludeKnownStacks,
+  findTiltPidsInDir,
+  readProcessTable,
+} from "../utils/process";
 import { disownedPorts, findLiveDisowned, probeTilt } from "../core/liveness";
 import { SiloError } from "../utils/errors";
 import type { PortAllocationEvent } from "../core/ports";
@@ -74,16 +78,24 @@ export const prepareTiltEnvironment = async (params: {
 
   // Stacks silo started are not "external", including ones a previous
   // `silo up --force` disowned — refusing on those would make --force
-  // unusable a second time.
-  const knownPids = new Set<number>([
+  // unusable a second time. Each recorded pid stands for its whole process
+  // group, since the `tilt up` under a supervisor is its own pid.
+  const known = [
     ...(instance?.tiltPid !== undefined ? [instance.tiltPid] : []),
     ...(instance?.disownedTilts ?? []).map((entry) => entry.pid),
     ...(disowning ? [disowning.pid] : []),
-  ]);
-  const externalTilt = await findTiltPidsInDir(baseConfig.projectRoot);
-  const external = externalTilt.filter((pid) => !knownPids.has(pid));
+  ];
+  const candidates = await findTiltPidsInDir(baseConfig.projectRoot);
+  const external = excludeKnownStacks({
+    candidates,
+    known,
+    table: known.length > 0 ? await readProcessTable() : [],
+  });
   if (external.length > 0) {
-    throw new SiloError("Tilt already running outside silo. Stop it first.", "TILT_RUNNING");
+    throw new SiloError(
+      `Tilt already running outside silo (pid ${external.join(", ")}). Stop it first.`,
+      "TILT_RUNNING"
+    );
   }
 
   const { config, profileName } = resolveAndApplyProfile({
