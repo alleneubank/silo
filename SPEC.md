@@ -996,8 +996,19 @@ first." -- a CI run has no interactive owner to reuse an environment for.
 
 **"External Tilt" detection**:
 
-1. Check for any Tilt process in current directory (via `pgrep -f "tilt.*$(pwd)"`)
-2. If found and not tracked in lockfile: error with "Tilt already running outside silo. Stop it first."
+1. Collect Tilt-named candidate processes (`pgrep -f tilt`, then filtered by
+   command name).
+2. Keep the ones whose working directory is the project root. A process's
+   directory is not part of its argv -- silo passes the project root as the
+   spawn cwd, and a developer's own `tilt up` is just `tilt up` -- so each
+   candidate's cwd is read from the system (`/proc/<pid>/cwd` on Linux, `lsof`
+   elsewhere). A cwd that cannot be read means "unknown", and the process is
+   not treated as a match.
+3. Discard anything belonging to a stack silo started: a recorded pid, a
+   descendant of one (the supervisor runs `tilt up` as a child, in a process
+   group of its own), or a process in the group a recorded pid leads.
+4. If anything remains: error with "Tilt already running outside silo (pid N).
+   Stop it first."
 
 ### Missing Lockfile Behavior
 
