@@ -39,6 +39,8 @@ need bun
 repo_root="$(CDPATH= cd "$(dirname "$0")/.." && pwd)"
 tmp_dir=""
 first_pid=""
+external_pid=""
+external_up_pid=""
 reuse_pid=""
 forced_pid=""
 third_pid=""
@@ -47,6 +49,13 @@ cleanup() {
   status=$?
   trap - EXIT INT TERM HUP
   drained=""
+  if [ -n "$external_pid" ]; then
+    kill -9 "$external_pid" 2>/dev/null || true
+  fi
+  if [ -n "$external_up_pid" ]; then
+    kill -9 "$external_up_pid" 2>/dev/null || true
+    drained=1
+  fi
   if [ -n "$first_pid" ]; then
     kill -9 "$first_pid" 2>/dev/null || true
     drained=1
@@ -112,6 +121,36 @@ TOML
 cat >"$tmp_dir/Tiltfile" <<'TILTFILE'
 local_resource('idle', serve_cmd=['sh', '-c', 'while :; do sleep 1; done'])
 TILTFILE
+
+# 0. A Tilt started outside silo in this directory must be detected. Its
+#    directory is not in its argv, so this only works if silo reads the
+#    process's actual working directory.
+ln -s /bin/sleep "$tmp_dir/tilt-external-fixture"
+# The fixture must run *in* the project directory: that is the only thing
+# distinguishing it, and it is exactly what argv does not carry.
+(
+  cd "$tmp_dir"
+  exec ./tilt-external-fixture 120
+) &
+external_pid=$!
+
+(
+  cd "$tmp_dir"
+  exec bun "$repo_root/src/cli.ts" up demo >"$tmp_dir/external.log" 2>&1
+) &
+external_up_pid=$!
+if await_exit "$external_up_pid"; then
+  external_up_pid=""
+else
+  kill -9 "$external_up_pid" 2>/dev/null || true
+  external_up_pid=""
+  die "'silo up' did not exit; it ignored a Tilt running outside silo"
+fi
+grep -q "Tilt already running outside silo" "$tmp_dir/external.log" ||
+  die "'silo up' failed for the wrong reason with an external Tilt present"
+kill -9 "$external_pid" 2>/dev/null || true
+external_pid=""
+echo "ok: 'silo up' refused while a Tilt ran outside silo in this directory"
 
 (
   cd "$tmp_dir"

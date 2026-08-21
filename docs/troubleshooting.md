@@ -84,9 +84,12 @@ silo info: Instance 'feature-x' is already running (Tilt pid 12345)
 
 ## Tilt Already Running Outside silo
 
-**Error:** `Tilt already running outside silo. Stop it first.`
+**Error:** `Tilt already running outside silo (pid <pid>). Stop it first.`
 
-- Stop the external Tilt process in this directory and retry.
+- A Tilt whose working directory is this project root is running, and silo did
+  not start it. Stop the named pid and retry.
+- Stacks silo started are never reported here, including the `tilt up` running
+  under a supervisor and stacks disowned by `silo up --force`.
 
 ## Profile Switch Requires --force
 
