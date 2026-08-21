@@ -8,6 +8,8 @@ Isolated local development environments. silo solves instance isolation and k3d 
 
 - Bun (runtime)
 - Tilt
+- [janitor](https://github.com/alleneubank/janitor) (supervises Tilt; see
+  [Process supervision](#process-supervision))
 - k3d (optional, only if `k3d.enabled = true`)
 
 ## Install

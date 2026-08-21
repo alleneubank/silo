@@ -47,6 +47,13 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
           tilt version
 
+      - name: Install janitor
+        run: |
+          set -euo pipefail
+          curl -fsSL https://raw.githubusercontent.com/alleneubank/janitor/main/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/janitor" version
+
       - name: Silo ci (example)
         working-directory: example
         run: |

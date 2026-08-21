@@ -11,7 +11,7 @@ import { tiltDown } from "../backends/tilt";
 import { buildTemplateVars } from "../core/variables";
 import { resolveTemplateRecord } from "../core/instance";
 import { buildEnvVars } from "../core/env";
-import { isPidRunning, isTiltProcess, stopProcess } from "../utils/process";
+import { isPidRunning, isTrackedTiltProcess, stopProcess } from "../utils/process";
 import { SiloError } from "../utils/errors";
 import { ensureToolsAvailable } from "../utils/validate";
 
@@ -62,7 +62,7 @@ export const down = async (options: {
 
   const tiltPid = lockfile.instance.tiltPid;
   if (tiltPid && isPidRunning(tiltPid)) {
-    const tiltRunning = await isTiltProcess(tiltPid);
+    const tiltRunning = await isTrackedTiltProcess(tiltPid);
     if (tiltRunning) {
       logger.info(`Stopping Tilt (pid ${tiltPid})`);
       await stopProcess(tiltPid);

@@ -22,7 +22,11 @@ import { runHooks } from "../hooks/runner";
 import { ensureCluster, writeKubeconfig } from "../backends/k3d";
 import { advertiseLocalRegistry } from "../backends/registry";
 import { resolveRegistryHostPort } from "../backends/registry-port";
-import { findTiltPidsInDir, isPidRunning, isTiltProcess } from "../utils/process";
+import {
+  findTiltPidsInDir,
+  isPidRunning,
+  isTrackedTiltProcess,
+} from "../utils/process";
 import { SiloError } from "../utils/errors";
 import type { PortAllocationEvent } from "../core/ports";
 import type { InstanceState, ResolvedConfig } from "../core/types";
@@ -30,6 +34,7 @@ import {
   REGISTRY_ADVERTISE_RETRY_BASE_DELAY_MS,
   REGISTRY_ADVERTISE_RETRY_COUNT,
   REGISTRY_ADVERTISE_RETRY_MAX_DELAY_MS,
+  TILT_SUPERVISOR_BIN,
 } from "../core/constants";
 
 type PrepareResult = {
@@ -59,7 +64,7 @@ export const prepareTiltEnvironment = async (params: {
   const lockfile = await readLockfile(baseConfig.projectRoot);
 
   if (lockfile?.instance?.tiltPid && isPidRunning(lockfile.instance.tiltPid)) {
-    const isTilt = await isTiltProcess(lockfile.instance.tiltPid);
+    const isTilt = await isTrackedTiltProcess(lockfile.instance.tiltPid);
     if (isTilt) {
       throw new SiloError(
         `Instance '${lockfile.instance.name}' already running. Use 'silo down' first.`,
@@ -82,7 +87,7 @@ export const prepareTiltEnvironment = async (params: {
     force: options.force,
   });
 
-  const tools = ["tilt"];
+  const tools = ["tilt", TILT_SUPERVISOR_BIN];
   if (config.k3d?.enabled) {
     tools.push("k3d");
   }
