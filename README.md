@@ -23,8 +23,8 @@ npm i -g @0xbigboss/silo
 Install the silo skill in [Claude Code](https://claude.ai/code) so your AI assistant knows how to use silo:
 
 ```bash
-/plugin marketplace add 0xBigBoss/silo
-/plugin install silo@0xBigBoss-silo
+/plugin marketplace add alleneubank/silo
+/plugin install silo@alleneubank-silo
 ```
 
 ### Pi package
