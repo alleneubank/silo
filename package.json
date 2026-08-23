@@ -2,7 +2,7 @@
   "name": "@0xbigboss/silo",
   "version": "0.8.0",
   "description": "Isolated local development environments for Tilt and k3d.",
-  "author": "0xbigboss <github@0xbigboss.dev>",
+  "author": "0xbigboss <allen@unrulysystems.com>",
   "type": "module",
   "bin": {
     "silo": "dist/cli.js"
