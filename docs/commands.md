@@ -117,8 +117,9 @@ Options:
 silo status
 ```
 
-Shows the current instance state (profile, Tilt, k3d, ports, URLs) based on the
-lockfile.
+Shows the current instance state (profile, Tilt pid, k3d, ports, URLs) based on
+the lockfile. That is not Tilt resource health. When Tilt is running, status
+prints `tilt get uiresources --port $TILT_PORT`. See `silo doc tilt`.
 
 ## env
 

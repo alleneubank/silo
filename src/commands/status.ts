@@ -5,6 +5,7 @@ import { resolveInstanceUrls } from "../core/instance";
 import { applyProfile } from "../core/profile";
 import { clusterExists } from "../backends/k3d";
 import { findLiveDisowned, probeTilt } from "../core/liveness";
+import { runningStackHintLines } from "../utils/breadcrumbs";
 import { logKeyValues, logger } from "../utils/logger";
 import { resolveRegistryAdvertiseSettings } from "../core/registry";
 import { getRegistryConfigMapStatus } from "../backends/registry";
@@ -90,7 +91,19 @@ export const status = async (options: { config: string }): Promise<void> => {
 
   logKeyValues("Ports", lockfile.instance.ports);
 
-  if (registrySettings) {
+  const kubeconfigPath = lockfile.instance.identity.kubeconfigPath;
+  const kubeconfigReady =
+    kubeconfigPath !== undefined && (await Bun.file(kubeconfigPath).exists());
+  runningStackHintLines({
+    tiltRunning,
+    tiltPort: lockfile.instance.ports.TILT_PORT,
+    urls,
+    kubeconfigPath: kubeconfigReady ? kubeconfigPath : undefined,
+  }).forEach((line) => logger.info(line));
+
+  logKeyValues("URLs", urls);
+
+  if (registrySettings && k3dRunning) {
     const registryStatus = await getRegistryConfigMapStatus({
       ...(lockfile.instance.identity.kubeconfigPath !== undefined && {
         kubeconfigPath: lockfile.instance.identity.kubeconfigPath,
@@ -99,6 +112,4 @@ export const status = async (options: { config: string }): Promise<void> => {
     });
     logger.info(`Registry ConfigMap: ${registryStatus}`);
   }
-
-  logKeyValues("URLs", urls);
 };

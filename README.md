@@ -95,6 +95,17 @@ supervisor fails the run rather than starting an unsupervised Tilt.
 
 See `silo doc tilt` for the details.
 
+## Working with a running stack
+
+`silo status` is lockfile state (pid, ports, URLs), not Tilt resource health.
+After `silo up`, source `.localnet.env` and talk to the Tilt API:
+
+```bash
+tilt get uiresources --port "$TILT_PORT"
+```
+
+For HTTP, use the printed `*.localhost` URLs, not `localhost:PORT`. See `silo doc tilt`.
+
 ## CI usage
 
 `silo env` and `silo ci` auto-export env vars to `$GITHUB_ENV` when running in

@@ -76,6 +76,25 @@ describe("doc topics", () => {
     expect(topics).toEqual(Object.keys(DOC_TOPICS));
   });
 
+  it("lists available topics when the topic is unknown", async () => {
+    let message = "";
+    try {
+      await doc({ topic: "nope" });
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    expect(message).toContain("Unknown doc topic: nope");
+    expect(message).toContain("Available:");
+    expect(message).toContain("tilt");
+  });
+
+  it("documents the lifecycle vs Tilt API split", async () => {
+    const docPath = path.join(docsRoot, "tilt.md");
+    const contents = await Bun.file(docPath).text();
+    expect(contents).toContain("Pid-alive is not");
+    expect(contents).toContain("tilt get uiresources --port");
+  });
+
   it("documents npm-based Tilt extension loading for CI", async () => {
     const docPath = path.join(docsRoot, "tilt.md");
     const contents = await Bun.file(docPath).text();

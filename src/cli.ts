@@ -88,6 +88,9 @@ If this project's Tilt is already running, up reports that instance and exits
 0 rather than starting a second stack. --force starts a parallel stack on new
 ports; the running one is recorded as disowned and must be stopped by pid.
 
+A live instance prints the Tilt API port. pid-alive is not resource health;
+use tilt get uiresources --port $TILT_PORT (see silo doc tilt).
+
 Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
 
@@ -102,6 +105,9 @@ Options:
 
 Stop environment (stops Tilt, keeps k3d by default).
 
+The Tilt API is gone after down. The k3d cluster stays unless
+--delete-cluster is passed.
+
 Options:
   --delete-cluster   Delete k3d cluster (default: keep for faster iteration)
   --clean            Remove env file and lockfile
@@ -111,7 +117,8 @@ Options:
 `,
   status: `silo status [options]
 
-Show current instance state.
+Show current instance state from the lockfile (pid, ports, URLs), not Tilt
+resource health. When Tilt is running, status prints the Tilt API command.
 
 Options:
   -c, --config    Path to config file (default: silo.toml)
@@ -121,6 +128,8 @@ Options:
   env: `silo env [name] [options]
 
 Generate env file only, don't start anything.
+
+Does not start Tilt or k3d. Source the env file, or run silo up.
 
 Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
@@ -136,6 +145,8 @@ Options:
   ci: `silo ci [name] [options] [-- <tilt args>]
 
 Run Tilt in CI mode (tilt ci) after env + k3d setup.
+
+Sets CI=true for Tilt so CI-gated resources run. See silo doc commands.
 
 Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
