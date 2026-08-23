@@ -40,8 +40,12 @@ jobs:
           # it again. registry.npmjs.org is the default anyway, and the OIDC
           # exchange does not read .npmrc.
 
+      # npm 11, not npm@latest: 11.5.1+ does trusted publishing, and npm 12
+      # changed `npm info --json` to emit an array where 11 emits an object.
+      # changesets reads `.versions` off that object, so under npm 12 it reads
+      # every published package as unpublished and republishes on every run.
       - name: Use an npm that supports trusted publishing
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
 
       - name: Install dependencies
         run: bun install
