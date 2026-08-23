@@ -121,5 +121,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 MIT. See [LICENSE](LICENSE).
 
-Please follow the [code of conduct](CODE_OF_CONDUCT.md). Report vulnerabilities
-to the address in [SECURITY.md](SECURITY.md).
+Report vulnerabilities to the address in [SECURITY.md](SECURITY.md).
