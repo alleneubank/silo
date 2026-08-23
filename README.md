@@ -86,7 +86,9 @@ When silo launches child processes (Tilt, hooks, k3d, kubectl), it injects:
 ## CI usage
 
 `silo env` and `silo ci` auto-export env vars to `$GITHUB_ENV` when running in
-CI (or when `--export-ci` is provided):
+CI (or when `--export-ci` is provided), and skip the export with a warning when
+`$GITHUB_ENV` is not set. `silo ci` also sets `CI=true` for Tilt, so Tiltfiles
+that gate e2e resources on `CI` run them:
 
 ```bash
 silo ci e2e --timeout 300s

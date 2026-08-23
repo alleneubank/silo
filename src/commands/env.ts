@@ -91,8 +91,12 @@ export const env = async (
   });
 
   if (shouldExportCiEnv(options.exportCi)) {
-    const githubEnvPath = resolveGithubEnvPath();
-    await appendGithubEnv({ state, urls, githubEnvPath });
+    const githubEnvPath = resolveGithubEnvPath(options.exportCi);
+    if (githubEnvPath) {
+      await appendGithubEnv({ state, urls, githubEnvPath });
+    } else {
+      logger.warn("GITHUB_ENV is not set; skipping CI env export");
+    }
   }
 
   logKeyValues("Ports", state.ports);

@@ -144,6 +144,15 @@ silo ci [name] [-- <tilt args>]
 Runs the full silo startup sequence for CI (env, hooks, k3d) and executes
 `tilt ci` instead of `tilt up`.
 
+`CI=true` is set in the environment handed to Tilt. Tiltfiles commonly gate e2e
+resources on `os.environ.get("CI") == "true"`; without it those resources stay
+manual, never run, and `tilt ci` still reports success because every workload it
+did build is healthy.
+
+The `$GITHUB_ENV` export is skipped with a warning when the variable is absent,
+so `CI=true silo ci` works outside GitHub Actions. Passing `--export-ci`
+explicitly still fails when there is nowhere to write.
+
 Options:
 
 - `-f, --force` Regenerate ports even if lockfile exists
