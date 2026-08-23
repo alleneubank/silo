@@ -3,10 +3,10 @@
   "description": "Isolated local development environments for Tilt and k3d projects",
   "version": "0.6.0",
   "author": {
-    "name": "0xBigBoss",
+    "name": "alleneubank",
     "email": "github@0xbigboss.dev"
   },
-  "repository": "https://github.com/0xBigBoss/silo",
-  "homepage": "https://github.com/0xBigBoss/silo",
+  "repository": "https://github.com/alleneubank/silo",
+  "homepage": "https://github.com/alleneubank/silo",
   "license": "MIT"
 }

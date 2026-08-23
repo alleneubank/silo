@@ -69,7 +69,7 @@ CI environments often run without GitHub HTTPS clone credentials, so this local
 From a GitHub-hosted extension repo:
 
 ```
-v1alpha1.extension_repo(name='silo', url='https://github.com/0xBigBoss/silo')
+v1alpha1.extension_repo(name='silo', url='https://github.com/alleneubank/silo')
 v1alpha1.extension(name='silo-require', repo_name='silo', repo_path='tilt-extensions/silo/require')
 load('ext://silo-require', 'SILO_REQUIRE')
 ```

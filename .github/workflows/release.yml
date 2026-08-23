@@ -14,6 +14,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      # Mints the OIDC token npm trusted publishing authenticates with.
+      # Without it npm rejects the publish as E404.
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,8 +29,13 @@ jobs:
       - name: Setup Node for npm publish
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # Trusted publishing needs Node >= 22.14.0 and npm >= 11.5.1; the npm
+          # bundled with any Node 20 is far below that and fails obscurely.
+          node-version: "22.14.0"
           registry-url: "https://registry.npmjs.org"
+
+      - name: Use an npm that supports trusted publishing
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: bun install
@@ -53,6 +61,7 @@ jobs:
           title: "chore: release"
           commit: "chore: release"
         env:
+          # No npm token: the registry authenticates this workflow through OIDC
+          # against the trusted publisher configured on the package
+          # (alleneubank/silo, release.yml). Provenance is attached automatically.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}

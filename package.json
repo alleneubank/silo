@@ -61,11 +61,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/0xBigBoss/silo.git"
+    "url": "git+https://github.com/alleneubank/silo.git"
   },
-  "homepage": "https://github.com/0xBigBoss/silo",
+  "homepage": "https://github.com/alleneubank/silo",
   "bugs": {
-    "url": "https://github.com/0xBigBoss/silo/issues"
+    "url": "https://github.com/alleneubank/silo/issues"
   },
   "license": "MIT",
   "engines": {
