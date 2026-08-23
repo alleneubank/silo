@@ -1,5 +1,53 @@
 # @0xbigboss/silo
 
+## 0.7.0
+
+### Minor Changes
+
+- 55e4054: `silo up` no longer starts a duplicate stack when one is already live.
+
+  Before starting anything, `up` checks whether the Tilt recorded in the lockfile
+  is still running (the same liveness check `silo status` uses, so a reused pid
+  still reads as dead). If it is, `up` reports that instance -- its ports and
+  URLs -- and exits 0 instead of forking a second Tilt onto ephemeral ports.
+
+  `silo up --force` still starts a parallel stack for anyone who wants one. The
+  running stack is now moved into a new `disownedTilts` list in the lockfile
+  rather than being overwritten, so it keeps a record of the ports it owns:
+  `silo status` lists disowned stacks, `silo down` warns that it does not stop
+  them, and entries are dropped once the process exits.
+
+  `silo up` now holds an exclusive startup claim (`.silo.startup`) from the
+  liveness check until the new pid is recorded, so two concurrent runs cannot both
+  get past the guard, and it refuses with `DISOWNED_RUNNING` when a disowned stack
+  is running but nothing owns the lockfile. `silo env` keeps disowned ports
+  reserved rather than reallocating them or dropping them from the machine-wide
+  port registry.
+
+  `silo ci` is unchanged and still errors when an instance is already running.
+
+### Patch Changes
+
+- 36c7b0f: Detect a Tilt running outside silo by the directory it is actually running in.
+
+  The check built the pattern `tilt.*<project root>` and passed it to `pgrep -f`,
+  which matches a process's argv. silo starts Tilt with the project root as the
+  spawn cwd and a developer's own `tilt up` is just `tilt up`, so the path was
+  never in argv and the pattern could not match: `findTiltPidsInDir` always
+  returned nothing and the "Tilt already running outside silo" guard never fired.
+
+  Candidates are now attributed by reading each process's working directory
+  (`/proc/<pid>/cwd` on Linux, `lsof` elsewhere), and stacks silo started are
+  excluded by ancestry and process group rather than by pid alone — the `tilt up`
+  under a supervisor is a different pid from the one the lockfile records. The
+  error now names the pid it found.
+
+- f14a0e4: Point every repository URL at `alleneubank/silo`, the current owner of the
+  repo. The old `0xBigBoss/silo` paths still redirect on github.com, but npm
+  compares `repository.url` to `GITHUB_REPOSITORY` verbatim when it generates
+  provenance, so the stale owner would fail the publish outright. The plugin
+  marketplace id moves with it: install with `silo@alleneubank-silo`.
+
 ## 0.6.0
 
 ### Minor Changes
