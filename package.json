@@ -59,6 +59,10 @@
     "claude-code",
     "ai-agent"
   ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alleneubank/silo.git"
