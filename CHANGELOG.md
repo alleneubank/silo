@@ -1,5 +1,14 @@
 # @0xbigboss/silo
 
+## 0.8.1
+
+### Patch Changes
+
+- efc5c86: CLI commands print the next correct command at stop points: Tilt API port on
+  `silo status` / already-running `up`, "did not start Tilt" on `silo env`,
+  kept k3d cluster on `silo down`, install URLs for missing tools, and available
+  topics for unknown `silo doc` names.
+
 ## 0.8.0
 
 ### Minor Changes
