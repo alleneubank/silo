@@ -2,7 +2,7 @@ import { loadConfig } from "../core/config";
 import { appendGithubEnv } from "../core/env";
 import { logger } from "../utils/logger";
 import { tiltCi } from "../backends/tilt";
-import { resolveGithubEnvPath, shouldExportCiEnv } from "../utils/ci";
+import { resolveGithubEnvPath, shouldExportCiEnv, withCiEnv } from "../utils/ci";
 import { prepareTiltEnvironment } from "./prepare";
 
 export const ci = async (
@@ -27,18 +27,22 @@ export const ci = async (
   });
 
   if (shouldExportCiEnv(options.exportCi)) {
-    const githubEnvPath = resolveGithubEnvPath();
-    await appendGithubEnv({
-      state,
-      urls,
-      githubEnvPath,
-    });
+    const githubEnvPath = resolveGithubEnvPath(options.exportCi);
+    if (githubEnvPath) {
+      await appendGithubEnv({
+        state,
+        urls,
+        githubEnvPath,
+      });
+    } else {
+      logger.warn("GITHUB_ENV is not set; skipping CI env export");
+    }
   }
 
   logger.info("Running tilt ci");
   await tiltCi({
     cwd: config.projectRoot,
-    env: envVars,
+    env: withCiEnv(envVars),
     timeout: options.timeout,
     extraArgs: options.tiltArgs,
   });
