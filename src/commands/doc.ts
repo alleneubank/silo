@@ -1,4 +1,5 @@
 import path from "path";
+import { unknownDocTopicMessage } from "../utils/breadcrumbs";
 import { SiloError } from "../utils/errors";
 import { DOC_TOPICS, DOC_TOPIC_ALIASES } from "./doc-topics";
 
@@ -59,7 +60,10 @@ export const doc = async (params: {
   const canonicalTopic = DOC_TOPIC_ALIASES[topicKey] ?? topicKey;
   const entry = DOC_TOPICS[canonicalTopic];
   if (!entry) {
-    throw new SiloError(`Unknown doc topic: ${topic}`, "DOC_NOT_FOUND");
+    throw new SiloError(
+      unknownDocTopicMessage(topic, Object.keys(DOC_TOPICS)),
+      "DOC_NOT_FOUND"
+    );
   }
 
   const docPath = await findDocPath(entry.file);

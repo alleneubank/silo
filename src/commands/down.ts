@@ -17,6 +17,7 @@ import {
   findLiveDisowned,
   probeTilt,
 } from "../core/liveness";
+import { downKeptClusterHint } from "../utils/breadcrumbs";
 import { SiloError } from "../utils/errors";
 import { ensureToolsAvailable } from "../utils/validate";
 
@@ -150,5 +151,9 @@ export const down = async (options: {
     // stays so peer allocations continue to avoid these ports until the
     // lockfile is removed.
     await unregisterInstance({ projectRoot: config.projectRoot });
+  }
+
+  if (!options["delete-cluster"] && lockfile.instance.k3dClusterCreated) {
+    logger.info(downKeptClusterHint());
   }
 };

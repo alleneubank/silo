@@ -12,6 +12,7 @@ import { readLockfile, updateLockfile, writeLockfile } from "../core/lockfile";
 import { registerInstance } from "../core/port_registry";
 import { sanitizeName } from "../core/name";
 import { applyProfile, resolveExplicitProfile } from "../core/profile";
+import { runningStackHintLines } from "../utils/breadcrumbs";
 import { logKeyValues, logger } from "../utils/logger";
 import { startTilt } from "../backends/tilt";
 import { SiloError } from "../utils/errors";
@@ -42,8 +43,15 @@ const reportRunningInstance = (params: {
   if (profileName) {
     logger.info(`Profile: ${profileName}`);
   }
+  const urls = resolveInstanceUrls({ config, instance });
   logKeyValues("Ports", instance.ports);
-  logKeyValues("URLs", resolveInstanceUrls({ config, instance }));
+  runningStackHintLines({
+    tiltRunning: true,
+    tiltPort: instance.ports.TILT_PORT,
+    urls,
+    kubeconfigPath: instance.identity.kubeconfigPath,
+  }).forEach((line) => logger.info(line));
+  logKeyValues("URLs", urls);
   logger.info(
     "Nothing to start. Run 'silo down' to stop it, or 'silo up --force' for a parallel stack."
   );

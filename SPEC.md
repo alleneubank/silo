@@ -1175,6 +1175,9 @@ keeps k8s image names simple.
 - **No config generation**: silo doesn't generate Tiltfile or compose.yaml. Projects own those.
 - **No secrets management**: No vault/secrets integration. Use direnv or similar.
 - **No compose management**: Tilt manages compose via `docker_compose()`. silo only sets env vars.
+- **No Tilt API wrap**: silo starts and stops Tilt; resource health, logs, and
+  triggers stay `tilt get` / `tilt logs` / `tilt trigger` against the API
+  server (`--port $TILT_PORT`).
 
 ## Success Criteria
 

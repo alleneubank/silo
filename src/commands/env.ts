@@ -1,6 +1,6 @@
 import { loadConfig } from "../core/config";
 import { buildInstanceState, resolveInstanceName } from "../core/instance";
-import { appendGithubEnv, writeEnvAndLockfile } from "../core/env";
+import { appendGithubEnv, resolveEnvPath, writeEnvAndLockfile } from "../core/env";
 import { readLockfile } from "../core/lockfile";
 import {
   readPeerPorts,
@@ -9,6 +9,7 @@ import {
 import { resolveAndApplyProfile } from "../core/profile";
 import { disownedPorts, findLiveDisowned } from "../core/liveness";
 import { logKeyValues, logger, logPortAllocations } from "../utils/logger";
+import { envDidNotStartHint } from "../utils/breadcrumbs";
 import { resolveGithubEnvPath, shouldExportCiEnv } from "../utils/ci";
 import type { PortAllocationEvent } from "../core/ports";
 
@@ -90,6 +91,10 @@ export const env = async (
     ports: [...Object.values(state.ports), ...disownedPorts(liveDisowned)],
   });
 
+  logKeyValues("Ports", state.ports);
+  logKeyValues("URLs", urls);
+  logger.info(envDidNotStartHint(resolveEnvPath(config)));
+
   if (shouldExportCiEnv(options.exportCi)) {
     const githubEnvPath = resolveGithubEnvPath(options.exportCi);
     if (githubEnvPath) {
@@ -98,7 +103,4 @@ export const env = async (
       logger.warn("GITHUB_ENV is not set; skipping CI env export");
     }
   }
-
-  logKeyValues("Ports", state.ports);
-  logKeyValues("URLs", urls);
 };

@@ -18,7 +18,11 @@ Use this Skill when a project uses `silo.toml` or the user asks about `silo` com
    - `silo down` stops Tilt; `--delete-cluster` removes k3d; `--clean` removes env/lockfile.
    - `silo env [name]` generates env + lockfile only.
    - `silo profiles` lists profile names.
-   - `silo status` reports current instance.
+   - `silo status` reports lockfile state (pid, ports, URLs), not Tilt
+     resource health. After `silo up`, poke the Tilt API with
+     `tilt get uiresources --port $TILT_PORT` (source the env file).
+     Do not run `tilt up` or `tilt down` while silo owns the stack.
+     See `silo doc tilt`.
    - `silo version` prints CLI version.
 3. Profiles:
    - Resolution order: `--profile` > `SILO_PROFILE` > lockfile > base config.

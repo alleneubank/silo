@@ -7,6 +7,26 @@ CLI and can be printed with:
 silo doc tilt
 ```
 
+## Lifecycle vs Tilt API
+
+silo starts, stops, and isolates Tilt. It does not wrap the Tilt API.
+
+| Job | Tool |
+| --- | --- |
+| Ports, env, k3d, hooks, start/stop | `silo up` / `down` / `env` / `ci` / `status` |
+| Resource health, logs, wait, trigger | `tilt get` / `logs` / `wait` / `trigger` |
+
+`silo status` reads the lockfile (pid, ports, URLs). Pid-alive is not
+resource health. The API may not be on 10350; pass `--port` from `TILT_PORT`
+in the env file (default `.localnet.env`):
+
+```
+tilt get uiresources --port "$TILT_PORT"
+```
+
+Do not run `tilt up` or `tilt down` while silo owns the stack. Do not run
+`silo up` again for code or Tiltfile edits — Tilt reloads those itself.
+
 ## Expectations
 
 - A `Tiltfile` is expected in the current directory.

@@ -108,4 +108,5 @@ silo info: Instance 'feature-x' is already running (Tilt pid 12345)
 
 **Error:** `tilt` or `k3d` not found
 
-- Ensure required tools are installed and on your PATH.
+- Ensure required tools are installed and on your PATH. The error names an
+  install URL for `janitor`, `tilt`, `k3d`, and `kubectl`.

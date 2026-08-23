@@ -1,4 +1,5 @@
 import { TOOL_CHECK_TIMEOUT_MS } from "../core/constants";
+import { missingToolsMessage } from "./breadcrumbs";
 import { runCommand } from "./exec";
 import { SiloError } from "./errors";
 
@@ -19,6 +20,6 @@ export const ensureToolsAvailable = async (tools: string[]): Promise<void> => {
 
   const missing = checks.filter((check) => !check.ok).map((check) => check.tool);
   if (missing.length > 0) {
-    throw new SiloError(`Missing required tools: ${missing.join(", ")}`, "MISSING_TOOL");
+    throw new SiloError(missingToolsMessage(missing), "MISSING_TOOL");
   }
 };
