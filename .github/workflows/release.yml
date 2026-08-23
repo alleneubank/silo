@@ -73,7 +73,7 @@ jobs:
         env:
           # No npm token: the registry authenticates this workflow through OIDC
           # against the trusted publisher configured on the package
-          # (alleneubank/silo, release.yml). Do not set publishConfig.provenance:
-          # npm rejects attestations from a private GitHub repo (E422), even
-          # for a public package. Trusted publishing still authenticates.
+          # (alleneubank/silo, release.yml). Provenance is attached because the
+          # GitHub source repo is public; npm rejects attestations from private
+          # source repos (E422).
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
