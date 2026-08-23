@@ -33,7 +33,12 @@ jobs:
           # their own Node floor (npm 12 wants ^24.15.0). Track the Node 24 line
           # rather than pinning a patch that npm@latest will outgrow.
           node-version: "24"
-          registry-url: "https://registry.npmjs.org"
+          # No registry-url on purpose. It writes an .npmrc pinning
+          # _authToken=${NODE_AUTH_TOKEN}, and with OIDC there is no token, so
+          # every registry read goes out unauthorized: `changeset publish` then
+          # reads an already-published version as missing and tries to publish
+          # it again. registry.npmjs.org is the default anyway, and the OIDC
+          # exchange does not read .npmrc.
 
       - name: Use an npm that supports trusted publishing
         run: npm install -g npm@latest
