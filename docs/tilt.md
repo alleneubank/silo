@@ -10,15 +10,21 @@ silo doc tilt
 ## Expectations
 
 - A `Tiltfile` is expected in the current directory.
-- `tilt` must be installed and on your PATH.
+- `tilt` and [janitor](https://github.com/alleneubank/janitor) must be on PATH.
 
 ## Startup
 
-`silo up` starts Tilt in the foreground with:
+`silo up` starts Tilt in the foreground under
+[janitor](https://github.com/alleneubank/janitor):
 
 ```
-tilt up
+janitor --grace-ms <ms> -- tilt up
 ```
+
+janitor is a required tool. A missing supervisor fails the run rather than
+starting an unsupervised Tilt. The lockfile's `tiltPid` is the supervisor's
+pid; stopping it drains Tilt so it cannot outlive the silo process that
+started it.
 
 silo passes all generated env vars to Tilt, plus these markers so the Tiltfile
 can detect a silo-managed run:
@@ -28,6 +34,9 @@ can detect a silo-managed run:
 - `SILO_ENV_FILE=<absolute path to generated env file>`
 
 The process runs in the same terminal, and `Ctrl+C` stops Tilt.
+
+`silo ci` invokes `tilt ci` directly (no supervisor). Tilt CI already exits
+when the run finishes.
 
 ## Shutdown
 

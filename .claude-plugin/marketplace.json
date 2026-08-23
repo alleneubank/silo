@@ -2,7 +2,7 @@
   "name": "alleneubank-silo",
   "owner": {
     "name": "alleneubank",
-    "email": "github@0xbigboss.dev"
+    "email": "allen@unrulysystems.com"
   },
   "metadata": {
     "description": "Isolated local development environments for Tilt and k3d projects",
