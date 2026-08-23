@@ -2,7 +2,11 @@
 
 Isolated local development environments. silo solves instance isolation and k3d bootstrap sequencing for Tilt-based projects.
 
-![silo version](docs/screenshot.png)
+[![CI](https://github.com/alleneubank/silo/actions/workflows/ci.yml/badge.svg)](https://github.com/alleneubank/silo/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@0xbigboss/silo.svg)](https://www.npmjs.com/package/@0xbigboss/silo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+![silo version command in a terminal, showing the silo ASCII art](docs/screenshot.png)
 
 ## Requirements
 
@@ -32,7 +36,7 @@ Install the silo skill in [Claude Code](https://claude.ai/code) so your AI assis
 Install silo as a [pi package](https://pi.dev/packages) to expose the `silo` skill to the pi coding agent:
 
 ```bash
-pi install git:git@github.com:alleneubank/silo.git
+pi install git:https://github.com/alleneubank/silo.git
 ```
 
 The skill shells out to the `silo` binary; install it first via `npm i -g @0xbigboss/silo` or the source build.
@@ -83,6 +87,14 @@ When silo launches child processes (Tilt, hooks, k3d, kubectl), it injects:
 - `SILO_WORKSPACE=<workspace name>`
 - `SILO_ENV_FILE=<absolute path to generated env file>`
 
+## Process supervision
+
+`silo up` starts Tilt as `janitor --grace-ms <ms> -- tilt up`, so Tilt cannot
+outlive the silo process that started it. janitor is required: a missing
+supervisor fails the run rather than starting an unsupervised Tilt.
+
+See `silo doc tilt` for the details.
+
 ## CI usage
 
 `silo env` and `silo ci` auto-export env vars to `$GITHUB_ENV` when running in
@@ -101,6 +113,13 @@ from installed dependencies instead of `v1alpha1.extension_repo()`:
 load('./node_modules/@0xbigboss/silo/tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')
 ```
 
+## Development
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
+
+Please follow the [code of conduct](CODE_OF_CONDUCT.md). Report vulnerabilities
+to the address in [SECURITY.md](SECURITY.md).

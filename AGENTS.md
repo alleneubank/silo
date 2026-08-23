@@ -1,3 +1,3 @@
 # Agents Documentation
 
-Read CLAUDE.md and CLAUDE.local.md.
+Read CLAUDE.md. Machine-local overrides belong in `CLAUDE.local.md` (gitignored).
