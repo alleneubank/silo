@@ -6,7 +6,7 @@ Isolated local development environments. silo solves instance isolation and k3d 
 [![npm](https://img.shields.io/npm/v/@0xbigboss/silo.svg)](https://www.npmjs.com/package/@0xbigboss/silo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-![silo version command in a terminal, showing the silo ASCII art](docs/screenshot.png)
+![silo isolating two simultaneous Git worktrees with separate ports, clusters, registries, hostnames, and healthy Tilt resources](https://raw.githubusercontent.com/alleneubank/silo/main/.github/assets/silo-demo.gif)
 
 ## Requirements
 
