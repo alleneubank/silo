@@ -13,7 +13,7 @@
 
   outputs = { self, nixpkgs, bun-overlay, tilt-overlay }:
     let
-      tiltForkVersion = "0.37.8-fork.20261008.g77574b67b";
+      tiltForkVersion = "0.37.8-fork.20261009.g753c01455";
       tiltForkSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
       tiltForkOverlay = _: prev:
         let
