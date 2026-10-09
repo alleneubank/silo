@@ -135,11 +135,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791503430,
-        "narHash": "sha256-Opkq5mZ1jLeKxm8pmfNBbau6Fl1I3vqJHfE7t5H+HuY=",
+        "lastModified": 1791518313,
+        "narHash": "sha256-zwZnag30XAGOU1oVkMe1En60AQNT24yyQsDAhoe/nkE=",
         "owner": "alleneubank",
         "repo": "tilt-overlay",
-        "rev": "496ac71343317828ff992f8de3189cc75c4f28bb",
+        "rev": "f384459b7d34180b8b8aabe6eab8b00911676c1c",
         "type": "github"
       },
       "original": {
