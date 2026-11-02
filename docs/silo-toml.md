@@ -40,6 +40,7 @@ K3D_REGISTRY_PORT = 5000  # Only used if k3d.registry.enabled
 APP_HOST = "${name}.localhost"
 ADMIN_HOST = "admin.${name}.localhost"
 API_HOST = "api.${name}.localhost"
+TILT_HOST = "127.0.0.1"  # Optional; defaults to APP_HOST
 
 [urls]
 DATABASE_URL = "postgres://user:pass@localhost:${POSTGRES_PORT}/dev"
@@ -50,6 +51,7 @@ ADMIN_URL = "http://${ADMIN_HOST}:${ADMIN_PORT}"
 
 [k3d]
 enabled = true
+kubeconfigPath = ".localnet/kubeconfig" # Optional; default: ~/.kube/<cluster-name>
 args = [
   # "--agents=2",  # Optional: adds worker nodes for multi-node testing
   # Route host ports to cluster ingress via the k3d loadbalancer
@@ -60,6 +62,9 @@ args = [
 [k3d.registry]
 enabled = true
 advertise = true
+
+[tilt]
+webMode = "prod" # Optional; use Tilt's embedded production assets
 
 # Optional external registry advertisement
 # [registry]
@@ -83,6 +88,7 @@ post-down = []
 - `hosts` (optional): Hostname templates. Default: `APP_HOST = "${name}.localhost"`.
 - `urls` (optional): URL templates. Default: empty.
 - `k3d` (optional): k3d cluster integration settings.
+- `tilt` (optional): Tilt launch settings.
 - `hooks` (optional): Lifecycle hook commands.
 - `registry` (optional): registry advertisement settings for non-k3d clusters.
 
@@ -113,7 +119,7 @@ API_HOST = "api.${name}.localhost"
 
 Defaults:
 - If `hosts` is omitted, `APP_HOST = "${name}.localhost"` is added.
-- `TILT_HOST` is always added and copies `APP_HOST`.
+- `TILT_HOST` defaults to `APP_HOST` when omitted; explicit values are preserved.
 
 ## URLs
 
@@ -151,6 +157,29 @@ need `kubectl port-forward` for every service.
 Notes:
 - Registry port is allocated via `ports.K3D_REGISTRY_PORT` (default: 5000).
 - `k3d.args` can use interpolation variables (see below).
+- `k3d.kubeconfigPath` is an optional literal project-relative file path, such
+  as `.localnet/kubeconfig`. It resolves from the directory containing
+  `silo.toml`, once into instance identity. All generated env, hooks, Tilt,
+  registry advertisement and status consumers use that resolved path.
+  Omission keeps `~/.kube/<cluster-name>`. Disabled k3d exports no kubeconfig.
+  Paths use letters, numbers, `_`, `-`, `.`, and `/`, with no empty, `.` or
+  `..` components. Absolute paths, home expansion, interpolation, backslashes
+  and path-list separators are rejected. Symlinks are trusted local inputs;
+  project-relative validation does not provide a filesystem sandbox.
+
+## Tilt
+
+```toml
+[tilt]
+webMode = "prod"
+```
+
+`tilt.webMode` optionally selects embedded production web assets with exactly
+`--web-mode=prod` for `silo up` and `silo ci`. The only accepted selection is
+`prod`; `local` and other values refuse at config load. Omission preserves
+Tilt's default behavior. silo does not set `TILT_WEB_MODE`. A CI passthrough
+`--web-mode` conflicts with an explicit selection and refuses before setup.
+Profiles can override `tilt.webMode` and `k3d.kubeconfigPath`.
 
 ## Registry (External)
 

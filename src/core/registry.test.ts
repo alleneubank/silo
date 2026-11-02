@@ -29,8 +29,8 @@ const buildState = (port: number, name = "demo"): InstanceState => {
     prefix: baseConfig.prefix,
     hosts,
     ports,
-    k3dEnabled: true,
-    registryEnabled: true,
+    projectRoot: baseConfig.projectRoot,
+    k3d: baseConfig.k3d,
   });
   return {
     name,
@@ -42,6 +42,12 @@ const buildState = (port: number, name = "demo"): InstanceState => {
 };
 
 describe("applyRegistryPortOverride", () => {
+  test("preserves the already-resolved kubeconfig when reconciling registry ports", () => {
+    const state = buildState(49157);
+    state.identity.kubeconfigPath = "/owned/project/.localnet/kubeconfig";
+    const result = applyRegistryPortOverride({ state, config: baseConfig, actualPort: 49163 });
+    expect(result.state.identity.kubeconfigPath).toBe("/owned/project/.localnet/kubeconfig");
+  });
   test("updates registry port and urls when drift detected", () => {
     const state = buildState(49157);
     const result = applyRegistryPortOverride({

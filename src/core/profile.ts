@@ -171,9 +171,11 @@ const mergeK3dConfig = (params: {
   const mergedArgs = appendArgs
     ? [...(baseArgs ?? []), ...appendArgs]
     : baseArgs;
+  const kubeconfigPath = override?.kubeconfigPath ?? base?.kubeconfigPath;
 
   return {
     enabled,
+    ...(kubeconfigPath !== undefined ? { kubeconfigPath } : {}),
     ...(mergedArgs ? { args: mergedArgs } : {}),
     ...(registry ? { registry } : {}),
   };
@@ -237,6 +239,7 @@ export const applyProfile = (config: ResolvedConfig, profileName: string): Resol
     urlOrder,
     hooks,
     k3d,
+    tilt: profile.tilt ? { ...config.tilt, ...profile.tilt } : config.tilt,
     registry,
   };
 };

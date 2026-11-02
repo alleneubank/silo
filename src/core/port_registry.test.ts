@@ -127,7 +127,7 @@ describe("port_registry", () => {
     expect(seenFromC.size).toBe(4);
   });
 
-  test("stale entries (missing lockfile) are garbage-collected on read", async () => {
+  test("stale entries retain their reservation and bytes until their owner unregisters", async () => {
     await registerInstance({
       projectRoot: projectA,
       name: "wt-a",
@@ -137,37 +137,31 @@ describe("port_registry", () => {
     // Simulate the project going away without calling unregister.
     await fs.rm(path.join(projectA, ".silo.lock"), { force: true });
 
+    const entryPath = path.join(registryDir, `${registryKey(await fs.realpath(projectA))}.json`);
+    const before = await fs.readFile(entryPath);
     const seen = await readPeerPorts({
       excludeProjectRoot: projectB,
       registryDir,
     });
-    expect(seen.size).toBe(0);
-
-    // The registry file should also be removed as part of GC.
-    const registryFiles = await fs.readdir(registryDir);
-    expect(registryFiles.length).toBe(0);
+    expect([...seen]).toEqual([49152]);
+    expect(await fs.readFile(entryPath)).toEqual(before);
+    await unregisterInstance({ projectRoot: projectA, registryDir });
+    expect(await fs.readdir(registryDir)).toEqual([]);
   });
 
-  test("corrupt registry entries are garbage-collected on read", async () => {
+  test.each(["not json {", '{"ports":[49152]}'])("corrupt peer entries refuse allocation without changing bytes: %s", async (bytes) => {
     await fs.mkdir(registryDir, { recursive: true });
-    await fs.writeFile(path.join(registryDir, "corrupt.json"), "not json {");
+    const corruptPath = path.join(registryDir, "corrupt.json");
+    await fs.writeFile(corruptPath, bytes);
 
-    const seen = await readPeerPorts({
+    await expect(readPeerPorts({
       excludeProjectRoot: projectA,
       registryDir,
-    });
-    expect(seen.size).toBe(0);
-
-    const files = await fs.readdir(registryDir);
-    expect(files.includes("corrupt.json")).toBe(false);
+    })).rejects.toThrow("corrupt.json");
+    expect(await fs.readFile(corruptPath, "utf8")).toBe(bytes);
   });
 
-  test("entry registered before lockfile exists is GC'd on peer read", async () => {
-    // Regression test for the register-before-lockfile race: if an instance
-    // registers its ports before writing .silo.lock, a concurrent peer read
-    // would see no lockfile and GC the entry. The fix is to register AFTER
-    // the lockfile is on disk — but this test locks in the invariant that
-    // callers must respect the order.
+  test("a reservation published before its lockfile is still excluded by peers", async () => {
     const projectX = await tmpRoot("silo-no-lock-");
     try {
       await registerInstance({
@@ -176,15 +170,57 @@ describe("port_registry", () => {
         ports: [51000],
         registryDir,
       });
-      // No lockfile at projectX — the entry is "stale" by definition.
       const seen = await readPeerPorts({
         excludeProjectRoot: projectA,
         registryDir,
       });
-      expect(seen.has(51000)).toBe(false);
+      expect(seen.has(51000)).toBe(true);
     } finally {
       await fs.rm(projectX, { recursive: true, force: true });
     }
+  });
+
+  test("registry enumeration errors refuse allocation", async () => {
+    const unavailable = path.join(registryDir, "regular-file");
+    await fs.writeFile(unavailable, "not a directory");
+    await expect(readPeerPorts({ excludeProjectRoot: projectA, registryDir: unavailable })).rejects.toThrow(unavailable);
+    expect(await fs.readFile(unavailable, "utf8")).toBe("not a directory");
+  });
+
+  test("unreadable peers refuse allocation without removing the entry", async () => {
+    const unreadable = path.join(registryDir, "unreadable.json");
+    await fs.writeFile(unreadable, "{}");
+    await fs.chmod(unreadable, 0);
+    try {
+      await expect(readPeerPorts({ excludeProjectRoot: projectA, registryDir })).rejects.toThrow(unreadable);
+    } finally {
+      await fs.chmod(unreadable, 0o600);
+    }
+    expect(await fs.readFile(unreadable, "utf8")).toBe("{}");
+  });
+
+  test("indeterminate peer lockfile liveness refuses allocation and preserves the reservation", async () => {
+    await registerInstance({ projectRoot: projectA, name: "peer", ports: [49152], registryDir });
+    const entryPath = path.join(registryDir, `${registryKey(await fs.realpath(projectA))}.json`);
+    const before = await fs.readFile(entryPath);
+    const lockPath = path.join(projectA, ".silo.lock");
+    await fs.rm(lockPath);
+    await fs.symlink(".silo.lock", lockPath);
+    await expect(readPeerPorts({ excludeProjectRoot: projectB, registryDir })).rejects.toThrow(lockPath);
+    expect(await fs.readFile(entryPath)).toEqual(before);
+    expect(await fs.readlink(lockPath)).toBe(".silo.lock");
+  });
+
+  test("only the caller's canonical key is excluded or removed", async () => {
+    await registerInstance({ projectRoot: projectA, name: "self", ports: [50000], registryDir });
+    const ownPath = path.join(registryDir, `${registryKey(await fs.realpath(projectA))}.json`);
+    const otherPath = path.join(registryDir, "legacy-alias.json");
+    const before = await fs.readFile(ownPath);
+    await fs.writeFile(otherPath, before);
+    expect([...(await readPeerPorts({ excludeProjectRoot: projectA, registryDir }))]).toEqual([50000]);
+    await unregisterInstance({ projectRoot: projectA, registryDir });
+    expect(await fs.readdir(registryDir)).toEqual(["legacy-alias.json"]);
+    expect(await fs.readFile(otherPath)).toEqual(before);
   });
 
   test("entry registered AFTER lockfile exists survives peer read", async () => {

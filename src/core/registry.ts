@@ -1,4 +1,3 @@
-import { buildInstanceIdentity } from "./identity";
 import { resolveTemplateRecord } from "./instance";
 import { buildTemplateVars } from "./variables";
 import type { InstanceState, ResolvedConfig } from "./types";
@@ -162,14 +161,12 @@ export const applyRegistryPortOverride = (params: {
   }
 
   const updatedPorts = { ...state.ports, K3D_REGISTRY_PORT: actualPort };
-  const updatedIdentity = buildInstanceIdentity({
-    name: state.identity.name,
-    prefix: state.identity.prefix,
-    hosts: state.identity.hosts,
-    ports: updatedPorts,
-    k3dEnabled: config.k3d?.enabled ?? false,
-    registryEnabled: config.k3d?.registry?.enabled ?? false,
-  });
+  const updatedIdentity = {
+    ...state.identity,
+    ...(state.identity.k3dRegistryName !== undefined && {
+      k3dRegistryName: `${state.identity.k3dRegistryName.split(":")[0]}:${actualPort}`,
+    }),
+  };
 
   const templateVars = buildTemplateVars({
     identity: updatedIdentity,

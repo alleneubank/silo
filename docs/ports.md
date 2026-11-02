@@ -42,17 +42,26 @@ peer instance:
 - The ephemeral scan skips all excluded ports and wraps around the range if
   needed.
 
-After allocating, silo writes its own registry entry with the final port
-assignments. This guarantees that two silo instances on the same machine —
-even two cold-start worktrees of the same project — get **disjoint** port sets,
-not just probabilistically disjoint.
+After allocating, silo atomically replaces its own registry entry with the
+final port assignments. Allocations must be serialized across the complete
+read/allocate/write sequence to guarantee disjoint ports. This includes older
+clients; the registry does not provide a machine-wide allocation lock.
 
 ### Liveness
 
-A registry entry is considered live as long as the project's `.silo.lock`
-file exists. On every registry read, entries whose `.silo.lock` is gone (or
-whose JSON is corrupt) are garbage-collected. `silo down --clean` removes both
-the lockfile and the registry entry, releasing the ports for other instances.
+Peer reads never modify or remove registry entries. A valid reservation stays
+excluded even when its `.silo.lock` is missing: absence alone cannot prove its
+ports are safe to reuse. Lock-only peers need no listening socket to reserve
+their ports. Unreadable or corrupt peer files, registry enumeration failures,
+and indeterminate lockfile access refuse allocation with the affected path.
+Only a missing registry directory means no peers. Reads are bounded to 10,000
+directory entries and 1 MiB per reservation; oversized input also refuses.
+
+Only the caller's canonical project key is excluded from its peer read and
+removed by its unregister operation. `silo down --clean` unregisters that
+project; it performs no peer garbage collection. If a peer entry prevents
+allocation, have its owner establish that its resources are gone and retire
+its reservation. Deleting another project's entry can free an occupied port.
 
 ### Override location
 

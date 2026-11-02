@@ -189,10 +189,8 @@ export const prepareTiltEnvironment = async (params: {
     urlOrder,
   });
 
-  // Register AFTER the lockfile is on disk. Registry liveness is keyed on
-  // `.silo.lock` presence, so registering before the lockfile exists would
-  // let a concurrent peer read GC our entry immediately and steal our
-  // ports. Order must be: allocate → write lockfile → register.
+  // Keep the lockfile on disk before publishing the reservation: older readers
+  // still use its presence to decide whether to retain our ports.
   // The registry holds one entry per project root, so it must name every port
   // this project still owns — a disowned stack's included. Registering only the
   // new stack would let another project allocate a port the disowned one uses.

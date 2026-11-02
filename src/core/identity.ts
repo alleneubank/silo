@@ -1,6 +1,6 @@
 import path from "path";
 import os from "os";
-import type { IdentityVars, InstanceIdentity } from "./types";
+import type { IdentityVars, InstanceIdentity, K3dConfig } from "./types";
 import { shortenK3dClusterName } from "./name";
 import { SiloError } from "../utils/errors";
 
@@ -16,18 +16,20 @@ export const buildInstanceIdentity = (params: {
   prefix: string;
   hosts: Record<string, string>;
   ports: Record<string, number>;
-  k3dEnabled: boolean;
-  registryEnabled: boolean;
+  projectRoot: string;
+  k3d: K3dConfig | undefined;
 }): InstanceIdentity => {
-  const { name, prefix, hosts, ports, k3dEnabled, registryEnabled } = params;
+  const { name, prefix, hosts, ports, projectRoot, k3d } = params;
   const composeName = `${prefix}-${name}`;
-  const k3dClusterName = k3dEnabled ? shortenK3dClusterName(composeName) : undefined;
+  const k3dClusterName = k3d?.enabled ? shortenK3dClusterName(composeName) : undefined;
   const kubeconfigPath = k3dClusterName
-    ? path.join(os.homedir(), ".kube", k3dClusterName)
+    ? k3d?.kubeconfigPath !== undefined
+      ? path.resolve(projectRoot, k3d.kubeconfigPath)
+      : path.join(os.homedir(), ".kube", k3dClusterName)
     : undefined;
 
   let k3dRegistryName: string | undefined;
-  if (k3dEnabled && registryEnabled && k3dClusterName) {
+  if (k3d?.registry?.enabled && k3dClusterName) {
     const registryPort = ports.K3D_REGISTRY_PORT;
     if (!registryPort) {
       throw new SiloError(
@@ -48,7 +50,7 @@ export const buildInstanceIdentity = (params: {
     hosts,
   };
 
-  if (k3dEnabled) {
+  if (k3dClusterName) {
     identity.k3dClusterName = k3dClusterName;
     if (kubeconfigPath) {
       identity.kubeconfigPath = kubeconfigPath;

@@ -118,8 +118,8 @@ export const buildInstanceState = async (params: {
     prefix: config.prefix,
     hosts,
     ports,
-    k3dEnabled: config.k3d?.enabled ?? false,
-    registryEnabled: config.k3d?.registry?.enabled ?? false,
+    projectRoot: config.projectRoot,
+    k3d: config.k3d,
   });
 
   const templateVars = buildTemplateVars({ identity, ports });

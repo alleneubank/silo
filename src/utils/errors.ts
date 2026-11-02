@@ -1,8 +1,8 @@
 export class SiloError extends Error {
   readonly code: string;
 
-  constructor(message: string, code = "SILO_ERROR") {
-    super(message);
+  constructor(message: string, code = "SILO_ERROR", options?: ErrorOptions) {
+    super(message, options);
     this.code = code;
   }
 }
