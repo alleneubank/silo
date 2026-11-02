@@ -56,12 +56,14 @@ describe("probeTilt", () => {
     await fs.rm(tempDir, { recursive: true, force: true });
   });
 
-  // A symlink is enough to make `ps -o comm=` report a tilt-shaped name on
-  // both macOS and Linux; copying a system binary breaks its signature.
+  // Use the test runtime: system utilities can reject renamed executable aliases.
   test("accepts a live process whose command names tilt", async () => {
     const fakeTilt = path.join(tempDir, "tilt-liveness-fixture");
-    await fs.symlink("/bin/sleep", fakeTilt);
-    const proc = Bun.spawn([fakeTilt, "30"], { stdout: "ignore", stderr: "ignore" });
+    await fs.symlink(process.execPath, fakeTilt);
+    const proc = Bun.spawn([fakeTilt, "-e", "setTimeout(() => {}, 30_000)"], {
+      stdout: "ignore",
+      stderr: "ignore",
+    });
     spawned.push(proc);
 
     expect(await probeTilt(proc.pid)).toBe(true);
