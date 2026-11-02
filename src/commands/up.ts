@@ -129,7 +129,7 @@ const startStack = async (params: {
   });
 
   logger.info("Starting Tilt");
-  const tiltProc = startTilt({ cwd: config.projectRoot, env: envVars });
+  const tiltProc = startTilt({ cwd: config.projectRoot, env: envVars, webMode: config.tilt?.webMode });
   await updateLockfile(config.projectRoot, (current) => ({
     ...current.instance,
     tiltPid: tiltProc.pid,
@@ -168,10 +168,9 @@ export const up = async (
     });
     await writeLockfile(config.projectRoot, next);
 
-    // This stack's ports are free again. The registry entry is per project and
-    // stays live while the lockfile exists, so peers keep avoiding whatever it
-    // last named until someone rewrites it — do that here rather than leaving
-    // the ports reserved until the next silo command.
+    // Refresh the project's reservation after dropping this Tilt's ownership.
+    // Peers retain its allocated ports and any remaining disowned stack ports
+    // until the project explicitly changes or unregisters its reservation.
     await registerInstance({
       projectRoot: config.projectRoot,
       name: next.name,

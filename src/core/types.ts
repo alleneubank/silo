@@ -1,4 +1,11 @@
+import type { BRAND } from "zod";
+
 export type PortConfigValue = number | "random";
+export type ProjectRelativePath = string & BRAND<"ProjectRelativePath">;
+
+export interface TiltConfig {
+  webMode?: "prod";
+}
 
 export interface SiloConfig {
   version: 1;
@@ -8,6 +15,7 @@ export interface SiloConfig {
   hosts?: Record<string, string>;
   urls?: Record<string, string>;
   k3d?: K3dConfig;
+  tilt?: TiltConfig;
   hooks?: LifecycleHooks;
   profiles?: Record<string, ProfileConfig>;
   registry?: RegistryConfig;
@@ -15,6 +23,7 @@ export interface SiloConfig {
 
 export interface K3dConfig {
   enabled: boolean;
+  kubeconfigPath?: ProjectRelativePath;
   args?: string[];
   registry?: {
     enabled: boolean;
@@ -53,6 +62,7 @@ export interface ProfileConfig {
   hosts?: Record<string, string>;
   urls?: Record<string, string>;
   k3d?: Partial<K3dConfig>;
+  tilt?: TiltConfig;
   hooks?: Partial<LifecycleHooks>;
   append?: ProfileAppendConfig;
   registry?: RegistryConfig;
@@ -69,6 +79,7 @@ export interface ResolvedConfig {
   urls: Record<string, string>;
   urlOrder: string[];
   k3d: K3dConfig | undefined;
+  tilt?: TiltConfig | undefined;
   hooks: LifecycleHooks;
   profiles: Record<string, ProfileConfig> | undefined;
   registry: RegistryConfig | undefined;

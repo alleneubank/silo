@@ -58,6 +58,23 @@ The process runs in the same terminal, and `Ctrl+C` stops Tilt.
 `silo ci` invokes `tilt ci` directly (no supervisor). Tilt CI already exits
 when the run finishes.
 
+For an explicit loopback UI with embedded production assets:
+
+```toml
+[hosts]
+APP_HOST = "${name}.localhost"
+TILT_HOST = "127.0.0.1"
+
+[tilt]
+webMode = "prod"
+```
+
+silo adds exactly `--web-mode=prod` to `tilt up` and `tilt ci`. Without
+`tilt.webMode`, Tilt chooses its existing default. silo does not set
+`TILT_WEB_MODE`. Other configured values are rejected; CI passthrough cannot
+override an explicit mode. This flag selects web assets, not listener access
+policy; inspect actual listeners when validating a private deployment.
+
 ## Shutdown
 
 `silo down` runs `tilt down` (with a timeout) and then stops any tracked Tilt

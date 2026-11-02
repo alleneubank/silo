@@ -149,7 +149,7 @@ export const down = async (options: {
     // Release this instance's ports in the machine-wide registry so peer
     // silo instances can claim them. When --clean is not passed, the entry
     // stays so peer allocations continue to avoid these ports until the
-    // lockfile is removed.
+    // project's own unregister operation retires it.
     await unregisterInstance({ projectRoot: config.projectRoot });
   }
 

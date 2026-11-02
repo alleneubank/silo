@@ -22,7 +22,7 @@ export const resolveHosts = (params: {
     throw new SiloError("APP_HOST must be defined in hosts", "INVALID_CONFIG");
   }
 
-  resolved.TILT_HOST = resolved.APP_HOST;
+  resolved.TILT_HOST ??= resolved.APP_HOST;
   const nextOrder = order.includes("TILT_HOST")
     ? order
     : [...order, "TILT_HOST"];

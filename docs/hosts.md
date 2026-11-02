@@ -37,7 +37,15 @@ APP_HOST = "${name}.localhost"
 
 ## Built-In Hosts
 
-- `TILT_HOST` is always added and copies `APP_HOST`.
+- `TILT_HOST` defaults to `APP_HOST` when omitted. An explicit value is preserved.
+
+For a loopback Tilt UI while preserving the application's browser hostname:
+
+```toml
+[hosts]
+APP_HOST = "${name}.localhost"
+TILT_HOST = "127.0.0.1"
+```
 
 ## Interpolation Rules
 

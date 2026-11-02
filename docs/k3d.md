@@ -43,6 +43,14 @@ silo derives names from `{prefix}-{name}`:
 - `silo down` keeps the cluster by default.
 - `silo down --delete-cluster` deletes it.
 
+## Kubeconfig
+
+`k3d.kubeconfigPath` optionally selects a literal project-relative kubeconfig
+file, for example `.localnet/kubeconfig`. silo resolves it from the directory
+containing `silo.toml` into instance identity and exports that absolute path
+as `KUBECONFIG`. Omission keeps `~/.kube/<cluster-name>`. See `silo doc config`
+for validation and profile rules. The global kubeconfig is not updated.
+
 ## k3d.args Interpolation
 
 Arguments in `k3d.args` are interpolated after ports and URLs resolve, so they

@@ -4,6 +4,9 @@ import path from "path";
 import { promises as fs } from "fs";
 import { loadConfig } from "./config";
 import { buildInstanceState } from "./instance";
+import { writeEnvAndLockfile } from "./env";
+import { readLockfile } from "./lockfile";
+import { applyProfile } from "./profile";
 import type { Lockfile } from "./types";
 
 const withConfig = async (
@@ -41,6 +44,43 @@ const lockfileWith = (disowned: Lockfile["instance"]["disownedTilts"]): Lockfile
 });
 
 describe("buildInstanceState", () => {
+  test("derives the owned kubeconfig in identity, child env, generated env and lockfile", async () => {
+    await withConfig(async (configPath) => {
+      await fs.appendFile(configPath, `
+[k3d]
+enabled = true
+kubeconfigPath = ".localnet/kubeconfig"
+[profiles.private.k3d]
+kubeconfigPath = ".private/kubeconfig"
+`);
+      const config = applyProfile(await loadConfig(configPath), "private");
+      const result = await buildInstanceState({ config, name: "demo", profile: "private", lockfile: null, force: false });
+      const expectedPath = path.join(path.dirname(configPath), ".private", "kubeconfig");
+      expect(result.state.identity.kubeconfigPath).toBe(expectedPath);
+      expect(result.envVars.KUBECONFIG).toBe(expectedPath);
+      await writeEnvAndLockfile({ ...result, config });
+      expect(await fs.readFile(path.join(config.projectRoot, ".localnet.env"), "utf8")).toContain(`KUBECONFIG=${expectedPath}\n`);
+      expect((await readLockfile(config.projectRoot))?.instance.identity.kubeconfigPath).toBe(expectedPath);
+    });
+  });
+
+  test("retains the existing home-based default for other projects", async () => {
+    await withConfig(async (configPath) => {
+      await fs.appendFile(configPath, "\n[k3d]\nenabled = true\n");
+      const result = await buildInstanceState({ config: await loadConfig(configPath), name: "demo", profile: undefined, lockfile: null, force: false });
+      expect(result.state.identity.kubeconfigPath).toBe(path.join(os.homedir(), ".kube", "localnet-demo"));
+    });
+  });
+
+  test("does not export a kubeconfig when k3d is disabled", async () => {
+    await withConfig(async (configPath) => {
+      await fs.appendFile(configPath, '\n[k3d]\nenabled = false\nkubeconfigPath = ".localnet/kubeconfig"\n');
+      const result = await buildInstanceState({ config: await loadConfig(configPath), name: "demo", profile: undefined, lockfile: null, force: false });
+      expect(result.state.identity.kubeconfigPath).toBeUndefined();
+      expect(result.envVars.KUBECONFIG).toBeUndefined();
+    });
+  });
+
   // A rebuilt state overwrites the lockfile. Losing the disowned list here is
   // what leaves a running Tilt with no record anywhere.
   test("carries stacks disowned by an earlier --force", async () => {

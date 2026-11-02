@@ -260,6 +260,7 @@ interface SiloConfig {
   hosts?: Record<string, string>; // Default: { APP_HOST: '${name}.localhost' }
   urls?: Record<string, string>; // Optional: omit if no derived URLs needed
   k3d?: K3dConfig;
+  tilt?: { webMode?: "prod" }; // Explicit embedded production web assets
   hooks?: LifecycleHooks;
   profiles?: Record<string, ProfileConfig>; // Optional: environment-specific overrides
   registry?: RegistryConfig; // Optional: external registry advertisement
@@ -275,6 +276,7 @@ const CONFIG_DEFAULTS = {
 
 interface K3dConfig {
   enabled: boolean;
+  kubeconfigPath?: string; // Validated literal project-relative file path
   args?: string[];
   registry?: {
     enabled: boolean;
@@ -301,6 +303,7 @@ interface ProfileConfig {
   hosts?: Record<string, string>; // Override host templates
   urls?: Record<string, string>; // Override/add URL templates
   k3d?: Partial<K3dConfig>; // Override k3d settings
+  tilt?: { webMode?: "prod" }; // Override Tilt launch settings
   hooks?: Partial<LifecycleHooks>; // Replace hook arrays
   append?: ProfileAppendConfig; // Append to arrays instead of replacing
   registry?: RegistryConfig; // Override external registry advertisement
@@ -775,6 +778,11 @@ Next: edit the file, then run `silo up`.
 silo runs Tilt as `janitor --grace-ms <ms> -- tilt up` rather than spawning
 `tilt up` directly.
 
+An optional `[tilt] webMode = "prod"` adds exactly `--web-mode=prod` to
+`tilt up` and `tilt ci`, selecting embedded assets. Omission keeps Tilt's
+default. Other configured values and conflicting CI passthrough refuse;
+silo does not set `TILT_WEB_MODE`.
+
 **Invariant: Tilt does not outlive the silo process that started it.**
 
 `silo up` forwards SIGINT and SIGTERM to Tilt, which covers an orderly exit.
@@ -1033,6 +1041,14 @@ silo calls k3d directly (not ctlptl). Instance isolation includes:
 - **Registry**: `{prefix}-{name}-registry.localhost:{port}`
 - **Kubeconfig**: Separate file per instance at `~/.kube/{prefix}-{name}`
 
+`k3d.kubeconfigPath` optionally replaces that default with a literal
+project-relative file path, resolved once from `silo.toml`'s directory into
+instance identity. Every consumer derives `KUBECONFIG` from identity,
+including after registry-port reconciliation. Absolute paths, traversal,
+expansion and ambiguous separators refuse at the config boundary; exact
+syntax and profile behavior are in `docs/silo-toml.md`. Trusted symlinks are
+not a filesystem sandbox.
+
 If `{prefix}-{name}` exceeds 32 characters, silo shortens the k3d cluster name
 to stay within the limit while preserving uniqueness. The format becomes:
 
@@ -1138,7 +1154,7 @@ APP_HOST = "${name}.localhost"
 
 **Built-in hosts** (always added to `hosts` record):
 
-- `TILT_HOST`: Copies `APP_HOST` value (for Tilt UI access at `http://${TILT_HOST}:${TILT_PORT}`)
+- `TILT_HOST`: Defaults to `APP_HOST` only when omitted; explicit values are preserved (for Tilt UI access at `http://${TILT_HOST}:${TILT_PORT}`)
 
 **Resolution**: `${name}` is replaced with the sanitized instance name.
 

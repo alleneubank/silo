@@ -48,9 +48,22 @@ const ProfileK3dRegistrySchema = RegistryAdvertiseSchema.extend({
   enabled: z.boolean().optional(),
 }).strict();
 
+// Literal POSIX-style file paths keep kubeconfig inside the project and avoid
+// shell expansion or KUBECONFIG's platform-dependent path-list separators.
+const ProjectRelativePathSchema = z.string().max(4096).refine(
+  (value) =>
+    /^[A-Za-z0-9_./-]+$/.test(value) &&
+    !path.posix.isAbsolute(value) &&
+    value.split("/").every((part) => part.length > 0 && part !== "." && part !== ".."),
+  { message: "kubeconfigPath must be a project-relative file path without traversal or expansion" }
+).brand<"ProjectRelativePath">();
+
+const TiltSchema = z.object({ webMode: z.literal("prod").optional() }).strict();
+
 const K3dSchema = z
   .object({
     enabled: z.boolean(),
+    kubeconfigPath: ProjectRelativePathSchema.optional(),
     args: z.array(z.string()).optional(),
     registry: K3dRegistrySchema.optional(),
   })
@@ -59,6 +72,7 @@ const K3dSchema = z
 const ProfileK3dSchema = z
   .object({
     enabled: z.boolean().optional(),
+    kubeconfigPath: ProjectRelativePathSchema.optional(),
     args: z.array(z.string()).optional(),
     registry: ProfileK3dRegistrySchema.optional(),
   })
@@ -82,6 +96,7 @@ const ProfileConfigSchema = z
     hosts: z.record(z.string()).optional(),
     urls: z.record(z.string()).optional(),
     k3d: ProfileK3dSchema.optional(),
+    tilt: TiltSchema.optional(),
     hooks: HooksSchema.optional(),
     append: ProfileAppendSchema.optional(),
     registry: RegistryAdvertiseSchema.optional(),
@@ -97,6 +112,7 @@ const SiloConfigSchema = z
     hosts: z.record(z.string()).optional(),
     urls: z.record(z.string()).optional(),
     k3d: K3dSchema.optional(),
+    tilt: TiltSchema.optional(),
     hooks: HooksSchema.optional(),
     profiles: z.record(ProfileConfigSchema).optional(),
     registry: RegistryAdvertiseSchema.optional(),
@@ -148,6 +164,7 @@ export const loadConfig = async (configPath: string): Promise<ResolvedConfig> =>
     urls,
     urlOrder,
     k3d: parsed.k3d,
+    tilt: parsed.tilt,
     hooks,
     profiles: parsed.profiles,
     registry: parsed.registry,

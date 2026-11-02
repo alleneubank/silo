@@ -81,10 +81,8 @@ export const env = async (
 
   await writeEnvAndLockfile({ state, config, urls, hostOrder, portOrder, urlOrder });
 
-  // Register AFTER the lockfile is on disk — registry liveness is tied to
-  // `.silo.lock` presence, so a peer read between register() and lockfile
-  // write would GC us and race-steal our ports. Order must stay:
-  // allocate → write lockfile → register.
+  // Keep the lockfile on disk before publishing the reservation: older readers
+  // still use its presence to decide whether to retain our ports.
   await registerInstance({
     projectRoot: config.projectRoot,
     name: state.name,

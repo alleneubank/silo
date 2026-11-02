@@ -1,7 +1,9 @@
 import { loadConfig } from "../core/config";
 import { appendGithubEnv } from "../core/env";
 import { logger } from "../utils/logger";
-import { tiltCi } from "../backends/tilt";
+import { buildTiltCiArgv, tiltCi } from "../backends/tilt";
+import { resolveAndApplyProfile } from "../core/profile";
+import { readLockfile } from "../core/lockfile";
 import { resolveGithubEnvPath, shouldExportCiEnv, withCiEnv } from "../utils/ci";
 import { prepareTiltEnvironment } from "./prepare";
 
@@ -19,6 +21,15 @@ export const ci = async (
   logger.info("Loading config");
   const baseConfig = await loadConfig(options.config);
   logger.verbose(`Config path: ${baseConfig.configPath}`);
+
+  // Refuse conflicting passthrough before allocation, hooks or cluster effects.
+  const { config: launchConfig } = resolveAndApplyProfile({
+    baseConfig,
+    profileFlag: options.profile,
+    lockfile: await readLockfile(baseConfig.projectRoot),
+    force: options.force,
+  });
+  buildTiltCiArgv({ timeout: options.timeout, extraArgs: options.tiltArgs, webMode: launchConfig.tilt?.webMode });
 
   const { config, state, urls, envVars } = await prepareTiltEnvironment({
     baseConfig,
@@ -45,5 +56,6 @@ export const ci = async (
     env: withCiEnv(envVars),
     timeout: options.timeout,
     extraArgs: options.tiltArgs,
+    webMode: config.tilt?.webMode,
   });
 };
