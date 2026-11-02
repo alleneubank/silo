@@ -82,8 +82,8 @@ describe("findTiltPidsInDir", () => {
 
   test("finds a tilt-shaped process by the directory it runs in", async () => {
     const fakeTilt = path.join(dir, "tilt-fixture");
-    await fs.symlink("/bin/sleep", fakeTilt);
-    const proc = Bun.spawn([fakeTilt, "30"], {
+    await fs.symlink(process.execPath, fakeTilt);
+    const proc = Bun.spawn([fakeTilt, "-e", "setTimeout(() => {}, 30_000)"], {
       cwd: dir,
       stdout: "ignore",
       stderr: "ignore",
