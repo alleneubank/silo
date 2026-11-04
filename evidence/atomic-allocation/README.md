@@ -127,3 +127,36 @@ marker from its fixture subprocess environment, alongside its explicit CI=false.
 The published CLI artifact is unchanged. The corrective local run supplies
 GITHUB_ACTIONS=true to the harness itself; allocation-actions.log records the
 result. The initial hosted failure is retained verbatim.
+
+## Anonymous-volume correction
+
+A second hosted run exposed unordered Docker Mounts output in the fixture's
+byte comparison. The snapshot now parses all fields and compares them deeply,
+normalizing only Mounts order by destination. No identity/content assertion was
+removed. That observation also showed the omitted anonymous-volume cleanup.
+Exact owned k3d container removal now uses `--volumes`, delegating anonymous
+child removal to Docker for that container ID. Named volumes remain separate
+receipts; external named volumes are not removed by that option, per the
+[Docker command contract](https://docs.docker.com/reference/cli/docker/container/rm/).
+
+Corrected artifact SHA-256:
+`1a09c9812329a16342f95b7c006ddd5d844f611c6dbb3b5febca6a0e21396abc`.
+[volume-backend.log](volume-backend.log) records real container mount handles
+before teardown and proves all fixture-attached named/anonymous volumes absent
+after explicit cluster deletion. Typecheck, lint, check and 123 tests passed.
+A full repeated local run safely refused clean when a declared port could not
+be proved free; a fresh socket query later found it absent and ordinary owner
+clean succeeded. This was not bypassed or graded as a passing full rerun.
+Earlier full-flow evidence covers unchanged code; the corrected deletion path
+has its separate native run and requires refreshed guest coverage.
+
+Historical cleanup gap: earlier experimental container removals omitted the
+anonymous-volume flag. Exact old native inspect captures identified 25 unused
+anonymous children; their parent identity, creation time, labels and absence
+were verified before individual non-forced removal. The manifest and removal
+log are retained. Older real-cluster anonymous volume IDs were not retained,
+and the Docker event window no longer contains those mount records. Such
+unattributable volumes cannot safely be selected or deleted on this shared
+host; they remain untouched. The label/name audit proves only recorded scoped
+objects absent and does not establish that every historical anonymous child
+was removed. This host-cleanup limitation remains explicit for the coordinator.

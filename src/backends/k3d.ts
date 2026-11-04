@@ -91,7 +91,7 @@ export const deleteCluster = async (owner: ProjectOperation): Promise<void> => {
   for (const kind of ["container", "volume", "network"] as const) {
     for (const receipt of owner.resources().filter(r => r.source === "k3d" && r.kind === kind)) {
       if (await verifyResource(owner, receipt)) {
-        const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force"] : []), kind === "volume" ? receipt.name : receipt.id], {
+        const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force", "--volumes"] : []), kind === "volume" ? receipt.name : receipt.id], {
           kind: `owned-${kind}-delete`, effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
         });
         if (await verifyResource(owner, receipt)) throw new SiloError(`CLEANUP_REQUIRED: deletion left ${receipt.kind}/${receipt.name}`, "CLEANUP_REQUIRED");

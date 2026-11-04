@@ -28,7 +28,8 @@ delete safeEnv.USER;
 delete safeEnv.LOGNAME;
 const processes = new Set<Bun.Subprocess>();
 const projects: string[] = [];
-const cleanupObjects: { kind: "container" | "network" | "volume"; id: string; name: string; created: string }[] = [];
+const FixtureSnapshotSchema = z.array(z.object({ Mounts: z.array(z.object({ Destination: z.string() }).passthrough()).optional() }).passthrough());
+const cleanupObjects: { kind: "container" | "network" | "volume"; id: string; name: string; created: z.infer<typeof FixtureSnapshotSchema> }[] = [];
 let commandNumber = 0;
 const ResultSchema = z.object({
   code: z.string().optional(), changed: z.boolean().optional(), legacy: z.boolean().optional(), found: z.array(z.object({ path: z.string() }).passthrough()).optional(),
@@ -227,6 +228,11 @@ async function legacy() {
   log({ scenario: "paused old operation drained before cutover; reverse lock-only reservation refused until owner down", pass: true });
 }
 async function docker(argv: string[]) { const r = await command(root, ["docker", ...argv]); assert.equal(r.code, 0, r.stderr); return r.stdout.trim(); }
+async function fixtureSnapshot(kind: string, id: string) {
+  return FixtureSnapshotSchema.parse(JSON.parse(await docker([kind, "inspect", id]))).map(row => row.Mounts === undefined ? row : {
+    ...row, Mounts: [...row.Mounts].sort((a, b) => a.Destination < b.Destination ? -1 : a.Destination > b.Destination ? 1 : 0),
+  });
+}
 async function backend() {
   const p = project("backend");
   const cfg = readFileSync(path.join(p, "silo.toml"), "utf8");
@@ -236,9 +242,9 @@ async function backend() {
   await silo(p, ["down", "--clean"]);
   for (const [kind, objectName] of [["network", `k3d-${cluster}`], ["volume", `k3d-${cluster}-images`]] as const) {
     const id = await docker([kind, "create", "--label", `io.silo.rehearsal=${path.basename(root)}`, objectName]);
-    const created = await docker([kind, "inspect", id]); cleanupObjects.push({ kind, id, name: objectName, created });
+    const created = await fixtureSnapshot(kind, id); cleanupObjects.push({ kind, id, name: objectName, created });
     appendFileSync(resourceFile, `${kind} ${id} name=${objectName}; teardown docker ${kind} rm ${id} after exact inspect identity comparison\n`);
-    await silo(p, ["env", name(p)], "NAME_CONFLICT"); assert.equal(await docker([kind, "inspect", id]), created);
+    await silo(p, ["env", name(p)], "NAME_CONFLICT"); assert.deepEqual(await fixtureSnapshot(kind, id), created);
     await docker([kind, "rm", id]); cleanupObjects.pop();
   }
   for (const file of [".localnet.env", ".localnet/kubeconfig"]) {
@@ -248,20 +254,27 @@ async function backend() {
   await silo(p, ["env", name(p)]); await silo(p, ["ci", "--timeout=120s"]);
   const made = await state(p); assert(made.resources.some(r => r.name === `${cluster}-registry.localhost`)); assert(made.resources.some(r => r.kind === "volume"));
   const images = new Map<string, string>();
-  for (const receipt of made.resources.filter(r => r.kind === "container")) images.set(receipt.name, await docker(["container", "inspect", receipt.id, "--format", "{{.Config.Image}}"]));
+  const attachedVolumes = new Set<string>();
+  for (const receipt of made.resources.filter(r => r.kind === "container")) {
+    images.set(receipt.name, await docker(["container", "inspect", receipt.id, "--format", "{{.Config.Image}}"]));
+    const mounts = z.array(z.object({ Type: z.string(), Name: z.string().optional() })).parse(JSON.parse(await docker(["container", "inspect", receipt.id, "--format", "{{json .Mounts}}"] )));
+    for (const mount of mounts) if (mount.Type === "volume" && mount.Name) attachedVolumes.add(mount.Name);
+  }
+  log({ scenario: "owned container volume handles before deletion", names: [...attachedVolumes] });
   log({ scenario: "real k3d cluster/registry/network/volume and kubeconfig receipts", resources: made.resources, pass: true });
   await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED"); assert(existsSync(path.join(p, ".silo.lock")));
   await silo(p, ["down", "--delete-cluster", "--clean"]); assert.equal((await silo(p, ["status"])).project?.allocation, null);
   for (const receipt of made.resources) {
     const result = await command(root, ["docker", receipt.kind, "inspect", receipt.kind === "volume" ? receipt.name : receipt.id]); assert.notEqual(result.code, 0);
   }
+  for (const volume of attachedVolumes) assert.notEqual((await command(root, ["docker", "volume", "inspect", volume])).code, 0);
   for (const [objectName, role] of [[`k3d-${cluster}-server-0`, "server"], [`${cluster}-registry.localhost`, "registry"]]) {
     const image = images.get(objectName!); assert(image);
     const id = await docker(["container", "create", "--name", objectName!, "--label", `io.silo.rehearsal=${path.basename(root)}`, "--label", "app=k3d", "--label", `k3d.cluster=${cluster}`, "--label", `k3d.role=${role}`, image]);
-    const created = await docker(["container", "inspect", id]); cleanupObjects.push({ kind: "container", id, name: objectName!, created });
+    const created = await fixtureSnapshot("container", id); cleanupObjects.push({ kind: "container", id, name: objectName!, created });
     appendFileSync(resourceFile, `synthetic stopped k3d ${role} container ${id} name=${objectName}; teardown docker container rm ${id} after exact inspect comparison\n`);
-    await silo(p, ["env", name(p)], "NAME_CONFLICT"); assert.equal(await docker(["container", "inspect", id]), created);
-    await docker(["container", "rm", id]); cleanupObjects.pop();
+    await silo(p, ["env", name(p)], "NAME_CONFLICT"); assert.deepEqual(await fixtureSnapshot("container", id), created);
+    await docker(["container", "rm", "--volumes", id]); cleanupObjects.pop();
   }
   writeFileSync(path.join(p, ".silo.lock"), JSON.stringify({ version: 2, projectId: "unreceipted-fixture", generation: 1 }));
   await silo(p, ["env", name(p)], "PATH_CONFLICT"); assert.equal(JSON.parse(readFileSync(path.join(p, ".silo.lock"), "utf8")).projectId, "unreceipted-fixture"); rmSync(path.join(p, ".silo.lock"));
@@ -269,11 +282,11 @@ async function backend() {
   const image = images.get(`k3d-${cluster}-server-0`); assert(image);
   const outside = `unclaimed-${path.basename(root).toLowerCase()}`;
   const outsideId = await docker(["container", "create", "--name", outside, "--label", `io.silo.project=${scoped.project.projectId}`, "--label", `io.silo.generation=${scoped.project.generation}`, image]);
-  const outsideCreated = await docker(["container", "inspect", outsideId]); cleanupObjects.push({ kind: "container", id: outsideId, name: outside, created: outsideCreated });
+  const outsideCreated = await fixtureSnapshot("container", outsideId); cleanupObjects.push({ kind: "container", id: outsideId, name: outside, created: outsideCreated });
   appendFileSync(resourceFile, `outside-claim synthetic container ${outsideId}; teardown exact ID after inspection\n`);
-  await silo(p, ["down", "--clean"], "NAME_CONFLICT"); assert.equal(await docker(["container", "inspect", outsideId]), outsideCreated);
+  await silo(p, ["down", "--clean"], "NAME_CONFLICT"); assert.deepEqual(await fixtureSnapshot("container", outsideId), outsideCreated);
   assert.deepEqual((await state(p)).claims, scoped.project.claims);
-  await docker(["container", "rm", outsideId]); cleanupObjects.pop(); await silo(p, ["down", "--clean"]);
+  await docker(["container", "rm", "--volumes", outsideId]); cleanupObjects.pop(); await silo(p, ["down", "--clean"]);
   await silo(p, ["env", name(p)], "ENGINE_UNAVAILABLE", { ...safeEnv, DOCKER_HOST: `unix://${root}/absent-docker.sock` });
   log({ scenario: "leftovers refused unchanged, retention holds claims, explicit exact deletion, unreachable engine refuses", pass: true });
 }
@@ -289,8 +302,8 @@ try {
 finally {
   for (const proc of processes) if (proc.exitCode === null) { proc.kill("SIGTERM"); await proc.exited; }
   for (const object of cleanupObjects) {
-    const current = await docker([object.kind, "inspect", object.id]);
-    assert.equal(current, object.created, "Refusing replacement fixture cleanup"); await docker([object.kind, "rm", object.id]);
+    const current = await fixtureSnapshot(object.kind, object.id);
+    assert.deepEqual(current, object.created, "Refusing replacement fixture cleanup"); await docker([object.kind, "rm", ...(object.kind === "container" ? ["--volumes"] : []), object.id]);
   }
   for (const p of projects) {
     try { await silo(p, ["down", "--delete-cluster", "--clean"]); }
