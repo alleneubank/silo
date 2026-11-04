@@ -169,7 +169,7 @@ describe("atomic account leases", () => {
     const canary = path.join(root, "must-not-exist");
     try {
       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
-      await expect(runOwnedCommand(op, ["/bin/sh", "-c", "touch must-not-exist"], {
+      await expect(runOwnedCommand(op, ["/bin/sh", "-c", "printf executed > must-not-exist"], {
         kind: "refused-supervisor", effect: "create", timeoutMs: 5000, env: { PATH: bin },
       })).rejects.toMatchObject({
         code: "LAUNCH_FAILED",

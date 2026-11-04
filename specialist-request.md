@@ -3,7 +3,7 @@
 Status: round 1 returned **changes required** at `5344574`;
 [its verdict](evidence/atomic-allocation/specialist-r1/verdict-specialist-r1.md)
 is retained verbatim. Request a fresh review at executable source
-`80f4974d0f9e2db056ceb7ba771fe12597d5afad` (later commits are document/evidence
+`80f4974d0f9e2db056ceb7ba771fe12597d5afad` (later commits change tests/records
 only), artifact `9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894`.
 The final source also preserves bounded supervisor diagnostics on pre-grant
 startup failures; inspect its error propagation and retained-claim behavior.

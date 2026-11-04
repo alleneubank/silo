@@ -58,9 +58,14 @@ on changed GIT_DIR, stdin, a mock launch gate, or skipped hook commands.
 
 The permanent contract case supplies a refusing supervisor executable. It
 asserts the diagnostic/exit status received by the caller, the absent tool
-sentinel, planned launch and retained claims. It fails against unchanged
-product code ([diagnostic-red.log](diagnostic-red.log)) and passes after the
-correction ([diagnostic-green.log](diagnostic-green.log)). That fixture replaces
+sentinel, planned launch and retained claims. Its sentinel uses the shell's
+`printf` builtin so execution is detectable even with the deliberately isolated
+PATH. It fails against unchanged product code
+([diagnostic-builtin-red.log](diagnostic-builtin-red.log)) and passes after the
+correction ([diagnostic-builtin-green.log](diagnostic-builtin-green.log)). The
+earlier case used external `touch`, which could itself be unavailable on that
+PATH; author verification corrected that oracle before closeout and retained
+both original and final observations. That fixture replaces
 only the external supervisor's startup failure; it does not qualify Janitor.
 The real Janitor and public CLI are exercised separately below.
 
@@ -85,7 +90,9 @@ Build provenance: the public run recorded bf51f59 plus source diff SHA-256
 `56bda1b082238141ab8e0f4863f7a2b0dad2060106aa1658b643d93ef1701fb0` and the CLI
 digest above. After commit, `git diff bf51f59 80f4974` over all three changed
 source/doc inputs has that identical diff digest. Commit hooks changed none of
-those inputs. Later evidence-only commits reuse this identity.
+those inputs. The later sentinel-only test change leaves product inputs and
+the built artifact unchanged; final push hooks run all 130 cases with that
+corrected test. Later evidence-only commits reuse this identity.
 
 ## Noticed and not checked
 

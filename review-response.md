@@ -7,8 +7,8 @@ The implementation correction is `6ffaa5bf18c0f33a828dad36d61e7d9cd60fa4c7`.
 allocation guest. Current executable source
 `80f4974d0f9e2db056ceb7ba771fe12597d5afad` additionally preserves supervisor
 startup diagnostics and adds a native-test dependency preflight. Its allocation,
-grant and retirement paths remain unchanged; later records-only commits reuse
-those covered inputs.
+grant and retirement paths remain unchanged; later test/records-only changes
+leave that executable unchanged.
 This response requests re-review; it does not claim specialist approval.
 
 | Finding | Disposition and observed evidence |
