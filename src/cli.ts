@@ -162,7 +162,7 @@ Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
 
 Options:
-  -f, --force     Regenerate ports even if lockfile exists
+  -f, --force     Reconfigure only stopped, reconciled state
   -p, --profile   Use named profile for env generation
   --timeout       Passed through to tilt ci --timeout
   --export-ci     Export env vars to $GITHUB_ENV (auto in CI)
