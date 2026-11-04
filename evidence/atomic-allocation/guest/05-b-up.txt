@@ -1,0 +1,20 @@
+silo info: Profile: alternative
+silo warn: Port TILT_PORT in use (48142), allocated 49154
+silo info: Generated env file at /tmp/guest/b/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/guest/b/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/guest/b/.localnet.env
+silo info: Wrote lockfile
+silo info: Tilt API is on port 49154 (pid-alive is not resource health).
+silo info:   tilt get uiresources --port 49154
+silo info:   silo doc tilt
+Tilt started on http://127.0.0.1:49154/
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+
+Initial Build
+Loading Tiltfile at: /tmp/guest/b/Tiltfile
+Successfully loaded Tiltfile (281.647µs)
+        guest │ 
+        guest │ Initial Build
+        guest │ Running cmd: while :; do sleep 1; done

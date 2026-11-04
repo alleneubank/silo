@@ -1,0 +1,6 @@
+{
+  runtime: "1.4.4",
+  uid: 1002,
+  userinfoHome: "/unrelated-home",
+  homedir: "/unrelated-home",
+}

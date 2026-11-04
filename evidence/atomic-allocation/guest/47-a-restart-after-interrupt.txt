@@ -1,0 +1,3 @@
+silo info: Reusing profile 'alternative' from lockfile
+silo info: Profile: alternative
+silo error: CLEANUP_REQUIRED: reconcile this generation with down before starting again

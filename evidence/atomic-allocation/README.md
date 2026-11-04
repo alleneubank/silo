@@ -20,10 +20,12 @@ shared engine; only newly owned fixture objects were mutated.
 
 High-risk basis: Kimi's r3 plan verdict `approve with conditions` at plan SHA
 `0226cebaa39b2ef50a390f828be57781c72c343907315f60c8cfa99997f2aadf`, the owner's
-23:3xZ stop/recreate choice, and r5 SHA
+23:3xZ stop/recreate choice, and the r5 refusal revision SHA
 `a205fbf98d130573daca1927b95944ac9bfc32386e725e8d3cbc5011a3bb8b4f`
 with the owner's 00:4xZ choice A: all permitted old invocations upgraded or
 retired and every old operation terminal before the first clean scan/allocation.
+The final plan-review verdict still requested that precondition; the owner
+closed it explicitly. No standalone r5 approval is claimed.
 Original approval records are in the coordinator's boss-mobile-release handoff.
 The implementation specialist and native Mac qualification remain pending;
 this record is not approval to merge or release.
@@ -68,9 +70,9 @@ These controls prove those named failures, not all old-version behavior.
 
 Preserved failures and corrections:
 
-- First serving-owner crash left a local server alive. Executor signal
-  forwarding duplicated Janitor's whole-group signal; removing it made the
-  repeated native crash pass. Both records are retained.
+- First serving-owner crash left a local server alive. The repeat passed after
+  redundant executor signal forwarding was removed. Both records are retained;
+  this sequence does not isolate it as the only possible causal input.
 - Bun 1.4.4's userInfo home followed HOME in a direct experiment, despite the
   [documented API](https://bun.com/reference/node/os/userInfo). Native account
   queries and a scrubbed-HOME regression replace that runtime assumption.
@@ -88,8 +90,10 @@ Preserved failures and corrections:
 ## Verdicts and gaps
 
 The packaged-skill comparison is a decision-only pilot; both arms used current
-docs successfully. It establishes no causal effectiveness gain. Guest verdict
-will be recorded separately against the same immutable package artifact.
+docs successfully. It establishes no causal effectiveness gain. The fresh
+[guest verdict](guest/verdict-guest.md) is green against the same immutable
+artifact, with real Tilt API and k3d observations and capture links. It does
+not qualify browser UI, valuable-data recovery or the unchecked classes below.
 No implementation specialist verdict ran; see the cross-provider request.
 
 Not checked: macOS/APFS or other CPU architectures; real data-bearing foreign
@@ -99,3 +103,19 @@ request deliberately losing its completion during daemon outage; every
 instruction-level crash timing. These stay explicit gaps and release gates,
 with no waiver. No BOSS repo, peer registry, existing project, shared builder,
 credential configuration, tag, release, npm publication or merge was changed.
+
+Source revision: `e4e77aa978cca4aa8210b0695123a7b8e7fa402d`. The author
+observed its commit hooks pass lint, format and typecheck. The final public harness
+also covers an actual owner SIGKILL before grant and a failed Tilt down retry;
+both passed. Raw `.log` evidence is intentionally retained despite this host's
+global log-ignore preference.
+
+The final full example was repeated at e4e77aa and the exact artifact digest
+above; example-built.log records both before launch. example-status.json now
+contains that built run's `/mnt/dist/cli.js` identities, with matching health
+and clean records. Selected raw native refusals are in native-refusals.json.
+Fresh typecheck/lint/skill-validator outputs are retained. The historical
+source-commit hook result is author-observed; later evidence-commit hooks have
+a separate retained [output](commit-hooks.log). The guest's stopped/reconciliation hesitation was
+addressed in troubleshooting copy only; executable source and digest stayed
+unchanged.

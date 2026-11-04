@@ -52,6 +52,10 @@ TCP/UDP listener blocks clean and reallocation.
 
 ## CLEANUP_REQUIRED
 
+After Ctrl+C, `stopped` means the Tilt process stopped. Its workload receipt
+may still need reconciliation. Run `down` before restarting; a stopped process
+alone is not a reconciled generation. The restart error names this condition.
+
 Retained resources, uncertain requests, missing executor completion facts or
 live/unknown groups prevent claim release. `status --json` lists the recorded
 launches, exact objects and problem. `down --clean` keeps snapshots and claims

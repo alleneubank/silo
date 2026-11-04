@@ -183,8 +183,8 @@ commands; the other bundled topics define their respective product surfaces.
 
 ## Acceptance and release gates
 
-The breaking release is 1.0.0. It remains a draft pending matching specialist
-review and native Linux/macOS rehearsals. No release or actual host-wide
+The breaking release is 1.0.0. Release requires matching specialist review
+and native Linux/macOS rehearsals. No release or actual host-wide
 cutover is implied by a feature branch. The approved basis is plan r3 §§1–3,
 plan r5 and the owner's explicit stop/recreate and cutover-precondition
 choices. The implementation does not authorize stopping existing projects.
