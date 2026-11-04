@@ -1,0 +1,6 @@
+{"domain":"account","projects":78,"active":0}
+{"domain":"guest-account","projects":5,"active":0}
+{"kind":"container","remainingOwnedObjects":0}
+{"kind":"network","remainingOwnedObjects":0}
+{"kind":"volume","remainingOwnedObjects":0}
+{"result":"pass","engine":"86f30b48-26b3-4a5b-8f5c-8c97fe963463","resourceMutation":false,"cache":"shared image/build cache retained"}

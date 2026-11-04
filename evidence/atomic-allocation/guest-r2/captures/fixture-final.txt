@@ -1,0 +1,6 @@
+total 20
+drwxrwxr-x 3 ae ae 4096 Nov  4 03:44 .
+drwxrwxr-x 4 ae ae 4096 Nov  4 03:43 ..
+drwxrwxr-x 2 ae ae 4096 Nov  4 03:44 .localnet
+-rw-rw-r-- 1 ae ae   56 Nov  4 03:42 Tiltfile
+-rw-rw-r-- 1 ae ae  172 Nov  4 03:42 silo.toml

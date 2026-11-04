@@ -148,7 +148,8 @@ A full repeated local run safely refused clean when a declared port could not
 be proved free; a fresh socket query later found it absent and ordinary owner
 clean succeeded. This was not bypassed or graded as a passing full rerun.
 Earlier full-flow evidence covers unchanged code; the corrected deletion path
-has its separate native run and requires refreshed guest coverage.
+has its separate native run; refreshed guest coverage was pending at that point
+and is recorded below.
 
 Historical cleanup gap: earlier experimental container removals omitted the
 anonymous-volume flag. Exact old native inspect captures identified 25 unused
@@ -160,3 +161,19 @@ unattributable volumes cannot safely be selected or deleted on this shared
 host; they remain untouched. The label/name audit proves only recorded scoped
 objects absent and does not establish that every historical anonymous child
 was removed. This host-cleanup limitation remains explicit for the coordinator.
+
+Current executable source: `d6590a5bb129cb90cb50bb1617bfe3ac966d907b`,
+artifact `1a09c9812329a16342f95b7c006ddd5d844f611c6dbb3b5febca6a0e21396abc`.
+[linux-native-final.log](linux-native-final.log) is a passing full all-suite run
+at that source, after the external port became free. The refreshed
+[deletion guest](guest-r2/verdict-guest.md) is green at that artifact, including
+an unchanged named control-volume sentinel. Hosted CI and example jobs also
+passed at that source; github-checks-d659.json records their exact run URLs.
+The two earlier hosted failures remain retained and attributed.
+
+The refreshed guest initially inspected full labels into a private capture,
+which included an ephemeral fixture token. The capture was replaced with
+identity/mount allowlisting and the exact cluster was promptly destroyed.
+The retained node capture exposes only allowlisted identity/mount fields; the
+fixture's destruction invalidated that token. This inspection mistake does not
+change the explicitly stated host-cleanup provenance gap.

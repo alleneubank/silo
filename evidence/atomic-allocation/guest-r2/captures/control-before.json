@@ -1,0 +1,14 @@
+[
+    {
+        "CreatedAt": "2026-11-04T03:43:35Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.guest": "guest-r2",
+            "purpose": "unrelated-control"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/guest-r2-control-20261104-0345/_data",
+        "Name": "guest-r2-control-20261104-0345",
+        "Options": null,
+        "Scope": "local"
+    }
+]

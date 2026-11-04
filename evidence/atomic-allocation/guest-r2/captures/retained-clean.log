@@ -1,0 +1,4 @@
+runner PID=1363589
+1363589 1363589 1363589 sh -c printf "runner PID=%s\n" "$$"; ps -o pid=,pgid=,sid=,args= -p "$$"; timeout 90 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/guest-r2-silo /tmp/guest-r2/retained down --clean --json; result=$?; printf "exit=%s\n" "$result"; exit "$result"
+{"schemaVersion":1,"code":"CLEANUP_REQUIRED","message":"CLEANUP_REQUIRED: retained resources (container/k3d-localnet-guest-r2-retained-server-0, container/k3d-localnet-guest-r2-retained-serverlb, network/k3d-localnet-guest-r2-retained, volume/k3d-localnet-guest-r2-retained-images); ownership snapshots and claims kept. Use explicit owned cluster deletion or resolve retained data with its owner."}
+exit=1
