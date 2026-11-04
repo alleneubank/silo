@@ -2,9 +2,11 @@
 
 Status: round 1 returned **changes required** at `5344574`;
 [its verdict](evidence/atomic-allocation/specialist-r1/verdict-specialist-r1.md)
-is retained verbatim. Request a fresh review at corrected executable source
-`4b0a9323f65fef62dfa82936d292110ef6714d40` (later commits are document/evidence
-only), artifact `2675670dc14c3db290a18956f0fdd57f443d7e062b82b2b65e79b64e22e0318e`.
+is retained verbatim. Request a fresh review at executable source
+`80f4974d0f9e2db056ceb7ba771fe12597d5afad` (later commits are document/evidence
+only), artifact `9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894`.
+The final source also preserves bounded supervisor diagnostics on pre-grant
+startup failures; inspect its error propagation and retained-claim behavior.
 No corrected-head specialist approval has been claimed.
 Keep the PR draft. Run one reviewer on a provider different from the author
 (Codex/OpenAI), read-only and without the author's profile/AGENTS instructions.
@@ -38,6 +40,10 @@ and all changed callers, including the example and workflows.
 - macOS native account lookup, Darwin PID/group behavior, APFS case and Unicode
   aliases, directory fsync, Intel/Apple Silicon distributed artifacts. The Mac
   run is pending; [macos-rehearsal.md](macos-rehearsal.md) gives the commands.
+- The coordinator's original macOS real-push failure. Linux reproduces the
+  same three failures with an unconfigured mise Janitor shim, and passes an
+  actual local-bare push with native Janitor. That does not establish the Mac
+  cause. Native-binary fixture preflight and actual Mac push remain necessary.
 - Live third-party Docker requests that complete after a lost executor fact;
   required behavior is retained cleanup uncertainty, not guessed cancellation.
 - Real stopped foreign k3d topologies with persistent data. The leftover server

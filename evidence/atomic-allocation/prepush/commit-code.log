@@ -1,0 +1,20 @@
+╭───────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-commit[m │
+╰───────────────────────────────────────╯
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 15ms on 2 files with 90 rules using 32 threads.
+
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 15ms on 2 files with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 1.30 seconds)
+✓ format (0.05 seconds)
+✓ lint (0.05 seconds)
+✓ typecheck (1.29 seconds)
+[feat/atomic-allocation 80f4974] fix(launch): preserve supervisor startup diagnostics
+ 3 files changed, 49 insertions(+), 4 deletions(-)

@@ -49,6 +49,24 @@ follow HOME on Linux. Confirm the regression under macOS:
 HOME="$TMPDIR/scrubbed-home" USER=unrelated LOGNAME=unrelated bun test src/core/allocation_domain.test.ts
 ```
 
+Also qualify the actual Git hook path without a network push:
+
+```sh
+mkdir -p "$TMPDIR/hook-probe"
+(cd "$TMPDIR/hook-probe" && janitor version)
+git init --bare "$TMPDIR/hook-push.git"
+git push "$TMPDIR/hook-push.git" HEAD:refs/heads/rehearsal
+```
+
+The fixture-directory probe and real push must succeed with Janitor 0.3.1.
+Put its installed binary directory ahead of version-manager shims on PATH if
+the probe fails; do not skip hooks or configure credentials. The Linux author
+reproduced the three handshake failures with an unconfigured mise shim, and
+the real local-bare push passed with the native binary. The original macOS
+failure's cause is not established by that Linux result. If it persists with
+the native binary, retain the new preflight/launch diagnostic and stop; neither
+`bun test` nor a direct `lefthook run pre-push` substitutes for this push.
+
 Only after verifying that this is the disposable account:
 
 ```sh

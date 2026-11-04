@@ -67,11 +67,12 @@ the store with empty state. This proposal authorizes no downgrade or deletion.
 
 ## Evidence
 
-Current executable source: `4b0a9323f65fef62dfa82936d292110ef6714d40`, CLI
-SHA-256 `2675670dc14c3db290a18956f0fdd57f443d7e062b82b2b65e79b64e22e0318e`.
-Its parent `6ffaa5b` contains the allocation correction; 4b0a932 changes only
-one CI-help sentence after the guest. Later document/evidence commits reuse
-unchanged behavioral inputs.
+Current executable source: `80f4974d0f9e2db056ceb7ba771fe12597d5afad`, CLI
+SHA-256 `9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894`.
+The allocation correction is at `6ffaa5b`; `4b0a932` changes one CI-help sentence.
+The current source adds bounded supervisor startup diagnostics and a native-test
+fixture-directory dependency preflight. Grant, effect and cleanup ordering are
+unchanged; earlier allocation evidence is reused for those unchanged inputs.
 
 Author environment: ae-dev Linux x86_64/ext4, Bun 1.4.4 / SQLite 3.53.4,
 Docker 29.9.2, k3d 5.9.0, Janitor 0.3.1, Tilt 0.37.8 fork. The built public CLI
@@ -80,7 +81,10 @@ Docker mutations were limited to new exact fixture handles.
 
 | Scenario / check | Observed |
 | --- | --- |
-| Required checks | 129 Bun tests, typecheck, lint, knip, jscpd (zero clones), build and commit hooks pass. Local pre-push hook passes all commands; no Git network call was made by this revision lane. |
+| Required checks | 130 Bun tests, typecheck, lint, knip, jscpd (zero clones), build and commit hooks pass. Actual `git push` of committed 80f4974 to an owned local bare repository runs every pre-push command successfully. No Git network call was made by this revision lane. |
+| Real-push failure investigation | With an unconfigured mise Janitor shim, actual local-bare push reproduces all three handshake failures; stderr identifies missing runtime configuration. Plain native-gate tests also fail in that PATH. The unchanged bf51f59 source passes real local and locally emulated SSH-transport pushes with native Janitor 0.3.1. This establishes the reproduced Linux environment failure, not the original Mac cause. |
+| Supervisor refusal regression / author run | New diagnostic case fails before the source change and passes after; tool sentinel remains absent and claims retained. Built public CLI with actual unconfigured mise shim reports the underlying error, exit status and launch identity, with no hook execution or changed claims/env bytes. Restored native Janitor completes real Tilt CI and public clean; final fixture claims are empty and recorded launch PIDs absent. |
+| Fresh supervisor-error guest | Green at 80f4974 / 9965e0b2: repeated text/JSON refusals preserve claims and both snapshot hashes; native CI runs the hook exactly once; public/repeated clean and invalid-profile checks leave no ownership. Guest fixture removed. |
 | Applicable baseline controls | 9882041 duplicate lock-only ports/output escape and 0.9.0 failed-teardown controls retained. New 0.9.0 public control adopts an unchanged same-name fixture node, then a different root deletes it. 0.5.9 deletes a peer reservation with absent lock; the same 0.9.0 control preserves it, so that GC class is absent there. |
 | Six correction cases | Dropped role, capitalization-only retarget, publish/delete parent-sync retry, short append and interrupted-append retirement all fail on pre-fix 5344574 and pass on the correction. Actual SQLite/filesystem effects remain real except the named injected failure. |
 | Author's full Linux rehearsal | Pass with zero-exit fixture cleanup: concurrent lock-only/live A+B; legacy/cutover and paused old writer; squatter; pre-grant/post-rename crashes; peer preservation; aliases; failed teardown/retry; exact k3d create/retain/delete and child-volume removal. |
@@ -89,7 +93,8 @@ Docker mutations were limited to new exact fixture handles.
 | Fresh full example | At 4b0a932 / 2675670d, original inputs pass CI, web/API availability and identities, complete GITHUB_ENV append with no uncertain sink, and public owner cleanup. |
 | Scoped closeout | Both disposable stores have zero active generations; no recorded object/mount handle or launched PID remains. Historical unattributable volumes and shared caches are preserved. |
 
-Records: [current evidence and class audit](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/specialist-r1/README.md),
+Records: [real-push and supervisor-error evidence](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/prepush/README.md),
+[allocation correction and class audit](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/specialist-r1/README.md),
 [full evidence index](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/README.md),
 [review response](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/review-response.md),
 [fresh guest](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/specialist-r1/guest/verdict-guest.md),
@@ -105,7 +110,9 @@ The [independent claim fact check](https://github.com/alleneubank/silo/blob/feat
 supports the recorded observations with provenance limits. It is separate
 from the required implementation specialist verdict.
 
-**Noticed:** the first extra example's k3s bootstrap failed and original Tilt
+**Noticed:** the supervisor-error guest observed raw mise ANSI escapes inside
+the valid JSON diagnostic; no normalization guarantee is claimed. The first
+extra example's k3s bootstrap failed and original Tilt
 down could not reach its API. Both failures and exact fixture teardown remain
 captured. A fresh generation with the original inputs passed; this does not
 establish a general reliability or pre-existing-failure conclusion. Compose
@@ -114,7 +121,8 @@ and removed under the fixture grant. Automatic arbitrary Compose child-volume
 removal is not claimed; native k3d child removal is observed separately.
 
 **Not checked / release holds:** corrected-head specialist approval, new hosted
-CI, native macOS/APFS case modes/account/process behavior/directory sync and
+CI, the original macOS real-push failure after native-binary preflight, native
+macOS/APFS case modes/account/process behavior/directory sync and
 Intel/Apple Silicon artifacts; real data-bearing foreign topology, lost live
 daemon completion, alternate/remote engines, Docker IPv6 publication races,
 Tilt's internal API-listener failure and every instruction-level interruption;

@@ -4,7 +4,11 @@ All four findings are **supported**. The reviewed proposal was
 `5344574fd4f380c86f625a84bcd7ccb6d2918643` (executable source `d6590a5`).
 The implementation correction is `6ffaa5bf18c0f33a828dad36d61e7d9cd60fa4c7`.
 `4b0a9323f65fef62dfa82936d292110ef6714d40` changes only CI help copy after the
-fresh guest; later evidence/document commits do not change executable behavior.
+allocation guest. Current executable source
+`80f4974d0f9e2db056ceb7ba771fe12597d5afad` additionally preserves supervisor
+startup diagnostics and adds a native-test dependency preflight. Its allocation,
+grant and retirement paths remain unchanged; later records-only commits reuse
+those covered inputs.
 This response requests re-review; it does not claim specialist approval.
 
 | Finding | Disposition and observed evidence |
@@ -42,14 +46,39 @@ scope and observations are in the [evidence record](evidence/atomic-allocation/s
 
 ## Qualification and remaining gates
 
-129 Bun tests, typecheck, lint, knip, jscpd, build, commit hooks and a locally
-invoked pre-push hook passed. The author drove the full native Linux public-CLI
+130 Bun tests, typecheck, lint, knip, jscpd, build, commit hooks and an actual
+local-bare push of 80f4974 passed. The author drove the full native Linux public-CLI
 suite at the corrected allocation source; the later help-only change reuses
 those unchanged observations. The fresh example at `4b0a932` passed CI, web/API
 availability and identities, complete CI export, and public retirement. The
 guest is green at the corrected allocation artifact, including repeats and
 interruption; its stale CI-help observation was corrected and the built help
 was driven afterward.
+
+## Addendum 3: actual push and supervisor failure
+
+The three handshake failures are reproduced on Linux by a real local-bare
+push when PATH resolves the existing unconfigured mise Janitor shim. Temporary
+diagnostics reveal `No version is set for shim: janitor`; the same PATH also
+fails outside Git. With the actual Janitor 0.3.1 binary selected, unchanged
+bf51f59 passes both real local transport and Git's SSH transport to a locally
+executed receive-pack. No network connection is used. The original Mac
+failure's cause remains **unresolved**: the Linux result does not attribute it.
+
+The supported diagnostic defect is fixed at the launch boundary: an early
+supervisor exit retains its stderr/status and the original cause, without
+changing the durable grant or cleanup ordering. The new contract case fails
+before that correction and passes after, with its tool sentinel absent and
+claims retained. Native tests now fail before allocation if Janitor cannot
+run from their fixture directory. Selecting the installed binary on PATH
+corrects the reproduced tool environment without global configuration edits.
+
+The author drove the built public CLI with actual mise/native Janitor and
+Tilt: refusal preserves bytes/claims and runs no hook; restoring PATH allows
+real CI and public cleanup. A fresh guest independently passes repeated text/
+JSON refusals, native CI and final empty claims. Its ANSI-in-JSON observation
+is retained as polish, not a new correctness or specialist approval claim.
+See [records and limitations](evidence/atomic-allocation/prepush/README.md).
 
 The first extra example hit a k3s bootstrap/API failure and its original Tilt
 teardown also failed. Those failures remain captured; they are not called
@@ -63,5 +92,6 @@ Keep PR #58 draft. A matching profile-free cross-provider specialist verdict,
 native macOS/APFS and architecture qualification, explicit merge/release
 approval, the final versioned artifact qualification, and the real owner-led
 host cutover remain open. Historical unattributable anonymous volumes are
-preserved as settled by addendum 1. No waiver, push, merge, tag, release, npm
-publication or real-project recreation occurred in this revision lane.
+preserved as settled by addendum 1. No waiver, Git network call, merge, tag,
+release, npm publication or real-project recreation occurred in this revision
+lane. Only explicitly owned local-bare Git refs were pushed for verification.

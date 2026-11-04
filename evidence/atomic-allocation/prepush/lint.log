@@ -1,0 +1,3 @@
+$ bunx oxlint .
+Found 0 warnings and 0 errors.
+Finished in 18ms on 69 files with 90 rules using 32 threads.

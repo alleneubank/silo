@@ -1,0 +1,23 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/lease_store.test.ts:
+17 | beforeAll(() => {
+18 |   const root = mkdtempSync(path.join(os.tmpdir(), "silo-supervisor-preflight-"));
+19 |   try {
+20 |     const result = Bun.spawnSync(["janitor", "version"], { cwd: root, stdout: "pipe", stderr: "pipe", timeout: 2000 });
+21 |     if (result.exitCode !== 0) {
+22 |       throw new Error(`Native launch tests require runnable Janitor on PATH from fixture directories (see README prerequisites). ${result.error?.message ?? ""} ${result.stderr.toString().slice(-4096)}`.trimEnd());
+                                                                                                                                                                                                                        ^
+error: Native launch tests require runnable Janitor on PATH from fixture directories (see README prerequisites).  mise ERROR No version is set for shim: janitor
+Set a global default version with one of the following:
+mise use -g github:alleneubank/janitor@0.2.3
+mise use -g github:alleneubank/janitor@0.3.0
+mise use -g github:alleneubank/janitor@0.3.1
+mise ERROR Version: 2026.10.23 linux-x64 (2026-10-29)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+      at <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/lease_store.test.ts:22:212)
+(fail) (unnamed) [19.02ms]
+
+ 0 pass
+ 1 fail
+Ran 1 test across 1 file. [34.00ms]

@@ -1,7 +1,13 @@
 # Atomic allocation evidence
 
-Current executable source: `4b0a9323f65fef62dfa82936d292110ef6714d40`;
-artifact SHA-256 `2675670dc14c3db290a18956f0fdd57f443d7e062b82b2b65e79b64e22e0318e`.
+Current executable source: `80f4974d0f9e2db056ceb7ba771fe12597d5afad`;
+artifact SHA-256 `9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894`.
+The [real-push investigation](prepush/README.md) records the Linux shim
+failure, supervisor-error regression, fixture-directory preflight, native
+public-CLI rehearsal and actual local-bare push with 130 passing tests.
+The original Mac failure remains unqualified here. The launch change retains
+diagnostics after the existing drain and leaves the grant/claim paths intact.
+
 The [specialist-round correction record](specialist-r1/README.md) contains the
 whole-class audit, all four review responses, six retained pre-fix failures,
 129 passing tests, fresh Linux rehearsal, missing baseline controls, fresh
@@ -9,7 +15,7 @@ guest and full example, preserved failures and scoped teardown. Round 1 was
 **changes required** at 5344574; corrected-head specialist re-review is pending.
 
 The records below are historical qualifications at their named source/artifact,
-including the earlier `6e5e0848` and `1a09c981` artifacts. Evidence-only commits
+including `4b0a932`, `6e5e0848` and `1a09c981` artifacts. Evidence-only commits
 reuse observations while covered inputs stay unchanged. The package remains
 0.9.0 until the approved 1.0.0 changeset runs. No versioning, release or actual
 host cutover occurred. Historical unattributable anonymous volumes are

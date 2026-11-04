@@ -1,0 +1,20 @@
+silo info: Removed owned snapshots and released this generation's claims.
+{"schemaVersion":1,"legacy":false,"changed":true,"project":{"schemaVersion":1,"projectId":"f9dc7538-d494-4b39-b351-a4bdbeed85e2","root":"/tmp/guest-project","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+clean_exit=0
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"f9dc7538-d494-4b39-b351-a4bdbeed85e2","root":"/tmp/guest-project","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+total 20
+drwxrwxr-x 2 ae ae 4096 Nov  4 05:40 .
+drwxrwxr-x 9 ae ae 4096 Nov  4 05:39 ..
+-rw-rw-r-- 1 ae ae   62 Nov  4 05:39 Tiltfile
+-rw-rw-r-- 1 ae ae    8 Nov  4 05:40 hook-sentinel
+-rw-rw-r-- 1 ae ae  202 Nov  4 05:39 silo.toml
+silo info: No allocated instance. Nothing to stop.
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"f9dc7538-d494-4b39-b351-a4bdbeed85e2","root":"/tmp/guest-project","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+repeat_clean_exit=0
+{"schemaVersion":1,"code":"PROFILE_MISSING","message":"No profiles defined in config"}
+invalid_profile_exit=1
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"f9dc7538-d494-4b39-b351-a4bdbeed85e2","root":"/tmp/guest-project","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+recorded_child_1803096=absent
+recorded_child_1803098=absent
+recorded_child_1803676=absent
+recorded_child_1803677=absent
