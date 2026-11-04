@@ -1,0 +1,52 @@
+╭───────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-commit[m │
+╰───────────────────────────────────────╯
+│  lint (skip) no files for inspection
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 14ms on 0 files with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 1.30 seconds)
+✓ format (0.05 seconds)
+✓ typecheck (1.30 seconds)
+[feat/atomic-allocation b96e18b] docs(allocation): record corrected cleanup qualification and limits
+ 38 files changed, 944 insertions(+), 1 deletion(-)
+ create mode 100644 evidence/atomic-allocation/claims-check-d659.md
+ create mode 100644 evidence/atomic-allocation/cleanup-audit.log
+ create mode 100644 evidence/atomic-allocation/github-checks-d659.json
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/build.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/ci.log
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/control-after.json
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/control-before.json
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/control-comparison.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/control-create.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/control-remove.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/control-removed.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/control-sentinel-after.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/control-sentinel-before.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/explicit-clean.log
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/fixture-final.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/network-after.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/node-mounts-before.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/nodes-after.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/nodes-still-retained.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/repeated-clean.log
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/retained-clean.log
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/sentinel-containers-removed.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/status-after-retained-clean.json
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/status-final.json
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/status-initial.json
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/status-retained.json
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/volumes-after.txt
+ create mode 100644 evidence/atomic-allocation/guest-r2/captures/volumes-before.json
+ create mode 100644 evidence/atomic-allocation/guest-r2/verdict-guest.md
+ create mode 100644 evidence/atomic-allocation/k3d-initial-clean.log
+ create mode 100644 evidence/atomic-allocation/k3d-initial-status.json
+ create mode 100644 evidence/atomic-allocation/linux-native-final.log
+ create mode 100644 evidence/atomic-allocation/orphan-parent-captures.json
+ create mode 100644 evidence/atomic-allocation/volume-cleanup-resources.txt
+ create mode 100644 evidence/atomic-allocation/volumes-typecheck.log
+ create mode 100644 pr-body.md
