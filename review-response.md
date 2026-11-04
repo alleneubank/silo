@@ -88,10 +88,47 @@ Compose teardown; it was individually verified unused and removed under the
 synthetic-fixture grant. This is separate from automatic k3d child-volume
 removal and does not authorize any historical anonymous-volume cleanup.
 
-Keep PR #58 draft. A matching profile-free cross-provider specialist verdict,
-native macOS/APFS and architecture qualification, explicit merge/release
+Keep PR #58 draft. Round 2 subsequently approved with conditions at fd710d9;
+the runtime reviewed there remains unchanged. Native macOS/APFS and architecture qualification, explicit merge/release
 approval, the final versioned artifact qualification, and the real owner-led
 host cutover remain open. Historical unattributable anonymous volumes are
 preserved as settled by addendum 1. No waiver, Git network call, merge, tag,
 release, npm publication or real-project recreation occurred in this revision
 lane. Only explicitly owned local-bare Git refs were pushed for verification.
+
+## Addendum 4: owner-crash completion observation
+
+**Supported probe synchronization defect; corrected without a product change.**
+The native Mac run killed the owner CLI, observed listener shutdown and then
+asserted immediately that status contained a completion. The preserved
+command 78 had none; the later retained store contained the same launch's
+exit-0 completion. The lifecycle contract separates child exit, executor
+publication and owner reconciliation. Read-only status does not perform that
+reconciliation, and listener shutdown does not imply the prior completion
+commit. The failure does not demonstrate permanently lost completion.
+
+The original live probe passed on Linux without instrumentation. A one-off
+schedule hold at the real completion INSERT then demonstrated public status
+with no exact completion after A's listener drained, followed by the same
+fact after release and successful owner cleanup, while B stayed unchanged.
+The corrected real live suite waited through two such missing-fact reads,
+then passed once the exact completion was published. The probe preserves
+every old assertion, adds exact launch/project/generation/group provenance,
+checks claims throughout and checks B again after the wait. It fails after
+the existing 30-second deadline if the fact never arrives. No product code,
+schema, CLI contract, timeout or assertion was weakened.
+
+At cf0b2b2, the full gates and uninstrumented public Linux all-suite passed;
+all 177 commands and fixture cleanup completed. Records, preserved failures,
+scope limits and teardown are in the
+[completion evidence](evidence/atomic-allocation/crash-completion/README.md).
+The native Mac preflight/real push passed before its later probe failure;
+the [Mac runbook](macos-rehearsal.md) now records the actual native PATH setup
+and completion boundary. Corrected native Mac qualification remains pending.
+
+The coordinator-supplied [round-2 specialist verdict](evidence/atomic-allocation/crash-completion/verdict-specialist-r2.md)
+is **approve with conditions** at fd710d9, with no blocking or should-fix
+findings. The product runtime and artifact are unchanged by this correction;
+product specialist round 3 is not initiated. Its native qualification,
+cutover and release conditions remain binding. No new guest, waiver, hosted
+CI result, merge or release approval is claimed.

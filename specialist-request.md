@@ -1,6 +1,16 @@
 # Cross-provider specialist request
 
-Status: round 1 returned **changes required** at `5344574`;
+Status: round 2 returned **approve with conditions** at `fd710d9`;
+[its verdict](evidence/atomic-allocation/crash-completion/verdict-specialist-r2.md)
+is retained verbatim. It has no blocking or should-fix findings. Correction
+`cf0b2b2` changes only the rehearsal's completion observation and the Mac
+runbook; runtime source and artifact are unchanged. This does not initiate
+product specialist round 3. The coordinator owns any further review request;
+native Mac, final versioned artifacts, cutover and release conditions remain.
+
+The original round-2 request below is historical context, not a second launch:
+
+Round 1 returned **changes required** at `5344574`;
 [its verdict](evidence/atomic-allocation/specialist-r1/verdict-specialist-r1.md)
 is retained verbatim. Request a fresh review at executable source
 `80f4974d0f9e2db056ceb7ba771fe12597d5afad` (later commits change tests/records

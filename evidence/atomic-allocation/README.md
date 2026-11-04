@@ -2,17 +2,27 @@
 
 Current executable source: `80f4974d0f9e2db056ceb7ba771fe12597d5afad`;
 artifact SHA-256 `9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894`.
+The [owner-crash observation correction](crash-completion/README.md) records
+the Mac timing failure, a controlled Linux reproduction of its ordering,
+the exact-completion wait at cf0b2b2, full gates and a fresh uninstrumented
+Linux all-suite pass. Product source and built bytes are unchanged.
+The retained [round-2 verdict](crash-completion/verdict-specialist-r2.md)
+is approve with conditions at fd710d9; native Mac qualification, host cutover
+and final release approvals remain open.
 The [real-push investigation](prepush/README.md) records the Linux shim
 failure, supervisor-error regression, fixture-directory preflight, native
 public-CLI rehearsal and actual local-bare push with 130 passing tests.
-The original Mac failure remains unqualified here. The launch change retains
+The historical Mac push cause was not attributed by that Linux record; the
+later native Mac run passed its real local-bare push and failed at the separate
+crash probe described above. The launch change retains
 diagnostics after the existing drain and leaves the grant/claim paths intact.
 
 The [specialist-round correction record](specialist-r1/README.md) contains the
 whole-class audit, all four review responses, six retained pre-fix failures,
 129 passing tests, fresh Linux rehearsal, missing baseline controls, fresh
 guest and full example, preserved failures and scoped teardown. Round 1 was
-**changes required** at 5344574; corrected-head specialist re-review is pending.
+**changes required** at 5344574; round 2 at fd710d9 resolved those findings
+with owner-only qualification and release conditions.
 
 The records below are historical qualifications at their named source/artifact,
 including `4b0a932`, `6e5e0848` and `1a09c981` artifacts. Evidence-only commits

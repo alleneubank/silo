@@ -1,0 +1,8 @@
+1.4.4
+janitor 0.3.1 (f9d8de4)
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+29.9.2 29.9.2
+86f30b48-26b3-4a5b-8f5c-8c97fe963463
+k3d version v5.9.0
+k3s version v1.35.5-k3s1 (default)
+ae:x:1002:1003::/home/ae:/usr/bin/zsh
