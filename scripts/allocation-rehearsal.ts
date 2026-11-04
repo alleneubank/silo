@@ -23,6 +23,7 @@ const log = (event: unknown) => { const line = JSON.stringify(event); console.lo
 const digest = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
 const safeEnv: NodeJS.ProcessEnv = { ...process.env, CI: "false", GITHUB_ENV: "", SILO_PROFILE: "" };
 delete safeEnv.SILO_PORT_REGISTRY_DIR;
+delete safeEnv.GITHUB_ACTIONS;
 delete safeEnv.USER;
 delete safeEnv.LOGNAME;
 const processes = new Set<Bun.Subprocess>();

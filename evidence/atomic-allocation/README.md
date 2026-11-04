@@ -119,3 +119,11 @@ source-commit hook result is author-observed; later evidence-commit hooks have
 a separate retained [output](commit-hooks.log). The guest's stopped/reconciliation hesitation was
 addressed in troubleshooting copy only; executable source and digest stayed
 unchanged.
+
+The first hosted example workflow passed unit CI but failed its legacy 0.5.9
+fixture: inherited `GITHUB_ACTIONS=true` made that old binary require the
+intentionally empty GITHUB_ENV. The native harness now removes the Actions
+marker from its fixture subprocess environment, alongside its explicit CI=false.
+The published CLI artifact is unchanged. The corrective local run supplies
+GITHUB_ACTIONS=true to the harness itself; allocation-actions.log records the
+result. The initial hosted failure is retained verbatim.

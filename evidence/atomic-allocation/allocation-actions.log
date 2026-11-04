@@ -1,0 +1,177 @@
+{"environment":{"platform":"linux","arch":"x64","bun":"1.4.4","root":"/tmp/native/allocation-rehearsal-zRAojC","accountHome":"/home/ae","artifact":"/mnt/dist/cli.js","sha256":"6e5e0848141659a58a316071623bc63eb05716cc8f16d68bb4bcdb8eb325b8d0"}}
+{"command":1,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-zraojc-old"],"code":0}
+{"command":2,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":3,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":4,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":5,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":6,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":7,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":8,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":9,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":10,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":11,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":12,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"scenario":"legacy lock-only refuses all five commands in old and unrelated roots without writes","registry":"/home/ae/.silo/instances","pass":true}
+{"command":13,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-zraojc-old"],"code":0}
+{"command":14,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":15,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":16,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":17,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":18,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":19,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":20,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":21,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":22,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":23,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":24,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"scenario":"legacy lock-only refuses all five commands in old and unrelated roots without writes","registry":"/tmp/native/allocation-rehearsal-zRAojC/invoking-home/.silo/instances","pass":true}
+{"command":25,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-zraojc-old"],"code":0}
+{"command":26,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":27,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":28,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":29,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":30,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":31,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":32,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":33,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":34,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":35,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":36,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"scenario":"legacy lock-only refuses all five commands in old and unrelated roots without writes","registry":"/tmp/native/allocation-rehearsal-zRAojC/old-registry","pass":true}
+{"command":37,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":38,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":39,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"command":40,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-legacy-peer","--json"],"code":0}
+{"command":41,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":42,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/late-09","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-zraojc-late-09"],"code":0}
+{"scenario":"unsupported old client after cutover","artifact":"/tmp/legacy/0.9.0/package/dist/cli.js","digest":"651730914fee9cdb165f1d0397c82b5160c6e5c42d55e21d193efae227780849","code":0,"oldPorts":{"APP_PORT":48127,"TILT_PORT":48128},"newClaimPorts":{"APP_PORT":48127,"TILT_PORT":48128},"storeUnchanged":true}
+{"command":43,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":44,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/late-09","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"command":45,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":46,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/late-05","argv":["/tmp/tools/bun","/tmp/legacy/0.5.9/package/dist/cli.js","env","proof-zraojc-late-05"],"code":0}
+{"scenario":"unsupported old client after cutover","artifact":"/tmp/legacy/0.5.9/package/dist/cli.js","digest":"d003a3a3bcff0e9abc60846e289a97133b69a87112be240bddb60d07a7410810","code":0,"oldPorts":{"APP_PORT":48127,"TILT_PORT":48128},"newClaimPorts":{"APP_PORT":48127,"TILT_PORT":48128},"storeUnchanged":true}
+{"command":47,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":48,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/late-05","argv":["/tmp/tools/bun","/tmp/legacy/0.5.9/package/dist/cli.js","down","--clean"],"code":0}
+{"command":49,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":50,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":51,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old-failed-teardown","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-zraojc-old-failed-teardown"],"code":0}
+{"command":52,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old-failed-teardown","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"scenario":"0.9.0 red control: failed Tilt teardown still reports success and removes snapshots","observed":true}
+{"scenario":"paused old operation drained before cutover; reverse lock-only reservation refused until owner down","pass":true}
+{"command":53,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-a","--json"],"code":0}
+{"command":54,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-b","--json"],"code":0}
+{"command":55,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":56,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":57,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":58,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-a","--json"],"code":0}
+{"command":59,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":60,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--timeout=10s","--json"],"code":1}
+{"command":61,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"command":62,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":63,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"squatter preserved; no renumbering or release","pass":true}
+{"command":64,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":65,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","--preload","/tmp/native/allocation-rehearsal-zRAojC/crash-export.ts","/mnt/dist/cli.js","env","proof-zraojc-a"],"code":137}
+{"command":66,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":67,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"native crash after rename before receipt checkpoint recovers own inode; B untouched","pass":true}
+{"command":68,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/gate-crash","argv":["/tmp/tools/bun","--preload","/tmp/native/allocation-rehearsal-zRAojC/crash-grant.ts","/mnt/dist/cli.js","up","proof-zraojc-gate-crash"],"code":137}
+{"command":69,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/gate-crash","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"native owner SIGKILL before durable grant executes no hook and drains actual child group","pass":true}
+{"command":70,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-a","--json"],"code":0}
+{"command":71,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":72,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":73,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":0}
+{"command":74,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--force","--json"],"code":1}
+{"command":75,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--profile","alternative","--force","--json"],"code":1}
+{"command":76,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":77,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":78,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":79,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"live force refusal, owner crash, completion recovery, B untouched","pass":true,"b":"fb40ae55-30ce-4f89-b8a1-745122edcd6b"}
+{"command":80,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":81,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-a","--json"],"code":0}
+{"command":82,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--profile","alternative","--force","--json"],"code":0}
+{"command":83,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":84,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":85,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/failed-teardown","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","proof-zraojc-failed-teardown","--timeout=30s","--json"],"code":0}
+{"command":86,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/failed-teardown","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":87,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/failed-teardown","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"command":88,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/failed-teardown","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":89,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/failed-teardown","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"native Tilt teardown failure propagates and retains claims/snapshots","pass":true}
+{"command":90,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/files","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-files","--json"],"code":0}
+{"command":91,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/files/nested","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-nested","--json"],"code":1}
+{"command":92,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/files","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":93,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/CaseRoot","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","alias-allocation-rehearsal-zraojc-12","--json"],"code":0}
+{"scenario":"native filesystem keeps these spellings distinct","original":"/tmp/native/allocation-rehearsal-zRAojC/CaseRoot","alternate":"/tmp/native/allocation-rehearsal-zRAojC/caseroot"}
+{"command":94,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/CaseRoot","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":95,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/Café","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","alias-allocation-rehearsal-zraojc-13","--json"],"code":0}
+{"scenario":"native filesystem keeps these spellings distinct","original":"/tmp/native/allocation-rehearsal-zRAojC/Café","alternate":"/tmp/native/allocation-rehearsal-zRAojC/Café"}
+{"command":96,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/Café","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":97,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":0}
+{"command":98,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":99,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","network","create","--label","io.silo.rehearsal=allocation-rehearsal-zRAojC","k3d-localnet-proof-zraojc-backend"],"code":0}
+{"command":100,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","network","inspect","71e03baf35be73b25b6186cf491cf57f8c72377b35cdeb8b1e51087cd9a3d147"],"code":0}
+{"command":101,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":1}
+{"command":102,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","network","inspect","71e03baf35be73b25b6186cf491cf57f8c72377b35cdeb8b1e51087cd9a3d147"],"code":0}
+{"command":103,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","network","rm","71e03baf35be73b25b6186cf491cf57f8c72377b35cdeb8b1e51087cd9a3d147"],"code":0}
+{"command":104,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","volume","create","--label","io.silo.rehearsal=allocation-rehearsal-zRAojC","k3d-localnet-proof-zraojc-backend-images"],"code":0}
+{"command":105,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","volume","inspect","k3d-localnet-proof-zraojc-backend-images"],"code":0}
+{"command":106,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":1}
+{"command":107,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","volume","inspect","k3d-localnet-proof-zraojc-backend-images"],"code":0}
+{"command":108,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","volume","rm","k3d-localnet-proof-zraojc-backend-images"],"code":0}
+{"command":109,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":1}
+{"command":110,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":1}
+{"command":111,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":0}
+{"command":112,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--timeout=120s","--json"],"code":0}
+{"command":113,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":114,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","9ef9185071c3e646adf5f11a6598d7b45070f1a33dbabf36504a41a6f7ae9e30","--format","{{.Config.Image}}"],"code":0}
+{"command":115,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","023f304652997e7e221c19774f216fbec17d0fc0bb38569f8d63f1747a9f17d0","--format","{{.Config.Image}}"],"code":0}
+{"command":116,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","b8302cc8e279be08ec7e4ee1ef3befe3ecfc09b4b7721356385d402eb988efe5","--format","{{.Config.Image}}"],"code":0}
+{"scenario":"real k3d cluster/registry/network/volume and kubeconfig receipts","resources":[{"source":"k3d","kind":"container","name":"k3d-localnet-proof-zraojc-backend-server-0","id":"9ef9185071c3e646adf5f11a6598d7b45070f1a33dbabf36504a41a6f7ae9e30","createdAt":"2026-11-04T03:26:26.005735252Z","labels":{"app":"k3d","io.silo.generation":"2","io.silo.project":"f1d6eba3-e6fe-47cd-82ed-fdf00776f3f4","k3d.cluster":"localnet-proof-zraojc-backend","k3d.role":"server"}},{"source":"k3d","kind":"container","name":"k3d-localnet-proof-zraojc-backend-serverlb","id":"023f304652997e7e221c19774f216fbec17d0fc0bb38569f8d63f1747a9f17d0","createdAt":"2026-11-04T03:26:26.022019017Z","labels":{"app":"k3d","io.silo.generation":"2","io.silo.project":"f1d6eba3-e6fe-47cd-82ed-fdf00776f3f4","k3d.cluster":"localnet-proof-zraojc-backend","k3d.role":"loadbalancer"}},{"source":"k3d","kind":"container","name":"localnet-proof-zraojc-backend-registry.localhost","id":"b8302cc8e279be08ec7e4ee1ef3befe3ecfc09b4b7721356385d402eb988efe5","createdAt":"2026-11-04T03:26:24.878417755Z","labels":{"app":"k3d","k3d.cluster":"localnet-proof-zraojc-backend","k3d.role":"registry"}},{"source":"k3d","kind":"network","name":"k3d-localnet-proof-zraojc-backend","id":"be3ffcf3aa6bdef83e2888c22cce6c8f5ed80793f34b54fc0f912b31f3a9fca5","createdAt":"2026-11-04T03:26:24.41386678Z","labels":{"io.silo.generation":"2","io.silo.project":"f1d6eba3-e6fe-47cd-82ed-fdf00776f3f4","k3d.cluster":"localnet-proof-zraojc-backend"}},{"source":"k3d","kind":"volume","name":"k3d-localnet-proof-zraojc-backend-images","id":"k3d-localnet-proof-zraojc-backend-images","createdAt":"2026-11-04T03:26:24Z","labels":{"io.silo.generation":"2","io.silo.project":"f1d6eba3-e6fe-47cd-82ed-fdf00776f3f4","k3d.cluster":"localnet-proof-zraojc-backend"}}],"pass":true}
+{"command":117,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"command":118,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":119,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":120,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","9ef9185071c3e646adf5f11a6598d7b45070f1a33dbabf36504a41a6f7ae9e30"],"code":1}
+{"command":121,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","023f304652997e7e221c19774f216fbec17d0fc0bb38569f8d63f1747a9f17d0"],"code":1}
+{"command":122,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","b8302cc8e279be08ec7e4ee1ef3befe3ecfc09b4b7721356385d402eb988efe5"],"code":1}
+{"command":123,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","network","inspect","be3ffcf3aa6bdef83e2888c22cce6c8f5ed80793f34b54fc0f912b31f3a9fca5"],"code":1}
+{"command":124,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","volume","inspect","k3d-localnet-proof-zraojc-backend-images"],"code":1}
+{"command":125,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","create","--name","k3d-localnet-proof-zraojc-backend-server-0","--label","io.silo.rehearsal=allocation-rehearsal-zRAojC","--label","app=k3d","--label","k3d.cluster=localnet-proof-zraojc-backend","--label","k3d.role=server","docker.io/rancher/k3s:v1.35.5-k3s1"],"code":0}
+{"command":126,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","8fd74a7fa8b7f76536f6182acc10879ba9b7975c5143d81631975f458ab4a5a7"],"code":0}
+{"command":127,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":1}
+{"command":128,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","8fd74a7fa8b7f76536f6182acc10879ba9b7975c5143d81631975f458ab4a5a7"],"code":0}
+{"command":129,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","rm","8fd74a7fa8b7f76536f6182acc10879ba9b7975c5143d81631975f458ab4a5a7"],"code":0}
+{"command":130,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","create","--name","localnet-proof-zraojc-backend-registry.localhost","--label","io.silo.rehearsal=allocation-rehearsal-zRAojC","--label","app=k3d","--label","k3d.cluster=localnet-proof-zraojc-backend","--label","k3d.role=registry","docker.io/library/registry:2"],"code":0}
+{"command":131,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","e3a7d19ce22f015a0522de27d72e451aab90e8b3d9eba645a5e658417b58bc12"],"code":0}
+{"command":132,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":1}
+{"command":133,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","e3a7d19ce22f015a0522de27d72e451aab90e8b3d9eba645a5e658417b58bc12"],"code":0}
+{"command":134,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","rm","e3a7d19ce22f015a0522de27d72e451aab90e8b3d9eba645a5e658417b58bc12"],"code":0}
+{"command":135,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":1}
+{"command":136,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":0}
+{"command":137,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","create","--name","unclaimed-allocation-rehearsal-zraojc","--label","io.silo.project=f1d6eba3-e6fe-47cd-82ed-fdf00776f3f4","--label","io.silo.generation=3","docker.io/rancher/k3s:v1.35.5-k3s1"],"code":0}
+{"command":138,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","f99e9888715eb9271c88595b090bedc7879f1b2e4e30a3089439f909fe66fc77"],"code":0}
+{"command":139,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"command":140,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","inspect","f99e9888715eb9271c88595b090bedc7879f1b2e4e30a3089439f909fe66fc77"],"code":0}
+{"command":141,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":142,"cwd":"/tmp/native/allocation-rehearsal-zRAojC","argv":["docker","container","rm","f99e9888715eb9271c88595b090bedc7879f1b2e4e30a3089439f909fe66fc77"],"code":0}
+{"command":143,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":144,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-zraojc-backend","--json"],"code":1}
+{"scenario":"leftovers refused unchanged, retention holds claims, explicit exact deletion, unreachable engine refuses","pass":true}
+{"result":"pass","suite":"all"}
+{"command":145,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":146,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":147,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/late-09","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":148,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/late-05","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":149,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/old-failed-teardown","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":150,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":151,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":152,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/gate-crash","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":153,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/failed-teardown","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":154,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/files","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":155,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/files/nested","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":156,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/CaseRoot","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":157,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/Café","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":158,"cwd":"/tmp/native/allocation-rehearsal-zRAojC/backend","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"resources":"/tmp/native/allocation-rehearsal-zRAojC/resources","evidence":"/tmp/native/allocation-rehearsal-zRAojC","retainedEvidence":true}
