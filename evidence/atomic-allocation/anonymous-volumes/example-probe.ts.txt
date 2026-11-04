@@ -1,0 +1,66 @@
+import assert from "node:assert/strict";
+import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+const project = "/tmp/fixtures/example-fixed";
+const evidence = "/mnt/evidence/atomic-allocation/anonymous-volumes/example-fixed";
+mkdirSync(evidence, { recursive: true });
+let sequence = 0;
+async function command(argv: string[], expected = 0) {
+  const n = ++sequence;
+  const p = Bun.spawn(argv, { cwd: project, detached: true, stdin: "ignore", stdout: "pipe", stderr: "pipe", env: { ...process.env, CI: "false", GITHUB_ENV: "", GITHUB_ACTIONS: "" } });
+  appendFileSync("/tmp/resources", `process ${p.pid} pgid=${p.pid}: ${JSON.stringify(argv)}; teardown via returned handle\n`);
+  const timer = setTimeout(() => p.kill("SIGTERM"), 360_000);
+  let [stdout, stderr, code] = await Promise.all([new Response(p.stdout).text(), new Response(p.stderr).text(), p.exited]);
+  clearTimeout(timer);
+  if (argv[0] === "docker" && argv[1] === "container" && argv[2] === "inspect") {
+    stdout = JSON.stringify(JSON.parse(stdout).map((c: any) => ({
+      Id: c.Id, Name: c.Name, Created: c.Created,
+      Config: { Image: c.Config.Image, Volumes: c.Config.Volumes, Labels: c.Config.Labels },
+      HostConfig: { Binds: c.HostConfig.Binds, Mounts: c.HostConfig.Mounts, VolumesFrom: c.HostConfig.VolumesFrom },
+      Mounts: c.Mounts,
+    })), null, 2);
+  }
+  writeFileSync(`${evidence}/${n}.stdout`, stdout); writeFileSync(`${evidence}/${n}.stderr`, stderr);
+  appendFileSync(`${evidence}/commands.jsonl`, JSON.stringify({ n, argv, code }) + "\n");
+  assert.equal(code, expected, stdout + stderr);
+  return stdout;
+}
+const silo = async (args: string[], expected = 0) => JSON.parse(await command([process.execPath, "/mnt/dist/cli.js", ...args, "--json"], expected));
+let failure: unknown;
+try {
+  await silo(["ci", "anon-fixed", "--timeout", "300s"]);
+  const before = await silo(["status"]);
+  writeFileSync(`${evidence}/status-before.json`, JSON.stringify(before, null, 2));
+  const kubeconfig = before.project.allocation.state.identity.kubeconfigPath;
+  await command(["kubectl", "--kubeconfig", kubeconfig, "wait", "--for=condition=available", "--timeout=60s", "deployment/web", "deployment/api"]);
+  for (const [service, port] of [["web", 3000], ["api", 8080]]) {
+    const health = JSON.parse(await command(["kubectl", "--kubeconfig", kubeconfig, "get", "--raw", `/api/v1/namespaces/default/services/${service}:${port}/proxy/health`]));
+    assert.equal(health.status, "ok");
+    writeFileSync(`${evidence}/${service}-health.json`, JSON.stringify(health, null, 2));
+  }
+  const parents = [];
+  const volumes = new Set<string>();
+  for (const receipt of before.project.resources) {
+    if (receipt.kind !== "container") continue;
+    const [c] = JSON.parse(await command(["docker", "container", "inspect", receipt.id]));
+    parents.push({ id: c.Id, createdAt: c.Created, name: c.Name, image: c.Config.Image, declaredVolumes: c.Config.Volumes, mounts: c.Mounts, receipt });
+    const anon = c.Mounts.filter((m: any) => m.Type === "volume" && !c.HostConfig.Binds?.some((bind: string) => bind.split(":")[1] === m.Destination));
+    assert.deepEqual(new Set(receipt.anonymousVolumes.map((v: any) => v.name)), new Set(anon.map((m: any) => m.Name)));
+    for (const m of c.Mounts) if (m.Type === "volume") volumes.add(m.Name);
+  }
+  writeFileSync(`${evidence}/parent-mounts.json`, JSON.stringify(parents, null, 2));
+  assert(parents.some(p => p.receipt.source === "compose" && p.receipt.anonymousVolumes.some((v: any) => v.destination === "/data")));
+  const retained = await silo(["down", "--clean"], 1); assert.equal(retained.code, "CLEANUP_REQUIRED");
+  const afterRefusal = await silo(["status"]); assert.deepEqual(afterRefusal.project.claims, before.project.claims);
+  await silo(["down", "--delete-cluster", "--clean"]);
+  const after = await silo(["status"]); assert.equal(after.project.generation, 0); assert.deepEqual(after.project.claims, []);
+  writeFileSync(`${evidence}/status-after.json`, JSON.stringify(after, null, 2));
+  const names = new Set((await command(["docker", "volume", "ls", "--format", "{{.Name}}"])).trim().split("\n"));
+  for (const volume of volumes) assert(!names.has(volume), `Leaked ${volume}`);
+  writeFileSync(`${evidence}/removed-mounts.json`, JSON.stringify({ parents: parents.map(p => p.id), volumes: [...volumes], allAbsent: true }, null, 2));
+  console.log(JSON.stringify({ result: "pass", project, parentCount: parents.length, mountCount: volumes.size }));
+} catch (error) { failure = error; console.error(error); }
+finally {
+  try { await silo(["down", "--delete-cluster", "--clean"]); }
+  catch (error) { failure ??= error; console.error(error); }
+}
+if (failure) process.exitCode = 1;

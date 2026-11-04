@@ -1,0 +1,34 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:6379"
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID:?run through silo}"
+      io.silo.generation: "${SILO_GENERATION:?run through silo}"
+  named:
+    image: redis:7-alpine
+    volumes:
+      - named:/data
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID:?run through silo}"
+      io.silo.generation: "${SILO_GENERATION:?run through silo}"
+  explicit:
+    image: redis:7-alpine
+    volumes:
+      - explicit:/data
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID:?run through silo}"
+      io.silo.generation: "${SILO_GENERATION:?run through silo}"
+networks:
+  default:
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID:?run through silo}"
+      io.silo.generation: "${SILO_GENERATION:?run through silo}"
+volumes:
+  named:
+    external: true
+    name: guest-g6401-named
+  explicit:
+    external: true
+    name: 535fa3c4bba1ab64535eecfe1debaa8ed86ed15ec011094321796ef4af7f6c8b

@@ -1,0 +1,31 @@
+[
+    {
+        "CreatedAt": "2026-11-04T23:14:07Z",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.volume.anonymous": ""
+        },
+        "Mountpoint": "/var/lib/docker/volumes/535fa3c4bba1ab64535eecfe1debaa8ed86ed15ec011094321796ef4af7f6c8b/_data",
+        "Name": "535fa3c4bba1ab64535eecfe1debaa8ed86ed15ec011094321796ef4af7f6c8b",
+        "Options": null,
+        "Scope": "local"
+    },
+    {
+        "CreatedAt": "2026-11-04T23:14:07Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/guest-g6401-named/_data",
+        "Name": "guest-g6401-named",
+        "Options": null,
+        "Scope": "local"
+    },
+    {
+        "CreatedAt": "2026-11-04T23:14:07Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/guest-g6401-unrelated/_data",
+        "Name": "guest-g6401-unrelated",
+        "Options": null,
+        "Scope": "local"
+    }
+]

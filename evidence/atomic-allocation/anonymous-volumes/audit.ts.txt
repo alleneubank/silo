@@ -1,0 +1,79 @@
+import assert from 'node:assert/strict';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { Database } from 'bun:sqlite';
+import { LaunchSchema } from '/mnt/src/core/lease_types';
+const pids = new Set<number>();
+const objects = new Map<string, {kind:string;id:string;name:string}>();
+function object(kind:string,id:string,name=id) {objects.set(`${kind}:${id}`,{kind,id,name});}
+function receipt(r:any) {
+  object(r.kind,r.id,r.name);
+  if(r.kind==='container') for(const v of r.anonymousVolumes??[])object('volume',v.name);
+}
+function dockerInspection(row:any) {
+  if(!row || typeof row!=='object')return;
+  if(row.Id&&row.Name&&row.Created&&row.State)object('container',row.Id,row.Name.replace(/^\//,''));
+  else if(row.Id&&row.Name&&row.CreatedAt===undefined&&row.Containers!==undefined)object('network',row.Id,row.Name);
+  else if(row.Name&&row.CreatedAt&&row.Mountpoint)object('volume',row.Name);
+  for(const m of row.Mounts??[])if(m.Type==='volume'&&m.Name)object('volume',m.Name);
+  if(row.Type==='volume'&&row.Name)object('volume',row.Name);
+}
+function scan(directory:string) {
+  if(!existsSync(directory))return;
+  for(const e of readdirSync(directory,{withFileTypes:true})) {
+    const file=`${directory}/${e.name}`;
+    if(e.isDirectory())scan(file);
+    else if(e.name==='resources'||e.name==='resources.txt') {
+      const text=readFileSync(file,'utf8');
+      for(const m of text.matchAll(/(?:\bprocess |pid\/pgid |supervisor=|group=)(\d+)/g))pids.add(Number(m[1]));
+      for(const m of text.matchAll(/^docker (container )?rm(?: -\S+)* ([a-f0-9]{64})/gm))object('container',m[2]);
+      for(const m of text.matchAll(/^docker (volume|network) rm (\S+)/gm))object(m[1],m[2]);
+      for(const m of text.matchAll(/^(network|volume) (\S+) name=(\S+);/gm))object(m[1],m[2],m[3]);
+      for(const m of text.matchAll(/^(?:synthetic stopped k3d (?:server|registry) container|outside-claim synthetic container|donor container|borrower container) ([a-f0-9]{64})/gm))object('container',m[1]);
+    } else if(e.name==='recorded-process-pids.txt') {
+      for(const text of readFileSync(file,'utf8').trim().split(/\s+/))pids.add(Number(text));
+    } else if(e.name.endsWith('.stdout')) {
+      let value:any;try{value=JSON.parse(readFileSync(file,'utf8'));}catch{continue;}
+      if(value?.project)for(const r of value.project.resources??[])receipt(r);
+      if(Array.isArray(value))for(const row of value)dockerInspection(row);
+    }
+  }
+}
+scan('/tmp/fixtures'); scan('/tmp/guest'); scan('/mnt/evidence/atomic-allocation/anonymous-volumes/example-fixed');
+scan('/tmp');
+const stores=[];
+for(const store of ['/home/ae/.silo/leases.sqlite','/tmp/guest/account/.silo/leases.sqlite']) {
+  if(!existsSync(store))continue;
+  const db=new Database(store,{readonly:true});
+  const projects=db.query('SELECT id,root,generation,operation_token FROM projects').all() as any[];
+  for(const p of projects){assert(p.root.startsWith('/tmp/'));assert.equal(p.generation,0);assert.equal(p.operation_token,null);}
+  const claims=(db.query('SELECT count(*) n FROM claims').get() as any).n;assert.equal(claims,0);
+  const activeResources=(db.query('SELECT count(*) n FROM resources WHERE deleted=0').get() as any).n;assert.equal(activeResources,0);
+  for(const row of db.query('SELECT receipt FROM resources').all() as any[])receipt(JSON.parse(row.receipt));
+  for(const row of db.query('SELECT receipt FROM launches').all() as any[]) {
+    const l=LaunchSchema.parse(JSON.parse(row.receipt));
+    for(const pid of [l.supervisorPid,l.leaderPid,l.groupId])if(pid!==null)pids.add(pid);
+  }
+  stores.push({store,projects,claims,activeResources});db.close();
+  assert(!existsSync(store+'-journal'));
+}
+for(const path of ['/mnt/evidence/atomic-allocation/anonymous-volumes/baseline-all-mounts.json','/mnt/evidence/atomic-allocation/anonymous-volumes/example-fixed/parent-mounts.json']) {
+  const parents=JSON.parse(readFileSync(path,'utf8'));
+  for(const c of parents){object('container',c.Id??c.id,c.Name??c.name);for(const m of c.Mounts??c.mounts)if(m.Type==='volume')object('volume',m.Name);}
+}
+for(const pid of pids) {
+  assert(Number.isSafeInteger(pid)&&pid>1);
+  for(const target of [pid,-pid]) {
+    let gone=false;try{process.kill(target,0);}catch(e:any){assert.equal(e.code,'ESRCH');gone=true;}
+    assert(gone,`Recorded PID/group ${target} still present; no signal sent`);
+  }
+}
+function docker(args:string[]) {const p=Bun.spawnSync(['docker',...args],{stdout:'pipe',stderr:'pipe',timeout:10000});assert.equal(p.exitCode,0,p.stderr.toString());return p.stdout.toString().trim();}
+const inventory:Record<string,string[]>={};
+for(const kind of ['container','network','volume']) {
+  const names=docker([kind,'ls',...(kind==='container'?['-a','--no-trunc']:kind==='network'?['--no-trunc']:[]),'--format',kind==='volume'?'{{.Name}}':'{{.ID}}']);
+  inventory[kind]=names?names.split('\n'):[];
+  if(inventory[kind].length){const id=inventory[kind][0];assert.equal(docker([kind,'inspect',id,'--format',kind==='volume'?'{{.Name}}':'{{.Id}}']),id);}
+}
+assert(inventory.network.includes(docker(['network','inspect','bridge','--format','{{.Id}}'])));
+for(const r of objects.values())assert(!inventory[r.kind].includes(r.kind==='volume'?r.name:r.id),`Recorded object remains: ${JSON.stringify(r)}`);
+console.log(JSON.stringify({at:new Date().toISOString(),stores,handlesChecked:[...pids].sort((a,b)=>a-b),everyRecordedPidAndSameNumberGroupAbsent:true,objectsChecked:[...objects.values()],allRecordedObjectsAbsent:true,inventoryCounts:Object.fromEntries(Object.entries(inventory).map(([k,v])=>[k,v.length])),result:'pass'},null,2));

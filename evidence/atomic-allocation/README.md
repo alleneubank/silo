@@ -1,6 +1,14 @@
 # Atomic allocation evidence
 
-Current executable source: `80f4974d0f9e2db056ceb7ba771fe12597d5afad`;
+Current cleanup correction: `a21f710896528aeaed5a6c142abc13a80895f1ba`, CLI SHA-256
+`40fd990ead9815f2f679b43e16eb65fc111fe0a798e08988e9a85667206e43a6`.
+The [anonymous-volume record](anonymous-volumes/README.md) supersedes the
+former Compose cleanup limitation: copied-example Linux baseline leaks Redis's
+image-declared anonymous child; parent-bound receipts and exact clean remove
+it. Full gates, all-suite and full-example Linux checks pass. Specialist round
+3 and native Mac qualification of this changed runtime remain pending.
+
+Historical executable source before that correction: `80f4974d0f9e2db056ceb7ba771fe12597d5afad`;
 artifact SHA-256 `9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894`.
 The [owner-crash observation correction](crash-completion/README.md) records
 the Mac timing failure, a controlled Linux reproduction of its ordering,

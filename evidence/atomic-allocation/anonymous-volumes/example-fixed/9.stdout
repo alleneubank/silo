@@ -1,0 +1,39 @@
+[
+  {
+    "Id": "38fa69b0e189ae7a3d82703efff49853e52203db2e3e42f803cc532c8a2a2383",
+    "Name": "/localnet-anon-fixed-registry.localhost",
+    "Created": "2026-11-04T23:14:13.918969315Z",
+    "Config": {
+      "Image": "docker.io/library/registry:2",
+      "Volumes": {
+        "/var/lib/registry": {}
+      },
+      "Labels": {
+        "app": "k3d",
+        "k3d.cluster": "localnet-anon-fixed",
+        "k3d.registry.host": "0.0.0.0",
+        "k3d.registry.hostIP": "0.0.0.0",
+        "k3d.role": "registry",
+        "k3d.version": "v5.9.0",
+        "k3s.registry.port.external": "5000",
+        "k3s.registry.port.internal": "5000"
+      }
+    },
+    "HostConfig": {
+      "Binds": null,
+      "VolumesFrom": null
+    },
+    "Mounts": [
+      {
+        "Type": "volume",
+        "Name": "908d544cc340baa84335bbd55adf0b01eba063c97f43b2bfdd5364f630e1713c",
+        "Source": "/var/lib/docker/volumes/908d544cc340baa84335bbd55adf0b01eba063c97f43b2bfdd5364f630e1713c/_data",
+        "Destination": "/var/lib/registry",
+        "Driver": "local",
+        "Mode": "",
+        "RW": true,
+        "Propagation": ""
+      }
+    ]
+  }
+]

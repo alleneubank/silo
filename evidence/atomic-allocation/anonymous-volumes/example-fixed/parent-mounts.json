@@ -1,0 +1,217 @@
+[
+  {
+    "id": "33e0734c25be9c0b931bf27b0b2326fe4fc044ac6ec36ea148fe89d2dfbb523b",
+    "createdAt": "2026-11-04T23:14:15.243227649Z",
+    "name": "/k3d-localnet-anon-fixed-server-0",
+    "image": "docker.io/rancher/k3s:v1.35.5-k3s1",
+    "declaredVolumes": {
+      "/var/lib/cni": {},
+      "/var/lib/kubelet": {},
+      "/var/lib/rancher/k3s": {},
+      "/var/log": {}
+    },
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "k3d-localnet-anon-fixed-images",
+        "Source": "/var/lib/docker/volumes/k3d-localnet-anon-fixed-images/_data",
+        "Destination": "/k3d/images",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "f6cac3663935c0065a66936f6c8a993eb0fc97108a6cada7bfad63e6265cac64",
+        "Source": "/var/lib/docker/volumes/f6cac3663935c0065a66936f6c8a993eb0fc97108a6cada7bfad63e6265cac64/_data",
+        "Destination": "/var/log",
+        "Driver": "local",
+        "Mode": "",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "efa6fe8f2269c162695fa0c7d7e65bafd0f15005698f0533abd04e64232ba76d",
+        "Source": "/var/lib/docker/volumes/efa6fe8f2269c162695fa0c7d7e65bafd0f15005698f0533abd04e64232ba76d/_data",
+        "Destination": "/var/lib/cni",
+        "Driver": "local",
+        "Mode": "",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "102ad94d1a1075201ae21bd85024cd03a76a3223dc2607efc8d362196986b777",
+        "Source": "/var/lib/docker/volumes/102ad94d1a1075201ae21bd85024cd03a76a3223dc2607efc8d362196986b777/_data",
+        "Destination": "/var/lib/kubelet",
+        "Driver": "local",
+        "Mode": "",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "volume",
+        "Name": "fee11e720ecd1910c66709f5de41dbef38ec90066ef98f6d0d25aba2d9980de0",
+        "Source": "/var/lib/docker/volumes/fee11e720ecd1910c66709f5de41dbef38ec90066ef98f6d0d25aba2d9980de0/_data",
+        "Destination": "/var/lib/rancher/k3s",
+        "Driver": "local",
+        "Mode": "",
+        "RW": true,
+        "Propagation": ""
+      }
+    ],
+    "receipt": {
+      "source": "k3d",
+      "name": "k3d-localnet-anon-fixed-server-0",
+      "id": "33e0734c25be9c0b931bf27b0b2326fe4fc044ac6ec36ea148fe89d2dfbb523b",
+      "createdAt": "2026-11-04T23:14:15.243227649Z",
+      "labels": {
+        "app": "k3d",
+        "io.silo.generation": "1",
+        "io.silo.project": "2fe75086-ea4b-4e68-83d5-4c42c1d05607",
+        "k3d.cluster": "localnet-anon-fixed",
+        "k3d.role": "server"
+      },
+      "kind": "container",
+      "anonymousVolumes": [
+        {
+          "name": "efa6fe8f2269c162695fa0c7d7e65bafd0f15005698f0533abd04e64232ba76d",
+          "createdAt": "2026-11-04T23:14:15Z",
+          "destination": "/var/lib/cni"
+        },
+        {
+          "name": "102ad94d1a1075201ae21bd85024cd03a76a3223dc2607efc8d362196986b777",
+          "createdAt": "2026-11-04T23:14:15Z",
+          "destination": "/var/lib/kubelet"
+        },
+        {
+          "name": "fee11e720ecd1910c66709f5de41dbef38ec90066ef98f6d0d25aba2d9980de0",
+          "createdAt": "2026-11-04T23:14:15Z",
+          "destination": "/var/lib/rancher/k3s"
+        },
+        {
+          "name": "f6cac3663935c0065a66936f6c8a993eb0fc97108a6cada7bfad63e6265cac64",
+          "createdAt": "2026-11-04T23:14:15Z",
+          "destination": "/var/log"
+        }
+      ]
+    }
+  },
+  {
+    "id": "f119a87c73522d3654c78e9e58bc87504eaee6d8c59bc1a17074f7cc4d69c3dc",
+    "createdAt": "2026-11-04T23:14:15.259425851Z",
+    "name": "/k3d-localnet-anon-fixed-serverlb",
+    "image": "ghcr.io/k3d-io/k3d-proxy:5.9.0",
+    "declaredVolumes": null,
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "k3d-localnet-anon-fixed-images",
+        "Source": "/var/lib/docker/volumes/k3d-localnet-anon-fixed-images/_data",
+        "Destination": "/k3d/images",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      }
+    ],
+    "receipt": {
+      "source": "k3d",
+      "name": "k3d-localnet-anon-fixed-serverlb",
+      "id": "f119a87c73522d3654c78e9e58bc87504eaee6d8c59bc1a17074f7cc4d69c3dc",
+      "createdAt": "2026-11-04T23:14:15.259425851Z",
+      "labels": {
+        "app": "k3d",
+        "io.silo.generation": "1",
+        "io.silo.project": "2fe75086-ea4b-4e68-83d5-4c42c1d05607",
+        "k3d.cluster": "localnet-anon-fixed",
+        "k3d.role": "loadbalancer"
+      },
+      "kind": "container",
+      "anonymousVolumes": []
+    }
+  },
+  {
+    "id": "23cce72a768c532e8406ad6667f104caea1d18b40b5f4d88fdc42fb6e879ce07",
+    "createdAt": "2026-11-04T23:14:31.090233381Z",
+    "name": "/localnet-anon-fixed-redis-1",
+    "image": "redis:7-alpine",
+    "declaredVolumes": {
+      "/data": {}
+    },
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "a2b5dbb7b824e2712fc66e8970d8725b72403419f82c9205ebd0f463873ccbb3",
+        "Source": "/var/lib/docker/volumes/a2b5dbb7b824e2712fc66e8970d8725b72403419f82c9205ebd0f463873ccbb3/_data",
+        "Destination": "/data",
+        "Driver": "local",
+        "Mode": "",
+        "RW": true,
+        "Propagation": ""
+      }
+    ],
+    "receipt": {
+      "source": "compose",
+      "name": "localnet-anon-fixed-redis-1",
+      "id": "23cce72a768c532e8406ad6667f104caea1d18b40b5f4d88fdc42fb6e879ce07",
+      "createdAt": "2026-11-04T23:14:31.090233381Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-anon-fixed",
+        "com.docker.compose.project.working_dir": "/tmp/fixtures/example-fixed",
+        "io.silo.generation": "1",
+        "io.silo.project": "2fe75086-ea4b-4e68-83d5-4c42c1d05607"
+      },
+      "kind": "container",
+      "anonymousVolumes": [
+        {
+          "name": "a2b5dbb7b824e2712fc66e8970d8725b72403419f82c9205ebd0f463873ccbb3",
+          "createdAt": "2026-11-04T23:14:31Z",
+          "destination": "/data"
+        }
+      ]
+    }
+  },
+  {
+    "id": "38fa69b0e189ae7a3d82703efff49853e52203db2e3e42f803cc532c8a2a2383",
+    "createdAt": "2026-11-04T23:14:13.918969315Z",
+    "name": "/localnet-anon-fixed-registry.localhost",
+    "image": "docker.io/library/registry:2",
+    "declaredVolumes": {
+      "/var/lib/registry": {}
+    },
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "908d544cc340baa84335bbd55adf0b01eba063c97f43b2bfdd5364f630e1713c",
+        "Source": "/var/lib/docker/volumes/908d544cc340baa84335bbd55adf0b01eba063c97f43b2bfdd5364f630e1713c/_data",
+        "Destination": "/var/lib/registry",
+        "Driver": "local",
+        "Mode": "",
+        "RW": true,
+        "Propagation": ""
+      }
+    ],
+    "receipt": {
+      "source": "k3d",
+      "name": "localnet-anon-fixed-registry.localhost",
+      "id": "38fa69b0e189ae7a3d82703efff49853e52203db2e3e42f803cc532c8a2a2383",
+      "createdAt": "2026-11-04T23:14:13.918969315Z",
+      "labels": {
+        "app": "k3d",
+        "k3d.cluster": "localnet-anon-fixed",
+        "k3d.role": "registry"
+      },
+      "kind": "container",
+      "anonymousVolumes": [
+        {
+          "name": "908d544cc340baa84335bbd55adf0b01eba063c97f43b2bfdd5364f630e1713c",
+          "createdAt": "2026-11-04T23:14:14Z",
+          "destination": "/var/lib/registry"
+        }
+      ]
+    }
+  }
+]

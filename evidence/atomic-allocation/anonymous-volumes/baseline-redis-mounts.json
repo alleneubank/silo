@@ -1,0 +1,41 @@
+{
+  "Id": "14afa53b25cc3e3510edb48df244a7a417cf0ffe5c6411459f081ec49e47d6be",
+  "Name": "/localnet-anon-baseline-redis-1",
+  "Created": "2026-11-04T23:03:48.321026216Z",
+  "Config": {
+    "Image": "redis:7-alpine",
+    "Volumes": {
+      "/data": {}
+    },
+    "Labels": {
+      "com.docker.compose.config-hash": "12359ac1ce38419fa399f5a4cb2471245a655a6d24ba2f040304948bb7a2cdac",
+      "com.docker.compose.container-number": "1",
+      "com.docker.compose.depends_on": "",
+      "com.docker.compose.image": "sha256:1cf73a2f04808e55a8bd2f5706c2aa0ebb0f71938f93deb7af79f48311cd5cb9",
+      "com.docker.compose.oneoff": "False",
+      "com.docker.compose.project": "localnet-anon-baseline",
+      "com.docker.compose.project.config_files": "/tmp/fixtures/example-baseline/docker-compose.yaml",
+      "com.docker.compose.project.working_dir": "/tmp/fixtures/example-baseline",
+      "com.docker.compose.service": "redis",
+      "com.docker.compose.version": "5.6.1",
+      "io.silo.generation": "1",
+      "io.silo.project": "a687a385-1499-43d1-8bd7-e785920f6c77"
+    }
+  },
+  "HostConfig": {
+    "Binds": null,
+    "VolumesFrom": null
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "6e85018136c4972111eec82d85a7e725a87e07d19edeed9c9fab25b5f8ca8b8b",
+      "Source": "/var/lib/docker/volumes/6e85018136c4972111eec82d85a7e725a87e07d19edeed9c9fab25b5f8ca8b8b/_data",
+      "Destination": "/data",
+      "Driver": "local",
+      "Mode": "",
+      "RW": true,
+      "Propagation": ""
+    }
+  ]
+}

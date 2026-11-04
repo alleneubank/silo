@@ -1,4 +1,37 @@
-# Cross-provider specialist request
+# Cross-provider specialist request — round 3 of 3
+
+Coordinator-owned launch, per addendum 5. Review cleanup source `a21f710896528aeaed5a6c142abc13a80895f1ba`,
+CLI SHA-256 `40fd990ead9815f2f679b43e16eb65fc111fe0a798e08988e9a85667206e43a6`, with the standard charter and threat model below.
+The earlier round-2 approval does not cover this product change. Keep PR #58
+draft. No review is launched or approval claimed by this lane.
+
+Goal: every owned container's creation-result receipt journals its anonymous
+mount identities before Silo tears that container down; receipts survive
+parent deletion. Clean removes only exact recorded anonymous children and
+cannot release or replace a generation while a recorded child remains.
+Named, explicitly supplied, bind and inherited mounts confer no child authority.
+Explicit cluster deletion uses the same exact child receipts, without implicit
+Docker --volumes deletion or pruning. Inspect all retirement/reallocation,
+failed-delete/retry and parent-forgetting paths against that obligation.
+
+Author risk scenarios: real copied example before/after; public regression red
+on 5d2c870 and green here; plain-down retention; forced-reallocation refusal;
+in-use deletion refusal and successful exact retry after original parent is
+gone; named and explicitly borrowed anonymous sentinel preservation;
+replacement identity refusal and absent-child recovery; full native k3d
+create/retain/delete and the existing all-suite crash/peer/cutover checks.
+Evidence: [anonymous-volumes/README.md](evidence/atomic-allocation/anonymous-volumes/README.md).
+
+Neighbors not qualified: tools deleting/recreating transient containers before
+Silo can capture creation results, inherited volumes-from, lost executor facts,
+same-name/same-second volume identity replacement, hostile local actors,
+alternate engines/drivers, native macOS at this runtime and final versioned
+artifacts. These are limits, not passing scenarios. Review scope remains trusted
+local users/agents and cooperating config/tools on a shared development host.
+The prior Mac 5d2c870 pass does not qualify these changed bytes or establish
+ownership of its two historical anonymous volumes; preserve them.
+
+## Historical request and standard charter
 
 Status: round 2 returned **approve with conditions** at `fd710d9`;
 [its verdict](evidence/atomic-allocation/crash-completion/verdict-specialist-r2.md)

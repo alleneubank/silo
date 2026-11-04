@@ -67,16 +67,15 @@ the store with empty state. This proposal authorizes no downgrade or deletion.
 
 ## Evidence
 
-Current executable source: `80f4974d0f9e2db056ceb7ba771fe12597d5afad`, CLI
-SHA-256 `9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894`.
-The allocation correction is at `6ffaa5b`; `4b0a932` changes one CI-help sentence.
-The current source adds bounded supervisor startup diagnostics and a native-test
-fixture-directory dependency preflight. Grant, effect and cleanup ordering are
-unchanged; earlier allocation evidence is reused for those unchanged inputs.
-Rehearsal correction `cf0b2b2` now waits for the crashed launch's exact durable
-completion rather than treating listener drain as that barrier. All prior
-assertions remain, with additional provenance and peer checks. No runtime
-source or built bytes changed.
+Current executable source: `a21f710896528aeaed5a6c142abc13a80895f1ba`, CLI
+SHA-256 `40fd990ead9815f2f679b43e16eb65fc111fe0a798e08988e9a85667206e43a6`.
+Container receipts now retain exact anonymous mount identities after parent
+deletion. Clean removes recorded Compose anonymous children; explicit cluster
+deletion removes its recorded children through the same exact receipt path,
+without Docker's implicit --volumes removal or pruning. Retirement and forced
+replacement require every recorded child absent. Named or explicitly supplied
+mounts confer no child deletion authority; in-use/replaced children keep claims.
+The earlier crash-completion probe correction and supervisor diagnostics remain.
 
 Author environment: ae-dev Linux x86_64/ext4, Bun 1.4.4 / SQLite 3.53.4,
 Docker 29.9.2, k3d 5.9.0, Janitor 0.3.1, Tilt 0.37.8 fork. The built public CLI
@@ -85,8 +84,15 @@ Docker mutations were limited to new exact fixture handles.
 
 | Scenario / check | Observed |
 | --- | --- |
+| Anonymous service volume defect / baseline | The copied full example at 5d2c870 records all four parents' Mounts, then public clean exits zero and releases claims with Redis's anonymous /data volume still present. The new native regression fails on that leaked volume before the fix. Six k3d mounted volumes disappear; they were the scope of the earlier six-volume audit, which did not cover Redis. |
+| Anonymous child cleanup / author run | At a21f710 the full Linux suite passes across 234 recorded commands, including expected refusals; all 17 final fixture cleanups exit zero. The full copied example passes web/API health and removes all seven distinct mounted volumes, including Redis's /data. Exact parent/child handles are retained. |
+| Anonymous risk scenarios | Plain down retains data and historical parent receipts; reallocation refuses unchanged claims. A fixture borrower makes clean fail without deleting or signalling it; exact owner removal allows successful retry after the original parent is gone. Explicitly borrowed anonymous and named sentinel snapshots survive. A replacement child identity refuses with unchanged claims and replacement. Repeated clean is a no-op. |
+| Fresh cleanup guest | Green at a21f710 / 40fd990e: real Compose/Redis retention, clean/repeat, second root preservation, two in-use failures with unchanged claims/receipts/snapshot hashes, successful retry, and explicit-volume data readback after reopening. |
+| Cleanup closing audit | 26 retired projects across two disposable stores, zero claims/active resource rows; 621 recorded PID/group handles and 122 recorded object handles absent, including 59 volume names. Never-created guest candidates count only as absence checks. |
+| Current required gates | 130 tests / 335 assertions, typecheck, lint, knip, jscpd (zero clones), build and normal commit hooks pass at a21f710. Actual local-bare push of a21f710 passes all pre-push hooks; the received ref is retained in the anonymous-volume record. |
+| Historical qualification at earlier sources | The following retained rows qualify their explicitly named earlier inputs; they do not replace the current-head cleanup observations above. |
 | Crash-completion synchronization | Native Mac fd710d9 status had no completion immediately after listener drain; its retained store later contained the same fact. A controlled Linux scheduling hold independently demonstrated that allowed ordering with real Tilt/Janitor. The corrected live probe waited through two missing-fact status reads and then passed after publication. Status remains read-only; owner reconciliation is separate. |
-| Fresh full Linux qualification at cf0b2b2 | Full gates pass: 130 tests / 335 assertions, typecheck, lint, knip, jscpd and build. The uninstrumented public all-suite passes all 177 commands and final fixture cleanup. A scoped audit finds 28 retired fixture projects, zero claims/undeleted resources, and absent recorded processes and object/mount handles. |
+| Fresh full Linux qualification at cf0b2b2 | Full gates pass: 130 tests / 335 assertions, typecheck, lint, knip, jscpd and build. The uninstrumented suite passes across 177 recorded commands, including expected refusals, and final fixture cleanup. A scoped audit finds 28 retired fixture projects, zero claims/undeleted resources, and absent recorded processes and object/mount handles. |
 | Required checks | 130 Bun tests, typecheck, lint, knip, jscpd (zero clones), build and commit hooks pass. Actual `git push` of committed 80f4974 to an owned local bare repository runs every pre-push command successfully. No Git network call was made by this revision lane. |
 | Real-push failure investigation | With an unconfigured mise Janitor shim, actual local-bare push reproduces all three handshake failures; stderr identifies missing runtime configuration. Plain native-gate tests also fail in that PATH. The unchanged bf51f59 source passes real local and locally emulated SSH-transport pushes with native Janitor 0.3.1. This establishes the reproduced Linux environment failure, not the original Mac cause. |
 | Supervisor refusal regression / author run | New diagnostic case fails before the source change and passes after; tool sentinel remains absent and claims retained. Built public CLI with actual unconfigured mise shim reports the underlying error, exit status and launch identity, with no hook execution or changed claims/env bytes. Restored native Janitor completes real Tilt CI and public clean; final fixture claims are empty and recorded launch PIDs absent. |
@@ -99,7 +105,8 @@ Docker mutations were limited to new exact fixture handles.
 | Fresh full example | At 4b0a932 / 2675670d, original inputs pass CI, web/API availability and identities, complete GITHUB_ENV append with no uncertain sink, and public owner cleanup. |
 | Scoped closeout | Both disposable stores have zero active generations; no recorded object/mount handle or launched PID remains. Historical unattributable volumes and shared caches are preserved. |
 
-Records: [crash-completion investigation and fresh qualification](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/crash-completion/README.md),
+Records: [anonymous-volume correction and Linux qualification](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/anonymous-volumes/README.md),
+[crash-completion investigation and fresh qualification](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/crash-completion/README.md),
 [real-push and supervisor-error evidence](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/prepush/README.md),
 [allocation correction and class audit](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/specialist-r1/README.md),
 [full evidence index](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/README.md),
@@ -109,11 +116,14 @@ Records: [crash-completion investigation and fresh qualification](https://github
 
 **Plan basis:** Kimi r3 conditional approval, r5 refusal revision, and the
 owner's stop/recreate and procedure-A decisions. No standalone r5 approval is
-implied. **Specialist:** round 1 was changes required at 5344574; round 2 is
-[approve with conditions at fd710d9](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/crash-completion/verdict-specialist-r2.md),
-with no blocking or should-fix findings. Its reviewed runtime is unchanged.
-Native qualification, real cutover and explicit release decisions remain
-conditions; this harness-only repair is not a product specialist round 3.
+implied. **Specialist:** round 1 was changes required at 5344574; round 2 was
+[approve with conditions at fd710d9](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/crash-completion/verdict-specialist-r2.md).
+This product cleanup change requires round 3 of 3, launched by the coordinator;
+no matching specialist approval is claimed yet. The native Mac 5d2c870 run
+passed its rehearsed scenarios but left two unattributed anonymous volumes.
+The Linux baseline reproduces the Compose leak; those historical Mac objects
+remain preserved. Changed-runtime native Mac qualification, APFS modes,
+final versioned artifacts and owner cutover/release gates remain pending.
 
 The [independent claim fact check](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/specialist-r1/fact-check.md)
 supports the recorded observations with provenance limits. It is separate
@@ -129,8 +139,10 @@ down could not reach its API. Both failures and exact fixture teardown remain
 captured. A fresh generation with the original inputs passed; this does not
 establish a general reliability or pre-existing-failure conclusion. Compose
 teardown left one captured anonymous Redis child, individually verified unused
-and removed under the fixture grant. Automatic arbitrary Compose child-volume
-removal is not claimed; native k3d child removal is observed separately.
+and removed under the fixture grant. That limitation is corrected for receipted anonymous children at a21f710;
+arbitrary tool-managed transient containers before capture remain unqualified.
+The first implementation of this correction exposed an in-use retry ordering
+error; its failure and recovery are retained, without weakening assertions.
 
 **Not checked / release holds:** new hosted CI, corrected native
 macOS/APFS case modes/account/process behavior/directory sync and
@@ -138,9 +150,10 @@ Intel/Apple Silicon artifacts; real data-bearing foreign topology, lost live
 daemon completion, alternate/remote engines, Docker IPv6 publication races,
 Tilt's internal API-listener failure and every instruction-level interruption;
 actual host cutover and final 1.0.0 artifact qualification. No waiver added.
-The native Mac run passed its fixture-directory native Bun/Janitor preflight,
-130 tests and actual local-bare hook push before the separate crash-probe
-failure; the corrected Mac suite still needs to run. The original Linux live
+The later native Mac run at 5d2c870 passed its native preflight, 130 tests,
+actual local-bare hook push and corrected all-suite/full-example scenarios;
+its two unattributed volumes prevented complete physical cleanup. This newer
+cleanup runtime still needs native Mac qualification. The original Linux live
 suite passed, so the natural Mac schedule was not reproduced here. The
 first standalone scheduling fixture failed pre-allocation on missing APP_HOST;
 that setup failure and the corrected run are retained separately.
