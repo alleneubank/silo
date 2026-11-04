@@ -129,13 +129,29 @@ async function live() {
   try {
     await until("both real Tilt services", async () => await body(finalAP.APP_PORT!) === name(a) && await body(bp.APP_PORT!) === name(b));
     const stableB = await state(b); const stableA = await state(a);
+    const crashedLaunch = stableA.launches.find(launch => launch.kind === "tilt-up" && launch.phase === "granted");
+    assert(crashedLaunch);
     await silo(a, ["up"]); await silo(a, ["up", "--force"], "ALREADY_RUNNING");
     await silo(a, ["env", "--profile", "alternative", "--force"], "ALREADY_RUNNING");
     assert.deepEqual((await state(a)).claims, stableA.claims);
     pa.kill("SIGKILL"); await pa.exited; processes.delete(pa);
     await until("owner crash drains A", async () => await body(finalAP.APP_PORT!) === null);
     assert.equal(await body(bp.APP_PORT!), name(b)); assert.deepEqual(await state(b), stableB);
-    const crashedA = await state(a); assert.deepEqual(crashedA.claims, stableA.claims); assert(crashedA.completions.length > 0);
+    // Listener shutdown alone does not prove tool exit or durable completion.
+    // Read-only status observes that fact; it does not reconcile the launch.
+    let crashedA = await state(a);
+    await until("crashed A's exact launch has a durable completion", async () => {
+      crashedA = await state(a);
+      assert.equal(crashedA.projectId, stableA.projectId); assert.equal(crashedA.generation, stableA.generation);
+      assert.deepEqual(crashedA.claims, stableA.claims);
+      return crashedA.completions.some(completion => completion.launchId === crashedLaunch.id);
+    });
+    assert.deepEqual(crashedA.claims, stableA.claims); assert(crashedA.completions.length > 0);
+    const completion = crashedA.completions.find(completion => completion.launchId === crashedLaunch.id); assert(completion);
+    assert.deepEqual([completion.projectId, completion.generation, completion.leaderPid, completion.groupId, completion.started],
+      [stableA.projectId, stableA.generation, crashedLaunch.leaderPid, crashedLaunch.groupId, true]);
+    log({ scenario: "owner-crash durable completion observed", launchId: crashedLaunch.id, completion, pass: true });
+    assert.equal(await body(bp.APP_PORT!), name(b)); assert.deepEqual(await state(b), stableB);
     await silo(a, ["down", "--clean"]); assert.equal(await body(bp.APP_PORT!), name(b));
     log({ scenario: "live force refusal, owner crash, completion recovery, B untouched", pass: true, b: stableB.projectId });
   } finally {

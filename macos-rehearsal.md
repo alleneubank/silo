@@ -17,6 +17,14 @@ In the disposable account, from this checkout:
 ```sh
 export TMPDIR="$PWD/../silo-allocation-macos-tmp"
 mkdir -p "$TMPDIR/fixtures" "$TMPDIR/legacy/0.9.0" "$TMPDIR/legacy/0.5.9"
+# Select native installations before invoking Bun, including from fixture roots.
+# These are the paths qualified on pixelproton; adjust for another installation.
+native_bun_dir="$HOME/.local/share/mise/installs/bun/1.4.4/bin"
+native_janitor_dir="$HOME/.local/share/mise/installs/github-alleneubank-janitor/0.3.1"
+test -x "$native_bun_dir/bun" && test -x "$native_janitor_dir/janitor"
+export PATH="$native_bun_dir:$native_janitor_dir:$PATH"
+# An inherited shell function can shadow PATH. This changes only this shell.
+unset -f bun 2>/dev/null || true
 bun --version                    # exactly 1.4.4
 janitor version                  # 0.3.1; help must offer --pgroup-only
 janitor --help
@@ -87,6 +95,16 @@ Expected tarball digests, downloaded by the Linux author:
 
 ## Run the same public-CLI scenarios
 
+The fd710d9 macOS run reached the live owner-crash case after its native
+preflight and real hook push passed. Its listener drained before status had
+the executor's completion fact; that same fact was present in the retained
+store afterward. Listener shutdown is not the completion barrier. The probe
+now waits up to 30 seconds for the exact crashed launch's durable completion,
+checking the original project, generation and claims throughout. All prior
+assertions remain; no completion by the deadline is a failure. Status remains
+read-only: it can show `running` / `granted` until owner reconciliation even
+after the completion fact appears. Run the corrected probe from this head.
+
 Run the gate in the foreground. If the host launcher requires a distinct
 process group, use that host's approved group launcher and record its returned
 PID. The harness records each child handle, exact Docker object and teardown
@@ -112,7 +130,7 @@ The suites may be selected independently with `--suite legacy`, `live` or
 | Pre-registry malformed root lock | Refusal without changes, even with no JSON entry. |
 | Reverse lock-only and paused old publication | The genuine 0.9.0 artifact pauses before registration; the procedure waits, drains it, then old down; only afterward does the new peer allocate. No claim is made while legacy state exists. |
 | Old 0.9.0 and 0.5.9 after cutover | Record their actual assignments and overlaps as unsupported limits; SQLite bytes/claims stay unchanged; visible JSON makes new status refuse. Never call this mixed-version isolation. |
-| Concurrent A/B env then live stacks | Disjoint ports and names; matching repeated up is a no-op; live force/profile change refuses; B's logical state and HTTP identity survive A clean/crash/recovery. |
+| Concurrent A/B env then live stacks | Disjoint ports and names; matching repeated up is a no-op; live force/profile change refuses; A's listener drains, then its exact launch completion becomes durable with the same generation/group and claims; B's logical state and HTTP identity survive A clean/crash/recovery. |
 | Squatter after reservation | Non-silo listener survives, CI reports PORT_BIND_CONFLICT, exported ports do not change, clean retains claims until the fixture listener stops. |
 | Crash after rename before checkpoint | Test-only SQLite boundary fault kills the real built CLI after its actual filesystem effect; down resumes only the journaled inode and cleans; peer unchanged. No production test bypass exists. |
 | Shared output/case-folded leaf | Public env refuses a cross-role/nested-root target alias without changing peer bytes. |
