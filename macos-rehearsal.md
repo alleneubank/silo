@@ -121,8 +121,8 @@ cat "$TMPDIR/rehearsal.log"
 
 A successful run contains `{"result":"pass","suite":"all"}` **and** no
 later cleanup failure, and exits zero. Keep the entire log and fixture evidence.
-The suites may be selected independently with `--suite legacy`, `live` or
-`backend` when a source change justifies rerunning only affected scenarios.
+The suites may be selected independently with `--suite legacy`, `live`,
+`backend` or `volumes` when a source change justifies rerunning only affected scenarios.
 
 | Scenario driven by that command | Required observation |
 | --- | --- |
@@ -141,6 +141,10 @@ The suites may be selected independently with `--suite legacy`, `live` or
 | k3d enabled to disabled after exact cluster deletion | `env --force` refuses removal of the published kubeconfig role; its original path/bytes and all claims survive. `down --clean` removes that recorded snapshot despite the config edit; subsequent disabled allocation has no kubeconfig claim, and final cleanup leaves no claims. |
 | Owner-labelled object outside namespace | NAME_CONFLICT; cleanup cannot grant authority outside declared names; the harness removes its exact synthetic object. |
 | Docker unavailable | ENGINE_UNAVAILABLE, never an empty-namespace pass. |
+| Anonymous image volume / clean | Redis's image-created `/data` volume is recorded under its exact container receipt and absent after clean; repeated clean is a no-op. |
+| Anonymous retention / failed delete / retry | Plain down retains the volume and parent receipt; force reallocation refuses without changed claims. A separate borrower makes clean fail without signals or deletion; after removing the exact fixture borrower, clean succeeds even though the original parent is gone. |
+| Explicit borrowed / named mounts | Existing donor anonymous and named sentinel volumes are explicitly mounted alongside Redis's own data; neither grants child authority, and their snapshots plus donor remain unchanged after clean. |
+| Replaced child identity | Recreate the exact recorded volume name at a different creation time inside the owned fixture: clean refuses NAME_CONFLICT and keeps claims/replacement bytes; after exact fixture removal, absent-child clean succeeds. |
 
 Repeat the same command on **both case-insensitive and case-sensitive native
 filesystems**, using locations supplied by the Mac account owner (no disk or
@@ -261,6 +265,33 @@ deployment/api` and `kubectl get --raw
 Use the same absolute CLI for `down --delete-cluster --clean`; record all exact
 resource IDs absent afterward. The example passes Compose project_name
 explicitly and labels its service/network; do not remove those settings.
+
+Before teardown, retain every container's mount handles, including Redis:
+
+```sh
+mkdir -p "$TMPDIR/example-mounts"
+bun "$silo_artifact" status --json > "$TMPDIR/example-status-before.json"
+bun -e 'const s=await Bun.file(process.argv[1]).json(); for(const r of s.project.resources) if(r.kind==="container") console.log(r.id)' \
+  "$TMPDIR/example-status-before.json" > "$TMPDIR/example-container-ids"
+while IFS= read -r container_id; do
+  docker container inspect "$container_id" --format '{{json .Mounts}}' \
+    > "$TMPDIR/example-mounts/$container_id.json"
+done < "$TMPDIR/example-container-ids"
+bun "$silo_artifact" down --delete-cluster --clean
+docker volume ls --format '{{.Name}}' > "$TMPDIR/example-volumes-after.txt"
+bun -e 'import assert from "node:assert/strict"; const s=await Bun.file(process.argv[1]).json(); const names=new Set((await Bun.file(process.argv[2]).text()).trim().split("\n")); for(const r of s.project.resources) if(r.kind==="container") for(const v of r.anonymousVolumes) assert(!names.has(v.name), `Leaked ${v.name} from ${r.id}`)' \
+  "$TMPDIR/example-status-before.json" "$TMPDIR/example-volumes-after.txt"
+bun "$silo_artifact" status --json > "$TMPDIR/example-status-after.json"
+```
+
+Require the pre-teardown receipts to contain Redis's `/data` anonymous child
+and the mount snapshots to match those handles. A missing mount receipt is a
+failure, not absence. The post-volume enumeration must succeed and include
+any known-present fixture control used for that run. Preserve any unexpected
+volume; timestamps alone never establish its owner. The former Linux six-volume
+audit covered the k3d image volume and five k3d anonymous children, not Redis.
+Plain Compose/Tilt teardown can leave anonymous data on either OS; no
+Docker/OrbStack-specific cause is established by the earlier Mac residue.
 
 Invite a fresh guest using the standard guest charter, the built CLI, packaged
 skill and a distinct disposable fixture. Include stop/recreate from a legacy

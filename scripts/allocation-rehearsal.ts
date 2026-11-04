@@ -12,7 +12,7 @@ const { values } = parseArgs({ args: Bun.argv.slice(2), options: {
   root: { type: "string" }, silo: { type: "string" }, suite: { type: "string", default: "all" },
   "legacy09": { type: "string" }, "legacy05": { type: "string" },
 }, strict: true });
-assert(values.root && values.silo, "Usage: bun scripts/allocation-rehearsal.ts --root <owned scratch> --silo <built cli.js> [--suite live|legacy|backend|all] [--legacy09 <0.9.0 cli.js> --legacy05 <0.5.9 cli.js>]");
+assert(values.root && values.silo, "Usage: bun scripts/allocation-rehearsal.ts --root <owned scratch> --silo <built cli.js> [--suite live|legacy|backend|volumes|all] [--legacy09 <0.9.0 cli.js> --legacy05 <0.5.9 cli.js>]");
 const accountHome = nativeAccountHome();
 assert.equal(readFileSync(path.join(accountHome, ".silo-rehearsal-account"), "utf8").trim(), "disposable silo rehearsal account", "Refusing a real account: create the marker only inside a disposable OS account/filesystem view");
 const cli = path.resolve(values.silo);
@@ -332,12 +332,115 @@ async function backend() {
   log({ scenario: "leftovers refused unchanged, retention holds claims, explicit exact deletion, unreachable engine refuses", pass: true });
 }
 
+function composeProject(label: string, mounts = "") {
+  const p = project(label);
+  writeFileSync(path.join(p, "Tiltfile"), "docker_compose('compose.yaml', project_name=os.getenv('COMPOSE_PROJECT_NAME'))\n");
+  writeFileSync(path.join(p, "compose.yaml"), `services:
+  redis:
+    image: redis:7-alpine
+${mounts}    labels:
+      io.silo.project: "\u0024{SILO_PROJECT_ID}"
+      io.silo.generation: "\u0024{SILO_GENERATION}"
+networks:
+  default:
+    labels:
+      io.silo.project: "\u0024{SILO_PROJECT_ID}"
+      io.silo.generation: "\u0024{SILO_GENERATION}"
+`);
+  return p;
+}
+const MountsSchema = z.array(z.object({ Type: z.string(), Name: z.string().optional(), Destination: z.string() }));
+async function redisMount(p: string) {
+  const made = await state(p);
+  const redis = made.resources.find(r => r.kind === "container" && r.source === "compose"); assert(redis?.kind === "container");
+  const mounts = MountsSchema.parse(JSON.parse(await docker(["container", "inspect", redis.id, "--format", "{{json .Mounts}}"] )));
+  const data = mounts.find(m => m.Type === "volume" && m.Destination === "/data"); assert(data?.Name);
+  return { made, redis, mounts, data: { ...data, Name: data.Name } };
+}
+async function anonymousVolumes() {
+  const p = composeProject("anonymous-volumes");
+  await silo(p, ["ci", name(p), "--timeout", "60s"]);
+  const { redis, mounts, data } = await redisMount(p);
+  const created = await fixtureSnapshot("volume", data.Name);
+  cleanupObjects.push({ kind: "volume", id: data.Name, name: data.Name, created });
+  appendFileSync(resourceFile, `volume ${data.Name} from container ${redis.id}; teardown public down --clean or exact snapshot-verified docker volume rm\n`);
+  log({ scenario: "image-declared anonymous mount before teardown", parent: redis, mounts, volume: created });
+  await silo(p, ["down", "--clean"]);
+  const volumes = (await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n");
+  assert(!volumes.includes(data.Name), "clean leaked the Redis image-declared anonymous /data volume");
+  cleanupObjects.pop();
+  assert.equal((await silo(p, ["status"])).project?.generation, 0);
+  assert.equal((await silo(p, ["down", "--clean"])).changed, false);
+  log({ scenario: "public clean removes the exact image-declared anonymous volume", parentId: redis.id, volume: data.Name, pass: true });
+
+  const donorId = await docker(["container", "create", "redis:7-alpine"]);
+  appendFileSync(resourceFile, `donor container ${donorId}; teardown snapshot-verified docker container rm --volumes ${donorId}\n`);
+  const donor = await fixtureSnapshot("container", donorId);
+  cleanupObjects.push({ kind: "container", id: donorId, name: donorId, created: donor });
+  const donorMounts = MountsSchema.parse(JSON.parse(await docker(["container", "inspect", donorId, "--format", "{{json .Mounts}}"] )));
+  const borrowed = donorMounts.find(m => m.Type === "volume" && m.Destination === "/data"); assert(borrowed?.Name);
+  const named = await docker(["volume", "create", `silo-sentinel-${path.basename(root).toLowerCase()}`]);
+  appendFileSync(resourceFile, `named sentinel volume ${named}; teardown snapshot-verified docker volume rm ${named}\n`);
+  const namedBefore = await fixtureSnapshot("volume", named);
+  cleanupObjects.push({ kind: "volume", id: named, name: named, created: namedBefore });
+  const borrowedBefore = await fixtureSnapshot("volume", borrowed.Name);
+  const retry = composeProject("anonymous-retry", `    volumes:\n      - type: volume\n        source: borrowed\n        target: /borrowed\n      - type: volume\n        source: sentinel\n        target: /named\n`);
+  appendFileSync(path.join(retry, "compose.yaml"), `volumes:\n  borrowed:\n    external: true\n    name: ${borrowed.Name}\n  sentinel:\n    external: true\n    name: ${named}\n`);
+  await silo(retry, ["ci", name(retry), "--timeout", "60s"]);
+  const owned = await redisMount(retry);
+  assert.deepEqual(owned.redis.anonymousVolumes.map(v => v.name), [owned.data.Name], "supplied volumes grant no deletion authority");
+  await silo(retry, ["down"]);
+  assert.deepEqual(await fixtureSnapshot("volume", borrowed.Name), borrowedBefore);
+  assert.deepEqual(await fixtureSnapshot("volume", named), namedBefore);
+  const stopped = await state(retry);
+  assert(stopped.resources.some(r => r.kind === "container" && r.id === owned.redis.id && r.anonymousVolumes.some(v => v.name === owned.data.Name)));
+  await silo(retry, ["env", "--force", "--profile", "alternative"], "CLEANUP_REQUIRED");
+  assert.deepEqual((await state(retry)).claims, stopped.claims);
+  const userId = await docker(["container", "create", "--volume", `${owned.data.Name}:/borrowed`, "redis:7-alpine"]);
+  appendFileSync(resourceFile, `borrower container ${userId}; teardown snapshot-verified docker container rm --volumes ${userId}\n`);
+  const userCreated = await fixtureSnapshot("container", userId);
+  cleanupObjects.push({ kind: "container", id: userId, name: userId, created: userCreated });
+  await silo(retry, ["down", "--clean"], "COMMAND_FAILED");
+  assert.deepEqual((await state(retry)).claims, stopped.claims);
+  assert.deepEqual(await fixtureSnapshot("container", userId), userCreated);
+  assert((await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(owned.data.Name));
+  await docker(["container", "rm", "--volumes", userId]); cleanupObjects.pop();
+  await silo(retry, ["down", "--clean"]);
+  assert(!(await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(owned.data.Name));
+  assert.equal((await silo(retry, ["status"])).project?.generation, 0);
+  assert.deepEqual(await fixtureSnapshot("volume", borrowed.Name), borrowedBefore);
+  assert.deepEqual(await fixtureSnapshot("volume", named), namedBefore);
+  assert.deepEqual(await fixtureSnapshot("container", donorId), donor);
+  log({ scenario: "retained mount blocks reallocation; in-use clean refuses and retries after parent deletion; explicit named and borrowed anonymous mounts survive", parent: owned.redis, borrowed: borrowed.Name, named, pass: true });
+
+  const identity = composeProject("anonymous-identity");
+  await silo(identity, ["ci", name(identity), "--timeout", "60s"]);
+  const original = await redisMount(identity);
+  await silo(identity, ["down"]);
+  const beforeReplacement = await state(identity);
+  const originalVolume = original.redis.anonymousVolumes.find(v => v.name === original.data.Name); assert(originalVolume);
+  await docker(["volume", "rm", originalVolume.name]);
+  await until("Docker volume creation-time resolution", async () => Date.now() >= Date.parse(originalVolume.createdAt) + 1000);
+  await docker(["volume", "create", "--label", "com.docker.volume.anonymous=", originalVolume.name]);
+  const replacement = await fixtureSnapshot("volume", originalVolume.name);
+  appendFileSync(resourceFile, `replacement fixture volume ${originalVolume.name}; teardown snapshot-verified docker volume rm ${originalVolume.name}\n`);
+  cleanupObjects.push({ kind: "volume", id: originalVolume.name, name: originalVolume.name, created: replacement });
+  await silo(identity, ["down", "--clean"], "NAME_CONFLICT");
+  assert.deepEqual((await state(identity)).claims, beforeReplacement.claims);
+  assert.deepEqual(await fixtureSnapshot("volume", originalVolume.name), replacement);
+  await docker(["volume", "rm", originalVolume.name]); cleanupObjects.pop();
+  await silo(identity, ["down", "--clean"]);
+  assert.equal((await silo(identity, ["status"])).project?.generation, 0);
+  log({ scenario: "replacement anonymous identity refuses without deleting replacement or dropping claims; absent-child retry retires", original: originalVolume, replacement, pass: true });
+}
+
 log({ environment: { platform: process.platform, arch: process.arch, bun: Bun.version, root, accountHome, artifact: cli, sha256: digest(cli) } });
 let failure: unknown;
 try {
   if (values.suite === "all" || values.suite === "legacy") await legacy();
   if (values.suite === "all" || values.suite === "live") await live();
   if (values.suite === "all" || values.suite === "backend") await backend();
+  if (values.suite === "all" || values.suite === "volumes") await anonymousVolumes();
   log({ result: "pass", suite: values.suite });
 } catch (error) { failure = error; log({ result: "fail", error: String(error), stack: error instanceof Error ? error.stack : null }); }
 finally {

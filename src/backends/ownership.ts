@@ -3,7 +3,9 @@ import { z } from "zod";
 import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import type { ProjectOperation } from "../core/lease_store";
-import type { Allocation, BackendReceipt, Claim, Launch } from "../core/lease_types";
+import type { Allocation, AnonymousVolume, BackendReceipt, Claim, Launch } from "../core/lease_types";
+import { runOwnedCommand } from "../core/owned_command";
+import { K3D_DELETE_TIMEOUT_MS } from "../core/constants";
 
 const MAX_OBJECTS = 10_000;
 const TOOL_TIMEOUT_MS = 5000;
@@ -13,6 +15,12 @@ const LabelsSchema = z.record(z.string()).nullable().optional();
 const InspectSchema = z.object({
   Id: z.string().optional(), Name: z.string(), Created: z.string().optional(), CreatedAt: z.string().optional(),
   Labels: LabelsSchema, Config: z.object({ Labels: LabelsSchema }).optional(),
+  HostConfig: z.object({
+    Binds: z.array(z.string()).max(256).nullable().optional(),
+    Mounts: z.array(z.object({ Type: z.string(), Source: z.string().optional(), Target: z.string() })).max(256).optional(),
+    VolumesFrom: z.array(z.string()).max(256).nullable().optional(),
+  }).optional(),
+  Mounts: z.array(z.object({ Type: z.string(), Name: z.string().optional(), Destination: z.string() })).max(256).optional(),
   State: z.object({ Running: z.boolean() }).optional(),
   NetworkSettings: z.object({ Ports: z.record(z.array(z.object({ HostPort: z.string() })).nullable()).nullable().optional() }).optional(),
 });
@@ -99,14 +107,40 @@ const inspectObject = async (entry: NamespaceEntry, source: BackendReceipt["sour
   ));
   const createdAt = value.Created ?? value.CreatedAt;
   if (!createdAt) throw new SiloError(`ENGINE_UNAVAILABLE: missing resource creation identity: ${entry.name}`, "ENGINE_UNAVAILABLE");
-  const receipt: BackendReceipt = {
-    source, kind: entry.kind, name: value.Name.replace(/^\//, ""), id: value.Id ?? value.Name,
+  const identity = {
+    source, name: value.Name.replace(/^\//, ""), id: value.Id ?? value.Name,
     createdAt, labels: safeLabels,
   };
+  const receipt: BackendReceipt = entry.kind === "container"
+    ? { ...identity, kind: "container", anonymousVolumes: await captureAnonymousVolumes(value, cwd) }
+    : { ...identity, kind: entry.kind };
   const bindings = Object.fromEntries(Object.entries(value.NetworkSettings?.Ports ?? {}).map(([target, bindings]) => [target, (bindings ?? []).map(binding => Number(binding.HostPort))]));
   const publishedPorts = Object.values(bindings).flat();
   if (publishedPorts.some(p => !Number.isSafeInteger(p) || p < 1 || p > 65535)) throw new SiloError("ENGINE_UNAVAILABLE: invalid Docker publication", "ENGINE_UNAVAILABLE");
   return { receipt, publishedPorts, bindings, running: value.State?.Running ?? false };
+};
+
+/** Only a mount with no supplied source can confer child-volume authority. */
+const captureAnonymousVolumes = async (container: z.infer<typeof InspectSchema>, cwd: string): Promise<AnonymousVolume[]> => {
+  if (!container.HostConfig || !container.Mounts) throw new SiloError("ENGINE_UNAVAILABLE: missing container mount provenance", "ENGINE_UNAVAILABLE");
+  const host = container.HostConfig;
+  const volumes: AnonymousVolume[] = [];
+  for (const mount of container.Mounts.filter(m => m.Type === "volume")) {
+    const supplied = host.Mounts?.some(m => m.Target === mount.Destination && m.Source) ||
+      host.Binds?.some(bind => {
+        const parts = bind.split(":");
+        return parts.length > 1 && parts[1] === mount.Destination;
+      });
+    if (supplied) continue;
+    if (host.VolumesFrom?.length) throw new SiloError("CLEANUP_REQUIRED: inherited volume provenance is ambiguous; no child-volume authority granted", "CLEANUP_REQUIRED");
+    if (!mount.Name) throw new SiloError("ENGINE_UNAVAILABLE: missing volume mount name", "ENGINE_UNAVAILABLE");
+    const volume = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "volume", "inspect", mount.Name], cwd)))[0]!;
+    if (volume.Name !== mount.Name || !volume.CreatedAt || !Object.hasOwn(volume.Labels ?? {}, "com.docker.volume.anonymous")) {
+      throw new SiloError(`CLEANUP_REQUIRED: cannot prove anonymous mount origin for ${mount.Name}`, "CLEANUP_REQUIRED");
+    }
+    volumes.push({ name: volume.Name, createdAt: volume.CreatedAt, destination: mount.Destination });
+  }
+  return volumes.sort((a, b) => a.destination < b.destination ? -1 : a.destination > b.destination ? 1 : 0);
 };
 
 const sameObject = (a: BackendReceipt, b: BackendReceipt): boolean => a.kind === b.kind && a.name === b.name && a.id === b.id && a.createdAt === b.createdAt;
@@ -212,6 +246,37 @@ export const proveBackendAbsent = async (owner: ProjectOperation): Promise<void>
   await assertEngine(owner);
   const entries = await enumerate(owner.root);
   await assertLabelledScope(owner, entries);
+  for (const parent of owner.resources(true)) {
+    if (parent.kind !== "container") continue;
+    for (const volume of parent.anonymousVolumes) {
+      if (entries.some(e => e.kind === "volume" && e.name === volume.name)) {
+        throw new SiloError(`CLEANUP_REQUIRED: anonymous volume ${volume.name} from ${parent.id} remains; run down --clean`, "CLEANUP_REQUIRED");
+      }
+    }
+  }
   const residual = entries.find(e => selected(e, owner.resourceClaims()) || owner.resources(true).some(r => r.kind === e.kind && r.kind !== "volume" && r.id === e.id));
   if (residual) throw new SiloError(`CLEANUP_REQUIRED: residual ${residual.kind}/${residual.name} (${residual.id}); claims retained`, "CLEANUP_REQUIRED");
+};
+
+/** Parent receipts survive container deletion, so crashes cannot discard child obligations. */
+export const deleteAnonymousVolumes = async (owner: ProjectOperation, source?: BackendReceipt["source"]): Promise<void> => {
+  await assertEngine(owner);
+  for (const parent of owner.resources(true)) {
+    if (parent.kind !== "container" || (source !== undefined && parent.source !== source)) continue;
+    for (const volume of parent.anonymousVolumes) {
+      const entries = await enumerate(owner.root);
+      if (!entries.some(e => e.kind === "volume" && e.name === volume.name)) continue;
+      const current = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "volume", "inspect", volume.name], owner.root)))[0]!;
+      if (current.Name !== volume.name || current.CreatedAt !== volume.createdAt || !Object.hasOwn(current.Labels ?? {}, "com.docker.volume.anonymous")) {
+        throw new SiloError(`NAME_CONFLICT: anonymous volume identity changed: ${volume.name}; parent ${parent.id}`, "NAME_CONFLICT");
+      }
+      const result = await runOwnedCommand(owner, ["docker", "volume", "rm", volume.name], {
+        kind: "owned-anonymous-volume-delete", effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
+      });
+      if ((await enumerate(owner.root)).some(e => e.kind === "volume" && e.name === volume.name)) {
+        throw new SiloError(`CLEANUP_REQUIRED: deletion left anonymous volume ${volume.name}`, "CLEANUP_REQUIRED");
+      }
+      owner.checkpointLaunch({ ...result.launch, reconciled: true });
+    }
+  }
 };

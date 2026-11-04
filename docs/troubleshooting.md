@@ -67,6 +67,15 @@ owned objects; failed Tilt teardown propagates. An uncertain request cannot
 be cancelled by process death or an empty listing. Escalate with those facts
 rather than deleting the ownership store.
 
+Container receipts include `anonymousVolumes` with each child's exact name,
+creation time and mount destination. Plain `down` retains Compose anonymous
+data; `down --clean` deletes those recorded children after Tilt teardown.
+Explicit cluster deletion removes its recorded anonymous children as well.
+Named volumes, explicit volume sources and bind mounts grant no child deletion
+authority. A volume still used by another container refuses deletion and keeps
+claims, even after its original parent is gone. Resolve that use with its owner,
+then retry clean; never prune or delete an unrecorded volume to clear the error.
+
 An interrupted or short CI environment append keeps its sink receipt and
 claims even through `down --clean`; cleanup cannot undo or replay an uncertain
 append. Inspect the runner file with its owner and preserve the recorded state

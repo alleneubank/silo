@@ -65,11 +65,20 @@ export const ExecutorCompletionSchema = z.object({
 export type ExecutorCompletion = z.infer<typeof ExecutorCompletionSchema>;
 export type ExecutorContext = Pick<ExecutorCompletion, "projectId" | "generation" | "launchId" | "leaderPid" | "groupId"> & { root: string };
 
-export const BackendReceiptSchema = z.object({
+const AnonymousVolumeSchema = z.object({
+  name: z.string().min(1), createdAt: z.string().min(1), destination: z.string().min(1),
+});
+export type AnonymousVolume = z.infer<typeof AnonymousVolumeSchema>;
+const BackendIdentitySchema = z.object({
   source: z.enum(["k3d", "compose"]),
-  kind: z.enum(["container", "network", "volume"]), name: z.string(), id: z.string(),
+  name: z.string(), id: z.string(),
   createdAt: z.string(), labels: z.record(z.string()),
 });
+export const BackendReceiptSchema = z.discriminatedUnion("kind", [
+  BackendIdentitySchema.extend({ kind: z.literal("container"), anonymousVolumes: z.array(AnonymousVolumeSchema).max(256) }),
+  BackendIdentitySchema.extend({ kind: z.literal("network") }),
+  BackendIdentitySchema.extend({ kind: z.literal("volume") }),
+]);
 export type BackendReceipt = z.infer<typeof BackendReceiptSchema>;
 
 export type Claim = { domain: string; resource: string; prefix?: boolean };

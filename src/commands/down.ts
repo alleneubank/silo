@@ -3,7 +3,7 @@ import { storedConfig } from "../core/allocation";
 import { writeEnvAndLockfile } from "../core/env";
 import { runHooks } from "../hooks/runner";
 import { deleteCluster } from "../backends/k3d";
-import { assertEngine, assertNamesAvailable, captureOwnedResources, verifyResource } from "../backends/ownership";
+import { assertEngine, assertNamesAvailable, captureOwnedResources, deleteAnonymousVolumes, verifyResource } from "../backends/ownership";
 import { tiltDown } from "../backends/tilt";
 import { stopOwnedCommand } from "../core/owned_command";
 import { logger } from "../utils/logger";
@@ -51,6 +51,10 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     if (effects.length > 0) {
       await runHooks(owner, { hooks: config.hooks["post-down"], env, phase: "post-down" });
       await captureOwnedResources(owner, "compose");
+    }
+    const hasAnonymousData = owner.resources(true).some(r => r.kind === "container" && r.anonymousVolumes.length > 0);
+    if (options.clean && owner.resources().length === 0 && hasAnonymousData) {
+      await deleteAnonymousVolumes(owner);
     }
     terminalGroups(owner);
     for (const launch of owner.launches()) {

@@ -137,6 +137,21 @@ matching cluster/name. k3d 5.9 uses the requested registry hostname without a
 provenance includes project label, physical working root and owned launch;
 other objects require ownership labels. Backend publications must be claimed.
 
+Container creation-result receipts include their anonymous volume names,
+creation identities and mount destinations. A source-less mount with Docker's
+anonymous-volume label confers child authority; an explicit source, bind mount
+or inherited mount does not. Ambiguous inherited provenance refuses. These
+immutable child receipts survive deletion of their parent container. `down`
+retains Compose child data; `down --clean` removes only the exact recorded
+anonymous children, without force or pruning. Explicit cluster deletion uses
+the same child receipts after deleting its containers. A changed identity or
+an in-use child prevents completion, and every recorded child must be absent
+before a generation can release its claims or be replaced. `status --json`
+exposes `anonymousVolumes` on container receipts, including deleted parents
+until the generation retires. Tools that delete/recreate their own containers
+before a creation-result capture can destroy attribution; arbitrary external
+tool lifecycles are outside Silo's cooperating-tool contract.
+
 Trusted hooks/Tiltfiles must consume generated identities and ports. In
 particular Tilt requires explicit `docker_compose(project_name=...)`; its
 directory-name default ignores the environment's Compose project name.
