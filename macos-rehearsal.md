@@ -102,6 +102,7 @@ The suites may be selected independently with `--suite legacy`, `live` or
 | Same-name leftover network/volume/stopped k3d server/registry containers | NAME_CONFLICT; exact C object IDs, creation identities and bytes remain unchanged; C is removed only by the harness's exact fixture handle. Stopped server/registry containers are synthetic native Docker residues, not running C clusters. |
 | Unreceipted env/kubeconfig/version-2 lock | PATH_CONFLICT and sentinels unchanged; legacy version-1 locks use LEGACY_STATE. |
 | Native k3d creation/retention/deletion | Exact node/registry/network/volume receipts, owned kubeconfig; clean refuses retained resources; explicit deletion removes only journaled objects. |
+| k3d enabled to disabled after exact cluster deletion | `env --force` refuses removal of the published kubeconfig role; its original path/bytes and all claims survive. `down --clean` removes that recorded snapshot despite the config edit; subsequent disabled allocation has no kubeconfig claim, and final cleanup leaves no claims. |
 | Owner-labelled object outside namespace | NAME_CONFLICT; cleanup cannot grant authority outside declared names; the harness removes its exact synthetic object. |
 | Docker unavailable | ENGINE_UNAVAILABLE, never an empty-namespace pass. |
 
@@ -114,6 +115,13 @@ NFC/NFD observations. Also run the filesystem tests from each checkout:
 ```sh
 bun test src/core/lease_store.test.ts src/core/legacy_check.test.ts
 ```
+
+The lease tests include one-failure parent-fsync faults for publish and delete,
+plus short and interrupted CI appends. Both sync retries must reach a successful
+native directory fsync before clearing the pending receipt. An uncertain CI
+append must retain claims through both reallocation and retirement attempts.
+Run these tests natively on each filesystem mode; Linux does not qualify
+Darwin's directory-sync behavior.
 
 ## Full example and guest
 

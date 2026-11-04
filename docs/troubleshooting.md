@@ -27,6 +27,9 @@ existing instance and exits successfully. A changed name/profile/config or
 cluster use explicit `down --delete-cluster` if deletion is intended.
 Then reconfigure the stopped generation with `--force`, or use `--clean` to
 retire it. Parallel stacks need separate roots and names.
+Clean before removing a generated-file role, such as disabling k3d after it
+published a kubeconfig, or changing any recorded path's spelling. Silo retains
+the prior generation until its recorded snapshots are cleaned.
 
 ## NAME_CONFLICT / PATH_CONFLICT / PATH_CHANGED
 
@@ -63,6 +66,12 @@ when proof is incomplete. `down --delete-cluster --clean` deletes only exact
 owned objects; failed Tilt teardown propagates. An uncertain request cannot
 be cancelled by process death or an empty listing. Escalate with those facts
 rather than deleting the ownership store.
+
+An interrupted or short CI environment append keeps its sink receipt and
+claims even through `down --clean`; cleanup cannot undo or replay an uncertain
+append. Inspect the runner file with its owner and preserve the recorded state
+when escalating. A failed parent-directory sync remains pending even when a
+rename or unlink is visible; retrying recovery must sync the parent successfully.
 
 ## ENGINE_UNAVAILABLE / ENGINE_CHANGED / STORE_ERROR
 

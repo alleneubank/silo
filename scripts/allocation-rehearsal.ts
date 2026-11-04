@@ -5,7 +5,7 @@ import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readd
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { z } from "zod";
-import { AllocationSchema, BackendReceiptSchema, ExecutorCompletionSchema, LaunchSchema } from "../src/core/lease_types";
+import { AllocationSchema, BackendReceiptSchema, ExecutorCompletionSchema, FileReceiptSchema, LaunchSchema } from "../src/core/lease_types";
 import { accountHome as nativeAccountHome } from "../src/core/allocation_domain";
 
 const { values } = parseArgs({ args: Bun.argv.slice(2), options: {
@@ -35,7 +35,7 @@ const ResultSchema = z.object({
   code: z.string().optional(), changed: z.boolean().optional(), legacy: z.boolean().optional(), found: z.array(z.object({ path: z.string() }).passthrough()).optional(),
   project: z.object({ projectId: z.string(), generation: z.number(), phase: z.string().nullable(), allocation: AllocationSchema.nullable(),
     claims: z.array(z.object({ domain: z.string(), resource: z.string(), prefix: z.boolean().optional() })),
-    resources: z.array(BackendReceiptSchema), launches: z.array(LaunchSchema), completions: z.array(ExecutorCompletionSchema),
+    resources: z.array(BackendReceiptSchema), launches: z.array(LaunchSchema), completions: z.array(ExecutorCompletionSchema), files: z.array(FileReceiptSchema),
   }).passthrough().nullable().optional(),
 });
 async function command(cwd: string, argv: string[], env = safeEnv, timeout = 180_000) {
@@ -236,7 +236,8 @@ async function fixtureSnapshot(kind: string, id: string) {
 async function backend() {
   const p = project("backend");
   const cfg = readFileSync(path.join(p, "silo.toml"), "utf8");
-  writeFileSync(path.join(p, "silo.toml"), cfg.replace("TILT_PORT=48128", "TILT_PORT=48128\nK3D_REGISTRY_PORT=48130\nHTTP_PORT=48131") + '\n[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\nargs=["--port=${HTTP_PORT}:80@loadbalancer"]\n[k3d.registry]\nenabled=true\n');
+  const clusterConfig = cfg.replace("TILT_PORT=48128", "TILT_PORT=48128\nK3D_REGISTRY_PORT=48130\nHTTP_PORT=48131") + '\n[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\nargs=["--port=${HTTP_PORT}:80@loadbalancer"]\n[k3d.registry]\nenabled=true\n';
+  writeFileSync(path.join(p, "silo.toml"), clusterConfig);
   const allocated = await silo(p, ["env", name(p)]); const initial = allocated.project; assert(initial?.allocation);
   const cluster = initial.allocation.state.identity.k3dClusterName!;
   await silo(p, ["down", "--clean"]);
@@ -263,7 +264,31 @@ async function backend() {
   log({ scenario: "owned container volume handles before deletion", names: [...attachedVolumes] });
   log({ scenario: "real k3d cluster/registry/network/volume and kubeconfig receipts", resources: made.resources, pass: true });
   await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED"); assert(existsSync(path.join(p, ".silo.lock")));
-  await silo(p, ["down", "--delete-cluster", "--clean"]); assert.equal((await silo(p, ["status"])).project?.allocation, null);
+  await silo(p, ["down", "--delete-cluster"]);
+  const stopped = await state(p);
+  const kubeconfig = stopped.allocation!.state.identity.kubeconfigPath!;
+  const kubeconfigClaim = stopped.files.find(f => f.role === "kubeconfig")!.target.key;
+  assert(stopped.claims.some(c => c.domain === "file-target" && c.resource === kubeconfigClaim));
+  const kubeconfigBefore = readFileSync(kubeconfig);
+  const disabledConfig = cfg.replace("[profiles.alternative.ports]", "[k3d]\nenabled=false\n[profiles.alternative.ports]");
+  writeFileSync(path.join(p, "silo.toml"), disabledConfig);
+  await silo(p, ["env", name(p), "--force"], "CLEANUP_REQUIRED");
+  const refused = await state(p);
+  assert.equal(refused.generation, stopped.generation);
+  assert.deepEqual(refused.claims, stopped.claims);
+  assert.deepEqual(readFileSync(kubeconfig), kubeconfigBefore);
+  await silo(p, ["down", "--clean"]);
+  assert(!existsSync(kubeconfig));
+  assert.equal((await silo(p, ["status"])).project?.allocation, null);
+  await silo(p, ["env", name(p), "--force"]);
+  const disabled = await state(p);
+  assert.equal(disabled.allocation!.state.identity.kubeconfigPath, undefined);
+  assert(!disabled.claims.some(c => c.domain === "file-target" && c.resource === kubeconfigClaim));
+  await silo(p, ["down", "--clean"]);
+  const final = (await silo(p, ["status"])).project;
+  assert.equal(final?.allocation, null); assert.deepEqual(final?.claims, []);
+  log({ scenario: "k3d enabled-to-disabled refuses role removal until recorded kubeconfig cleanup", kubeconfig, snapshotSha256: createHash("sha256").update(kubeconfigBefore).digest("hex"), generation: stopped.generation, refusedGeneration: refused.generation, finalClaims: final?.claims, pass: true });
+  writeFileSync(path.join(p, "silo.toml"), clusterConfig);
   for (const receipt of made.resources) {
     const result = await command(root, ["docker", receipt.kind, "inspect", receipt.kind === "volume" ? receipt.name : receipt.id]); assert.notEqual(result.code, 0);
   }

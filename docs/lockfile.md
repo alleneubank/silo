@@ -32,6 +32,15 @@ recorded operation. Cleanup requires the stored target and matching receipt;
 a config edit cannot redirect deletion and a foreign replacement is left
 untouched. Interrupted operations retain enough ownership to refuse safely.
 CI env export is a separate append-only sink claim, never a deletion grant.
+Short writes and interrupted appends retain the sink and generation claims;
+neither `--force` nor `down --clean` clears that uncertainty or replays the
+append. Inspect the runner file with its owner before further export.
+
+A reconfigured generation transfers each snapshot's exact path and receipt.
+Clean first when removing a file role (for example, disabling k3d after it
+published a kubeconfig) or changing a path, including capitalization. Failed
+parent-directory synchronization remains pending until a retry actually syncs
+the parent; observing the rename or deletion alone does not complete it.
 
 Use `silo down --delete-cluster --clean` to retire a reconciled generation.
 Missing/corrupt/unknown-version stores refuse; silo never replaces them with

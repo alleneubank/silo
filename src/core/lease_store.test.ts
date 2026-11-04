@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import * as fs from "node:fs";
 import { Database } from "bun:sqlite";
 import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -275,6 +276,95 @@ describe("atomic account leases", () => {
       ])).rejects.toThrow("PATH_CONFLICT");
       expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
     } finally { op.finish(); }
+  });
+
+  test("a generation cannot drop a published file role before owner cleanup", async () => {
+    const root = project("a"); const op = await open(root);
+    try {
+      await op.allocate(allocation(root, "a"), claims("a", 3000), [
+        ...targets(root), { role: "kubeconfig", target: prepareFileTarget(root, "kubeconfig", "kubeconfig") },
+      ]);
+      op.file("kubeconfig").publish("owned cluster snapshot\n");
+      const before = ProjectOperation.inspect(root, storePath);
+      await expect(op.allocate(allocation(root, "a", 3001), claims("a", 3001), targets(root))).rejects.toThrow("CLEANUP_REQUIRED");
+      expect(ProjectOperation.inspect(root, storePath)).toEqual(before);
+      expect(readFileSync(path.join(root, "kubeconfig"), "utf8")).toBe("owned cluster snapshot\n");
+      op.file("kubeconfig").remove();
+      await op.allocate(allocation(root, "a", 3001), claims("a", 3001), targets(root));
+      expect(op.fileReceipt("kubeconfig")).toBe(null);
+      await retire(op);
+      expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
+    } finally { op.finish(); }
+  });
+
+  test("a folded file claim cannot transfer a receipt to a different path spelling", async () => {
+    const root = project("a"); const op = await open(root);
+    try {
+      await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+      op.file("env").publish("owned snapshot\n");
+      const before = ProjectOperation.inspect(root, storePath);
+      await expect(op.allocate(allocation(root, "a", 3001), claims("a", 3001), [
+        ...targets(root).filter(t => t.role !== "env"), { role: "env", target: prepareFileTarget(root, ".LOCALNET.ENV", "env") },
+      ])).rejects.toThrow("PATH_CONFLICT");
+      expect(ProjectOperation.inspect(root, storePath)).toEqual(before);
+      expect(readFileSync(path.join(root, ".localnet.env"), "utf8")).toBe("owned snapshot\n");
+    } finally { op.finish(); }
+  });
+
+  for (const action of ["publish", "delete"] as const) test(`pending ${action} retains ownership until parent synchronization succeeds on retry`, async () => {
+    const root = project("a"); const op = await open(root);
+    const synchronize = fs.fsyncSync;
+    let failed = false;
+    let synchronizedParents = 0;
+    try {
+      await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+      if (action === "delete") op.file("env").publish("owned snapshot\n");
+      const fault = spyOn(fs, "fsyncSync").mockImplementation(fd => {
+        const parent = fs.fstatSync(fd).isDirectory();
+        if (parent && !failed) { failed = true; throw new Error("injected parent fsync failure"); }
+        synchronize(fd);
+        if (parent) synchronizedParents++;
+      });
+      try {
+        expect(() => action === "publish" ? op.file("env").publish("owned snapshot\n") : op.file("env").remove()).toThrow("injected parent fsync failure");
+        expect(existsSync(path.join(root, ".localnet.env"))).toBe(action === "publish");
+        expect(ProjectOperation.inspect(root, storePath)?.files.find(f => f.role === "env")?.pending?.action).toBe(action);
+        await expect(op.allocate(allocation(root, "a", 3001), claims("a", 3001), targets(root))).rejects.toThrow("INCOMPLETE_EXPORT");
+        expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: "3000" });
+        op.file("env").recover();
+        expect(synchronizedParents).toBe(1);
+        expect(ProjectOperation.inspect(root, storePath)?.files.find(f => f.role === "env")?.pending).toBe(null);
+        expect(op.fileReceipt("env")?.published === null).toBe(action === "delete");
+      } finally { fault.mockRestore(); }
+    } finally { op.finish(); }
+  });
+
+  for (const failure of ["short write", "interrupted write"] as const) test(`a CI ${failure} remains uncertain and blocks both claim transfer and retirement`, async () => {
+    const root = project("a"); const peerRoot = project("b");
+    const op = await open(root); const peer = await open(peerRoot);
+    const sink = path.join(base, "github.env");
+    const write = fs.writeSync;
+    try {
+      await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+      await peer.allocate(allocation(peerRoot, "b", 3001), claims("b", 3001), targets(peerRoot));
+      const fault = spyOn(fs, "writeSync").mockImplementation((fd, content) => {
+        const bytes = Buffer.from(String(content));
+        if (failure === "short write") return write(fd, bytes, 0, 4);
+        write(fd, bytes);
+        throw new Error("interrupted append");
+      });
+      try { expect(() => op.appendGithubEnv(sink, "NAME=é\n")).toThrow(failure === "short write" ? "INCOMPLETE_EXPORT" : "interrupted append"); }
+      finally { fault.mockRestore(); }
+      const expected = failure === "short write" ? "NAME" : "NAME=é\n";
+      expect(readFileSync(sink, "utf8")).toBe(expected);
+      const before = ProjectOperation.inspect(root, storePath);
+      expect(before?.sinks).toHaveLength(1);
+      expect(() => peer.appendGithubEnv(sink, "PEER=1\n")).toThrow("PATH_CONFLICT");
+      await expect(op.allocate(allocation(root, "a", 3002), claims("a", 3002), targets(root))).rejects.toThrow("CLEANUP_REQUIRED");
+      await expect(retire(op)).rejects.toThrow("CLEANUP_REQUIRED");
+      expect(ProjectOperation.inspect(root, storePath)).toEqual(before);
+      expect(readFileSync(sink, "utf8")).toBe(expected);
+    } finally { op.finish(); peer.finish(); }
   });
 
   test("CI sinks reject snapshot aliases and concurrent writers while sequential appends remain append-only", async () => {

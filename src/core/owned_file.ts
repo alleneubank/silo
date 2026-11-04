@@ -62,8 +62,8 @@ export class OwnedFile {
           throw new SiloError(`PATH_CHANGED: incomplete export has an unexpected target or temporary file: ${receipt.target.path}`, "PATH_CHANGED");
         }
         renameSync(pending.temporary, receipt.target.path);
-        synchronizeParent(receipt.target.parent);
       }
+      synchronizeParent(receipt.target.parent);
       this.owner.checkpoint({ ...receipt, published: expected, pending: null });
     } else {
       this.owner.assertRemoving();
@@ -72,8 +72,8 @@ export class OwnedFile {
           throw new SiloError(`PATH_CHANGED: pending cleanup found a replacement: ${receipt.target.path}`, "PATH_CHANGED");
         }
         unlinkSync(receipt.target.path);
-        synchronizeParent(receipt.target.parent);
       }
+      synchronizeParent(receipt.target.parent);
       this.owner.checkpoint({ ...receipt, published: null, pending: null });
     }
   }
@@ -129,7 +129,10 @@ export const appendSink = (owner: ProjectOperation, file: string, content: strin
     if (!stat.isFile() || stat.nlink !== 1n || fileIdentity(target.path) !== identity || (before !== null && identity !== before)) {
       throw new SiloError("PATH_CHANGED: CI sink was replaced", "PATH_CHANGED");
     }
-    writeSync(fd, content, undefined, "utf8");
+    const written = writeSync(fd, content, undefined, "utf8");
+    if (written !== Buffer.byteLength(content)) {
+      throw new SiloError(`INCOMPLETE_EXPORT: CI append wrote ${written} of ${Buffer.byteLength(content)} bytes; sink ownership remains uncertain: ${target.path}. Inspect the runner file before any further export.`, "INCOMPLETE_EXPORT");
+    }
     fsyncSync(fd);
     if (fileIdentity(target.path) !== identity) throw new SiloError("PATH_CHANGED: CI sink changed during append", "PATH_CHANGED");
   } finally { closeSync(fd); }

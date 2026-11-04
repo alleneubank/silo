@@ -436,7 +436,7 @@ export class ProjectOperation {
     const receipts = targets.map(({ role, target }): FileReceipt => {
       this.protectStoreTarget(target);
       const old = this.fileReceipt(role);
-      if (old && old.target.key !== target.key) {
+      if (old && (old.target.key !== target.key || old.target.path !== target.path)) {
         throw new SiloError(`PATH_CONFLICT: ${role} target changed; down --clean uses its recorded target. Clean before reallocating.`, "PATH_CONFLICT");
       }
       const identity = fileIdentity(target.path);
@@ -444,18 +444,14 @@ export class ProjectOperation {
         if (identity === null) throw new SiloError(`Config disappeared: ${target.path}`, "PATH_CHANGED");
         return { role, target, published: { identity, hash: digest(readFileSync(target.path)), generation }, pending: null };
       }
-      if (old) this.file(role).verify();
-      else if (identity !== null) {
+      if (!old && identity !== null) {
         throw new SiloError(`PATH_CONFLICT: unreceipted file exists: ${target.path}. Inspect its owner; silo will not overwrite or delete it.`, "PATH_CONFLICT");
       }
       return { role, target, published: old?.published ?? null, pending: null };
     });
     this.transaction(() => {
       if (previous) {
-        if (this.db.query<{ count: number }, [string, number]>("SELECT count(*) AS count FROM sinks WHERE project_id = ? AND generation = ?").get(this.projectId, this.generation)!.count > 0) {
-          throw new SiloError("CLEANUP_REQUIRED: interrupted CI append requires owner cleanup", "CLEANUP_REQUIRED");
-        }
-        this.db.query("DELETE FROM claims WHERE project_id = ? AND generation = ?").run(this.projectId, this.generation);
+        this.releaseGenerationClaims(receipts);
       }
       this.db.query("INSERT INTO allocations (project_id, generation, snapshot, phase) VALUES (?, ?, ?, 'reserved')").run(this.projectId, generation, JSON.stringify(AllocationSchema.parse(allocation)));
       for (const claim of claims) this.insertClaim(claim, generation);
@@ -674,18 +670,32 @@ export class ProjectOperation {
   retire(proof: RetirementProof): void {
     proof.assertFor(this);
     if (this.mutationState !== "retiring") throw new SiloError("Retirement proof has already been consumed", "STALE_OPERATION");
-    for (const role of ["env", "lock", "kubeconfig"] as const) {
-      const receipt = this.fileReceipt(role);
-      if (receipt && (receipt.published || receipt.pending || fileIdentity(receipt.target.path) !== null)) {
-        throw new SiloError(`CLEANUP_REQUIRED: owned ${role} snapshot remains`, "CLEANUP_REQUIRED");
-      }
-    }
     this.transaction(() => {
-      this.db.query("DELETE FROM claims WHERE project_id = ? AND generation = ?").run(this.projectId, this.generation);
-      this.db.query("DELETE FROM sinks WHERE project_id = ? AND generation = ?").run(this.projectId, this.generation);
+      this.releaseGenerationClaims([]);
       this.db.query("UPDATE projects SET generation = 0 WHERE id = ? AND generation = ? AND operation_token = ?").run(this.projectId, this.generation, this.token);
     }, true);
     this.project = { ...this.project, generation: 0 };
+  }
+
+  /** A generation may release claims only after every file obligation is discharged or transferred. */
+  private releaseGenerationClaims(transfers: readonly FileReceipt[]): void {
+    if (this.db.query<{ count: number }, [string, number]>("SELECT count(*) AS count FROM sinks WHERE project_id = ? AND generation = ?").get(this.projectId, this.generation)!.count > 0) {
+      throw new SiloError("CLEANUP_REQUIRED: interrupted CI append remains uncertain; sink and generation claims retained. Inspect the runner file with its owner; silo cannot undo or replay an uncertain append.", "CLEANUP_REQUIRED");
+    }
+    const receipts = this.db.query<JsonRow, [string, number]>("SELECT receipt FROM files WHERE project_id = ? AND generation = ?").all(this.projectId, this.generation).map(r => FileReceiptSchema.parse(JSON.parse(r.receipt)));
+    for (const receipt of receipts) {
+      if (receipt.role === "config") continue;
+      const next = transfers.find(file => file.role === receipt.role);
+      if (next) {
+        assert(next.target.key === receipt.target.key && next.target.path === receipt.target.path, "Transferred file target is immutable");
+        this.file(receipt.role).verify();
+        assert.deepEqual(next.published, receipt.published, "Transferred snapshot retains its receipt");
+        assert(next.pending === null, "Only completed snapshots can transfer");
+      } else if (receipt.published || receipt.pending || fileIdentity(receipt.target.path) !== null) {
+        throw new SiloError(`CLEANUP_REQUIRED: owned ${receipt.role} snapshot remains at ${receipt.target.path}. Run down --clean before removing its role; claims retained.`, "CLEANUP_REQUIRED");
+      }
+    }
+    this.db.query("DELETE FROM claims WHERE project_id = ? AND generation = ?").run(this.projectId, this.generation);
   }
 
   finish(): void {

@@ -101,6 +101,17 @@ leaves foreign bytes intact. Cleanup uses the stored target, never a newly
 edited config. CI exports claim a separate append-only sink with no deletion
 authority; simultaneous writers and snapshot aliases refuse.
 
+Generation claim release uses one file-obligation boundary for reconfiguration
+and retirement. Every prior snapshot must transfer its exact recorded path and
+receipt or be cleaned first, including roles omitted by the next configuration.
+Disabling k3d with a published kubeconfig therefore requires `down --clean`
+before reallocation. A folded target key does not authorize changing the path's
+spelling. A failed parent sync keeps the rename/unlink pending, even if its
+filesystem effect is already visible; recovery retries the parent sync before
+checkpointing. A short or interrupted CI append keeps its uncertainty receipt
+and claims, blocking both reallocation and retirement. Silo cannot undo or
+replay such an append; its runner file must be inspected with its owner.
+
 `.silo.lock` version 2 carries project ID and generation. It and the env file
 are consumer snapshots, not ownership authorities. Missing snapshots do not
 release claims. `status --json` is read-only and does not initialize a store.

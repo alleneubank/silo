@@ -26,6 +26,8 @@ changing its configuration or repairing an environment. Discover topics with
 - `--force` can reconfigure a stopped, reconciled generation. It refuses live,
   retained or uncertain state. Stop/reconcile before changing name, profile,
   ports or output paths. Parallel stacks require separate roots and names.
+  Clean before changing a recorded path (including capitalization) or removing
+  a generated-file role, such as disabling k3d with a published kubeconfig.
   Profile selection is `--profile` > `SILO_PROFILE` > stored profile > base.
 - `LEGACY_STATE` is a host-wide, read-only refusal, including lock-only peers
   with no listener. Read its listing. Before a host's first new allocation,
