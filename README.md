@@ -10,9 +10,10 @@ Isolated local development environments. silo solves instance isolation and k3d 
 
 ## Requirements
 
-- Bun (runtime)
+- Bun 1.4.4 (qualified runtime)
+- Docker with a local Unix endpoint
 - Tilt
-- [janitor](https://github.com/alleneubank/janitor) (supervises Tilt; see
+- [janitor](https://github.com/alleneubank/janitor) 0.3.1 (process-group supervisor; see
   [Process supervision](#process-supervision))
 - k3d (optional, only if `k3d.enabled = true`)
 
@@ -42,6 +43,12 @@ pi install git:https://github.com/alleneubank/silo.git
 The skill shells out to the `silo` binary; install it first via `npm i -g @0xbigboss/silo` or the source build.
 
 ## Quick start
+
+This breaking version requires a host cutover: announce it, upgrade or retire
+every permitted old invocation, and wait for all old operations to finish
+before the first new allocation. Each owner stops and recreates its ephemeral
+projects. Legacy JSON entries/root locks cause read-only `LEGACY_STATE`;
+nothing migrates or deletes automatically. See `silo doc troubleshooting`.
 
 ```bash
 silo init
@@ -89,15 +96,17 @@ When silo launches child processes (Tilt, hooks, k3d, kubectl), it injects:
 
 ## Process supervision
 
-`silo up` starts Tilt as `janitor --grace-ms <ms> -- tilt up`, so Tilt cannot
-outlive the silo process that started it. janitor is required: a missing
-supervisor fails the run rather than starting an unsupervised Tilt.
+All mutating tools use durable gated Janitor groups with `--pgroup-only`.
+Owner loss drains the recorded group; uncertain effects retain ownership.
+A missing supervisor refuses startup. `--force` reconfigures only a stopped,
+reconciled generation; parallel stacks need separate roots and names.
 
 See `silo doc tilt` for the details.
 
 ## Working with a running stack
 
-`silo status` is lockfile state (pid, ports, URLs), not Tilt resource health.
+`silo status --json` reports canonical account ownership (generation, claims,
+receipts and retained resources). It does not report Tilt resource health.
 After `silo up`, source `.localnet.env` and talk to the Tilt API:
 
 ```bash

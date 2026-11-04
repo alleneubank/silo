@@ -23,10 +23,13 @@ post-down = []
 - Hooks run via `/bin/sh -c` from the project root.
 - Hooks inherit all generated environment variables.
 - Each hook has a 5 minute timeout.
+- Each hook holds the project operation and uses a durable gated Janitor
+  process group (`--pgroup-only`). Do not detach descendants or mutate peer
+  resources. Hook code is trusted; Silo cannot infer arbitrary hook ownership.
 
 ## Failure Behavior
 
 - `pre-up` failure: aborts before k3d is created or Tilt starts.
 - `post-up` failure: aborts before Tilt starts.
 - `pre-down` failure: aborts teardown.
-- `post-down` failure: logged as a warning; teardown continues.
+- `post-down` failure: propagates; claims remain for reconciliation.

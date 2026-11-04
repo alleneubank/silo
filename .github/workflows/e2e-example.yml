@@ -7,7 +7,7 @@ on:
       - main
 
 env:
-  BUN_VERSION: "1.4.0"
+  BUN_VERSION: "1.4.4"
   SILO_CI_TIMEOUT: "300s"
   SILO_CI_NAME: "ci-run"
   WEB_LOCAL_PORT: "18080"
@@ -38,7 +38,7 @@ jobs:
       - name: Install k3d
         run: |
           set -euo pipefail
-          curl -sSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+          curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/v5.9.0/install.sh | TAG=v5.9.0 bash
           k3d version
 
       - name: Install Tilt
@@ -50,15 +50,34 @@ jobs:
       - name: Install janitor
         run: |
           set -euo pipefail
-          curl -fsSL https://raw.githubusercontent.com/alleneubank/janitor/main/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          "$HOME/.local/bin/janitor" version
+          curl -fsSL https://raw.githubusercontent.com/alleneubank/janitor/v0.3.1/install.sh | JANITOR_VERSION=v0.3.1 PREFIX="$RUNNER_TEMP/janitor" sh
+          echo "$RUNNER_TEMP/janitor/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/janitor/bin/janitor" version
+
+      - name: Build distributed CLI
+        working-directory: .
+        run: bun run build
+
+      - name: Native allocation rehearsal (disposable hosted runner)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/allocation/fixtures" "$RUNNER_TEMP/allocation/legacy09" "$RUNNER_TEMP/allocation/legacy05"
+          printf 'disposable silo rehearsal account\n' > "$HOME/.silo-rehearsal-account"
+          curl -fsSL https://registry.npmjs.org/@0xbigboss/silo/-/silo-0.9.0.tgz -o "$RUNNER_TEMP/allocation/legacy09/package.tgz"
+          curl -fsSL https://registry.npmjs.org/@0xbigboss/silo/-/silo-0.5.9.tgz -o "$RUNNER_TEMP/allocation/legacy05/package.tgz"
+          echo "34d4c96b6f7a21ec688aa66b561527cfa215633e0743d771261caa7e45dd5c6b  $RUNNER_TEMP/allocation/legacy09/package.tgz" | sha256sum --check
+          echo "bbbbe93f47b4bc537ee28e740d32ba78080a2e2cda82781cf959a269468281a2  $RUNNER_TEMP/allocation/legacy05/package.tgz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/allocation/legacy09/package.tgz" -C "$RUNNER_TEMP/allocation/legacy09"
+          tar -xzf "$RUNNER_TEMP/allocation/legacy05/package.tgz" -C "$RUNNER_TEMP/allocation/legacy05"
+          bun run test:allocation --root "$RUNNER_TEMP/allocation/fixtures" --silo "$PWD/dist/cli.js" \
+            --legacy09 "$RUNNER_TEMP/allocation/legacy09/package/dist/cli.js" \
+            --legacy05 "$RUNNER_TEMP/allocation/legacy05/package/dist/cli.js"
 
       - name: Silo ci (example)
         working-directory: example
         run: |
           set -euo pipefail
-          ../silo ci "${SILO_CI_NAME}" --timeout "${SILO_CI_TIMEOUT}"
+          bun ../dist/cli.js ci "${SILO_CI_NAME}" --timeout "${SILO_CI_TIMEOUT}"
           if [ -n "${GITHUB_ENV:-}" ]; then
             grep -q '^KUBECONFIG=' "$GITHUB_ENV"
           else
@@ -101,4 +120,11 @@ jobs:
         working-directory: example
         run: |
           set -euo pipefail
-          ../silo down --delete-cluster --clean || true
+          bun ../dist/cli.js down --delete-cluster --clean
+
+      - name: Preserve rehearsal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allocation-rehearsal
+          path: ${{ runner.temp }}/allocation/fixtures

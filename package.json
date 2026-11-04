@@ -14,6 +14,7 @@
     "check": "bunx knip && bunx jscpd src/",
     "typecheck": "bun run tsc --noEmit",
     "test": "bun test",
+    "test:allocation": "bun scripts/allocation-rehearsal.ts",
     "test:drain": "sh scripts/drain-test.sh",
     "test:duplicate": "sh scripts/duplicate-test.sh",
     "build": "bun build --target=bun --outdir dist src/cli.ts",
@@ -73,7 +74,7 @@
   },
   "license": "MIT",
   "engines": {
-    "bun": ">=1.1.0"
+    "bun": "1.4.4"
   },
   "pi": {
     "skills": [

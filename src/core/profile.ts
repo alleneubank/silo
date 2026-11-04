@@ -27,7 +27,7 @@ const normalizeProfileName = (value?: string): string | undefined => {
 };
 
 /** The profile the caller asked for explicitly: `--profile` first, then env. */
-export const resolveExplicitProfile = (
+const resolveExplicitProfile = (
   profileFlag: string | undefined
 ): string | undefined =>
   normalizeProfileName(profileFlag) ?? normalizeProfileName(process.env.SILO_PROFILE);

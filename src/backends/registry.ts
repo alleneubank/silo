@@ -1,8 +1,9 @@
 import os from "os";
 import path from "path";
 import { promises as fs } from "fs";
-import { KUBECTL_APPLY_TIMEOUT_MS, KUBECTL_GET_TIMEOUT_MS } from "../core/constants";
-import { runCommand, runCommandChecked } from "../utils/exec";
+import { KUBECTL_APPLY_TIMEOUT_MS } from "../core/constants";
+import { runOwnedCommand } from "../core/owned_command";
+import type { ProjectOperation } from "../core/lease_store";
 import { withRetry } from "../utils/retry";
 
 const buildConfigMap = (
@@ -31,12 +32,12 @@ ${hostLine}${runtimeLine}${clusterLine}${helpLine}
 };
 
 export const advertiseLocalRegistry = async (params: {
+  owner: ProjectOperation;
   registryHost: string;
   registryHostFromContainerRuntime?: string;
   registryHostFromClusterNetwork?: string;
   help?: string;
   kubeconfigPath?: string;
-  cwd: string;
   retry: {
     attempts: number;
     baseDelayMs: number;
@@ -49,7 +50,7 @@ export const advertiseLocalRegistry = async (params: {
     registryHostFromClusterNetwork,
     help,
     kubeconfigPath,
-    cwd,
+    owner,
     retry,
   } = params;
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "silo-registry-"));
@@ -67,53 +68,15 @@ export const advertiseLocalRegistry = async (params: {
     );
     await withRetry(
       () =>
-        runCommandChecked(["kubectl", "apply", "-f", manifestPath], {
-          cwd,
+        runOwnedCommand(owner, ["kubectl", "apply", "-f", manifestPath], {
           ...(kubeconfigPath ? { env: { KUBECONFIG: kubeconfigPath } } : {}),
           timeoutMs: KUBECTL_APPLY_TIMEOUT_MS,
-          context: "kubectl apply local-registry-hosting",
-          stdio: "inherit",
+          kind: "registry-advertise",
+          effect: "hook",
         }),
       retry
     );
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });
   }
-};
-
-export const getRegistryConfigMapStatus = async (params: {
-  kubeconfigPath?: string;
-  cwd: string;
-}): Promise<"present" | "absent" | "unknown"> => {
-  const { kubeconfigPath, cwd } = params;
-  const result = await runCommand(
-    [
-      "kubectl",
-      "get",
-      "configmap",
-      "local-registry-hosting",
-      "-n",
-      "kube-public",
-      "-o",
-      "json",
-    ],
-    {
-      cwd,
-      ...(kubeconfigPath ? { env: { KUBECONFIG: kubeconfigPath } } : {}),
-      timeoutMs: KUBECTL_GET_TIMEOUT_MS,
-      context: "kubectl get local-registry-hosting",
-      stdio: "pipe",
-    }
-  );
-
-  if (result.exitCode === 0) {
-    return "present";
-  }
-
-  const combined = `${result.stdout}\n${result.stderr}`.toLowerCase();
-  if (combined.includes("notfound") || combined.includes("not found")) {
-    return "absent";
-  }
-
-  return "unknown";
 };

@@ -1,223 +1,105 @@
-import path from "path";
-import { promises as fs } from "fs";
-import {
-  DOCKER_PS_TIMEOUT_MS,
-  K3D_CREATE_TIMEOUT_MS,
-  K3D_DELETE_TIMEOUT_MS,
-  K3D_LIST_TIMEOUT_MS,
-} from "../core/constants";
-import { runCommand, runCommandChecked } from "../utils/exec";
+import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
+import { K3D_CREATE_TIMEOUT_MS, K3D_DELETE_TIMEOUT_MS, K3D_LIST_TIMEOUT_MS } from "../core/constants";
+import type { ProjectOperation } from "../core/lease_store";
+import { runOwnedCommand } from "../core/owned_command";
+import { assertEngine, assertNamesAvailable, captureOwnedResources, verifyResource } from "./ownership";
 
-type RegistryHealth = "healthy" | "stale" | "unknown";
+const CONTROL_FLAGS = new Set([
+  "--config", "-c", "--network", "--registry-create", "--api-port", "--runtime-label",
+  "--kubeconfig-update-default", "--kubeconfig-switch-context", "--token", "--no-rollback",
+]);
 
-export type EnsureClusterDeps = {
-  runCommand: typeof runCommand;
-  runCommandChecked: typeof runCommandChecked;
-};
-
-const defaultEnsureClusterDeps: EnsureClusterDeps = {
-  runCommand,
-  runCommandChecked,
-};
-
-const parseNamesOutput = (output: string): string[] =>
-  output
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-const parseRegistryListNames = (output: string): string[] | null => {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(output);
-  } catch {
-    return null;
-  }
-
-  if (!Array.isArray(parsed)) {
-    return null;
-  }
-
-  return parsed
-    .map((entry) => {
-      if (!entry || typeof entry !== "object") {
-        return null;
+/** User args may tune the cluster, but cannot replace its identity, file or port claims. */
+export const validateK3dArgs = (args: string[], ports: Record<string, number>): void => {
+  const declared = new Set(Object.values(ports));
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index]!;
+    const flag = arg.split("=", 1)[0]!;
+    if (CONTROL_FLAGS.has(flag)) throw new SiloError(`INVALID_CONFIG: silo owns k3d ${flag}; remove it from k3d.args`, "INVALID_CONFIG");
+    if (flag === "--port" || flag === "-p") {
+      const value = arg.includes("=") ? arg.slice(arg.indexOf("=") + 1) : args[++index];
+      const mapping = /^(?:(?:127\.0\.0\.1|0\.0\.0\.0|localhost|\[::\]|\[::1\]):)?(\d+):(\d+)(?:\/(?:tcp|udp))?(?:@[A-Za-z0-9_:;,.*-]+)?$/.exec(value ?? "");
+      const hostPort = Number(mapping?.[1]);
+      const containerPort = Number(mapping?.[2]);
+      if (!mapping || !declared.has(hostPort) || containerPort < 1 || containerPort > 65535) {
+        throw new SiloError(`INVALID_CONFIG: k3d port mapping must publish a declared allocated host port: ${value ?? "missing value"}`, "INVALID_CONFIG");
       }
-      const name = (entry as { name?: unknown }).name;
-      return typeof name === "string" && name.length > 0 ? name : null;
-    })
-    .filter((name): name is string => name !== null);
-};
-
-const hasExpectedRegistryName = (names: string[], registryHost: string): boolean => {
-  const allowedNames = new Set([registryHost, `k3d-${registryHost}`]);
-  return names.some((name) => allowedNames.has(name));
-};
-
-const resolveRegistryHealth = async (
-  registryName: string,
-  cwd: string,
-  deps: EnsureClusterDeps
-): Promise<RegistryHealth> => {
-  const registryHost = registryName.split(":")[0] ?? registryName;
-
-  const registryList = await deps.runCommand(["k3d", "registry", "list", "-o", "json"], {
-    cwd,
-    timeoutMs: K3D_LIST_TIMEOUT_MS,
-    context: "k3d registry list",
-    stdio: "pipe",
-  });
-  if (registryList.exitCode !== 0) {
-    return "unknown";
-  }
-
-  const registryNames = parseRegistryListNames(registryList.stdout);
-  if (!registryNames) {
-    return "unknown";
-  }
-  if (!hasExpectedRegistryName(registryNames, registryHost)) {
-    return "stale";
-  }
-
-  const dockerContainers = await deps.runCommand(["docker", "ps", "--format", "{{.Names}}"], {
-    cwd,
-    timeoutMs: DOCKER_PS_TIMEOUT_MS,
-    context: "docker ps (registry health check)",
-    stdio: "pipe",
-  });
-  if (dockerContainers.exitCode !== 0) {
-    return "unknown";
-  }
-
-  const containerNames = parseNamesOutput(dockerContainers.stdout);
-  return hasExpectedRegistryName(containerNames, registryHost) ? "healthy" : "stale";
-};
-
-export const clusterExists = async (
-  clusterName: string,
-  cwd: string,
-  runner: typeof runCommand = runCommand
-): Promise<boolean> => {
-  const result = await runner(["k3d", "cluster", "list"], {
-    cwd,
-    timeoutMs: K3D_LIST_TIMEOUT_MS,
-    context: "k3d cluster list",
-    stdio: "pipe",
-  });
-
-  if (result.exitCode !== 0) {
-    return false;
-  }
-
-  return result.stdout.includes(clusterName);
-};
-
-export const ensureCluster = async (params: {
-  clusterName: string;
-  registryName: string | undefined;
-  args: string[];
-  cwd: string;
-}, deps: EnsureClusterDeps = defaultEnsureClusterDeps): Promise<{ created: boolean }> => {
-  const { clusterName, registryName, args, cwd } = params;
-  const exists = await clusterExists(clusterName, cwd, deps.runCommand);
-  if (exists) {
-    if (!registryName) {
-      return { created: false };
     }
-
-    const registryHealth = await resolveRegistryHealth(registryName, cwd, deps);
-    if (registryHealth !== "stale") {
-      return { created: false };
-    }
-
-    await deps.runCommandChecked(["k3d", "cluster", "delete", clusterName], {
-      cwd,
-      timeoutMs: K3D_DELETE_TIMEOUT_MS,
-      context: `k3d cluster delete ${clusterName}`,
-      stdio: "inherit",
-    });
   }
-
-  const cmd = [
-    "k3d",
-    "cluster",
-    "create",
-    clusterName,
-    "--kubeconfig-update-default=false",
-    "--kubeconfig-switch-context=false",
-  ];
-
-  if (registryName) {
-    cmd.push("--registry-create", registryName);
-  }
-
-  cmd.push(...args);
-
-  await deps.runCommandChecked(cmd, {
-    cwd,
-    timeoutMs: K3D_CREATE_TIMEOUT_MS,
-    context: `k3d cluster create ${clusterName}`,
-    stdio: "inherit",
-  });
-
-  return { created: true };
 };
 
-export const deleteCluster = async (clusterName: string, cwd: string): Promise<void> => {
-  await runCommandChecked(["k3d", "cluster", "delete", clusterName], {
-    cwd,
-    timeoutMs: K3D_DELETE_TIMEOUT_MS,
-    context: `k3d cluster delete ${clusterName}`,
-    stdio: "inherit",
-  });
-};
-
-/**
- * Strips ANSI escape sequences and debug output lines from k3d output.
- * k3d may write debug lines (e.g., DEBU[0000]) to stdout with ANSI colors.
- */
-export const stripDebugOutput = (output: string): string => {
-  // ANSI escape sequence pattern: ESC[ followed by parameters and command
-  // No 'g' flag - we only need to detect presence, not find all matches
+export const stripDebugOutput = (output: string): string => output.split("\n").filter(line => {
   // oxlint-disable-next-line no-control-regex -- intentionally matching ANSI escapes
-  const ansiPattern = /\x1b\[[0-9;]*[a-zA-Z]/;
+  const ansi = /\x1b\[[0-9;]*[a-zA-Z]/;
+  return !ansi.test(line) && !/^(DEBU|INFO|WARN|ERRO)\[/.test(line);
+}).join("\n");
 
-  return output
-    .split("\n")
-    .filter((line) => {
-      // Skip lines containing ANSI escape sequences
-      if (ansiPattern.test(line)) {
-        return false;
-      }
-      // Skip debug/info/warn log lines (DEBU, INFO, WARN patterns from logrus)
-      if (/^(DEBU|INFO|WARN|ERRO)\[/.test(line)) {
-        return false;
-      }
-      return true;
-    })
-    .join("\n");
+const recordCreation = async (owner: ProjectOperation, command: string[], kind: string): Promise<void> => {
+  const result = await runOwnedCommand(owner, command, { kind, effect: "create", timeoutMs: K3D_CREATE_TIMEOUT_MS });
+  await captureOwnedResources(owner, "k3d", result.launch);
+  owner.checkpointLaunch({ ...result.launch, reconciled: true });
 };
 
-export const writeKubeconfig = async (
-  clusterName: string,
-  kubeconfigPath: string,
-  cwd: string
-): Promise<void> => {
-  const result = await runCommand(["k3d", "kubeconfig", "get", clusterName], {
-    cwd,
-    timeoutMs: K3D_LIST_TIMEOUT_MS,
-    context: `k3d kubeconfig get ${clusterName}`,
-    stdio: "pipe",
-  });
-
-  if (result.exitCode !== 0) {
-    throw new SiloError("Failed to fetch kubeconfig", "KUBECONFIG_FAILED");
+/** Every backend mutation is bound to this allocation, never to a lockfile name. */
+export const ensureCluster = async (owner: ProjectOperation): Promise<void> => {
+  const current = owner.current();
+  if (!current) throw new Error("Cluster creation requires an allocation");
+  const allocation = current.allocation;
+  const cluster = allocation.state.identity.k3dClusterName;
+  if (!cluster) return;
+  await assertEngine(owner);
+  await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+  if (allocation.state.k3dClusterCreated) {
+    for (const receipt of owner.resources().filter(r => r.source === "k3d")) {
+      if (!(await verifyResource(owner, receipt))) throw new SiloError(`CLEANUP_REQUIRED: retained resource disappeared: ${receipt.name}`, "CLEANUP_REQUIRED");
+    }
+    return;
   }
+  const labels = ["--label", `io.silo.project=${owner.projectId}`, "--label", `io.silo.generation=${owner.generation}`, "--label", `k3d.cluster=${cluster}`];
+  await recordCreation(owner, ["docker", "network", "create", ...labels, `k3d-${cluster}`], "k3d-network-create");
+  await recordCreation(owner, ["docker", "volume", "create", ...labels, `k3d-${cluster}-images`], "k3d-volume-create");
+  const command = [
+    "k3d", "cluster", "create", cluster, "--no-rollback",
+    "--kubeconfig-update-default=false", "--kubeconfig-switch-context=false",
+    "--network", `k3d-${cluster}`, "--api-port", `127.0.0.1:${allocation.state.ports.K3D_API_PORT}`,
+    "--runtime-label", `io.silo.project=${owner.projectId}@all`,
+    "--runtime-label", `io.silo.generation=${owner.generation}@all`,
+  ];
+  if (allocation.state.identity.k3dRegistryName) command.push("--registry-create", allocation.state.identity.k3dRegistryName);
+  command.push(...allocation.k3dArgs);
+  await recordCreation(owner, command, "k3d-cluster-create");
+  owner.update({ ...allocation, state: { ...allocation.state, k3dClusterCreated: true } }, current.phase);
+};
 
-  const dir = path.dirname(kubeconfigPath);
-  await fs.mkdir(dir, { recursive: true });
+export const writeKubeconfig = async (owner: ProjectOperation): Promise<void> => {
+  const allocation = owner.current()?.allocation;
+  const cluster = allocation?.state.identity.k3dClusterName;
+  if (!cluster || !allocation.state.identity.kubeconfigPath) return;
+  await assertEngine(owner);
+  const result = await runCommand(["k3d", "kubeconfig", "get", cluster], {
+    cwd: owner.root, timeoutMs: K3D_LIST_TIMEOUT_MS, context: "owned kubeconfig read", stdio: "pipe",
+  });
+  if (result.exitCode !== 0) throw new SiloError("KUBECONFIG_FAILED: could not read owned cluster kubeconfig", "KUBECONFIG_FAILED");
+  owner.file("kubeconfig").publish(stripDebugOutput(result.stdout));
+};
 
-  const cleanYaml = stripDebugOutput(result.stdout);
-  await Bun.write(kubeconfigPath, cleanYaml);
+/** Deletes only exact journaled Docker objects; k3d's name/label-wide delete is not used. */
+export const deleteCluster = async (owner: ProjectOperation): Promise<void> => {
+  await assertEngine(owner);
+  await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+  for (const kind of ["container", "volume", "network"] as const) {
+    for (const receipt of owner.resources().filter(r => r.source === "k3d" && r.kind === kind)) {
+      if (await verifyResource(owner, receipt)) {
+        const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force"] : []), kind === "volume" ? receipt.name : receipt.id], {
+          kind: `owned-${kind}-delete`, effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
+        });
+        if (await verifyResource(owner, receipt)) throw new SiloError(`CLEANUP_REQUIRED: deletion left ${receipt.kind}/${receipt.name}`, "CLEANUP_REQUIRED");
+        owner.checkpointLaunch({ ...result.launch, reconciled: true });
+      }
+      owner.forgetResource(receipt);
+    }
+  }
+  const current = owner.current()!;
+  owner.update({ ...current.allocation, state: { ...current.allocation.state, k3dClusterCreated: false } }, "stopped");
 };

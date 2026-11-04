@@ -1,115 +1,31 @@
-import path from "path";
-import { loadConfig } from "../core/config";
-import { readLockfile } from "../core/lockfile";
-import { resolveInstanceUrls } from "../core/instance";
-import { applyProfile } from "../core/profile";
-import { clusterExists } from "../backends/k3d";
-import { findLiveDisowned, probeTilt } from "../core/liveness";
+import { ProjectOperation, processAbsent } from "../core/lease_store";
 import { runningStackHintLines } from "../utils/breadcrumbs";
-import { logKeyValues, logger } from "../utils/logger";
-import { resolveRegistryAdvertiseSettings } from "../core/registry";
-import { getRegistryConfigMapStatus } from "../backends/registry";
+import { logger, logKeyValues } from "../utils/logger";
+import { commandRoot } from "./prepare";
+import { commandLiveness } from "../core/owned_command";
 
-export const status = async (options: { config: string }): Promise<void> => {
-  const resolvedConfigPath = path.resolve(process.cwd(), options.config);
-  const configFile = Bun.file(resolvedConfigPath);
-  const hasConfig = await configFile.exists();
-  const config = hasConfig ? await loadConfig(options.config) : null;
-  if (config) {
-    logger.verbose(`Config path: ${config.configPath}`);
-  }
-  const projectRoot = config?.projectRoot ?? process.cwd();
-
-  const lockfile = await readLockfile(projectRoot);
-  if (!lockfile) {
-    logger.info("No active instance. Run 'silo up' to start.");
+export const status = async (options: { config: string; json?: boolean; changed?: boolean }): Promise<void> => {
+  const project = ProjectOperation.inspect(commandRoot(options.config));
+  if (options.json) {
+    console.log(JSON.stringify({ schemaVersion: 1, legacy: false, changed: options.changed ?? false, project }));
     return;
   }
-
-  const profileName = lockfile.instance.profile;
-  const resolvedConfig =
-    config && profileName ? applyProfile(config, profileName) : config;
-
-  const tiltPid = lockfile.instance.tiltPid;
-  const tiltRunning = tiltPid !== undefined ? await probeTilt(tiltPid) : false;
-  const liveDisowned = await findLiveDisowned({
-    disowned: lockfile.instance.disownedTilts,
-  });
-
-  const clusterName = lockfile.instance.identity.k3dClusterName;
-  const k3dRunning = clusterName
-    ? await clusterExists(clusterName, projectRoot)
-    : false;
-
-  logger.info(`Instance: ${lockfile.instance.name}`);
-  if (profileName) {
-    logger.info(`Profile: ${profileName}`);
+  if (!project?.allocation) { logger.info("No allocated instance. Run env or up to allocate."); return; }
+  const allocation = project.allocation;
+  logger.info(`Instance: ${allocation.state.name}`);
+  logger.info(`Project: ${project.projectId}; generation: ${project.generation}`);
+  logger.info(`State: ${project.phase}`);
+  if (project.problem) logger.warn(project.problem);
+  if (project.operation) logger.info(`Operation: ${project.operation.token}, pid ${project.operation.pid}`);
+  for (const launch of project.launches) {
+    const terminal = (launch.supervisorPid === null || processAbsent(launch.supervisorPid)) && (launch.groupId === null || processAbsent(-launch.groupId));
+    logger.info(`Launch ${launch.id}: ${launch.kind}, ${launch.phase}; ${terminal ? "recorded groups absent" : "recorded group live or unknown"}`);
   }
-  logger.info(`State: ${tiltRunning ? "running" : "stopped"}`);
-  if (tiltPid) {
-    logger.info(`Tilt: ${tiltRunning ? `pid ${tiltPid}` : "not running"}`);
-  }
-  if (liveDisowned.length > 0) {
-    // Stacks a `silo up --force` left running. They answer on their own ports
-    // and 'silo down' does not stop them, so naming them is the only way to
-    // tell which Tilt owns which port.
-    logger.warn(`Disowned stacks still running: ${liveDisowned.length}`);
-    liveDisowned.forEach((entry) => {
-      const ports = Object.values(entry.ports).join(", ");
-      logger.warn(
-        `  pid ${entry.pid} (instance '${entry.name}', disowned ${entry.disownedAt}, ports ${ports})`
-      );
-    });
-    logger.warn("Stop a disowned stack with 'kill <pid>'.");
-  }
-  if (clusterName) {
-    logger.info(`k3d: ${clusterName} (${k3dRunning ? "running" : "missing"})`);
-  }
-  const urls = resolveInstanceUrls({
-    config: resolvedConfig,
-    instance: lockfile.instance,
-  });
-
-  const registrySettings = resolvedConfig
-    ? resolveRegistryAdvertiseSettings({
-        config: resolvedConfig,
-        state: lockfile.instance,
-        urls,
-      })
-    : null;
-
-  if (lockfile.instance.identity.k3dRegistryName) {
-    const registryHost = registrySettings?.host;
-    const hostLabel = registryHost ? ` (host ${registryHost})` : "";
-    logger.info(`Registry: ${lockfile.instance.identity.k3dRegistryName}${hostLabel}`);
-  } else if (registrySettings) {
-    logger.info(`Registry: ${registrySettings.host} (external)`);
-  }
-  if (lockfile.instance.identity.kubeconfigPath) {
-    logger.info(`Kubeconfig: ${lockfile.instance.identity.kubeconfigPath}`);
-  }
-
-  logKeyValues("Ports", lockfile.instance.ports);
-
-  const kubeconfigPath = lockfile.instance.identity.kubeconfigPath;
-  const kubeconfigReady =
-    kubeconfigPath !== undefined && (await Bun.file(kubeconfigPath).exists());
-  runningStackHintLines({
-    tiltRunning,
-    tiltPort: lockfile.instance.ports.TILT_PORT,
-    urls,
-    kubeconfigPath: kubeconfigReady ? kubeconfigPath : undefined,
-  }).forEach((line) => logger.info(line));
-
-  logKeyValues("URLs", urls);
-
-  if (registrySettings && k3dRunning) {
-    const registryStatus = await getRegistryConfigMapStatus({
-      ...(lockfile.instance.identity.kubeconfigPath !== undefined && {
-        kubeconfigPath: lockfile.instance.identity.kubeconfigPath,
-      }),
-      cwd: projectRoot,
-    });
-    logger.info(`Registry ConfigMap: ${registryStatus}`);
-  }
+  for (const resource of project.resources) logger.info(`Resource: ${resource.kind}/${resource.name} (${resource.id}), ${resource.createdAt}`);
+  let tiltLive = false;
+  for (const launch of project.launches.filter(l => l.kind === "tilt-up" && !l.terminal)) if (await commandLiveness(launch) === "live") tiltLive = true;
+  runningStackHintLines({ tiltRunning: tiltLive, tiltPort: allocation.state.ports.TILT_PORT, urls: allocation.urls, kubeconfigPath: allocation.state.identity.kubeconfigPath }).forEach(line => logger.info(line));
+  logKeyValues("Ports", allocation.state.ports);
+  logKeyValues("URLs", allocation.urls);
+  logger.info("Status is read-only; use down to reconcile this owner's resources. Process liveness is not application readiness.");
 };
