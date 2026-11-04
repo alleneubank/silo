@@ -1,0 +1,31 @@
+{"artifact":"/tmp/legacy/0.9.0/package/dist/cli.js","sha256":"651730914fee9cdb165f1d0397c82b5160c6e5c42d55e21d193efae227780849"}
+{"artifact":"/tmp/legacy/0.5.9/package/dist/cli.js","sha256":"d003a3a3bcff0e9abc60846e289a97133b69a87112be240bddb60d07a7410810"}
+{"command":1,"cwd":"/tmp/native/baseline-controls/peer-owner-09","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","red-owner-09"],"code":0}
+{"command":2,"cwd":"/tmp/native/baseline-controls/peer-reader-09","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","red-reader-09"],"code":0}
+{"scenario":"peer-entry deletion with absent peer lock","version":"09","entry":"/tmp/native/baseline-controls/registry/5361fd156fe52aeb4ee03b2a49bfee9dcb84076542a1cdfe314d488b6c32c2fa.json","beforeSha256":"ceee61bdcbce54599dab8c7dea9eca369333e42846f8e73cad38f4d26e4c5191","deleted":false,"result":"class absent: 0.9.0 preserves read-only peer entry"}
+{"command":3,"cwd":"/tmp/native/baseline-controls/peer-reader-09","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"command":4,"cwd":"/tmp/native/baseline-controls/peer-owner-09","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"command":5,"cwd":"/tmp/native/baseline-controls/peer-owner-05","argv":["/tmp/tools/bun","/tmp/legacy/0.5.9/package/dist/cli.js","env","red-owner-05"],"code":0}
+{"command":6,"cwd":"/tmp/native/baseline-controls/peer-reader-05","argv":["/tmp/tools/bun","/tmp/legacy/0.5.9/package/dist/cli.js","env","red-reader-05"],"code":0}
+{"scenario":"peer-entry deletion with absent peer lock","version":"05","entry":"/tmp/native/baseline-controls/registry/1e49dbbb6a213eac459b7f32cbdbac84b1cd019735f440ea591a9cfd212ea749.json","beforeSha256":"bdf0a52b4586790ef2cb036b9954843e1b6923e9e020beb31ad2a2ac2383afdf","deleted":true,"result":"red: peer reservation deleted"}
+{"command":7,"cwd":"/tmp/native/baseline-controls/peer-reader-05","argv":["/tmp/tools/bun","/tmp/legacy/0.5.9/package/dist/cli.js","down","--clean"],"code":0}
+{"command":8,"cwd":"/tmp/native/baseline-controls/peer-owner-05","argv":["/tmp/tools/bun","/tmp/legacy/0.5.9/package/dist/cli.js","down","--clean"],"code":0}
+{"command":9,"cwd":"/tmp/native/baseline-controls/cluster-owner","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","red-mw1n3yjg"],"code":0}
+{"command":10,"cwd":"/tmp/native/baseline-controls","argv":["k3d","cluster","create","localnet-red-mw1n3yjg","--kubeconfig-update-default=false","--kubeconfig-switch-context=false","--api-port","127.0.0.1:48243","--wait","--timeout","120s"],"code":0}
+{"command":11,"cwd":"/tmp/native/baseline-controls","argv":["k3d","cluster","get","localnet-red-mw1n3yjg","-o","json"],"code":0}
+{"command":12,"cwd":"/tmp/native/baseline-controls","argv":["docker","container","inspect","k3d-localnet-red-mw1n3yjg-serverlb","--format","{{.Id}}"],"code":0}
+{"command":13,"cwd":"/tmp/native/baseline-controls","argv":["docker","container","inspect","e617ae3f4089b094da0e9d29c4b4ed6af3d570f44e9a0cf8b413419c0933df0d","--format","{{json .Mounts}}"],"code":0}
+{"command":14,"cwd":"/tmp/native/baseline-controls","argv":["docker","container","inspect","k3d-localnet-red-mw1n3yjg-server-0","--format","{{.Id}}"],"code":0}
+{"command":15,"cwd":"/tmp/native/baseline-controls","argv":["docker","container","inspect","5b5af534d61ccbc3ba3a3422dedcbae48f2865fd654e85a6fe6257158612a1b4","--format","{{json .Mounts}}"],"code":0}
+{"command":16,"cwd":"/tmp/native/baseline-controls","argv":["docker","container","inspect","5b5af534d61ccbc3ba3a3422dedcbae48f2865fd654e85a6fe6257158612a1b4","--format","{{.Created}}"],"code":0}
+{"command":17,"cwd":"/tmp/native/baseline-controls/cluster-adopter","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","ci","red-mw1n3yjg","--timeout=45s"],"code":0}
+{"command":18,"cwd":"/tmp/native/baseline-controls","argv":["docker","container","inspect","k3d-localnet-red-mw1n3yjg-server-0","--format","{{.Id}}"],"code":0}
+{"command":19,"cwd":"/tmp/native/baseline-controls","argv":["docker","container","inspect","5b5af534d61ccbc3ba3a3422dedcbae48f2865fd654e85a6fe6257158612a1b4","--format","{{.Created}}"],"code":0}
+{"scenario":"0.9.0 same-name cluster adoption","ownerRoot":"/tmp/native/baseline-controls/cluster-owner","peerRoot":"/tmp/native/baseline-controls/cluster-adopter","cluster":"localnet-red-mw1n3yjg","originalNodeId":"5b5af534d61ccbc3ba3a3422dedcbae48f2865fd654e85a6fe6257158612a1b4","created":"2026-11-04T04:52:08.066532215Z","result":"red: peer ci succeeds using original owner's unchanged node"}
+{"command":20,"cwd":"/tmp/native/baseline-controls/cluster-adopter","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--delete-cluster","--clean"],"code":0}
+{"command":21,"cwd":"/tmp/native/baseline-controls","argv":["k3d","cluster","list","-o","json"],"code":0}
+{"command":22,"cwd":"/tmp/native/baseline-controls","argv":["docker","container","ls","-a","--no-trunc","--format","{{.ID}}"],"code":0}
+{"scenario":"0.9.0 same-name cluster deletion","cluster":"localnet-red-mw1n3yjg","originalNodeId":"5b5af534d61ccbc3ba3a3422dedcbae48f2865fd654e85a6fe6257158612a1b4","result":"red: peer down deletes original owner's cluster"}
+{"command":23,"cwd":"/tmp/native/baseline-controls","argv":["docker","volume","ls","--format","{{.Name}}"],"code":0}
+{"command":24,"cwd":"/tmp/native/baseline-controls/cluster-owner","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"result":"pass","controlMeaning":"red observations confirm the stated old defects; not candidate passes","root":"/tmp/native/baseline-controls"}
