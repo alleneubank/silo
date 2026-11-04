@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { afterEach, beforeAll, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import * as fs from "node:fs";
 import { Database } from "bun:sqlite";
-import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { ProjectOperation, digest } from "./lease_store";
@@ -13,6 +13,16 @@ import type { Allocation, Claim, FileReceipt } from "./lease_types";
 let base: string;
 let storePath: string;
 let legacyInputs: { accountHome: string; home: string; registryDir: undefined };
+
+beforeAll(() => {
+  const root = mkdtempSync(path.join(os.tmpdir(), "silo-supervisor-preflight-"));
+  try {
+    const result = Bun.spawnSync(["janitor", "version"], { cwd: root, stdout: "pipe", stderr: "pipe", timeout: 2000 });
+    if (result.exitCode !== 0) {
+      throw new Error(`Native launch tests require runnable Janitor on PATH from fixture directories (see README prerequisites). ${result.stderr.toString().slice(-4096)}`.trimEnd());
+    }
+  } finally { rmSync(root, { recursive: true }); }
+});
 
 beforeEach(() => {
   base = mkdtempSync(path.join(os.tmpdir(), "silo-leases-"));
@@ -146,6 +156,28 @@ describe("atomic account leases", () => {
       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
       await expect(runOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "uncertain-create", effect: "create", timeoutMs: 5000 })).rejects.toThrow("COMMAND_FAILED");
       await expect(retire(op)).rejects.toThrow("CLEANUP_REQUIRED");
+      expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: "3000" });
+    } finally { op.finish(); }
+  });
+
+  test("a supervisor that refuses startup reports its diagnostic without executing the tool", async () => {
+    const root = project("a"); const op = await open(root);
+    const bin = path.join(base, "bin"); mkdirSync(bin);
+    const supervisor = path.join(bin, "janitor");
+    writeFileSync(supervisor, '#!/bin/sh\necho "supervisor fixture: no runtime configured" >&2\nexit 78\n');
+    chmodSync(supervisor, 0o755);
+    const canary = path.join(root, "must-not-exist");
+    try {
+      await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+      await expect(runOwnedCommand(op, ["/bin/sh", "-c", "touch must-not-exist"], {
+        kind: "refused-supervisor", effect: "create", timeoutMs: 5000, env: { PATH: bin },
+      })).rejects.toMatchObject({
+        code: "LAUNCH_FAILED",
+        message: expect.stringContaining("supervisor fixture: no runtime configured"),
+        details: expect.objectContaining({ supervisorExitCode: 78 }),
+      });
+      expect(existsSync(canary)).toBe(false);
+      expect(op.launches()).toMatchObject([{ phase: "planned", reconciled: false }]);
       expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: "3000" });
     } finally { op.finish(); }
   });

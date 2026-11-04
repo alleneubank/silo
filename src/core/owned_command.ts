@@ -120,8 +120,13 @@ export const startOwnedCommand = async (
   } catch (error) {
     proc.stdin.end();
     proc.kill("SIGTERM");
-    await withTimeout(proc.exited, STOP_TIMEOUT_MS, "ungranted supervisor drain");
-    await stderr;
+    const exitCode = await withTimeout(proc.exited, STOP_TIMEOUT_MS, "ungranted supervisor drain");
+    const diagnostic = await stderr;
+    if (error instanceof SiloError && error.code === "LAUNCH_FAILED") {
+      throw new SiloError(`${error.message}; supervisor exited ${exitCode}. ${diagnostic.slice(-4096)}`.trimEnd(), error.code, {
+        cause: error, details: { ...error.details, launchId: intent.id, generation: owner.generation, supervisorExitCode: exitCode },
+      });
+    }
     throw error;
   }
 };
