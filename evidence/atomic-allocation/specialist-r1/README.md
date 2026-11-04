@@ -15,6 +15,12 @@ sentence; artifact
 The unchanged allocation observations and guest remain applicable; built help,
 the fresh full example and local pre-push hooks were driven at the latter head.
 Later document/evidence-only commits reuse these inputs.
+The [build identity record](build-identity.json) retains a successful rebuild
+and matching digest at the unchanged executable source. The full-example
+stdout log lacks a per-run command/hash prologue: its attribution uses the
+author's pre-invocation hash/command observation, unchanged bundle bytes and
+the retained result. The later identity record is not presented as a prologue
+captured during that earlier run.
 
 ## Environment, scope and approval
 
@@ -131,6 +137,14 @@ mode/architecture qualification, new hosted CI, real host cutover or final
 changed transitions, native fault cases and exact old-client control commands.
 PR #58 remains draft; merge, ready transition, versioning, tag, release and npm
 publication are not authorized here. No waiver was added.
+
+The [independent claim fact check](fact-check.md) supports the stated
+observations with explicit provenance limits. It began at ec0df6e and checked
+the linked-log correction at 2d99da8, then checked the later build identity
+capture. This is not the required cross-provider implementation specialist
+verdict. Its missing-log finding is closed; the final record commit also
+tracks the subsequently inspected build identity file. The example's absent
+per-run prologue remains disclosed above.
 
 The [final scoped audit](final-audit-after.log) found both disposable stores
 with zero active generations, no recorded remaining object/mount handle, and

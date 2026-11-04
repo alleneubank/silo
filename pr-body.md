@@ -101,6 +101,10 @@ implied. **Specialist:** round 1 is changes required at 5344574; all four
 findings are supported and answered. Corrected-head cross-provider re-review
 is pending; no new approval is claimed.
 
+The [independent claim fact check](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/specialist-r1/fact-check.md)
+supports the recorded observations with provenance limits. It is separate
+from the required implementation specialist verdict.
+
 **Noticed:** the first extra example's k3s bootstrap failed and original Tilt
 down could not reach its API. Both failures and exact fixture teardown remain
 captured. A fresh generation with the original inputs passed; this does not
@@ -115,4 +119,7 @@ Intel/Apple Silicon artifacts; real data-bearing foreign topology, lost live
 daemon completion, alternate/remote engines, Docker IPv6 publication races,
 Tilt's internal API-listener failure and every instruction-level interruption;
 actual host cutover and final 1.0.0 artifact qualification. No waiver added.
+The extra full-example log has no per-run command/hash prologue; the
+[separate identity record](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/specialist-r1/build-identity.json)
+states its author-observed attribution and matching rebuilt bytes.
 PR #58 remains draft pending these gates and explicit merge/release approvals.
