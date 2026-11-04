@@ -1,6 +1,11 @@
 # Cross-provider specialist request
 
-Status: requested; no implementation specialist verdict has been claimed.
+Status: round 1 returned **changes required** at `5344574`;
+[its verdict](evidence/atomic-allocation/specialist-r1/verdict-specialist-r1.md)
+is retained verbatim. Request a fresh review at corrected executable source
+`4b0a9323f65fef62dfa82936d292110ef6714d40` (later commits are document/evidence
+only), artifact `2675670dc14c3db290a18956f0fdd57f443d7e062b82b2b65e79b64e22e0318e`.
+No corrected-head specialist approval has been claimed.
 Keep the PR draft. Run one reviewer on a provider different from the author
 (Codex/OpenAI), read-only and without the author's profile/AGENTS instructions.
 Supply the standard charter below, this goal/threat model, the baseline,
@@ -54,6 +59,14 @@ and all changed callers, including the example and workflows.
 - Actual ae-dev host cutover and real installed-client upgrades/retirements
   were not performed. Old clients after cutover are unsupported limits; the
   fixture demonstrates duplicate lock-only numbers with unchanged new claims.
+- The fresh example first encountered a k3s bootstrap/API failure and failed
+  original Tilt teardown; the failure and exact fixture teardown records are
+  retained. A fresh generation with the original inputs passed. No general
+  bootstrap-reliability or pre-existing-failure conclusion is established.
+- An anonymous Redis /data child remained after Compose/Tilt teardown and was
+  individually removed using its recorded mount/parent attribution. Automatic
+  k3d node/registry child removal was exercised separately; arbitrary Compose
+  anonymous children are not an established automatic-cleanup guarantee.
 
 ## Standard specialist charter
 

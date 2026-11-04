@@ -1,0 +1,9 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'kube1104', '--config', '/tmp/guest/kube-switch/silo.toml']
+exit=0
+silo info: Generated env file at /tmp/guest/kube-switch/owned.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   TILT_PORT: 49153
+silo info: Project c9217b10-761b-4dde-a027-2294d4f75e4e, generation 2: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/guest/kube-switch/owned.env; set +a
+

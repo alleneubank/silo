@@ -1,0 +1,36 @@
+kube actual target matches reservation: True
+kube stopped after explicit delete: True
+kube refusal 1: True
+kube snapshots unchanged after refusal 1: True
+kube refusal 2: True
+kube snapshots unchanged after refusal 2: True
+kube generation retained: True
+kube reservations retained: True
+kube receipts retained: True
+kube old clean succeeds: True
+kube original snapshots removed: True
+kube disabled env succeeds: True
+kube disabled env exports no kubeconfig: True
+kube disabled does not recreate kubeconfig: True
+kube final clean succeeds: True
+kube claims empty: True
+sentinel intact after kube switch: True
+case initial env succeeds: True
+case stopped and reconciled: True
+case refusal 1: True
+case original snapshots unchanged 1: True
+case new spelling absent 1: True
+case refusal 2: True
+case original snapshots unchanged 2: True
+case new spelling absent 2: True
+case generation retained: True
+case claims retained: True
+case receipts retained: True
+case clean original succeeds: True
+case original snapshots removed: True
+case new spelling succeeds: True
+case no stale original output: True
+case final clean succeeds: True
+case final claims empty: True
+case all snapshots absent: True
+sentinel intact after both transitions: True

@@ -1,0 +1,13 @@
+[
+  {
+    "name": "localnet-red-mw1n3yjg",
+    "nodes": [
+      {
+        "name": "k3d-localnet-red-mw1n3yjg-serverlb"
+      },
+      {
+        "name": "k3d-localnet-red-mw1n3yjg-server-0"
+      }
+    ]
+  }
+]

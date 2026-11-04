@@ -1,11 +1,19 @@
 # Atomic allocation evidence
 
-Candidate artifact SHA-256:
-`6e5e0848141659a58a316071623bc63eb05716cc8f16d68bb4bcdb8eb325b8d0`.
-The implementation commit containing this record is the source revision;
-later evidence-only commits reuse observations while covered inputs stay
-unchanged. The package remains 0.9.0 until the approved 1.0.0 changeset runs.
-No versioning, release or actual host cutover occurred.
+Current executable source: `4b0a9323f65fef62dfa82936d292110ef6714d40`;
+artifact SHA-256 `2675670dc14c3db290a18956f0fdd57f443d7e062b82b2b65e79b64e22e0318e`.
+The [specialist-round correction record](specialist-r1/README.md) contains the
+whole-class audit, all four review responses, six retained pre-fix failures,
+129 passing tests, fresh Linux rehearsal, missing baseline controls, fresh
+guest and full example, preserved failures and scoped teardown. Round 1 was
+**changes required** at 5344574; corrected-head specialist re-review is pending.
+
+The records below are historical qualifications at their named source/artifact,
+including the earlier `6e5e0848` and `1a09c981` artifacts. Evidence-only commits
+reuse observations while covered inputs stay unchanged. The package remains
+0.9.0 until the approved 1.0.0 changeset runs. No versioning, release or actual
+host cutover occurred. Historical unattributable anonymous volumes are
+preserved by the coordinator's settled addendum-1 decision.
 
 ## Environment and approval
 
@@ -27,7 +35,7 @@ retired and every old operation terminal before the first clean scan/allocation.
 The final plan-review verdict still requested that precondition; the owner
 closed it explicitly. No standalone r5 approval is claimed.
 Original approval records are in the coordinator's boss-mobile-release handoff.
-The implementation specialist and native Mac qualification remain pending;
+Corrected-head specialist approval and native Mac qualification remain pending;
 this record is not approval to merge or release.
 
 ## Author run
@@ -162,7 +170,7 @@ host; they remain untouched. The label/name audit proves only recorded scoped
 objects absent and does not establish that every historical anonymous child
 was removed. This host-cleanup limitation remains explicit for the coordinator.
 
-Current executable source: `d6590a5bb129cb90cb50bb1617bfe3ac966d907b`,
+Previous executable source: `d6590a5bb129cb90cb50bb1617bfe3ac966d907b`,
 artifact `1a09c9812329a16342f95b7c006ddd5d844f611c6dbb3b5febca6a0e21396abc`.
 [linux-native-final.log](linux-native-final.log) is a passing full all-suite run
 at that source, after the external port became free. The refreshed

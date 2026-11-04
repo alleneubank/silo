@@ -1,0 +1,53 @@
+{
+  "phase": "cleanup-required",
+  "identity": {
+    "name": "atomic-r1-example",
+    "prefix": "localnet",
+    "composeName": "localnet-atomic-r1-example",
+    "dockerNetwork": "localnet-atomic-r1-example",
+    "volumePrefix": "localnet-atomic-r1-example",
+    "containerPrefix": "localnet-atomic-r1-example-",
+    "hosts": {
+      "APP_HOST": "atomic-r1-example.localhost",
+      "API_HOST": "api.atomic-r1-example.localhost",
+      "TILT_HOST": "atomic-r1-example.localhost"
+    },
+    "k3dClusterName": "localnet-atomic-r1-example",
+    "k3dRegistryName": "localnet-atomic-r1-example-registry.localhost:5000",
+    "kubeconfigPath": "/home/ae/.kube/localnet-atomic-r1-example"
+  },
+  "claims": 28,
+  "resources": [
+    {
+      "kind": "container",
+      "id": "08a77148bcd18f333ecb1f549603bdd6189c8718caa09d5bb989a59cc0b1ce2f",
+      "name": "k3d-localnet-atomic-r1-example-server-0"
+    },
+    {
+      "kind": "container",
+      "id": "a898b661941b1375c7e62a3c9c51c02fc29295b87fd6c1d8875c44c35d2d0240",
+      "name": "k3d-localnet-atomic-r1-example-serverlb"
+    },
+    {
+      "kind": "container",
+      "id": "b4335f79f7c9a80b36737dadcbae2b1536a08f079d44bb318f4729617fab190c",
+      "name": "localnet-atomic-r1-example-registry.localhost"
+    },
+    {
+      "kind": "network",
+      "id": "c84e88e12d58740ee953643a0cad02462aa1c9b575631643ec742fde321347dd",
+      "name": "k3d-localnet-atomic-r1-example"
+    },
+    {
+      "kind": "volume",
+      "id": "k3d-localnet-atomic-r1-example-images",
+      "name": "k3d-localnet-atomic-r1-example-images"
+    }
+  ]
+}
+08a77148bcd18f333ecb1f549603bdd6189c8718caa09d5bb989a59cc0b1ce2f "running" true false false 0 4
+
+a898b661941b1375c7e62a3c9c51c02fc29295b87fd6c1d8875c44c35d2d0240 "running" true false false 0 0
+
+b4335f79f7c9a80b36737dadcbae2b1536a08f079d44bb318f4729617fab190c "running" true false false 0 0
+

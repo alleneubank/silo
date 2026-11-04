@@ -1,0 +1,14 @@
+silo info: Loading config
+silo info: Running pre-down hooks (0)
+silo info: Running tilt down
+Loading Tiltfile at: /tmp/native/baseline-controls/cluster-adopter/Tiltfile
+Successfully loaded Tiltfile (394.208µs)
+silo info: Deleting k3d cluster 'localnet-red-mw1n3yjg'
+[36mINFO[0m[0000] Deleting cluster 'localnet-red-mw1n3yjg'     
+[36mINFO[0m[0000] Deleting cluster network 'k3d-localnet-red-mw1n3yjg' 
+[36mINFO[0m[0000] Deleting 1 attached volumes...               
+[36mINFO[0m[0000] Removing cluster details from default kubeconfig... 
+[36mINFO[0m[0000] Removing standalone kubeconfig file (if there is one)... 
+[36mINFO[0m[0000] Successfully deleted cluster localnet-red-mw1n3yjg! 
+silo info: Running post-down hooks (0)
+silo info: Removing env file and lockfile

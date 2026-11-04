@@ -123,6 +123,86 @@ append must retain claims through both reallocation and retirement attempts.
 Run these tests natively on each filesystem mode; Linux does not qualify
 Darwin's directory-sync behavior.
 
+## Old-client controls
+
+The Linux control record is `evidence/atomic-allocation/specialist-r1/baseline-controls.log`.
+These are deliberate failures of the old ownership contract, using only new
+disposable fixtures. They do not qualify the candidate. Keep exact command
+results and stop on any unexpected result. Run from this checkout after the
+portable candidate rehearsal has cleaned its fixtures:
+
+```sh
+set -eu
+mkdir -p "$TMPDIR/controls/registry"
+export SILO_PORT_REGISTRY_DIR="$TMPDIR/controls/registry"
+for old_version in 0.9.0 0.5.9; do
+  control_a="$TMPDIR/controls/owner-$old_version"
+  control_b="$TMPDIR/controls/reader-$old_version"
+  mkdir -p "$control_a" "$control_b"
+  for control_root in "$control_a" "$control_b"; do
+    printf 'version=1\n[ports]\nAPP_PORT=48241\nTILT_PORT=48242\n' > "$control_root/silo.toml"
+    printf "local_resource('proof',cmd='printf control-proof')\n" > "$control_root/Tiltfile"
+  done
+  old_cli="$TMPDIR/legacy/$old_version/package/dist/cli.js"
+  CI=false bun "$old_cli" env "control-owner-$old_version" --config "$control_a/silo.toml"
+  # The hash is the documented old registry key for the canonical fixture root.
+  control_entry=$(bun -e 'import{realpathSync}from"node:fs";import{createHash}from"node:crypto";console.log(createHash("sha256").update(realpathSync(process.argv[1])).digest("hex"))' "$control_a")
+  shasum -a 256 "$SILO_PORT_REGISTRY_DIR/$control_entry.json"
+  mv "$control_a/.silo.lock" "$control_a/saved-lock"
+  CI=false bun "$old_cli" env "control-reader-$old_version" --config "$control_b/silo.toml"
+  if [ "$old_version" = 0.9.0 ]; then
+    test -f "$SILO_PORT_REGISTRY_DIR/$control_entry.json"
+    shasum -a 256 "$SILO_PORT_REGISTRY_DIR/$control_entry.json" # unchanged
+  else
+    test ! -e "$SILO_PORT_REGISTRY_DIR/$control_entry.json" # red: peer deleted
+  fi
+  mv "$control_a/saved-lock" "$control_a/.silo.lock"
+  CI=false bun "$old_cli" down --clean --config "$control_b/silo.toml"
+  CI=false bun "$old_cli" down --clean --config "$control_a/silo.toml"
+done
+```
+
+For the same-name cluster control, use a unique explicit name and record the
+real nodes and mount handles before the old client can delete them. The fixed
+fixture ports must be free; otherwise choose and record other unused ports
+before creating anything. No name below may refer to an existing cluster:
+
+```sh
+control_c="$TMPDIR/controls/cluster-owner"
+control_d="$TMPDIR/controls/cluster-adopter"
+mkdir -p "$control_c" "$control_d"
+for control_root in "$control_c" "$control_d"; do
+  printf 'version=1\n[ports]\nTILT_PORT=48242\nK3D_API_PORT=48243\n[k3d]\nenabled=true\nkubeconfigPath="owned-kubeconfig"\n' > "$control_root/silo.toml"
+  printf "local_resource('proof',cmd='printf control-proof')\n" > "$control_root/Tiltfile"
+done
+control_name="red-$(date +%s)-$$"
+old_cli="$TMPDIR/legacy/0.9.0/package/dist/cli.js"
+CI=false bun "$old_cli" env "$control_name" --config "$control_c/silo.toml"
+control_cluster=$(bun -e 'console.log((await Bun.file(process.argv[1]).json()).instance.identity.k3dClusterName)' "$control_c/.silo.lock")
+k3d cluster create "$control_cluster" --kubeconfig-update-default=false --kubeconfig-switch-context=false --api-port 127.0.0.1:48243 --wait --timeout 120s
+control_node=$(docker container inspect "k3d-$control_cluster-server-0" --format '{{.Id}}')
+docker container inspect "$control_node" --format '{{.Id}} {{.Name}} {{.Created}}' > "$TMPDIR/controls/node-before.txt"
+docker container inspect "$control_node" --format '{{range .Mounts}}{{if eq .Type "volume"}}{{println .Name}}{{end}}{{end}}' > "$TMPDIR/controls/mount-handles.txt"
+CI=false bun "$old_cli" ci "$control_name" --config "$control_d/silo.toml" --timeout 45s
+docker container inspect "$control_node" --format '{{.Id}} {{.Name}} {{.Created}}' > "$TMPDIR/controls/node-after.txt"
+cmp "$TMPDIR/controls/node-before.txt" "$TMPDIR/controls/node-after.txt" # red: adopted unchanged
+CI=false bun "$old_cli" down --delete-cluster --clean --config "$control_d/silo.toml"
+docker network inspect bridge --format '{{.Id}}' # known-present engine control
+docker container ls -a --no-trunc --format '{{.ID}}' > "$TMPDIR/controls/container-ids-after.txt"
+bun -e 'import assert from"node:assert/strict";assert(!(await Bun.file(process.argv[1]).text()).trim().split("\n").includes(process.argv[2]))' "$TMPDIR/controls/container-ids-after.txt" "$control_node"
+# Expected: exact node absent; red: a different root deleted the owner's cluster.
+CI=false bun "$old_cli" down --clean --config "$control_c/silo.toml"
+unset SILO_PORT_REGISTRY_DIR
+```
+
+Confirm each recorded mount handle is absent using a successful complete
+`docker volume ls --format '{{.Name}}'` enumeration. If one remains, retain its
+parent attribution and inspect it; only an unused handle from this exact
+disposable fixture is eligible for owner-authorized `docker volume rm <handle>`.
+Never select anonymous volumes by age, name pattern or an unvalidated query.
+The 0.9.0 peer-read control is a preservation result, not a fabricated red:
+that release lacks 0.5.9's peer-entry GC defect.
+
 ## Full example and guest
 
 Copy `example/` into another owned scratch root. Run the built CLI against
