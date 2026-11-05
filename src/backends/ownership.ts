@@ -120,7 +120,7 @@ const inspectObject = async (entry: NamespaceEntry, source: BackendReceipt["sour
   return { receipt, publishedPorts, bindings, running: value.State?.Running ?? false };
 };
 
-/** Only a mount with no supplied source can confer child-volume authority. */
+/** Anonymous mount handles are audit data, never a volume deletion capability. */
 const captureAnonymousVolumes = async (container: z.infer<typeof InspectSchema>, cwd: string): Promise<AnonymousVolume[]> => {
   if (!container.HostConfig || !container.Mounts) throw new SiloError("ENGINE_UNAVAILABLE: missing container mount provenance", "ENGINE_UNAVAILABLE");
   const host = container.HostConfig;
@@ -132,7 +132,7 @@ const captureAnonymousVolumes = async (container: z.infer<typeof InspectSchema>,
         return parts.length > 1 && parts[1] === mount.Destination;
       });
     if (supplied) continue;
-    if (host.VolumesFrom?.length) throw new SiloError("CLEANUP_REQUIRED: inherited volume provenance is ambiguous; no child-volume authority granted", "CLEANUP_REQUIRED");
+    if (host.VolumesFrom?.length) throw new SiloError("CLEANUP_REQUIRED: inherited volume provenance is ambiguous; removing this container with volumes could delete inherited data. No deletion permitted.", "CLEANUP_REQUIRED");
     if (!mount.Name) throw new SiloError("ENGINE_UNAVAILABLE: missing volume mount name", "ENGINE_UNAVAILABLE");
     const volume = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "volume", "inspect", mount.Name], cwd)))[0]!;
     if (volume.Name !== mount.Name || !volume.CreatedAt || !Object.hasOwn(volume.Labels ?? {}, "com.docker.volume.anonymous")) {
@@ -240,43 +240,47 @@ export const verifyResource = async (owner: ProjectOperation, receipt: BackendRe
   return true;
 };
 
+const anonymousLeaks = (entries: NamespaceEntry[], receipts: BackendReceipt[]): (AnonymousVolume & { parentId: string })[] => receipts.flatMap(parent =>
+  parent.kind !== "container" || entries.some(e => e.kind === "container" && e.id === parent.id) ? [] :
+    parent.anonymousVolumes.filter(volume => entries.some(e => e.kind === "volume" && e.name === volume.name)).map(volume => ({ ...volume, parentId: parent.id })),
+);
+
+export const findAnonymousLeaks = async (owner: ProjectOperation): Promise<(AnonymousVolume & { parentId: string })[]> => {
+  const receipts = owner.resources(true);
+  if (!receipts.some(r => r.kind === "container" && r.anonymousVolumes.length > 0)) return [];
+  await assertEngine(owner);
+  return anonymousLeaks(await enumerate(owner.root), receipts);
+};
+
 export const proveBackendAbsent = async (owner: ProjectOperation): Promise<void> => {
   const record = owner.current();
   if (!record?.allocation.engine && owner.resources(true).length === 0) return;
   await assertEngine(owner);
   const entries = await enumerate(owner.root);
   await assertLabelledScope(owner, entries);
-  for (const parent of owner.resources(true)) {
-    if (parent.kind !== "container") continue;
-    for (const volume of parent.anonymousVolumes) {
-      if (entries.some(e => e.kind === "volume" && e.name === volume.name)) {
-        throw new SiloError(`CLEANUP_REQUIRED: anonymous volume ${volume.name} from ${parent.id} remains; run down --clean`, "CLEANUP_REQUIRED");
-      }
-    }
+  const leaks = anonymousLeaks(entries, owner.resources(true));
+  if (leaks.length > 0) {
+    throw new SiloError(`CLEANUP_REQUIRED: leaked anonymous volumes remain (${leaks.map(v => `${v.name} from ${v.parentId}`).join(", ")}). Silo never deletes volumes by name; resolve this data with its owner. Claims retained.`, "CLEANUP_REQUIRED", {
+      details: { leakedVolumes: leaks },
+    });
   }
   const residual = entries.find(e => selected(e, owner.resourceClaims()) || owner.resources(true).some(r => r.kind === e.kind && r.kind !== "volume" && r.id === e.id));
   if (residual) throw new SiloError(`CLEANUP_REQUIRED: residual ${residual.kind}/${residual.name} (${residual.id}); claims retained`, "CLEANUP_REQUIRED");
 };
 
-/** Parent receipts survive container deletion, so crashes cannot discard child obligations. */
-export const deleteAnonymousVolumes = async (owner: ProjectOperation, source?: BackendReceipt["source"]): Promise<void> => {
-  await assertEngine(owner);
-  for (const parent of owner.resources(true)) {
-    if (parent.kind !== "container" || (source !== undefined && parent.source !== source)) continue;
-    for (const volume of parent.anonymousVolumes) {
-      const entries = await enumerate(owner.root);
-      if (!entries.some(e => e.kind === "volume" && e.name === volume.name)) continue;
-      const current = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "volume", "inspect", volume.name], owner.root)))[0]!;
-      if (current.Name !== volume.name || current.CreatedAt !== volume.createdAt || !Object.hasOwn(current.Labels ?? {}, "com.docker.volume.anonymous")) {
-        throw new SiloError(`NAME_CONFLICT: anonymous volume identity changed: ${volume.name}; parent ${parent.id}`, "NAME_CONFLICT");
-      }
-      const result = await runOwnedCommand(owner, ["docker", "volume", "rm", volume.name], {
-        kind: "owned-anonymous-volume-delete", effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
+/** The deletion target is an immutable container/network ID, never a volume name. */
+const deleteResources = async (owner: ProjectOperation, source: BackendReceipt["source"], kind: "container" | "network"): Promise<void> => {
+  for (const receipt of owner.resources().filter(r => r.source === source && r.kind === kind)) {
+    if (await verifyResource(owner, receipt)) {
+      const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force", "--volumes"] : []), receipt.id], {
+        kind: `owned-${kind}-delete`, effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
       });
-      if ((await enumerate(owner.root)).some(e => e.kind === "volume" && e.name === volume.name)) {
-        throw new SiloError(`CLEANUP_REQUIRED: deletion left anonymous volume ${volume.name}`, "CLEANUP_REQUIRED");
-      }
+      if (await verifyResource(owner, receipt)) throw new SiloError(`CLEANUP_REQUIRED: deletion left ${kind}/${receipt.name}`, "CLEANUP_REQUIRED");
       owner.checkpointLaunch({ ...result.launch, reconciled: true });
     }
+    owner.forgetResource(receipt);
   }
 };
+
+export const deleteOwnedContainers = (owner: ProjectOperation, source: BackendReceipt["source"]): Promise<void> => deleteResources(owner, source, "container");
+export const deleteOwnedNetworks = (owner: ProjectOperation, source: BackendReceipt["source"]): Promise<void> => deleteResources(owner, source, "network");

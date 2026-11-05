@@ -7,7 +7,7 @@ import path from "node:path";
 import { ProjectOperation, digest } from "./lease_store";
 import { fileIdentity, prepareFileTarget } from "./file_target";
 import { appendGithubEnv, writeEnvAndLockfile } from "./env";
-import { runOwnedCommand } from "./owned_command";
+import { runOwnedCommand, startOwnedCommand } from "./owned_command";
 import type { Allocation, Claim, FileReceipt } from "./lease_types";
 
 let base: string;
@@ -194,6 +194,50 @@ describe("atomic account leases", () => {
       expect(op.launches().every(launch => launch.phase === "exited" && launch.reconciled)).toBe(true);
       await retire(op);
       expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
+    } finally { op.finish(); }
+  });
+
+  test("recovery folds a durable successful deletion retry before releasing claims", async () => {
+    const root = project("retry-crash");
+    let op = await open(root);
+    const command = ["/bin/sh", "-c", "if test -f attempted; then exit 0; else touch attempted; exit 17; fi"];
+    try {
+      await op.allocate(allocation(root, "retry-crash"), claims("retry-crash", 3000), targets(root));
+      await expect(runOwnedCommand(op, command, { kind: "owned-delete", effect: "delete", timeoutMs: 5000 })).rejects.toThrow("COMMAND_FAILED");
+      op.markLaunchTerminal(op.launches()[0]!.id);
+      const retry = await startOwnedCommand(op, command, { kind: "owned-delete", effect: "delete", timeoutMs: 5000 });
+      const result = await retry.exited;
+      expect(result.exitCode).toBe(0);
+      // Persist the executor fact at the interruption boundary: the parent has
+      // not imported it or reconciled the earlier failed request.
+      const db = new Database(storePath);
+      try {
+        db.query("INSERT INTO completions (project_id, generation, launch_id, receipt) VALUES (?, ?, ?, ?)").run(op.projectId, op.generation, retry.launch.id,
+          JSON.stringify({ projectId: op.projectId, generation: op.generation, launchId: retry.launch.id, leaderPid: retry.launch.leaderPid, groupId: retry.launch.groupId, started: true, exitCode: 0, completedAt: "2026-11-05T02:21:00Z" }));
+      } finally { db.close(); }
+      op.finish();
+      op = await open(root, true);
+      for (const launch of op.launches()) op.markLaunchTerminal(launch.id);
+      op.applyCompletions();
+      expect(op.launches().every(launch => launch.phase === "exited" && launch.reconciled)).toBe(true);
+      await retire(op);
+      expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
+    } finally { op.finish(); }
+  });
+
+  test("an earlier successful deletion cannot reconcile a later failed request", async () => {
+    const root = project("delete-order"); const op = await open(root);
+    const command = ["/bin/sh", "-c", "if test -f successful; then exit 17; else touch successful; exit 0; fi"];
+    try {
+      await op.allocate(allocation(root, "delete-order"), claims("delete-order", 3000), targets(root));
+      await runOwnedCommand(op, command, { kind: "owned-delete", effect: "delete", timeoutMs: 5000 });
+      for (const launch of op.launches()) op.markLaunchTerminal(launch.id);
+      await expect(runOwnedCommand(op, command, { kind: "owned-delete", effect: "delete", timeoutMs: 5000 })).rejects.toThrow("COMMAND_FAILED");
+      for (const launch of op.launches()) op.markLaunchTerminal(launch.id);
+      op.applyCompletions();
+      expect(op.launches().find(l => l.phase === "exited" && l.exitCode === 17)?.reconciled).toBe(false);
+      await expect(retire(op)).rejects.toThrow("CLEANUP_REQUIRED");
+      expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: "3000" });
     } finally { op.finish(); }
   });
 

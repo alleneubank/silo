@@ -114,6 +114,9 @@ Stop environment (stops Tilt, keeps k3d by default).
 The Tilt API is gone after down. The k3d cluster stays unless
 --delete-cluster is passed. Retained or uncertain resources keep their claims;
 --clean refuses to erase their ownership. No peer state is garbage-collected.
+Recorded Compose containers are removed with their anonymous volumes. Silo
+never deletes a volume by name. Leaked names keep claims until their owner
+resolves them independently; inherited volumes-from provenance refuses.
 
 Options:
   --delete-cluster   Delete k3d cluster (default: keep for faster iteration)

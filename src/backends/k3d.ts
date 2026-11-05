@@ -1,9 +1,9 @@
 import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
-import { K3D_CREATE_TIMEOUT_MS, K3D_DELETE_TIMEOUT_MS, K3D_LIST_TIMEOUT_MS } from "../core/constants";
+import { K3D_CREATE_TIMEOUT_MS, K3D_LIST_TIMEOUT_MS } from "../core/constants";
 import type { ProjectOperation } from "../core/lease_store";
 import { runOwnedCommand } from "../core/owned_command";
-import { assertEngine, assertNamesAvailable, captureOwnedResources, deleteAnonymousVolumes, verifyResource } from "./ownership";
+import { assertEngine, assertNamesAvailable, captureOwnedResources, deleteOwnedContainers, deleteOwnedNetworks, verifyResource } from "./ownership";
 
 const CONTROL_FLAGS = new Set([
   "--config", "-c", "--network", "--registry-create", "--api-port", "--runtime-label",
@@ -88,19 +88,8 @@ export const writeKubeconfig = async (owner: ProjectOperation): Promise<void> =>
 export const deleteCluster = async (owner: ProjectOperation): Promise<void> => {
   await assertEngine(owner);
   await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
-  for (const kind of ["container", "volume", "network"] as const) {
-    if (kind === "volume") await deleteAnonymousVolumes(owner, "k3d");
-    for (const receipt of owner.resources().filter(r => r.source === "k3d" && r.kind === kind)) {
-      if (await verifyResource(owner, receipt)) {
-        const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force"] : []), kind === "volume" ? receipt.name : receipt.id], {
-          kind: `owned-${kind}-delete`, effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
-        });
-        if (await verifyResource(owner, receipt)) throw new SiloError(`CLEANUP_REQUIRED: deletion left ${receipt.kind}/${receipt.name}`, "CLEANUP_REQUIRED");
-        owner.checkpointLaunch({ ...result.launch, reconciled: true });
-      }
-      owner.forgetResource(receipt);
-    }
-  }
+  await deleteOwnedContainers(owner, "k3d");
+  await deleteOwnedNetworks(owner, "k3d");
   const current = owner.current()!;
   owner.update({ ...current.allocation, state: { ...current.allocation.state, k3dClusterCreated: false } }, "stopped");
 };

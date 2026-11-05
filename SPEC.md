@@ -129,28 +129,62 @@ substring text matches. Bounded/invalid responses refuse.
 
 Every selected existing cluster, registry, network, volume or container needs
 an exact matching receipt (kind, name, ID, creation identity). Leftovers are
-`NAME_CONFLICT`, never reuse/adoption/deletion. New k3d networks and image
-volumes are precreated with project/generation labels. k3d nodes receive those
+`NAME_CONFLICT`, never reuse/adoption/deletion. New k3d networks and named image
+cache volumes are precreated with project/generation labels. The named cache
+is retained after cluster deletion: k3d 5.9.0 requires it for its tools node,
+and Silo never deletes volumes by name. Its owner resolves that cache before
+clean can release the generation. k3d nodes receive those
 labels. Registry provenance requires the completed owned creation request and
 matching cluster/name. k3d 5.9 uses the requested registry hostname without a
 `k3d-` prefix; claims and capture use that actual name. Compose container
 provenance includes project label, physical working root and owned launch;
 other objects require ownership labels. Backend publications must be claimed.
 
-Container creation-result receipts include their anonymous volume names,
-creation identities and mount destinations. A source-less mount with Docker's
-anonymous-volume label confers child authority; an explicit source, bind mount
-or inherited mount does not. Ambiguous inherited provenance refuses. These
-immutable child receipts survive deletion of their parent container. `down`
-retains Compose child data; `down --clean` removes only the exact recorded
-anonymous children, without force or pruning. Explicit cluster deletion uses
-the same child receipts after deleting its containers. A changed identity or
-an in-use child prevents completion, and every recorded child must be absent
-before a generation can release its claims or be replaced. `status --json`
-exposes `anonymousVolumes` on container receipts, including deleted parents
-until the generation retires. Tools that delete/recreate their own containers
-before a creation-result capture can destroy attribution; arbitrary external
-tool lifecycles are outside Silo's cooperating-tool contract.
+Container creation-result receipts include anonymous mount names, creation
+times and destinations for audit only. They never grant volume deletion
+authority. `down` removes exact receipted Compose container IDs with
+`docker container rm --force --volumes` before Tilt teardown. Explicit cluster
+deletion removes exact receipted k3d container IDs the same way, then removes
+its network by immutable ID. Docker removes attached anonymous volumes;
+explicitly named mounts and volumes still referenced by another container
+survive. Inherited `volumes-from` provenance refuses before container removal:
+Docker could otherwise remove inherited anonymous data after its donor is gone.
+
+Immutable parent/mount receipts survive physical container deletion. If the
+parent is already gone, Silo does not attempt volume cleanup. Every remaining
+recorded anonymous name is reported as a leak; Silo cannot distinguish leaked
+original data from a same-name replacement and never deletes either. Ordinary
+down retains claims and reports the names in status's problem; clean and forced
+replacement refuse until those names are absent. Explicit user/named volumes
+are never deleted; a receipted named volume still present also prevents clean
+and replacement. The data's owner must resolve these leftovers independently;
+repeated Silo cleanup is not a deletion remedy. A crash can therefore leak data
+but cannot grant name-based cleanup authority. `status --json` exposes
+`anonymousVolumes`, including deleted parents until the generation retires.
+Tools that delete/recreate containers before capture can destroy attribution;
+arbitrary external tool lifecycles are outside the cooperating-tool contract.
+
+Decision (ratified 2026-11-05, human via silo-redesign addendum 1): anonymous
+volumes are removed with their recorded container, never by name.
+Decision (provisional 2026-11-05): refuse retirement/reconfiguration with retained
+claims while recorded anonymous names remain; a name cannot establish whether
+the remaining object is original or replacement data. The no-name-deletion
+rule also retains k3d's named image cache; disabling it fails k3d 5.9.0 tools-node
+creation, so its owner must resolve it independently.
+`scripts/allocation-rehearsal.ts --suite volumes` drives ordinary cleanup,
+sharing, same-name replacement and leak refusal; lease-store recovery tests
+cover durable successful retry reconciliation. Named-volume behavior follows
+[Docker's container removal contract](https://docs.docker.com/reference/cli/docker/container/rm/).
+
+- REQ-CLEANUP-001: built-in Docker deletion accepts only container/network
+  targets; anonymous volume deletion uses an exact parent container ID with
+  `--volumes`. Check: `--suite parent-volumes`, `same-second`, `paused-delete`.
+- REQ-CLEANUP-002: a surviving recorded anonymous name or named cache prevents
+  retirement/replacement with claims preserved. Check: `--suite volumes` and
+  `backend`.
+- REQ-CLEANUP-003: recovery folds durable successful exact deletion retries
+  through the common reconciliation rule, never an earlier success over a
+  later failure. Check: `--suite retry-crash` and lease-store deletion tests.
 
 Trusted hooks/Tiltfiles must consume generated identities and ports. In
 particular Tilt requires explicit `docker_compose(project_name=...)`; its

@@ -345,6 +345,11 @@ export class ProjectOperation {
       assert.deepEqual([completion.projectId, completion.generation, completion.leaderPid, completion.groupId], [this.projectId, this.generation, launch.leaderPid, launch.groupId], "Completion provenance differs from the grant");
       this.checkpointLaunch({ ...launch, phase: "exited", started: completion.started, exitCode: completion.exitCode, reconciled: !completion.started || launch.effect === "none" });
     }
+    // Completion import must be sufficient after a crash; there may be no
+    // remaining object on which to execute another successful retry.
+    for (const launch of this.launches()) {
+      if (launch.phase === "exited" && launch.effect === "delete" && launch.exitCode === 0) this.reconcileDeletion(launch);
+    }
   }
 
   recordCommandResult(result: Extract<Launch, { phase: "exited" }>): Extract<Launch, { phase: "exited" }> {
@@ -360,7 +365,14 @@ export class ProjectOperation {
     this.assertMutable();
     const completed = this.launches().find(launch => launch.id === result.id);
     assert(completed?.phase === "exited" && completed.exitCode === 0 && completed.effect === "delete", "Deletion reconciliation requires a successful durable result");
-    for (const previous of this.launches()) {
+    // Launch rows are append-only. Only intents preceding this success can be
+    // retries it resolves; a later failed request must retain its uncertainty.
+    const earlier = this.db.query<JsonRow, [string, number, string, number, string]>(`SELECT receipt FROM launches
+      WHERE project_id = ? AND generation = ? AND rowid <= (
+        SELECT rowid FROM launches WHERE project_id = ? AND generation = ? AND id = ?)
+      ORDER BY rowid`).all(this.projectId, this.generation, this.projectId, this.generation, completed.id);
+    for (const row of earlier) {
+      const previous = LaunchSchema.parse(JSON.parse(row.receipt));
       if (previous.phase === "exited" && previous.exitCode !== null && previous.effect === "delete" &&
         (previous.terminal || previous.id === completed.id) && previous.kind === completed.kind &&
         JSON.stringify(previous.command) === JSON.stringify(completed.command)) {

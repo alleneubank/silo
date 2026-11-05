@@ -67,14 +67,24 @@ owned objects; failed Tilt teardown propagates. An uncertain request cannot
 be cancelled by process death or an empty listing. Escalate with those facts
 rather than deleting the ownership store.
 
-Container receipts include `anonymousVolumes` with each child's exact name,
-creation time and mount destination. Plain `down` retains Compose anonymous
-data; `down --clean` deletes those recorded children after Tilt teardown.
-Explicit cluster deletion removes its recorded anonymous children as well.
-Named volumes, explicit volume sources and bind mounts grant no child deletion
-authority. A volume still used by another container refuses deletion and keeps
-claims, even after its original parent is gone. Resolve that use with its owner,
-then retry clean; never prune or delete an unrecorded volume to clear the error.
+Container receipts include `anonymousVolumes` with each mount's name, creation
+time and destination for audit, never deletion authority. `down` removes exact
+receipted Compose container IDs with their anonymous volumes before Tilt
+teardown. Explicit cluster deletion does the same for k3d containers. Named
+mounts and anonymous volumes another container still references remain intact.
+The named k3d image cache also survives cluster deletion. k3d 5.9.0 needs that
+cache for its tools node; its owner must resolve it independently before clean
+can release claims. Silo will not delete it by name.
+
+If another tool removed a parent without its volumes, or a shared mount remains,
+Silo reports each surviving name as leaked and never deletes it by name. The
+reported object may be replacement data. Plain down keeps the allocation and
+records the problem; clean and forced replacement refuse while that name is
+present. Resolve the data with its owner independently, then retry. Removing a
+borrower alone does not grant Silo cleanup authority for a missing parent.
+Inherited `volumes-from` provenance refuses before removal because Docker can
+delete an inherited anonymous volume when its last user is removed. Never
+prune or delete an unrecorded volume to clear a Silo error.
 
 An interrupted or short CI environment append keeps its sink receipt and
 claims even through `down --clean`; cleanup cannot undo or replay an uncertain

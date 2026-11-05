@@ -122,7 +122,12 @@ cat "$TMPDIR/rehearsal.log"
 A successful run contains `{"result":"pass","suite":"all"}` **and** no
 later cleanup failure, and exits zero. Keep the entire log and fixture evidence.
 The suites may be selected independently with `--suite legacy`, `live`,
-`backend` or `volumes` when a source change justifies rerunning only affected scenarios.
+`backend` or `volumes` when a source change justifies rerunning only affected
+scenarios. `volumes` includes the focused `same-second`, `paused-delete`,
+`parent-volumes`, `inherited-volumes` and `retry-crash` cases. These focused
+names are also valid suite selectors. The replacement tests seed a real
+creation-result receipt from Docker's returned parent/mount identities, then
+drive the built public CLI; they do not mock the engine or edit its database.
 
 | Scenario driven by that command | Required observation |
 | --- | --- |
@@ -137,14 +142,19 @@ The suites may be selected independently with `--suite legacy`, `live`,
 | Native root spelling aliases | Existing case/Unicode normalization aliases resolve to one project; distinct spellings on case-sensitive filesystems remain distinct. |
 | Same-name leftover network/volume/stopped k3d server/registry containers | NAME_CONFLICT; exact C object IDs, creation identities and bytes remain unchanged; C is removed only by the harness's exact fixture handle. Stopped server/registry containers are synthetic native Docker residues, not running C clusters. |
 | Unreceipted env/kubeconfig/version-2 lock | PATH_CONFLICT and sentinels unchanged; legacy version-1 locks use LEGACY_STATE. |
-| Native k3d creation/retention/deletion | Exact node/registry/network/volume receipts, owned kubeconfig; clean refuses retained resources; explicit deletion removes only journaled objects. |
+| Native k3d creation/retention/deletion | Exact node/registry/network/named-cache receipts and anonymous mount audit records, owned kubeconfig; clean refuses retained resources; explicit deletion removes exact container IDs with their anonymous volumes, then network ID. The named images cache remains and clean still refuses with unchanged claims. The harness's separate fixture-owner cleanup verifies its recorded creation identity before removing that owned cache; only then can public clean retire. |
 | k3d enabled to disabled after exact cluster deletion | `env --force` refuses removal of the published kubeconfig role; its original path/bytes and all claims survive. `down --clean` removes that recorded snapshot despite the config edit; subsequent disabled allocation has no kubeconfig claim, and final cleanup leaves no claims. |
 | Owner-labelled object outside namespace | NAME_CONFLICT; cleanup cannot grant authority outside declared names; the harness removes its exact synthetic object. |
 | Docker unavailable | ENGINE_UNAVAILABLE, never an empty-namespace pass. |
 | Anonymous image volume / clean | Redis's image-created `/data` volume is recorded under its exact container receipt and absent after clean; repeated clean is a no-op. |
-| Anonymous retention / failed delete / retry | Plain down retains the volume and parent receipt; force reallocation refuses without changed claims. A separate borrower makes clean fail without signals or deletion; after removing the exact fixture borrower, clean succeeds even though the original parent is gone. |
+| Anonymous sharing / leak refusal | A borrower exists before down. Removing the recorded parent with its volumes preserves data still referenced by that borrower. The historical parent receipt survives, and status reports the leaked name. Clean/force refuse with unchanged claims. Removing the borrower alone does not let Silo delete that name: clean still refuses. Only the fixture owner's exact attributed cleanup makes the name absent and permits retirement. |
 | Explicit borrowed / named mounts | Existing donor anonymous and named sentinel volumes are explicitly mounted alongside Redis's own data; neither grants child authority, and their snapshots plus donor remain unchanged after clean. |
-| Replaced child identity | Recreate the exact recorded volume name at a different creation time inside the owned fixture: clean refuses NAME_CONFLICT and keeps claims/replacement bytes; after exact fixture removal, absent-child clean succeeds. |
+| Replaced child name | Remove the exact synthetic parent externally without volumes, then replace its recorded volume name. Clean reports CLEANUP_REQUIRED and preserves both replacement and claims regardless of timestamp/labels. Forced replacement also refuses. After fixture-owner resolution, absent-name cleanup succeeds. |
+| Same-second replacement | The original and replacement have identical Docker CreatedAt seconds; the public CLI preserves the replacement and claims. An unmatched timestamp is a failed test precondition, not a passing safety result. |
+| Paused unsafe deletion | A transparent Docker CLI wrapper can pause a name-based volume deletion after inspection. The baseline reaches it and deletes a fixture replacement; this candidate never reaches that deletion. Its public clean reports the leaked/replaced name and preserves the replacement and claims. All other wrapper commands reach real Docker unchanged. |
+| Parent-scoped cleanup before failure | Make the fixture Tiltfile fail during teardown. Public down reports COMMAND_FAILED, but the exact recorded Compose parent and its anonymous mount are already absent; restoring the Tiltfile permits ordinary recovery. |
+| Inherited volumes-from | Silo refuses before removing the inherited borrower and leaves donor/borrower/volumes/claims unchanged. The separate owned Docker fixture proves `rm --volumes` preserves a live donor's references and named mounts, but removes inherited anonymous data when the last user is removed after its donor is gone. |
+| Durable successful retry / CLI crash | A real network deletion first fails on a fixture endpoint. Remove that exact fixture endpoint, pause the retry, SIGSTOP the recorded CLI, release real deletion, and observe the exact successful executor completion durably while the CLI still has a granted receipt. SIGKILL that CLI. Public recovery reconciles the earlier failed request and releases claims without another deletion of the absent network. |
 
 Repeat the same command on **both case-insensitive and case-sensitive native
 filesystems**, using locations supplied by the Mac account owner (no disk or
@@ -277,10 +287,18 @@ while IFS= read -r container_id; do
   docker container inspect "$container_id" --format '{{json .Mounts}}' \
     > "$TMPDIR/example-mounts/$container_id.json"
 done < "$TMPDIR/example-container-ids"
-bun "$silo_artifact" down --delete-cluster --clean
+if bun "$silo_artifact" down --delete-cluster --clean --json > "$TMPDIR/example-teardown.json"; then
+  echo "Expected retained named-cache refusal" >&2
+  exit 1
+fi
+bun -e 'import assert from "node:assert/strict"; const r=await Bun.file(process.argv[1]).json(); assert.equal(r.code,"CLEANUP_REQUIRED")' "$TMPDIR/example-teardown.json"
 docker volume ls --format '{{.Name}}' > "$TMPDIR/example-volumes-after.txt"
 bun -e 'import assert from "node:assert/strict"; const s=await Bun.file(process.argv[1]).json(); const names=new Set((await Bun.file(process.argv[2]).text()).trim().split("\n")); for(const r of s.project.resources) if(r.kind==="container") for(const v of r.anonymousVolumes) assert(!names.has(v.name), `Leaked ${v.name} from ${r.id}`)' \
   "$TMPDIR/example-status-before.json" "$TMPDIR/example-volumes-after.txt"
+bun "$silo_artifact" status --json > "$TMPDIR/example-status-retained.json"
+bun -e 'import assert from "node:assert/strict"; const before=await Bun.file(process.argv[1]).json(); const after=await Bun.file(process.argv[2]).json(); assert.deepEqual(after.project.claims,before.project.claims); for(const v of before.project.resources.filter(r=>r.kind==="volume")){ const r=Bun.spawnSync(["docker","volume","inspect",v.name],{stdout:"pipe",stderr:"pipe"}); assert.equal(r.exitCode,0); const current=JSON.parse(r.stdout.toString())[0]; assert.equal(current.Name,v.name); assert.equal(current.CreatedAt,v.createdAt); assert.equal(current.Labels["io.silo.project"],before.project.projectId); assert.equal(current.Labels["io.silo.generation"],String(before.project.generation)); console.log("fixture-owner named cache teardown",v.name); const removed=Bun.spawnSync(["docker","volume","rm",v.name],{stdout:"pipe",stderr:"pipe"}); assert.equal(removed.exitCode,0,removed.stderr.toString()); }' \
+  "$TMPDIR/example-status-before.json" "$TMPDIR/example-status-retained.json"
+bun "$silo_artifact" down --clean
 bun "$silo_artifact" status --json > "$TMPDIR/example-status-after.json"
 ```
 
@@ -290,8 +308,17 @@ failure, not absence. The post-volume enumeration must succeed and include
 any known-present fixture control used for that run. Preserve any unexpected
 volume; timestamps alone never establish its owner. The former Linux six-volume
 audit covered the k3d image volume and five k3d anonymous children, not Redis.
-Plain Compose/Tilt teardown can leave anonymous data on either OS; no
-Docker/OrbStack-specific cause is established by the earlier Mac residue.
+The current runtime removes exact parent IDs with `--volumes` before Tilt can
+discard them. No Silo path deletes a volume by name. A missing parent or a
+shared volume can still leave reported data: retain the evidence and claims;
+never treat a recorded mount name as current deletion authority. The
+named k3d images cache is retained because k3d 5.9.0 needs it for its tools
+node. In the example, the six anonymous mounts should be absent after exact
+parent deletion; the seventh mounted volume is that named cache and must remain.
+Record clean's refusal and unchanged claims, then resolve only that cache under
+the fixture-owner grant after exact identity verification, and repeat public
+clean to retire. Compare actual snapshots and receipts; a count is not proof.
+No Docker/OrbStack-specific cause is established by the earlier Mac residue.
 
 Invite a fresh guest using the standard guest charter, the built CLI, packaged
 skill and a distinct disposable fixture. Include stop/recreate from a legacy

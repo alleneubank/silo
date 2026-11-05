@@ -1,12 +1,13 @@
 /** Native public-CLI rehearsal. Run only in an explicitly disposable OS account. */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { z } from "zod";
 import { AllocationSchema, BackendReceiptSchema, ExecutorCompletionSchema, FileReceiptSchema, LaunchSchema } from "../src/core/lease_types";
 import { accountHome as nativeAccountHome } from "../src/core/allocation_domain";
+import { ProjectOperation } from "../src/core/lease_store";
 
 const { values } = parseArgs({ args: Bun.argv.slice(2), options: {
   root: { type: "string" }, silo: { type: "string" }, suite: { type: "string", default: "all" },
@@ -19,6 +20,10 @@ const cli = path.resolve(values.silo);
 const root = mkdtempSync(path.join(path.resolve(values.root), "allocation-rehearsal-"));
 const events = path.join(root, "events.jsonl");
 const resourceFile = path.join(root, "resources");
+const recordResource = (line: string) => {
+  appendFileSync(resourceFile, line);
+  appendFileSync(path.resolve("resources"), `rehearsal ${root}: ${line}`);
+};
 const log = (event: unknown) => { const line = JSON.stringify(event); console.log(line); appendFileSync(events, line + "\n"); };
 const digest = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
 const safeEnv: NodeJS.ProcessEnv = { ...process.env, CI: "false", GITHUB_ENV: "", SILO_PROFILE: "" };
@@ -42,7 +47,7 @@ async function command(cwd: string, argv: string[], env = safeEnv, timeout = 180
   const id = ++commandNumber;
   const proc = Bun.spawn(argv, { cwd, env, detached: true, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
   processes.add(proc);
-  appendFileSync(resourceFile, `process ${proc.pid} pgid=${proc.pid}: ${JSON.stringify(argv)}; teardown via returned subprocess handle or verified recorded group\n`);
+  recordResource(`process ${proc.pid} pgid=${proc.pid}: ${JSON.stringify(argv)}; teardown via returned subprocess handle or verified recorded group\n`);
   const timer = setTimeout(() => { proc.kill("SIGTERM"); }, timeout);
   const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
   clearTimeout(timer); processes.delete(proc);
@@ -79,7 +84,7 @@ const snapshot = (directory: string): string => {
 function start(p: string) {
   const proc = Bun.spawn([process.execPath, cli, "up"], { cwd: p, env: safeEnv, detached: true, stdout: Bun.file(path.join(p, "up.log")), stderr: Bun.file(path.join(p, "up.log")) });
   processes.add(proc); writeFileSync(path.join(p, "silo.pid"), String(proc.pid));
-  appendFileSync(resourceFile, `silo up pid/pgid ${proc.pid} root ${p}; teardown via returned handle then silo down --clean\n`);
+  recordResource(`silo up pid/pgid ${proc.pid} root ${p}; teardown via returned handle then silo down --clean\n`);
   return proc;
 }
 async function live() {
@@ -117,7 +122,7 @@ async function live() {
   writeFileSync(gatePreload, `import fs from 'node:fs';import{Database}from'bun:sqlite';const query=Database.prototype.query;Database.prototype.query=function(...sql){const stmt=query.apply(this,sql),run=stmt.run;stmt.run=function(...args){let receipt;try{receipt=typeof args[0]==='string'?JSON.parse(args[0]):null}catch{}if(receipt?.phase==='granted'){fs.writeFileSync(${JSON.stringify(ungranted)},JSON.stringify(receipt));process.kill(process.pid,'SIGKILL')}return run.apply(this,args)};return stmt};`);
   const ungrantedCrash = await command(gate, [process.execPath, "--preload", gatePreload, cli, "up", name(gate)]);
   assert.notEqual(ungrantedCrash.code, 0); const proposed = LaunchSchema.parse(JSON.parse(readFileSync(ungranted, "utf8"))); assert(proposed.groupId);
-  appendFileSync(resourceFile, `ungranted launch supervisor=${proposed.supervisorPid} group=${proposed.groupId}; Janitor owns drain after recorded CLI death; tool gate never granted\n`);
+  recordResource(`ungranted launch supervisor=${proposed.supervisorPid} group=${proposed.groupId}; Janitor owns drain after recorded CLI death; tool gate never granted\n`);
   await until("ungranted group drained", async () => { try { process.kill(-proposed.groupId!, 0); return false; } catch (error) { if (error instanceof Error && "code" in error && error.code === "ESRCH") return true; throw error; } });
   assert(!existsSync(canary)); await silo(gate, ["down", "--clean"]); assert(!existsSync(canary));
   log({ scenario: "native owner SIGKILL before durable grant executes no hook and drains actual child group", pass: true });
@@ -211,7 +216,7 @@ async function legacy() {
   const preload = path.join(root, "pause-old.ts"), reached = path.join(root, "old-paused"), release = path.join(root, "old-release");
   writeFileSync(preload, `import {promises as fs,writeFileSync,existsSync} from 'node:fs'; const write=fs.writeFile.bind(fs); fs.writeFile=async function(file,...args){if(String(file).endsWith('.tmp')&&String(file).includes(${JSON.stringify(override)})){writeFileSync(${JSON.stringify(reached)},'paused');while(!existsSync(${JSON.stringify(release)}))await Bun.sleep(25);}return write(file,...args)};`);
   const paused = Bun.spawn([process.execPath, "--preload", preload, path.resolve(values.legacy09), "env", name(old)], { cwd: old, env: { ...safeEnv, HOME: home, SILO_PORT_REGISTRY_DIR: override }, detached: true, stdout: Bun.file(path.join(root, "paused-old.log")), stderr: Bun.file(path.join(root, "paused-old.log")) });
-  processes.add(paused); appendFileSync(resourceFile, `paused old env pid/pgid ${paused.pid}; release ${release}, await exit then own old down\n`);
+  processes.add(paused); recordResource(`paused old env pid/pgid ${paused.pid}; release ${release}, await exit then own old down\n`);
   await until("old artifact paused before registry publication", async () => existsSync(reached));
   assert(!readdirSync(override).some(f => f.endsWith(".json")));
   // The approved precondition waits for this operation; it never races a clean scan.
@@ -260,7 +265,7 @@ async function backend() {
   for (const [kind, objectName] of [["network", `k3d-${cluster}`], ["volume", `k3d-${cluster}-images`]] as const) {
     const id = await docker([kind, "create", "--label", `io.silo.rehearsal=${path.basename(root)}`, objectName]);
     const created = await fixtureSnapshot(kind, id); cleanupObjects.push({ kind, id, name: objectName, created });
-    appendFileSync(resourceFile, `${kind} ${id} name=${objectName}; teardown docker ${kind} rm ${id} after exact inspect identity comparison\n`);
+    recordResource(`${kind} ${id} name=${objectName}; teardown docker ${kind} rm ${id} after exact inspect identity comparison\n`);
     await silo(p, ["env", name(p)], "NAME_CONFLICT"); assert.deepEqual(await fixtureSnapshot(kind, id), created);
     await docker([kind, "rm", id]); cleanupObjects.pop();
   }
@@ -269,7 +274,9 @@ async function backend() {
     await silo(p, ["env", name(p)], "PATH_CONFLICT"); assert.equal(readFileSync(path.join(p, file), "utf8"), "foreign fixture sentinel\n"); rmSync(path.join(p, file));
   }
   await silo(p, ["env", name(p)]); await silo(p, ["ci", "--timeout=120s"]);
-  const made = await state(p); assert(made.resources.some(r => r.name === `${cluster}-registry.localhost`)); assert(made.resources.some(r => r.kind === "volume"));
+  const made = await state(p); assert(made.resources.some(r => r.name === `${cluster}-registry.localhost`));
+  assert(made.resources.some(r => r.kind === "volume"));
+  assert(made.resources.some(r => r.kind === "container" && r.anonymousVolumes.length > 0));
   const images = new Map<string, string>();
   const attachedVolumes = new Set<string>();
   for (const receipt of made.resources.filter(r => r.kind === "container")) {
@@ -281,6 +288,16 @@ async function backend() {
   log({ scenario: "real k3d cluster/registry/network/volume and kubeconfig receipts", resources: made.resources, pass: true });
   await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED"); assert(existsSync(path.join(p, ".silo.lock")));
   await silo(p, ["down", "--delete-cluster"]);
+  const retainedCache = await state(p);
+  await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
+  assert.deepEqual((await state(p)).claims, retainedCache.claims);
+  for (const cache of made.resources.filter(r => r.kind === "volume")) {
+    const current = z.array(z.object({ Name: z.string(), CreatedAt: z.string() })).length(1).parse(JSON.parse(await docker(["volume", "inspect", cache.name])))[0]!;
+    assert.equal(current.Name, cache.name); assert.equal(current.CreatedAt, cache.createdAt);
+    recordResource(`named k3d cache ${cache.name} retained by Silo; author fixture-only teardown exact recorded creation identity then docker volume rm\n`);
+    await docker(["volume", "rm", cache.name]);
+  }
+  await silo(p, ["down"]);
   const stopped = await state(p);
   const kubeconfig = stopped.allocation!.state.identity.kubeconfigPath!;
   const kubeconfigClaim = stopped.files.find(f => f.role === "kubeconfig")!.target.key;
@@ -313,7 +330,7 @@ async function backend() {
     const image = images.get(objectName!); assert(image);
     const id = await docker(["container", "create", "--name", objectName!, "--label", `io.silo.rehearsal=${path.basename(root)}`, "--label", "app=k3d", "--label", `k3d.cluster=${cluster}`, "--label", `k3d.role=${role}`, image]);
     const created = await fixtureSnapshot("container", id); cleanupObjects.push({ kind: "container", id, name: objectName!, created });
-    appendFileSync(resourceFile, `synthetic stopped k3d ${role} container ${id} name=${objectName}; teardown docker container rm ${id} after exact inspect comparison\n`);
+    recordResource(`synthetic stopped k3d ${role} container ${id} name=${objectName}; teardown docker container rm ${id} after exact inspect comparison\n`);
     await silo(p, ["env", name(p)], "NAME_CONFLICT"); assert.deepEqual(await fixtureSnapshot("container", id), created);
     await docker(["container", "rm", "--volumes", id]); cleanupObjects.pop();
   }
@@ -324,7 +341,7 @@ async function backend() {
   const outside = `unclaimed-${path.basename(root).toLowerCase()}`;
   const outsideId = await docker(["container", "create", "--name", outside, "--label", `io.silo.project=${scoped.project.projectId}`, "--label", `io.silo.generation=${scoped.project.generation}`, image]);
   const outsideCreated = await fixtureSnapshot("container", outsideId); cleanupObjects.push({ kind: "container", id: outsideId, name: outside, created: outsideCreated });
-  appendFileSync(resourceFile, `outside-claim synthetic container ${outsideId}; teardown exact ID after inspection\n`);
+  recordResource(`outside-claim synthetic container ${outsideId}; teardown exact ID after inspection\n`);
   await silo(p, ["down", "--clean"], "NAME_CONFLICT"); assert.deepEqual(await fixtureSnapshot("container", outsideId), outsideCreated);
   assert.deepEqual((await state(p)).claims, scoped.project.claims);
   await docker(["container", "rm", "--volumes", outsideId]); cleanupObjects.pop(); await silo(p, ["down", "--clean"]);
@@ -363,7 +380,7 @@ async function anonymousVolumes() {
   const { redis, mounts, data } = await redisMount(p);
   const created = await fixtureSnapshot("volume", data.Name);
   cleanupObjects.push({ kind: "volume", id: data.Name, name: data.Name, created });
-  appendFileSync(resourceFile, `volume ${data.Name} from container ${redis.id}; teardown public down --clean or exact snapshot-verified docker volume rm\n`);
+  recordResource(`volume ${data.Name} from container ${redis.id}; teardown public down --clean or exact snapshot-verified docker volume rm\n`);
   log({ scenario: "image-declared anonymous mount before teardown", parent: redis, mounts, volume: created });
   await silo(p, ["down", "--clean"]);
   const volumes = (await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n");
@@ -374,13 +391,13 @@ async function anonymousVolumes() {
   log({ scenario: "public clean removes the exact image-declared anonymous volume", parentId: redis.id, volume: data.Name, pass: true });
 
   const donorId = await docker(["container", "create", "redis:7-alpine"]);
-  appendFileSync(resourceFile, `donor container ${donorId}; teardown snapshot-verified docker container rm --volumes ${donorId}\n`);
+  recordResource(`donor container ${donorId}; teardown snapshot-verified docker container rm --volumes ${donorId}\n`);
   const donor = await fixtureSnapshot("container", donorId);
   cleanupObjects.push({ kind: "container", id: donorId, name: donorId, created: donor });
   const donorMounts = MountsSchema.parse(JSON.parse(await docker(["container", "inspect", donorId, "--format", "{{json .Mounts}}"] )));
   const borrowed = donorMounts.find(m => m.Type === "volume" && m.Destination === "/data"); assert(borrowed?.Name);
   const named = await docker(["volume", "create", `silo-sentinel-${path.basename(root).toLowerCase()}`]);
-  appendFileSync(resourceFile, `named sentinel volume ${named}; teardown snapshot-verified docker volume rm ${named}\n`);
+  recordResource(`named sentinel volume ${named}; teardown snapshot-verified docker volume rm ${named}\n`);
   const namedBefore = await fixtureSnapshot("volume", named);
   cleanupObjects.push({ kind: "volume", id: named, name: named, created: namedBefore });
   const borrowedBefore = await fixtureSnapshot("volume", borrowed.Name);
@@ -388,7 +405,12 @@ async function anonymousVolumes() {
   appendFileSync(path.join(retry, "compose.yaml"), `volumes:\n  borrowed:\n    external: true\n    name: ${borrowed.Name}\n  sentinel:\n    external: true\n    name: ${named}\n`);
   await silo(retry, ["ci", name(retry), "--timeout", "60s"]);
   const owned = await redisMount(retry);
+  const ownedVolumeBefore = await fixtureSnapshot("volume", owned.data.Name);
   assert.deepEqual(owned.redis.anonymousVolumes.map(v => v.name), [owned.data.Name], "supplied volumes grant no deletion authority");
+  const userId = await docker(["container", "create", "--volume", `${owned.data.Name}:/borrowed`, "redis:7-alpine"]);
+  recordResource(`borrower container ${userId}; teardown snapshot-verified docker container rm --volumes ${userId}\n`);
+  const userCreated = await fixtureSnapshot("container", userId);
+  cleanupObjects.push({ kind: "container", id: userId, name: userId, created: userCreated });
   await silo(retry, ["down"]);
   assert.deepEqual(await fixtureSnapshot("volume", borrowed.Name), borrowedBefore);
   assert.deepEqual(await fixtureSnapshot("volume", named), namedBefore);
@@ -396,42 +418,269 @@ async function anonymousVolumes() {
   assert(stopped.resources.some(r => r.kind === "container" && r.id === owned.redis.id && r.anonymousVolumes.some(v => v.name === owned.data.Name)));
   await silo(retry, ["env", "--force", "--profile", "alternative"], "CLEANUP_REQUIRED");
   assert.deepEqual((await state(retry)).claims, stopped.claims);
-  const userId = await docker(["container", "create", "--volume", `${owned.data.Name}:/borrowed`, "redis:7-alpine"]);
-  appendFileSync(resourceFile, `borrower container ${userId}; teardown snapshot-verified docker container rm --volumes ${userId}\n`);
-  const userCreated = await fixtureSnapshot("container", userId);
-  cleanupObjects.push({ kind: "container", id: userId, name: userId, created: userCreated });
-  await silo(retry, ["down", "--clean"], "COMMAND_FAILED");
+  await silo(retry, ["down", "--clean"], "CLEANUP_REQUIRED");
   assert.deepEqual((await state(retry)).claims, stopped.claims);
   assert.deepEqual(await fixtureSnapshot("container", userId), userCreated);
   assert((await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(owned.data.Name));
   await docker(["container", "rm", "--volumes", userId]); cleanupObjects.pop();
+  // The borrower's explicit source is named from Docker's perspective. Once
+  // the original parent is gone, Silo has audit data but no deletion authority.
+  await silo(retry, ["down", "--clean"], "CLEANUP_REQUIRED");
+  assert.deepEqual((await state(retry)).claims, stopped.claims);
+  const leaked = await fixtureSnapshot("volume", owned.data.Name);
+  assert.deepEqual(leaked, ownedVolumeBefore);
+  recordResource(`leaked fixture volume ${owned.data.Name}; author teardown exact snapshot-verified docker volume rm; never product cleanup\n`);
+  await docker(["volume", "rm", owned.data.Name]);
   await silo(retry, ["down", "--clean"]);
   assert(!(await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(owned.data.Name));
   assert.equal((await silo(retry, ["status"])).project?.generation, 0);
   assert.deepEqual(await fixtureSnapshot("volume", borrowed.Name), borrowedBefore);
   assert.deepEqual(await fixtureSnapshot("volume", named), namedBefore);
   assert.deepEqual(await fixtureSnapshot("container", donorId), donor);
-  log({ scenario: "retained mount blocks reallocation; in-use clean refuses and retries after parent deletion; explicit named and borrowed anonymous mounts survive", parent: owned.redis, borrowed: borrowed.Name, named, pass: true });
+  log({ scenario: "shared anonymous mount is leaked, reported and never deleted by name; clean/force retain claims until the fixture owner resolves it; explicit named and borrowed mounts survive", parent: owned.redis, borrowed: borrowed.Name, named, pass: true });
 
   const identity = composeProject("anonymous-identity");
   await silo(identity, ["ci", name(identity), "--timeout", "60s"]);
   const original = await redisMount(identity);
-  await silo(identity, ["down"]);
+  // Remove the parent externally without its mounts: this models a crash/tool
+  // teardown that has destroyed Silo's only safe volume-deletion handle.
+  await docker(["container", "rm", "--force", original.redis.id]);
   const beforeReplacement = await state(identity);
   const originalVolume = original.redis.anonymousVolumes.find(v => v.name === original.data.Name); assert(originalVolume);
   await docker(["volume", "rm", originalVolume.name]);
   await until("Docker volume creation-time resolution", async () => Date.now() >= Date.parse(originalVolume.createdAt) + 1000);
   await docker(["volume", "create", "--label", "com.docker.volume.anonymous=", originalVolume.name]);
   const replacement = await fixtureSnapshot("volume", originalVolume.name);
-  appendFileSync(resourceFile, `replacement fixture volume ${originalVolume.name}; teardown snapshot-verified docker volume rm ${originalVolume.name}\n`);
+  recordResource(`replacement fixture volume ${originalVolume.name}; teardown snapshot-verified docker volume rm ${originalVolume.name}\n`);
   cleanupObjects.push({ kind: "volume", id: originalVolume.name, name: originalVolume.name, created: replacement });
-  await silo(identity, ["down", "--clean"], "NAME_CONFLICT");
+  await silo(identity, ["down", "--clean"], "CLEANUP_REQUIRED");
   assert.deepEqual((await state(identity)).claims, beforeReplacement.claims);
   assert.deepEqual(await fixtureSnapshot("volume", originalVolume.name), replacement);
   await docker(["volume", "rm", originalVolume.name]); cleanupObjects.pop();
   await silo(identity, ["down", "--clean"]);
   assert.equal((await silo(identity, ["status"])).project?.generation, 0);
-  log({ scenario: "replacement anonymous identity refuses without deleting replacement or dropping claims; absent-child retry retires", original: originalVolume, replacement, pass: true });
+  log({ scenario: "replacement anonymous name is reported as a leak without deletion or claim release; owner-resolved absence allows retirement", original: originalVolume, replacement, pass: true });
+}
+
+async function seededAnonymousParent(label: string) {
+  const p = project(label);
+  const allocated = await silo(p, ["env", name(p)]); assert(allocated.project?.allocation);
+  const projectId = allocated.project.projectId;
+  const generation = allocated.project.generation;
+  const containerName = `${allocated.project.allocation.state.identity.composeName}-audit`;
+  const owner = await ProjectOperation.open(p);
+  try {
+    await until("start of Docker's timestamp second", async () => Date.now() % 1000 < 100);
+    recordResource(`container intent ${containerName}; teardown exact returned ID with --volumes\n`);
+    const id = await docker(["container", "create", "--name", containerName, "--label", `io.silo.project=${projectId}`, "--label", `io.silo.generation=${generation}`, "redis:7-alpine"]);
+    recordResource(`container ${id}; teardown exact recorded ID with --volumes\n`);
+    const created = z.array(z.object({ Id: z.string(), Name: z.string(), Created: z.string(), Config: z.object({ Labels: z.record(z.string()) }), Mounts: MountsSchema })).length(1).parse(JSON.parse(await docker(["container", "inspect", id])))[0]!;
+    const mount = created.Mounts.find(m => m.Type === "volume" && m.Destination === "/data"); assert(mount?.Name);
+    const data = z.array(z.object({ Name: z.string(), CreatedAt: z.string() })).length(1).parse(JSON.parse(await docker(["volume", "inspect", mount.Name])))[0]!;
+    const volume = { name: data.Name, createdAt: data.CreatedAt, destination: "/data" };
+    const parent = BackendReceiptSchema.parse({ kind: "container", source: "compose", name: created.Name.replace(/^\//, ""), id: created.Id, createdAt: created.Created, labels: created.Config.Labels, anonymousVolumes: [volume] });
+    assert(parent.kind === "container");
+    // Seed the real creation-result boundary from Docker's returned identities;
+    // the race then runs the public CLI. Avoid a full CLI capture in the narrow
+    // timestamp window, which otherwise tests process startup speed.
+    owner.recordResources([parent]);
+    const made = ProjectOperation.inspect(p); assert(made?.allocation);
+    recordResource(`anonymous volume ${volume.name} under ${id}; fixture-only teardown exact inspect then docker volume rm, if parent no longer exists\n`);
+    await docker(["container", "rm", id]);
+    return { p, parent, volume, made };
+  } finally { owner.finish(); }
+}
+
+async function sameSecondReplacement() {
+  const { p, volume, made } = await seededAnonymousParent("same-second-replacement");
+  await docker(["volume", "rm", volume.name]);
+  await docker(["volume", "create", "--label", "com.docker.volume.anonymous=", volume.name]);
+  const replacement = await fixtureSnapshot("volume", volume.name);
+  cleanupObjects.push({ kind: "volume", id: volume.name, name: volume.name, created: replacement });
+  const created = z.array(z.object({ CreatedAt: z.string() })).length(1).parse(replacement)[0]!;
+  assert.equal(created.CreatedAt, volume.createdAt, "The regression must replace the volume in the original timestamp second");
+  try {
+    await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
+    assert.deepEqual(await fixtureSnapshot("volume", volume.name), replacement);
+    assert.deepEqual((await state(p)).claims, made.claims);
+    await silo(p, ["env", "--force", "--profile", "alternative"], "ALREADY_RUNNING");
+    assert.deepEqual((await state(p)).claims, made.claims);
+    log({ scenario: "same-second replacement is preserved; clean and forced replacement keep claims", original: volume, replacement, pass: true });
+  } finally {
+    const remaining = (await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n");
+    if (remaining.includes(volume.name)) {
+      assert.deepEqual(await fixtureSnapshot("volume", volume.name), replacement);
+      await docker(["volume", "rm", volume.name]);
+    }
+    cleanupObjects.pop();
+  }
+}
+
+async function pausedReplacement() {
+  const { p, volume, made } = await seededAnonymousParent("paused-replacement");
+  const bin = path.join(p, "bin"); mkdirSync(bin);
+  const paused = path.join(p, "paused"), release = path.join(p, "release");
+  const realDocker = Bun.which("docker"); assert(realDocker);
+  writeFileSync(path.join(bin, "docker"), `#!/bin/sh\nset -eu\nif [ "\u0024{1-}" = volume ] && [ "\u0024{2-}" = rm ] && [ "\u0024{3-}" = "\u0024VOLUME_PROBE_TARGET" ]; then\n  printf paused > "\u0024VOLUME_PROBE_PAUSED"\n  count=0\n  while [ ! -f "\u0024VOLUME_PROBE_RELEASE" ]; do\n    count=\u0024((count + 1))\n    [ "\u0024count" -lt 1500 ] || exit 78\n    sleep 0.02\n  done\nfi\nexec "\u0024VOLUME_PROBE_DOCKER" "\u0024@"\n`);
+  chmodSync(path.join(bin, "docker"), 0o755);
+  const pending = command(p, [process.execPath, cli, "down", "--clean", "--json"], {
+    ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, VOLUME_PROBE_TARGET: volume.name,
+    VOLUME_PROBE_PAUSED: paused, VOLUME_PROBE_RELEASE: release, VOLUME_PROBE_DOCKER: realDocker,
+  });
+  let finished = false;
+  const completed = pending.then(result => { finished = true; return result; });
+  await until("paused unsafe delete or completed safe cleanup", async () => existsSync(paused) || finished);
+  await docker(["volume", "rm", volume.name]);
+  await docker(["volume", "create", "--label", "com.docker.volume.anonymous=", volume.name]);
+  const replacement = await fixtureSnapshot("volume", volume.name);
+  cleanupObjects.push({ kind: "volume", id: volume.name, name: volume.name, created: replacement });
+  writeFileSync(release, "release\n");
+  try {
+    const result = await completed;
+    assert.notEqual(result.code, 0, "A leaked/replaced name must not be deleted and retired");
+    assert.equal(ResultSchema.parse(JSON.parse(result.stdout)).code, "CLEANUP_REQUIRED");
+    await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
+    assert.deepEqual(await fixtureSnapshot("volume", volume.name), replacement);
+    assert.deepEqual((await state(p)).claims, made.claims);
+    log({ scenario: "replacement at the unsafe deletion boundary is preserved; no name-delete authority exists", unsafeDeleteReached: existsSync(paused), original: volume, replacement, pass: true });
+  } finally {
+    if ((await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(volume.name)) {
+      assert.deepEqual(await fixtureSnapshot("volume", volume.name), replacement);
+      await docker(["volume", "rm", volume.name]);
+    }
+    cleanupObjects.pop();
+  }
+}
+
+async function parentVolumes() {
+  const p = composeProject("parent-volume-cleanup");
+  await silo(p, ["ci", name(p), "--timeout", "60s"]);
+  const { redis, data } = await redisMount(p);
+  const tiltfile = path.join(p, "Tiltfile"); const source = readFileSync(tiltfile, "utf8");
+  writeFileSync(tiltfile, "fail('intentional teardown failure after exact parent removal')\n");
+  try {
+    await silo(p, ["down", "--clean"], "COMMAND_FAILED");
+    assert.notEqual((await command(root, ["docker", "container", "inspect", redis.id])).code, 0, "The recorded parent must already be removed before Tilt teardown");
+    assert(!(await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(data.Name), "Anonymous data must be removed with its recorded parent, even when later Tilt teardown fails");
+    log({ scenario: "exact parent removal removes its anonymous volume before a later teardown failure", parent: redis, data, pass: true });
+  } finally { writeFileSync(tiltfile, source); }
+}
+
+async function inheritedVolumes() {
+  const p = project("inherited-volumes", '[hooks]\npost-up=["sh create-inherited.sh"]\n');
+  const allocated = await silo(p, ["env", name(p)]); assert(allocated.project?.allocation);
+  const named = `silo-inherited-${path.basename(root).toLowerCase()}`;
+  recordResource(`named volume intent ${named}; teardown exact snapshot-verified author docker volume rm\n`);
+  await docker(["volume", "create", named]);
+  const namedBefore = await fixtureSnapshot("volume", named);
+  cleanupObjects.push({ kind: "volume", id: named, name: named, created: namedBefore });
+  const donor = await docker(["container", "create", "--volume", `${named}:/named`, "redis:7-alpine"]);
+  recordResource(`inherited donor container ${donor}; teardown exact recorded ID with --volumes\n`);
+  const donorBefore = await fixtureSnapshot("container", donor);
+  cleanupObjects.push({ kind: "container", id: donor, name: donor, created: donorBefore });
+  const mounts = MountsSchema.parse(JSON.parse(await docker(["container", "inspect", donor, "--format", "{{json .Mounts}}"] )));
+  const anonymous = mounts.find(m => m.Destination === "/data"); assert(anonymous?.Name);
+  recordResource(`inherited anonymous volume ${anonymous.Name} from donor ${donor}; cleanup only with last exact recorded fixture parent\n`);
+  const anonymousBefore = await fixtureSnapshot("volume", anonymous.Name);
+  const borrowerName = `${allocated.project.allocation.state.identity.containerPrefix}inherited`;
+  recordResource(`inherited borrower intent ${borrowerName}; teardown exact returned ID with --volumes only while donor exists\n`);
+  writeFileSync(path.join(p, "create-inherited.sh"), `#!/bin/sh\nset -eu\ndocker container create --name "\u0024{CONTAINER_PREFIX}inherited" --label "io.silo.project=\u0024SILO_PROJECT_ID" --label "io.silo.generation=\u0024SILO_GENERATION" --volumes-from ${donor} redis:7-alpine > borrower.id\n`);
+  await silo(p, ["ci", "--timeout", "60s"], "CLEANUP_REQUIRED");
+  const borrower = readFileSync(path.join(p, "borrower.id"), "utf8").trim();
+  recordResource(`inherited borrower ${borrower}; teardown exact recorded ID with --volumes while donor exists\n`);
+  const borrowerBefore = await fixtureSnapshot("container", borrower);
+  cleanupObjects.push({ kind: "container", id: borrower, name: borrowerName, created: borrowerBefore });
+  const before = await state(p);
+  await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
+  assert.deepEqual((await state(p)).claims, before.claims);
+  assert.deepEqual(await fixtureSnapshot("container", borrower), borrowerBefore);
+  assert.deepEqual(await fixtureSnapshot("container", donor), donorBefore);
+  assert.deepEqual(await fixtureSnapshot("volume", anonymous.Name), anonymousBefore);
+  assert.deepEqual(await fixtureSnapshot("volume", named), namedBefore);
+  await docker(["container", "rm", "--volumes", borrower]); cleanupObjects.pop();
+  assert.deepEqual(await fixtureSnapshot("volume", anonymous.Name), anonymousBefore, "The live donor reference must protect its anonymous volume");
+
+  const lastUser = await docker(["container", "create", "--volumes-from", donor, "redis:7-alpine"]);
+  recordResource(`last inherited user ${lastUser}; teardown exact recorded ID with --volumes; this fixture owns donor and both volumes\n`);
+  const lastBefore = await fixtureSnapshot("container", lastUser);
+  cleanupObjects.push({ kind: "container", id: lastUser, name: lastUser, created: lastBefore });
+  assert.deepEqual(await fixtureSnapshot("container", donor), donorBefore);
+  await docker(["container", "rm", donor]);
+  cleanupObjects.splice(cleanupObjects.findIndex(o => o.kind === "container" && o.id === donor), 1);
+  assert.deepEqual(await fixtureSnapshot("volume", anonymous.Name), anonymousBefore);
+  await docker(["container", "rm", "--volumes", lastUser]); cleanupObjects.pop();
+  assert(!(await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(anonymous.Name), "Docker removes an inherited anonymous volume when its last user is removed with --volumes");
+  assert.deepEqual(await fixtureSnapshot("volume", named), namedBefore, "An inherited named volume must remain");
+  await silo(p, ["down", "--clean"]);
+  log({ scenario: "inherited provenance refuses without deletion; Docker preserves shared live references and named data, but removes last-user inherited anonymous data", donor, borrower, lastUser, anonymous: anonymous.Name, named, pass: true });
+}
+
+async function retryCrash() {
+  const p = project("retry-crash", '[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n');
+  const allocated = await silo(p, ["env", name(p)]); assert(allocated.project?.allocation);
+  const projectId = allocated.project.projectId, generation = allocated.project.generation;
+  const networkName = `k3d-${allocated.project.allocation.state.identity.k3dClusterName}`;
+  recordResource(`network intent ${networkName}; teardown exact receipted ID after endpoint removal\n`);
+  const id = await docker(["network", "create", "--label", `io.silo.project=${projectId}`, "--label", `io.silo.generation=${generation}`, networkName]);
+  const created = z.array(z.object({ Id: z.string(), Name: z.string(), Created: z.string(), Labels: z.record(z.string()) })).length(1).parse(JSON.parse(await docker(["network", "inspect", id])))[0]!;
+  recordResource(`network ${id} name=${networkName}; teardown exact recorded docker network rm ID\n`);
+  const owner = await ProjectOperation.open(p);
+  try { owner.recordResources([{ kind: "network", source: "k3d", id, name: created.Name, createdAt: created.Created, labels: created.Labels }]); }
+  finally { owner.finish(); }
+  const blocker = await docker(["container", "create", "--network", networkName, "redis:7-alpine"]);
+  recordResource(`network blocker ${blocker}; teardown exact returned container ID with --force --volumes\n`);
+  await docker(["container", "start", blocker]);
+  const blockerBefore = await fixtureSnapshot("container", blocker);
+  cleanupObjects.push({ kind: "container", id: blocker, name: blocker, created: blockerBefore });
+  await silo(p, ["down", "--delete-cluster", "--clean"], "COMMAND_FAILED");
+  const failed = await state(p);
+  const first = failed.launches.find(l => l.kind === "owned-network-delete" && l.phase === "exited" && l.exitCode !== 0); assert(first);
+  assert.deepEqual(await fixtureSnapshot("container", blocker), blockerBefore);
+  await docker(["container", "rm", "--force", "--volumes", blocker]); cleanupObjects.pop();
+
+  const bin = path.join(p, "bin"); mkdirSync(bin);
+  const paused = path.join(p, "paused"), release = path.join(p, "release");
+  const realDocker = Bun.which("docker"); assert(realDocker);
+  writeFileSync(path.join(bin, "docker"), `#!/bin/sh\nset -eu\nif [ "\u0024{1-}" = network ] && [ "\u0024{2-}" = rm ] && [ "\u0024{3-}" = "\u0024RETRY_PROBE_TARGET" ]; then\n  printf paused > "\u0024RETRY_PROBE_PAUSED"\n  count=0\n  while [ ! -f "\u0024RETRY_PROBE_RELEASE" ]; do\n    count=\u0024((count + 1))\n    [ "\u0024count" -lt 1500 ] || exit 78\n    sleep 0.02\n  done\nfi\nexec "\u0024RETRY_PROBE_DOCKER" "\u0024@"\n`);
+  chmodSync(path.join(bin, "docker"), 0o755);
+  const proc = Bun.spawn([process.execPath, cli, "down", "--delete-cluster", "--clean", "--json"], {
+    cwd: p, detached: true, env: { ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, RETRY_PROBE_TARGET: id, RETRY_PROBE_PAUSED: paused, RETRY_PROBE_RELEASE: release, RETRY_PROBE_DOCKER: realDocker },
+    stdin: "ignore", stdout: Bun.file(path.join(p, "interrupted.stdout")), stderr: Bun.file(path.join(p, "interrupted.stderr")),
+  });
+  processes.add(proc);
+  writeFileSync(path.join(p, "retry.pid"), String(proc.pid));
+  recordResource(`retry CLI pid/pgid ${proc.pid}; teardown exact returned handle; native Janitor owns each child executor group\n`);
+  const deadline = setTimeout(() => { if (proc.exitCode === null) proc.kill("SIGKILL"); }, 45_000);
+  try {
+    await until("retry paused before the real Docker deletion", async () => existsSync(paused));
+    const granted = (await state(p)).launches.find(l => l.kind === "owned-network-delete" && l.phase === "granted"); assert(granted?.phase === "granted");
+    const identity = await command(root, ["ps", "-o", "user=,pgid=,command=", "-p", String(proc.pid)]);
+    assert.equal(identity.code, 0); assert.equal(Number(identity.stdout.trim().split(/\s+/)[1]), proc.pid);
+    proc.kill("SIGSTOP");
+    await until("CLI stopped at the completion-import boundary", async () => {
+      const result = await command(root, ["ps", "-o", "stat=", "-p", String(proc.pid)]);
+      return result.code === 0 && result.stdout.trim().startsWith("T");
+    });
+    writeFileSync(release, "release\n");
+    await until("retry's exact durable successful completion", async () => {
+      const saved = await state(p);
+      return saved.completions.some(c => c.launchId === granted.id && c.started && c.exitCode === 0);
+    });
+    const interrupted = await state(p);
+    assert(interrupted.launches.some(l => l.id === first.id && l.phase === "exited" && !l.reconciled));
+    assert(interrupted.launches.some(l => l.id === granted.id && l.phase === "granted"));
+    assert(!(await docker(["network", "ls", "--no-trunc", "--format", "{{.ID}}"])).split("\n").includes(id));
+    proc.kill("SIGKILL"); await proc.exited; processes.delete(proc);
+    await silo(p, ["down", "--delete-cluster", "--clean"]);
+    const recovered = (await silo(p, ["status"])).project;
+    assert.equal(recovered?.generation, 0); assert.deepEqual(recovered?.claims, []);
+    log({ scenario: "real failed network delete, durable successful retry, CLI killed before completion import, public recovery retires", network: id, failedLaunch: first.id, successfulLaunch: granted.id, interrupted, pass: true });
+  } finally {
+    clearTimeout(deadline);
+    writeFileSync(release, "release\n");
+    if (proc.exitCode === null) { proc.kill("SIGKILL"); await proc.exited; }
+    processes.delete(proc);
+  }
 }
 
 log({ environment: { platform: process.platform, arch: process.arch, bun: Bun.version, root, accountHome, artifact: cli, sha256: digest(cli) } });
@@ -441,6 +690,11 @@ try {
   if (values.suite === "all" || values.suite === "live") await live();
   if (values.suite === "all" || values.suite === "backend") await backend();
   if (values.suite === "all" || values.suite === "volumes") await anonymousVolumes();
+  if (values.suite === "all" || values.suite === "volumes" || values.suite === "same-second") await sameSecondReplacement();
+  if (values.suite === "all" || values.suite === "volumes" || values.suite === "paused-delete") await pausedReplacement();
+  if (values.suite === "all" || values.suite === "volumes" || values.suite === "parent-volumes") await parentVolumes();
+  if (values.suite === "all" || values.suite === "volumes" || values.suite === "inherited-volumes") await inheritedVolumes();
+  if (values.suite === "all" || values.suite === "volumes" || values.suite === "retry-crash") await retryCrash();
   log({ result: "pass", suite: values.suite });
 } catch (error) { failure = error; log({ result: "fail", error: String(error), stack: error instanceof Error ? error.stack : null }); }
 finally {

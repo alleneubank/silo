@@ -18,11 +18,16 @@ changing its configuration or repairing an environment. Discover topics with
   health: source the generated env and query
   `tilt get uiresources --port "$TILT_PORT"`. Keep lifecycle changes in silo.
 - Stop with `silo down`. k3d resources and all reservations remain owned.
+  Receipted Compose containers are removed with their anonymous volumes.
   `silo down --delete-cluster --clean` explicitly deletes the owned cluster,
-  then removes receipted anonymous container volumes and snapshots and releases
-  claims once absence is proved. `status --json` lists `anonymousVolumes` on
-  container receipts, even after a parent is deleted. Named or explicitly reused
-  volumes grant no child deletion authority; in-use children keep claims.
+  removing each exact receipted container ID with its anonymous volumes, then
+  snapshots and claims once absence is proved. Silo never deletes a volume by
+  name. `status --json` lists audit-only `anonymousVolumes`, even after a parent
+  is gone. Named/explicit mounts and volumes still used elsewhere survive.
+  Leaked or replaced names keep claims and block clean/force until their owner
+  resolves them independently; Silo cannot clean a volume whose parent is gone.
+  Inherited `volumes-from` provenance refuses before container removal.
+  k3d's named image cache also remains for its owner to resolve before clean.
   Failed or uncertain teardown retains ownership. Inspect `status` and
   `silo doc troubleshooting`; never delete the store, lock or peer reservation
   to make allocation succeed. Never adopt or delete a conflicting object.
