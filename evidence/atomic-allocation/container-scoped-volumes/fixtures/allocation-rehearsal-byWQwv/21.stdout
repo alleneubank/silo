@@ -1,0 +1,1 @@
+[{"Type":"volume","Name":"k3d-localnet-proof-bywqwv-backend-images","Source":"/var/lib/docker/volumes/k3d-localnet-proof-bywqwv-backend-images/_data","Destination":"/k3d/images","Driver":"local","Mode":"z","RW":true,"Propagation":""}]

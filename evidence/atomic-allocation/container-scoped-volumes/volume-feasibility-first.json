@@ -1,0 +1,125 @@
+{
+  "head": "fff3083dc1974f1856835a5ed8424c7f26ebb19a",
+  "host": "onyx",
+  "run": "036502e6-9280-4eaf-b405-d9b8c459e812",
+  "timestamp": "2026-11-05T01:26:45.469Z",
+  "docker": {
+    "Platform": {
+      "Name": "Docker Engine - Community"
+    },
+    "Version": "29.9.2",
+    "ApiVersion": "1.56",
+    "MinAPIVersion": "1.40",
+    "Os": "linux",
+    "Arch": "amd64",
+    "Components": [
+      {
+        "Name": "Engine",
+        "Version": "29.9.2",
+        "Details": {
+          "ApiVersion": "1.56",
+          "Arch": "amd64",
+          "BuildTime": "Tue Oct 20 18:44:40 2026",
+          "Experimental": "false",
+          "GitCommit": "0367cbe",
+          "GoVersion": "go1.26.10",
+          "KernelVersion": "6.8.0-147-generic",
+          "MinAPIVersion": "1.40",
+          "Module": "github.com/moby/moby/v2",
+          "ModuleVersion": "v2.0.0+unknown",
+          "Os": "linux"
+        }
+      },
+      {
+        "Name": "containerd",
+        "Version": "v2.4.2",
+        "Details": {
+          "GitCommit": "b7a25261e029d68978bbf290df0a62fc819b3c51"
+        }
+      },
+      {
+        "Name": "runc",
+        "Version": "1.5.2",
+        "Details": {
+          "GitCommit": "v1.5.2-0-g29dd3dc2"
+        }
+      },
+      {
+        "Name": "docker-init",
+        "Version": "0.19.0",
+        "Details": {
+          "GitCommit": "de40ad0"
+        }
+      }
+    ],
+    "GitCommit": "0367cbe",
+    "GoVersion": "go1.26.10",
+    "KernelVersion": "6.8.0-147-generic",
+    "BuildTime": "2026-10-20T18:44:40.000000000+00:00"
+  },
+  "findings": [
+    {
+      "scenario": "baseline same-second replacement",
+      "original": {
+        "CreatedAt": "2026-11-05T01:26:45Z",
+        "Driver": "local",
+        "Labels": {
+          "com.docker.volume.anonymous": "",
+          "io.silo.probe": "036502e6-9280-4eaf-b405-d9b8c459e812"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/silo-036502e6-9280-4eaf-b405-d9b8c459e812-1-afe24a8f-80f1-4bcb-ad3d-1e6a5108e3b3/_data",
+        "Name": "silo-036502e6-9280-4eaf-b405-d9b8c459e812-1-afe24a8f-80f1-4bcb-ad3d-1e6a5108e3b3",
+        "Options": null,
+        "Scope": "local"
+      },
+      "replacement": {
+        "CreatedAt": "2026-11-05T01:26:45Z",
+        "Driver": "local",
+        "Labels": {
+          "com.docker.volume.anonymous": "",
+          "io.silo.probe": "036502e6-9280-4eaf-b405-d9b8c459e812"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/silo-036502e6-9280-4eaf-b405-d9b8c459e812-1-afe24a8f-80f1-4bcb-ad3d-1e6a5108e3b3/_data",
+        "Name": "silo-036502e6-9280-4eaf-b405-d9b8c459e812-1-afe24a8f-80f1-4bcb-ad3d-1e6a5108e3b3",
+        "Options": null,
+        "Scope": "local"
+      },
+      "baselinePredicateAcceptedReplacement": true,
+      "deletedReplacement": true
+    },
+    {
+      "scenario": "design A unique owner-labelled name: replacement after inspect, before paused delete",
+      "receipted": {
+        "CreatedAt": "2026-11-05T01:26:45Z",
+        "Driver": "local",
+        "Labels": {
+          "io.silo.generation": "1",
+          "io.silo.probe": "036502e6-9280-4eaf-b405-d9b8c459e812",
+          "io.silo.project": "5114d477-28b7-4a6a-b6bb-45af2bf5003f",
+          "io.silo.volume": "98d05d8f-26ef-488b-b44f-b5983c3d6a76"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/silo-5114d477-28b7-4a6a-b6bb-45af2bf5003f-1-2c1f7770-13d7-4f78-b2f6-22e406e18484/_data",
+        "Name": "silo-5114d477-28b7-4a6a-b6bb-45af2bf5003f-1-2c1f7770-13d7-4f78-b2f6-22e406e18484",
+        "Options": null,
+        "Scope": "local"
+      },
+      "replacement": {
+        "CreatedAt": "2026-11-05T01:26:45Z",
+        "Driver": "local",
+        "Labels": {
+          "io.silo.probe": "036502e6-9280-4eaf-b405-d9b8c459e812"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/silo-5114d477-28b7-4a6a-b6bb-45af2bf5003f-1-2c1f7770-13d7-4f78-b2f6-22e406e18484/_data",
+        "Name": "silo-5114d477-28b7-4a6a-b6bb-45af2bf5003f-1-2c1f7770-13d7-4f78-b2f6-22e406e18484",
+        "Options": null,
+        "Scope": "local"
+      },
+      "groupIdentity": "ae        303705 /usr/bin/timeout 30 /bin/bash -c printf \"PAUSED\\n\"; IFS= read -r grant; test \"$grant\" = delete && exec /usr/bin/docker volume rm \"$1\" silo-paused-delete silo-5114d477-28b7-4a6a-b6bb-45af2bf5003f-1-2c1f7770-13d7-4f78-b2f6-22e406e18484",
+      "deleteExitCode": 0,
+      "replacementDeleted": true,
+      "labelsCopiedFromOwner": false,
+      "note": "This is a Docker feasibility probe, not a run of an implemented Design A product."
+    }
+  ],
+  "createdHandlesAllAbsent": true
+}

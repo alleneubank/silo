@@ -1,0 +1,97 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { appendFileSync, writeFileSync } from "node:fs";
+
+const lane = "/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign";
+const handoff = "/home/ae/.handoffs/boss-mobile-release/silo-redesign";
+const run = randomUUID();
+const resources = `${lane}/resources`;
+const evidence = `${handoff}/evidence/volume-feasibility.json`;
+type Volume = { Name: string; CreatedAt: string; Labels: Record<string, string> | null };
+const active = new Set<string>();
+const journal = (line: string) => {
+  appendFileSync(resources, `${line}\n`);
+  appendFileSync(`${handoff}/resources`, `${line}\n`);
+};
+const docker = (args: string[]) => {
+  const result = Bun.spawnSync(["/usr/bin/docker", ...args], { stdout: "pipe", stderr: "pipe", timeout: 5000 });
+  assert.equal(result.exitCode, 0, `${args.join(" ")}: ${result.stderr}`);
+  return result.stdout.toString().trim();
+};
+const inspect = (name: string): Volume => JSON.parse(docker(["volume", "inspect", name]))[0];
+const create = (name: string, labels: string[]) => {
+  journal(`volume intent ${name}; run=${run}; teardown: docker volume inspect ${name}, verify io.silo.probe=${run}, then docker volume rm ${name}`);
+  active.add(name);
+  assert.equal(docker(["volume", "create", "--label", `io.silo.probe=${run}`, ...labels.flatMap(label => ["--label", label]), name]), name);
+  assert(docker(["volume", "ls", "--format", "{{.Name}}"]).split("\n").includes(name), "Volume enumeration must find this known-present control before proving absence");
+};
+const remove = (name: string) => {
+  assert.equal(inspect(name).Labels?.["io.silo.probe"], run);
+  docker(["volume", "rm", name]);
+  active.delete(name);
+  journal(`volume removed ${name}; run=${run}`);
+};
+const absent = (name: string) => !docker(["volume", "ls", "--format", "{{.Name}}"]).split("\n").includes(name);
+const findings: unknown[] = [];
+let paused: Bun.Subprocess | undefined;
+try {
+  // Reproduce the existing cleanup predicate without replacing any dependency.
+  let sameSecond = false;
+  for (let attempt = 0; attempt < 3 && !sameSecond; attempt++) {
+    const name = `silo-${run}-1-${randomUUID()}`;
+    create(name, ["com.docker.volume.anonymous="]);
+    const original = inspect(name);
+    remove(name);
+    create(name, ["com.docker.volume.anonymous="]);
+    const replacement = inspect(name);
+    const accepted = replacement.Name === original.Name && replacement.CreatedAt === original.CreatedAt && Object.hasOwn(replacement.Labels ?? {}, "com.docker.volume.anonymous");
+    sameSecond = original.CreatedAt === replacement.CreatedAt;
+    if (accepted) {
+      remove(name);
+      assert(absent(name));
+    } else remove(name);
+    findings.push({ scenario: "baseline same-second replacement", original, replacement, baselinePredicateAcceptedReplacement: accepted, deletedReplacement: accepted && absent(name) });
+  }
+  assert(sameSecond, "Could not reproduce within the same Docker timestamp second");
+
+  const project = randomUUID();
+  const name = `silo-${project}-1-${randomUUID()}`;
+  const ownerLabels = [`io.silo.project=${project}`, "io.silo.generation=1", `io.silo.volume=${randomUUID()}`];
+  create(name, ownerLabels);
+  const receipted = inspect(name);
+  assert.equal(receipted.Labels?.["io.silo.project"], project);
+  // This process cannot issue its deletion until explicitly granted below.
+  paused = Bun.spawn(["/usr/bin/timeout", "30", "/bin/bash", "-c", 'printf "PAUSED\\n"; IFS= read -r grant; test "$grant" = delete && exec /usr/bin/docker volume rm "$1"', "silo-paused-delete", name], { detached: true, stdin: "pipe", stdout: "pipe", stderr: "pipe" });
+  writeFileSync(`${lane}-tmp/pids/paused-delete.pid`, String(paused.pid));
+  journal(`process pid/pgid=${paused.pid}; run=${run}; command timeout 30 bash silo-paused-delete ${name}; teardown by recorded group only after user/pgid/command verification`);
+  const reader = paused.stdout.getReader();
+  const handshake = await reader.read();
+  assert.equal(new TextDecoder().decode(handshake.value), "PAUSED\n");
+  const group = Bun.spawnSync(["/usr/bin/ps", "-o", "user=,pgid=,command=", "-p", String(paused.pid)], { stdout: "pipe", timeout: 2000 });
+  assert.equal(group.exitCode, 0);
+  const groupIdentity = group.stdout.toString().trim();
+  assert.match(groupIdentity, new RegExp(`^ae\\s+${paused.pid}\\s+`));
+  remove(name);
+  // A cooperating tool can recreate the vacated name without copying owner labels.
+  create(name, []);
+  const replacement = inspect(name);
+  assert.equal(replacement.Labels?.["io.silo.project"], undefined);
+  paused.stdin.write("delete\n");
+  paused.stdin.end();
+  const [code, stderr] = await Promise.all([paused.exited, new Response(paused.stderr).text()]);
+  reader.releaseLock();
+  assert.equal(code, 0, stderr);
+  const replacementDeleted = absent(name);
+  assert(replacementDeleted);
+  active.delete(name);
+  journal(`volume removed by delayed name deletion ${name}; process ${paused.pid} exited ${code}`);
+  findings.push({ scenario: "design A unique owner-labelled name: replacement after inspect, before paused delete", receipted, replacement, groupIdentity, deleteExitCode: code, replacementDeleted, labelsCopiedFromOwner: false, note: "This is a Docker feasibility probe, not a run of an implemented Design A product." });
+  writeFileSync(evidence, JSON.stringify({ head: "fff3083dc1974f1856835a5ed8424c7f26ebb19a", host: "onyx", run, timestamp: new Date().toISOString(), docker: JSON.parse(docker(["version", "--format", "{{json .Server}}"])), findings, createdHandlesAllAbsent: [...active].length === 0 }, null, 2) + "\n");
+  console.log(evidence);
+} finally {
+  if (paused && paused.exitCode === null) {
+    paused.stdin.end();
+    await paused.exited;
+  }
+  for (const name of active) remove(name);
+}

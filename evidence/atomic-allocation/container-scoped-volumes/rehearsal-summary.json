@@ -1,0 +1,164 @@
+{
+  "head": "20997dc740bd1df00c351cb4db6b4ba20734e47b",
+  "fullSuite": {
+    "commandCount": 339,
+    "result": {
+      "result": "pass",
+      "suite": "all"
+    },
+    "finalFixtureCleanups": 22,
+    "cleanupExitCodes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "scenarios": [
+      {
+        "scenario": "legacy lock-only refuses all five commands in old and unrelated roots without writes",
+        "pass": true
+      },
+      {
+        "scenario": "legacy lock-only refuses all five commands in old and unrelated roots without writes",
+        "pass": true
+      },
+      {
+        "scenario": "legacy lock-only refuses all five commands in old and unrelated roots without writes",
+        "pass": true
+      },
+      {
+        "scenario": "unsupported old client after cutover"
+      },
+      {
+        "scenario": "unsupported old client after cutover"
+      },
+      {
+        "scenario": "0.9.0 red control: failed Tilt teardown still reports success and removes snapshots"
+      },
+      {
+        "scenario": "paused old operation drained before cutover; reverse lock-only reservation refused until owner down",
+        "pass": true
+      },
+      {
+        "scenario": "squatter preserved; no renumbering or release",
+        "pass": true
+      },
+      {
+        "scenario": "native crash after rename before receipt checkpoint recovers own inode; B untouched",
+        "pass": true
+      },
+      {
+        "scenario": "native owner SIGKILL before durable grant executes no hook and drains actual child group",
+        "pass": true
+      },
+      {
+        "scenario": "owner-crash durable completion observed",
+        "pass": true
+      },
+      {
+        "scenario": "live force refusal, owner crash, completion recovery, B untouched",
+        "pass": true
+      },
+      {
+        "scenario": "native Tilt teardown failure propagates and retains claims/snapshots",
+        "pass": true
+      },
+      {
+        "scenario": "native filesystem keeps these spellings distinct"
+      },
+      {
+        "scenario": "native filesystem keeps these spellings distinct"
+      },
+      {
+        "scenario": "owned container volume handles before deletion"
+      },
+      {
+        "scenario": "real k3d cluster/registry/network/volume and kubeconfig receipts",
+        "pass": true
+      },
+      {
+        "scenario": "k3d enabled-to-disabled refuses role removal until recorded kubeconfig cleanup",
+        "pass": true
+      },
+      {
+        "scenario": "leftovers refused unchanged, retention holds claims, explicit exact deletion, unreachable engine refuses",
+        "pass": true
+      },
+      {
+        "scenario": "image-declared anonymous mount before teardown"
+      },
+      {
+        "scenario": "public clean removes the exact image-declared anonymous volume",
+        "pass": true
+      },
+      {
+        "scenario": "shared anonymous mount is leaked, reported and never deleted by name; clean/force retain claims until the fixture owner resolves it; explicit named and borrowed mounts survive",
+        "pass": true
+      },
+      {
+        "scenario": "replacement anonymous name is reported as a leak without deletion or claim release; owner-resolved absence allows retirement",
+        "pass": true
+      },
+      {
+        "scenario": "same-second replacement is preserved; clean and forced replacement keep claims",
+        "pass": true
+      },
+      {
+        "scenario": "replacement at the unsafe deletion boundary is preserved; no name-delete authority exists",
+        "pass": true
+      },
+      {
+        "scenario": "exact parent removal removes its anonymous volume before a later teardown failure",
+        "pass": true
+      },
+      {
+        "scenario": "inherited provenance refuses without deletion; Docker preserves shared live references and named data, but removes last-user inherited anonymous data",
+        "pass": true
+      },
+      {
+        "scenario": "real failed network delete, durable successful retry, CLI killed before completion import, public recovery retires",
+        "pass": true
+      }
+    ]
+  },
+  "example": {
+    "mountedNames": [
+      "k3d-localnet-redesign-b7c43040-images",
+      "61ab2867418cd19e720b192c87e08eb9b042c6b7f714058885986ae721bb157e",
+      "497e61b717e2dbf252f34f6d5809f0a97328d8bda96c1dbe9a5cdad617cb81a0",
+      "7de4e56960a798dfd4309739697d9dd04c8dd0a5856b6f6caad06e1717651ea0",
+      "89a383835d80fad4a33c2dc88ccc7c009374ae8bcc63c23fb28b5c83d0e0b7e1",
+      "f812e5e9c755561cfdcccce537d353df6826d963dbee93ae667c6683730d068f",
+      "634dcf79e828f04928feedf5ef27ad5c7b36b906d23c58ce6ef6d8d7c7993170"
+    ],
+    "receiptedNames": [
+      "497e61b717e2dbf252f34f6d5809f0a97328d8bda96c1dbe9a5cdad617cb81a0",
+      "7de4e56960a798dfd4309739697d9dd04c8dd0a5856b6f6caad06e1717651ea0",
+      "89a383835d80fad4a33c2dc88ccc7c009374ae8bcc63c23fb28b5c83d0e0b7e1",
+      "61ab2867418cd19e720b192c87e08eb9b042c6b7f714058885986ae721bb157e",
+      "f812e5e9c755561cfdcccce537d353df6826d963dbee93ae667c6683730d068f",
+      "634dcf79e828f04928feedf5ef27ad5c7b36b906d23c58ce6ef6d8d7c7993170",
+      "k3d-localnet-redesign-b7c43040-images"
+    ],
+    "unreceipted": [],
+    "receiptedButNotMounted": []
+  }
+}

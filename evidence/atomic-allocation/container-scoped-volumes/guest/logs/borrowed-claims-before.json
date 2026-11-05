@@ -1,0 +1,67 @@
+{
+  "claims": [
+    {
+      "domain": "compose-name",
+      "resource": "sguest1105-guestborrowed"
+    },
+    {
+      "domain": "container",
+      "prefix": true,
+      "resource": "sguest1105-guestborrowed-"
+    },
+    {
+      "domain": "container",
+      "prefix": true,
+      "resource": "sguest1105-guestborrowed_"
+    },
+    {
+      "domain": "file-target",
+      "resource": "64513/61237520/.localnet.env"
+    },
+    {
+      "domain": "file-target",
+      "resource": "64513/61237520/.silo.lock"
+    },
+    {
+      "domain": "file-target",
+      "resource": "64513/61237520/silo.toml"
+    },
+    {
+      "domain": "host-port",
+      "resource": "49153"
+    },
+    {
+      "domain": "hostname",
+      "resource": "guestborrowed.localhost"
+    },
+    {
+      "domain": "instance-name",
+      "resource": "guestborrowed"
+    },
+    {
+      "domain": "network",
+      "resource": "sguest1105-guestborrowed"
+    },
+    {
+      "domain": "network",
+      "prefix": true,
+      "resource": "sguest1105-guestborrowed-"
+    },
+    {
+      "domain": "network",
+      "prefix": true,
+      "resource": "sguest1105-guestborrowed_"
+    },
+    {
+      "domain": "volume",
+      "prefix": true,
+      "resource": "sguest1105-guestborrowed-"
+    },
+    {
+      "domain": "volume",
+      "prefix": true,
+      "resource": "sguest1105-guestborrowed_"
+    }
+  ],
+  "generation": 1
+}

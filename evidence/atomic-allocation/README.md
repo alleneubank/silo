@@ -1,6 +1,15 @@
 # Atomic allocation evidence
 
-Current cleanup correction: `a21f710896528aeaed5a6c142abc13a80895f1ba`, CLI SHA-256
+Current proposed cleanup source: `20997dc740bd1df00c351cb4db6b4ba20734e47b`,
+CLI SHA-256 `90a44fcc8641b959544e2cb9e9525d469b8749ea8abc680ababe87b7329e7e0f`.
+The [container-scoped cleanup record](container-scoped-volumes/README.md)
+documents the human-approved removal of anonymous data with exact parent
+containers, audit-only mount receipts, leak/named-cache refusal, native
+replacement/crash regressions and current qualification. Fourth specialist
+review and corrected native Mac qualification remain required. The records
+below qualify their named historical inputs, not this complete artifact.
+
+Earlier cleanup correction: `a21f710896528aeaed5a6c142abc13a80895f1ba`, CLI SHA-256
 `40fd990ead9815f2f679b43e16eb65fc111fe0a798e08988e9a85667206e43a6`.
 The [anonymous-volume record](anonymous-volumes/README.md) supersedes the
 former Compose cleanup limitation: copied-example Linux baseline leaks Redis's

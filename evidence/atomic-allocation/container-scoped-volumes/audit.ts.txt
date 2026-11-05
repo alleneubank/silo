@@ -1,0 +1,101 @@
+import assert from "node:assert/strict";
+import { Database } from "bun:sqlite";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { BackendReceiptSchema, LaunchSchema } from "/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign/src/core/lease_types";
+
+const lane = "/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign";
+const scratch = `${lane}-tmp/addendum1`;
+const handles = new Map<string, { kind: "container" | "network" | "volume"; id: string }>();
+const pids = new Set<number>();
+const add = (kind: "container" | "network" | "volume", id: string) => { assert(id.length > 0); handles.set(`${kind}/${id}`, { kind, id }); };
+const receipt = (data: unknown) => {
+  const r = BackendReceiptSchema.parse(data);
+  add(r.kind, r.kind === "volume" ? r.name : r.id);
+  if (r.kind === "container") for (const child of r.anonymousVolumes) add("volume", child.name);
+};
+const stores = [];
+for (const [name, file, archival] of [
+  ["author", `${scratch}/account/.silo/leases.sqlite`, false],
+  ["guest", `${scratch}/guest/account/.silo/leases.sqlite`, false],
+  ["failed no-image-volume experiment", `${scratch}/failed-account/.silo/leases.sqlite`, true],
+] as const) {
+  const db = new Database(file, { readonly: true });
+  try {
+    const count = (sql: string) => db.query<{ count: number }, []>(sql).get()!.count;
+    const summary = { name, archival, projects: count("SELECT count(*) AS count FROM projects"), activeGenerations: count("SELECT count(*) AS count FROM projects WHERE generation > 0"), claims: count("SELECT count(*) AS count FROM claims"), activeResources: count("SELECT count(*) AS count FROM resources WHERE deleted = 0"), operations: count("SELECT count(*) AS count FROM projects WHERE operation_token IS NOT NULL") };
+    assert.equal(summary.operations, 0);
+    if (!archival) { assert.equal(summary.activeGenerations, 0); assert.equal(summary.claims, 0); assert.equal(summary.activeResources, 0); }
+    else assert.equal(summary.activeGenerations, 1, "Keep the failed creating request's uncertainty visible, not silently retired");
+    stores.push(summary);
+    for (const row of db.query<{ receipt: string }, []>("SELECT receipt FROM resources").all()) receipt(JSON.parse(row.receipt));
+    for (const row of db.query<{ receipt: string }, []>("SELECT receipt FROM launches").all()) {
+      const launch = LaunchSchema.parse(JSON.parse(row.receipt));
+      for (const pid of [launch.supervisorPid, launch.leaderPid, launch.groupId]) if (pid !== null) pids.add(pid);
+    }
+  } finally { db.close(); }
+}
+for (const directory of readdirSync(`${scratch}/fixtures`)) {
+  const root = `${scratch}/fixtures/${directory}`;
+  for (const line of readFileSync(`${root}/events.jsonl`, "utf8").trim().split("\n")) {
+    const event = JSON.parse(line);
+    if (event.code !== 0 || !Array.isArray(event.argv) || event.argv[0] !== "docker" || event.argv[2] !== "create") continue;
+    const kind = event.argv[1]; assert(["container", "network", "volume"].includes(kind));
+    const value = readFileSync(`${root}/${event.command}.stdout`, "utf8").trim();
+    assert(!/\s/.test(value)); add(kind, value);
+  }
+}
+const before = JSON.parse(readFileSync(`${scratch}/evidence/example-status-before.json`, "utf8"));
+for (const r of before.resources) receipt(r);
+for (const row of JSON.parse(readFileSync(`${scratch}/evidence/no-image-volume-partial-resources.json`, "utf8"))) {
+  if (row.id) { add("container", row.id); for (const m of row.mounts) if (m.Type === "volume") add("volume", m.Name); }
+  else add("network", row.Id);
+}
+for (const line of readFileSync(`${scratch}/guest/logs/final-container-absence.log`, "utf8").split("\n")) {
+  const match = /no such object: ([a-f0-9]{64})/.exec(line); if (match) add("container", match[1]!);
+}
+for (const line of readFileSync(`${scratch}/guest/logs/final-volume-absence.log`, "utf8").split("\n")) {
+  const match = /get (\S+): no such volume/i.exec(line); if (match) add("volume", match[1]!);
+}
+for (const file of ["volume-feasibility-first.json", "volume-feasibility.json"]) {
+  const probe = JSON.parse(readFileSync(`/home/ae/.handoffs/boss-mobile-release/silo-redesign/evidence/${file}`, "utf8"));
+  for (const finding of probe.findings) add("volume", (finding.original ?? finding.receipted).Name);
+}
+const resourceText = readFileSync(`${lane}/resources`, "utf8");
+for (const match of resourceText.matchAll(/(?:process pid\/pgid=|process |silo up pid\/pgid |retry CLI pid\/pgid |port-forward pid\/pgid=)(\d+)/g)) pids.add(Number(match[1]));
+for (const f of readdirSync(scratch).filter(f => f.endsWith(".pid"))) pids.add(Number(readFileSync(path.join(scratch, f), "utf8")));
+const docker = (args: string[]) => {
+  const r = Bun.spawnSync(["/usr/bin/docker", ...args], { stdout: "pipe", stderr: "pipe", timeout: 10_000 });
+  assert.equal(r.exitCode, 0, r.stderr.toString()); return r.stdout.toString().trim();
+};
+assert.equal(docker(["info", "--format", "{{.ID}}"]), "114f4194-e27d-4d0b-82fc-201ecd0e9997");
+const present = new Set<string>();
+let bridgeControl = false;
+for (const kind of ["container", "network", "volume"] as const) {
+  const output = docker([kind, "ls", ...(kind === "container" ? ["-a"] : []), ...(kind === "volume" ? [] : ["--no-trunc"]), "--format", "{{json .}}"]);
+  for (const line of output.split("\n").filter(Boolean)) {
+    const row = JSON.parse(line); const value = kind === "volume" ? row.Name : row.ID;
+    assert.equal(typeof value, "string"); present.add(`${kind}/${value}`);
+    if (kind === "network" && row.Name === "bridge") {
+      assert.equal(docker(["network", "inspect", row.ID, "--format", "{{.Name}}"]), "bridge");
+      bridgeControl = true;
+    }
+  }
+}
+assert(bridgeControl);
+const residual = [...handles.values()].filter(h => present.has(`${h.kind}/${h.id}`));
+assert.deepEqual(residual, []);
+const numericPresent: { pid: number; process: boolean; group: boolean }[] = [];
+for (const pid of pids) {
+  assert(Number.isSafeInteger(pid) && pid > 1);
+  const exists = (value: number) => {
+    try { process.kill(value, 0); return true; }
+    catch (error) { assert.equal((error as NodeJS.ErrnoException).code, "ESRCH"); return false; }
+  };
+  const running = exists(pid), group = exists(-pid);
+  if (running || group) numericPresent.push({ pid, process: running, group });
+}
+assert.deepEqual(numericPresent, [], "Do not signal a numeric handle that may have been reused; attribute it before any cleanup");
+const summary = { timestamp: new Date().toISOString(), head: "20997dc740bd1df00c351cb4db6b4ba20734e47b", stores, recordedDockerHandles: [...handles.values()], allRecordedDockerHandlesAbsent: true, recordedPidsAndGroups: [...pids].sort((a,b) => a-b), allRecordedNumericHandlesAbsent: true, remaining: residual, preserved: "Shared Docker images/build caches and every unrecorded object. The failed experiment's archival store retains its uncertainty until the disposable task account is removed after evidence retention." };
+writeFileSync(`${scratch}/evidence/audit.json`, JSON.stringify(summary, null, 2) + "\n");
+console.log(JSON.stringify({ stores, dockerHandles: handles.size, numericPidGroupHandles: pids.size, absent: true }));

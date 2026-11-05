@@ -1,102 +1,95 @@
 done
 
-Addendum 5's local outcome is verified at executable source
-`a21f710896528aeaed5a6c142abc13a80895f1ba`; CLI SHA-256
-`40fd990ead9815f2f679b43e16eb65fc111fe0a798e08988e9a85667206e43a6`.
-PR [#58](https://github.com/alleneubank/silo/pull/58) remains draft.
-The coordinator still owns the offline proposal push, specialist round 3 of 3
-and new native Mac qualification. At closeout, the final proposal head and exact push/body/response operations
-will be written to `~/.handoffs/boss-mobile-release/silo-impl/pr-ops.md`.
-No matching specialist approval or merge readiness is claimed.
+Lane deliverables are locally verified; this lane performed no merge or
+publication. The coordinator owns publication/review/release gates. Runtime source:
+20997dc740bd1df00c351cb4db6b4ba20734e47b on feat/atomic-allocation. CLI SHA-256:
+90a44fcc8641b959544e2cb9e9525d469b8749ea8abc680ababe87b7329e7e0f.
+After the record commit, the final proposal SHA and exact push/body/response
+operations will be sealed in ~/.handoffs/boss-mobile-release/silo-redesign/pr-ops.md.
 
-The copied full example at 5d2c870 reproduces a product leak on Linux:
-public `down --delete-cluster --clean` returns success and retires claims,
-but Redis's image-declared anonymous `/data` volume remains. All four parents'
-Mounts and image declarations were saved before deletion. Six k3d mounted
-volumes disappear; Redis's seventh survives. The prior Linux six-volume audit
-**did include image-declared anonymous volumes**: one named k3d image volume,
-four k3s node children and one registry child. It did not include Redis.
-No Docker/OrbStack-specific cause or ownership of the two historical Mac
-volumes is inferred; those objects remain untouched.
+The human's addendum-1 answer was implemented: built-in cleanup never deletes
+volumes by name. Exact receipted Compose parents are removed with anonymous
+volumes before Tilt teardown; explicit k3d deletion uses the same parent path
+and exact network IDs. Audit mount receipts survive. Leaked/replaced names and
+retained named volumes block clean/force with claims intact until their owner
+resolves them independently. Inherited provenance refuses before removal.
 
-The correction stores exact anonymous mount names, creation identities and
-destinations inside immutable container receipts. Parent receipts survive
-physical deletion. Clean deletes only recorded children; explicit cluster
-deletion uses the same path rather than implicit Docker `--volumes` deletion.
-Both retirement and forced replacement prove children absent. Explicit volume
-sources and binds confer no child authority; inherited ambiguity refuses.
-Used or replaced children keep claims. Failed child deletes retry before old
-failed-request adjudication. No schema DDL/version migration, timeout change,
-assertion relaxation or waiver was added.
+k3d 5.9.0 requires its named image cache for tools-node creation. It remains for
+its owner to resolve; no name-delete exception was added. The native harness
+separately removes only its own exact synthetic cache after recorded identity
+verification. A cache-disable attempt failed and was discarded; its physical
+partial objects were removed by exact container/network IDs. Its archived
+synthetic store retains one failed-create generation, 24 claims and one
+historical active network row. That network is absent; uncertainty was not
+silently reconciled. This archive is separate from the successful stores.
 
-Evidence: [anonymous-volume record](evidence/atomic-allocation/anonymous-volumes/README.md).
+Common recovery now folds durable successful exact deletion retries over only
+earlier matching completed failures. An older success cannot clear a later
+failure. No schema migration, new waiver or weakened unit assertion.
 
-- Native regression fails first on the leaked volume at 5d2c870; final focused
-  suite passes exact clean/repeat, retention/reallocation refusal, in-use
-  refusal/retry after parent deletion, supplied-data preservation and replaced
-  child identity refusal/recovery.
-- At a21f710, all required gates pass: 130 Bun tests / 335 assertions,
-  typecheck, lint, knip, jscpd (zero clones), build and normal commit hooks.
-- Author drove the complete native Linux public-CLI all-suite at a21f710:
-  the suite passes across 234 recorded commands, including expected refusals;
-  all 17 final fixture cleanups exit zero. Real Janitor, Tilt,
-  Docker and k3d; disposable native-account filesystem view, never the real
-  account's store. Existing crash, peer, cutover, squatter, role-removal,
-  file-alias and exact-k3d scenarios remain covered at the changed runtime.
-- Author drove the copied full example at the same source/artifact: web/API
-  deployments available; both health responses status ok; retained-k3d clean
-  refuses with unchanged claims; explicit deletion removes all seven recorded
-  mounted volumes, including Redis; final generation 0/claims empty.
-- Fresh [guest](evidence/atomic-allocation/anonymous-volumes/guest/verdict-guest.md)
-  is green at a21f710 / 40fd990e: real Compose/Redis, plain down retention,
-  exact clean/repeat, peer preservation, two in-use failures with unchanged
-  receipts/snapshot hashes/15 claims, successful retry, and reopened explicit
-  Redis data readback. It did not inspect the implementation.
-- [Closing audit](evidence/atomic-allocation/anonymous-volumes/audit.json):
-  26 fixture projects across two disposable stores, every generation 0 and no
-  operation; zero claims/active resource rows; 621 recorded PID/same-number
-  group handles absent; 122 recorded object handles absent, including 59
-  volume names. Candidate handles never created by the guest are only absence
-  checks, not claimed creations. Shared caches and historical unattributed
-  volumes are preserved.
+Verification
 
-The [fresh claim check](evidence/atomic-allocation/anonymous-volumes/verdict-claims.md)
-supports these bounded observations with wording corrections applied; it is
-separate from the pending specialist.
+- Baseline fff3083 / artifact 40fd990e fails the same-second replacement,
+  paused-delete replacement, parent-removal-before-teardown-failure, and real
+  successful-retry/caller-crash cases. Corrected native cases pass. The narrow
+  completion-import unit regression also failed first and now passes.
+- 132 Bun tests / 343 assertions; typecheck, lint, knip, jscpd (zero clones),
+  build and normal commit hooks pass. Actual local-bare source push executes
+  all pre-push hooks and receives exact source ref 20997dc. Native Bun/Janitor
+  precede mise shims. Final proposal-ref push/closeout receipts, if any, are
+  retained in the coordinator handoff.
+- Author's built public CLI all-suite on onyx passes across 339 recorded
+  commands; all 22 final fixture cleanups exit 0. Includes legacy/cutover,
+  crash/peer/file cases, k3d lifecycle, sharing/inheritance/replacement and
+  durable retry/crash recovery. Pinned k3d binary checksum verified; no system
+  installation or config change.
+- Copied full example passes CI and web/API health. All seven mounted volumes
+  have receipts: six anonymous mounts disappear with parents; named cache
+  remains and clean refuses without releasing claims. Exact fixture-owner
+  cache resolution then permits public retirement.
+- Independent guest is green at source 20997dc / artifact 90a44fcc: real Redis,
+  peer status preservation, repeated clean, named/borrowed data readback,
+  shared/orphan/replacement preservation and owner-resolution recovery.
+- Closing scoped audit: current author 20 and guest 5 project records are
+  generation 0, with no claims/active resources/operations. All 153 recorded
+  Docker handles and 1,086 recorded numeric PID/group handles are absent,
+  including archived runs. Shared images/build caches, unrecorded objects and
+  historical unattributed Mac volumes were preserved.
 
-The first implementation's in-use retry ordering failed and was corrected;
-original failure, recovery and fresh pass remain in the record. An initial
-unused schema export failed knip and was made private before full gates.
-The guest's initial fixture omitted APP_HOST and corrected it from bundled
-docs. None of these failures is labelled pre-existing or flaky.
+Evidence: evidence/atomic-allocation/container-scoped-volumes/README.md,
+including red/green logs, raw command outputs, example mounts/status/health,
+guest/verdict-guest.md and audit.json. Source/code commit hooks and local-bare
+push logs are retained there. pr-body.md, review-response-r3.md,
+specialist-request.md and macos-rehearsal.md are ready for the coordinator.
 
-The broader plan basis is the reviewed r3/r5 design and human stop/recreate /
-procedure-A decisions; addendum 5 directs this exact receipt-and-clean fix.
-Threat model remains trusted local users/agents and cooperating tools on a
-shared development host, accidental collision/deletion/crash, not hostile
-local writers. Round-2 approval at fd710d9 is historical and does not qualify
-this product change. The supplied native Mac 5d2c870 report passed its driven
-scenarios but could not attribute two anonymous volumes; this Linux lane
-neither deletes them nor claims Mac qualification of a21f710.
+Decisions and next steps
 
-Not checked: matching specialist round 3, native Mac at this runtime,
-case-sensitive APFS, final Intel/Apple Silicon/1.0.0 artifacts, new hosted CI,
-actual host cutover, lost executor facts, arbitrary tool-managed transient
-containers removed/recreated before creation-result capture, inherited
-volumes-from, same-name/same-second replacement or alternate engines/drivers.
-No waiver added. No Git network operation, credential change, merge, tag,
-release, npm publication or real-project cutover ran here.
+- Ratified: the 2026-11-05 02:21Z human container-scoped removal decision;
+  fourth specialist round approved; no migration, owner stop/recreate and
+  procedure-A cutover remain in force.
+- Provisional interior policy: surviving audit names or named cache refuse
+  retirement/reconfiguration with retained claims. SPEC.md records rationale.
+- Coordinator: push only the proposal ref and apply the prepared PR body and
+  round-3 response. Keep draft, request specialist round 4 over the full
+  fd710d9d..proposal delta, then rerun corrected native Mac qualification.
+- Intended semver remains 1.0.0 via the existing major changeset; no package or
+  plugin version bump, merge, tag, release or npm publication occurred here.
 
-Intended semver remains **1.0.0**, with package/plugin still 0.9.0 and the
-existing major changeset. Coordinator pushes only the proposal branch and
-applies the prepared PR body/addendum-only response, retaining draft status.
-After matching review/native qualification, merge still needs explicit owner
-authority. Review Changesets' Release PR and version synchronization, qualify
-its final artifacts, and obtain separate release approval: merging that Release
-PR on main publishes npm through OIDC. Owner-led procedure A and stop/recreate
-precede the first new host allocation; S1 adoption remains held.
+Noticed: the guest found ALREADY_RUNNING mildly confusing for force on stopped
+retained state, though its message and observed refusal were consistent. The
+initial same-second fixture missed its timestamp precondition and was corrected
+without weakening safety assertions; both failure and corrected evidence remain.
+No stated onyx inotify/firewall limit blocked the driven final scenarios; no
+specific row from these observations needs ae-dev as an environment workaround.
 
-Task-created dist and addendum5 scratch are cleanup targets after evidence
-retention; pre-existing dependencies, hooks and parent scratch are preserved.
-At closeout, final teardown and final-head actual local-bare hook push receipts
-will be added to the handoff beside the final exact coordinator operations.
+Not checked: matching specialist round 4, corrected native Mac/APFS modes and
+account/process/fsync behavior, final Intel/Apple Silicon 1.0.0 artifacts, new
+hosted CI, actual host cutover, lost executor facts, arbitrary transient tool
+containers before capture, alternate/remote engines/drivers or every daemon
+instruction-level interruption. No new waiver; no matching approval or release
+readiness is claimed. Live GitHub state was not queried on this host.
+
+After this record commit, final proposal-ref verification and task scratch/
+build/dependency teardown will be recorded in the coordinator handoff. Private account/env/lock/
+kubeconfig files are excluded from committed evidence. No network push,
+GitHub write, production-cluster operation or credential mutation ran here.

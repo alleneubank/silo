@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+BASE=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/addendum1/guest
+head -n 1 "$BASE/logs/$1.log" | jq -c '.project | {projectId,resources,launches}' | while IFS= read -r line; do "$BASE/ledger" "$line"; done

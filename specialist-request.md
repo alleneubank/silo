@@ -1,137 +1,89 @@
-# Cross-provider specialist request — round 3 of 3
+# Specialist request — human-approved round 4
 
-Coordinator-owned launch, per addendum 5. Review cleanup source `a21f710896528aeaed5a6c142abc13a80895f1ba`,
-CLI SHA-256 `40fd990ead9815f2f679b43e16eb65fc111fe0a798e08988e9a85667206e43a6`, with the standard charter and threat model below.
-The earlier round-2 approval does not cover this product change. Keep PR #58
-draft. No review is launched or approval claimed by this lane.
+The coordinator launches one read-only, profile-free specialist on a provider
+other than this author's OpenAI provider. The human explicitly approved the
+fourth round and, on 2026-11-05 at 02:21Z, selected container-scoped anonymous
+volume removal in silo-redesign addendum 1. Keep the proposal draft; this lane
+has not launched the specialist or claimed approval.
 
-Goal: every owned container's creation-result receipt journals its anonymous
-mount identities before Silo tears that container down; receipts survive
-parent deletion. Clean removes only exact recorded anonymous children and
-cannot release or replace a generation while a recorded child remains.
-Named, explicitly supplied, bind and inherited mounts confer no child authority.
-Explicit cluster deletion uses the same exact child receipts, without implicit
-Docker --volumes deletion or pruning. Inspect all retirement/reallocation,
-failed-delete/retry and parent-forgetting paths against that obligation.
+Use the standard specialist charter at
+`/home/ae/.codex/plugins/cache/agent-profile/agent-workflows/16.1.0/skills/done/references/specialist.md`
+(on onyx), or the identical standard charter in the coordinator's installed
+skill. Supply that charter and the inputs below, without the author's house
+profile/AGENTS/CLAUDE or author sessions. Grant every cited directory when the
+review launcher restricts reads to its working directory.
 
-Author risk scenarios: real copied example before/after; public regression red
-on 5d2c870 and green here; plain-down retention; forced-reallocation refusal;
-in-use deletion refusal and successful exact retry after original parent is
-gone; named and explicitly borrowed anonymous sentinel preservation;
-replacement identity refusal and absent-child recovery; full native k3d
-create/retain/delete and the existing all-suite crash/peer/cutover checks.
-Evidence: [anonymous-volumes/README.md](evidence/atomic-allocation/anonymous-volumes/README.md).
+## Goal, category and threat model
 
-Neighbors not qualified: tools deleting/recreating transient containers before
-Silo can capture creation results, inherited volumes-from, lost executor facts,
-same-name/same-second volume identity replacement, hostile local actors,
-alternate engines/drivers, native macOS at this runtime and final versioned
-artifacts. These are limits, not passing scenarios. Review scope remains trusted
-local users/agents and cooperating config/tools on a shared development host.
-The prior Mac 5d2c870 pass does not qualify these changed bytes or establish
-ownership of its two historical anonymous volumes; preserve them.
+High risk: shared-host allocation/resource ownership and the breaking public
+cleanup contract. Silo must not delete peer/replacement data. Its built-in
+cleanup removes anonymous volumes only with exact receipted parent container
+IDs (`docker container rm --force --volumes`), never by volume name. Receipts
+retain anonymous mount names for audit/leak reporting only. Surviving names or
+named volumes prevent retirement/forced replacement, preserving claims until
+the data's owner resolves them. Ambiguous inherited provenance refuses.
 
-## Historical request and standard charter
+A durable successful exact deletion retry must resolve earlier matching failed
+intents on recovery, including a caller crash before completion import. An
+older success must not resolve a later failed request. Unknown/lost completion
+facts remain uncertainty; empty listings alone cannot cancel requests.
 
-Status: round 2 returned **approve with conditions** at `fd710d9`;
-[its verdict](evidence/atomic-allocation/crash-completion/verdict-specialist-r2.md)
-is retained verbatim. It has no blocking or should-fix findings. Correction
-`cf0b2b2` changes only the rehearsal's completion observation and the Mac
-runbook; runtime source and artifact are unchanged. This does not initiate
-product specialist round 3. The coordinator owns any further review request;
-native Mac, final versioned artifacts, cutover and release conditions remain.
+Threat model: trusted local users/agents, config, hooks, installed tools and OS
+on a shared development host; accidental collisions, same-name replacements,
+deletions, crashes and non-silo squatters. Malicious local writers and other
+hosts/accounts are outside it. No private runtime/proxy or arbitrary shell
+containment. Do not silently exclude the demonstrated replacement races.
 
-The original round-2 request below is historical context, not a second launch:
+## Exact inputs
 
-Round 1 returned **changes required** at `5344574`;
-[its verdict](evidence/atomic-allocation/specialist-r1/verdict-specialist-r1.md)
-is retained verbatim. Request a fresh review at executable source
-`80f4974d0f9e2db056ceb7ba771fe12597d5afad` (later commits change tests/records
-only), artifact `9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894`.
-The final source also preserves bounded supervisor diagnostics on pre-grant
-startup failures; inspect its error propagation and retained-claim behavior.
-No corrected-head specialist approval has been claimed.
-Keep the PR draft. Run one reviewer on a provider different from the author
-(Codex/OpenAI), read-only and without the author's profile/AGENTS instructions.
-Supply the standard charter below, this goal/threat model, the baseline,
-selected PR head, diff, source and named neighbors. Do not supply author
-sessions or reasoning. Use the PR Evidence revision and artifact digest; a
-message-only/evidence-only commit does not invalidate unchanged behavior.
+- Repository/branch: onyx lane root, `feat/atomic-allocation`.
+- Exact final proposal SHA: coordinator handoff `pr-ops.md`; verify the SHA
+  before review. The runtime source is
+  `20997dc740bd1df00c351cb4db6b4ba20734e47b`, CLI SHA-256
+  `90a44fcc8641b959544e2cb9e9525d469b8749ea8abc680ababe87b7329e7e0f`.
+  Later record-only commits reuse those runtime inputs.
+- Review **the full delta fd710d9d..the exact final proposal SHA**, including
+  the prior anonymous-receipt change, its callers and the crash-completion
+  rehearsal correction, not merely this lane's last commit.
+- Production baseline: `9882041` (0.9.0). Previous reviewed candidate:
+  `fff3083dc1974f1856835a5ed8424c7f26ebb19a`.
+- Production previously used peer JSON reservations and name-oriented backend
+  cleanup. The previous candidate inspected anonymous name/time/label then
+  deleted by name; its round-3 verdict required changes. See
+  `evidence/atomic-allocation/container-scoped-volumes/verdict-specialist-r3.md`.
+- Contract and callers: SPEC.md, packaged Silo skill, docs/troubleshooting.md,
+  src/backends/{ownership,k3d,tilt}.ts, src/commands/down.ts,
+  src/core/{lease_store,owned_command,executor,allocation,lease_types}.ts,
+  creation/capture/retirement/reallocation callers, and native rehearsal scripts.
+- Evidence: `evidence/atomic-allocation/container-scoped-volumes/README.md`,
+  raw fixtures/logs, guest verdict and audit; `macos-rehearsal.md`.
 
-## Goal and risk category
+## Round-3 finding-to-check map
 
-Atomic local-account allocation and generation-bound lifecycle cleanup for
-Silo. High risk: shared-host resource ownership, SQLite schema/durability,
-public breaking CLI/file contract, and CI/runtime prerequisites. This is a
-stop/recreate cutover, with no import, migrate or recreate helper.
+| Finding | Distinguishing check |
+| --- | --- |
+| Same-second reused anonymous name | Native `--suite same-second`: equal Docker CreatedAt seconds, replacement/claims preserved. Red baseline and corrected observations retained. |
+| Replacement after inspection, before delete | Native `--suite paused-delete`: baseline reaches a transparent scheduling barrier and deletes replacement; candidate has no name-delete operation, reports the surviving name and retains claims/replacement. |
+| Anonymous cleanup at parent removal | Native `--suite parent-volumes`: exact parent and anonymous data absent before intentionally failed later Tilt teardown. |
+| Durable successful retry followed by caller crash | Native `--suite retry-crash`: real failed network deletion, real durable successful retry fact while CLI is stopped, killed CLI, then public recovery/retirement. Narrow lease-store tests also cover import and temporal ordering. |
+| Missing raw evidence | Current 132-test/static/build/commit/hook-push logs; 339-command full all-suite; complete example mount/health/retention/owner-resolution records; guest and audit. |
 
-Threat model: trusted local users/agents on a shared development host;
-accidental collisions, deletions, crashes and non-silo squatters. No malicious
-local attacker or confidentiality boundary. Config, hooks, installed tools
-and OS are trusted and must consume generated names/ports. No private runtime,
-network daemon/proxy or arbitrary shell containment is promised.
+## Neighbors and qualification limits
 
-Production baseline: `9882041aa7d1f798d6cdb44c5cab1cec8d0acd9a` (0.9.0).
-Peer JSON reads and publication are separate; env can overwrite an escaping
-output; same-name resources may be reused; live force disowns a stack; failed
-Tilt down can still clean snapshots/reservations. The candidate's public
-contract is [SPEC.md](SPEC.md) and its bundled docs. Review `git diff <base>...<head>`
-and all changed callers, including the example and workflows.
+Review explicit named/borrowed sources, source-less mounts, inherited mounts,
+parent tombstones, partial creation, named-cache retention, ordinary down,
+clean, explicit cluster deletion, force, retry ordering and all remaining
+built-in Docker mutation callers. The k3d named image cache is deliberately
+retained; fixture-owner cache cleanup is not an automatic product guarantee.
 
-## Neighbors the author's checks do not qualify
+The author drove current native Linux scenarios; the guest independently used
+real Compose/Redis. Neither qualifies native Mac/APFS account/process/fsync or
+case modes, Intel/Apple Silicon final artifacts, actual cutover, new hosted CI,
+lost executor facts, arbitrary transient tool-managed containers before
+capture, alternate/remote engines/drivers, or every daemon instruction-level
+interruption. Do not turn a listed limit into a passing scenario. Historical
+unattributed Mac volumes remain untouched.
 
-- macOS native account lookup, Darwin PID/group behavior, APFS case and Unicode
-  aliases, directory fsync, Intel/Apple Silicon distributed artifacts. The Mac
-  run is pending; [macos-rehearsal.md](macos-rehearsal.md) gives the commands.
-- The coordinator's original macOS real-push failure. Linux reproduces the
-  same three failures with an unconfigured mise Janitor shim, and passes an
-  actual local-bare push with native Janitor. That does not establish the Mac
-  cause. Native-binary fixture preflight and actual Mac push remain necessary.
-- Live third-party Docker requests that complete after a lost executor fact;
-  required behavior is retained cleanup uncertainty, not guessed cancellation.
-- Real stopped foreign k3d topologies with persistent data. The leftover server
-  and registry refusal cases use native stopped synthetic Docker containers;
-  full owned k3d creation/retention/deletion was driven separately.
-- Real schema upgrades are deliberately unsupported; unknown/corrupt state must
-  refuse rather than initialize. Test error paths against their input states.
-- Alternate local engines and endpoint drift; remote engines must refuse.
-- Tilt's independently selected internal API listener, IPv6 Docker publication
-  races, and dependencies that bind after a successful probe. No kernel socket
-  reservation or single-listener guarantee is claimed.
-- Arbitrary hard-coded tool names/ports and unlabelled external/shared objects
-  lie outside the managed contract. Check that failed scope attribution cannot
-  confer deletion authority. Inspect Compose project_name and ownership labels.
-- Namespace absence uses complete structured enumeration and the engine's
-  known-present bridge control. Judge whether this satisfies the required
-  absence proof at the last owned-object deletion; do not infer absence from
-  an error or an unvalidated filter.
-- Actual ae-dev host cutover and real installed-client upgrades/retirements
-  were not performed. Old clients after cutover are unsupported limits; the
-  fixture demonstrates duplicate lock-only numbers with unchanged new claims.
-- The fresh example first encountered a k3s bootstrap/API failure and failed
-  original Tilt teardown; the failure and exact fixture teardown records are
-  retained. A fresh generation with the original inputs passed. No general
-  bootstrap-reliability or pre-existing-failure conclusion is established.
-- An anonymous Redis /data child remained after Compose/Tilt teardown and was
-  individually removed using its recorded mount/parent attribution. Automatic
-  k3d node/registry child removal was exercised separately; arbitrary Compose
-  anonymous children are not an established automatic-cleanup guarantee.
-
-## Standard specialist charter
-
-Review one change in the named risk category. Judge whether it reaches the
-goal in production without breaking what that category protects: data, access,
-callers or the running service. Read touched code and callers; compare each
-changed interaction with production's behavior.
-
-Every finding must name a file/line and concrete failing input/state, wrong
-outcome and violated requirement or threat boundary. Separate observed
-failures, demonstrated paths and hypotheses; name unverified assumptions and
-the distinguishing check the author should run. Inability to run a check
-proves neither result. Separate the defect from its proposed remedy. Explain
-which failure a refactor removes. Flag scope/threat-model challenges explicitly.
-
-Rank findings **blocking**, **should fix**, or **note**. State what was not
-examined. Return `verdict-specialist.md` opening `approve` or `changes required`,
-with findings in that order and the exact head reviewed. No merge, publish,
-credential change, peer-resource cleanup or production operation is authorized.
+Return `verdict-specialist-r4.md` opening `approve` or `changes required`, with
+exact head and findings ranked per the standard charter. No merge, ready
+transition, publication, credentials or peer-resource mutation is authorized.

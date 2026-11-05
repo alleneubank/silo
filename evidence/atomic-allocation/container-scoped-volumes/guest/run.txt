@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+ROOT=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign
+BASE=${ROOT}-tmp/addendum1
+exec /home/linuxbrew/.linuxbrew/bin/bwrap --ro-bind / / --dev-bind /dev /dev --proc /proc --bind "$BASE/guest/account" /home/ae --ro-bind /home/ae/.local/share/mise /home/ae/.local/share/mise --bind "$BASE" /tmp --bind "$ROOT" /mnt --chdir "${GUEST_DIR:-/mnt}" /usr/bin/env -i HOME=/home/ae USER=ae LOGNAME=ae TMPDIR=/tmp/guest/tmp DOCKER_HOST=unix:///var/run/docker.sock KUBECONFIG=/tmp/no-global-kubeconfig CI=false GITHUB_ENV= SILO_PROFILE= PATH=/home/ae/.local/share/mise/installs/bun/1.4.4/bin:/home/ae/.local/share/mise/installs/github-alleneubank-janitor/0.3.1:/home/ae/.local/share/mise/installs/github-alleneubank-tilt/0.37.8-fork.20261009.g753c01455:/usr/local/bin:/usr/bin:/bin "$@"

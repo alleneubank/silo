@@ -1,0 +1,17 @@
+{
+  "containers": [
+    "43b582eeb5fdfcca3ef6572a8c82f2e5f1881d76b787f70c9c1549916e8ceccf",
+    "6286009950cdcb9ad6163afb69284cc40f517a5e8bb8fbe7ae3d49501fa05f90",
+    "c5a992e9d4358dda91baa66d4c10ba416090efe169ee4a9d008ef10adc6887d0"
+  ],
+  "network": "720fc4b7614c66d141bbb72fae6f0987b650177b12e0eb27c986f807608c9902",
+  "volumes": [
+    "01caac2672186bc0cd75b4b604ca19fa5b00d53952d17727b0589fa9005c122b",
+    "954af89d24535d7d6752bbc8c777a7b4fbd016ce22e7bcf5c5ba8aa848d3e33f",
+    "e34f8f29005c762cd955765d4a0e04a96107c303bd1813f8ce41c1f1cfe38dd2",
+    "6b16ac7f467d910cb09f32ca9da4f3f5888948b37b3de7082d777f63d8948a5d",
+    "a3c6b22fb4f1dd1e77395727a20db589e23ed59685514e105b73cff5e5214d39"
+  ],
+  "absent": true,
+  "note": "The failed creation request remains unresolved in its disposable account store. This author teardown does not pretend to reconcile a failed product creation."
+}

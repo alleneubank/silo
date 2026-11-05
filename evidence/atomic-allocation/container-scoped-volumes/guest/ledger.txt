@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+ROOT=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign
+GUEST=${ROOT}-tmp/addendum1/guest
+printf '\nGUEST %s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$GUEST/resources" "$ROOT/resources" >/dev/null
