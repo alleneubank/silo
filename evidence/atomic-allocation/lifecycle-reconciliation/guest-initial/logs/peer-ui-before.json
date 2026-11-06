@@ -1,0 +1,142 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "tilt.dev/v1alpha1",
+            "kind": "UIResource",
+            "metadata": {
+                "annotations": {
+                    "tilt.dev/resource": "(Tiltfile)"
+                },
+                "creationTimestamp": "2026-11-06T03:31:53Z",
+                "name": "(Tiltfile)",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "tilt.dev/v1alpha1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Tiltfile",
+                        "name": "(Tiltfile)",
+                        "uid": "9e48e12b-f36d-41ba-8d23-305c47817659"
+                    }
+                ],
+                "resourceVersion": "35",
+                "uid": "1f7d1cc8-468c-4306-ad71-978de6b5008f"
+            },
+            "spec": {},
+            "status": {
+                "buildHistory": [
+                    {
+                        "finishTime": "2026-11-06T03:31:53.536246Z",
+                        "spanID": "tiltfile:(Tiltfile):1",
+                        "startTime": "2026-11-06T03:31:53.485712Z"
+                    }
+                ],
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-11-06T03:31:53.536611Z",
+                        "status": "True",
+                        "type": "UpToDate"
+                    },
+                    {
+                        "lastTransitionTime": "2026-11-06T03:31:53.536611Z",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "disableStatus": {
+                    "disabledCount": 0,
+                    "enabledCount": 0,
+                    "sources": null,
+                    "state": "Enabled"
+                },
+                "lastDeployTime": "2026-11-06T03:31:53.536246Z",
+                "order": 1,
+                "pendingBuildSince": null,
+                "runtimeStatus": "not_applicable",
+                "updateStatus": "ok"
+            }
+        },
+        {
+            "apiVersion": "tilt.dev/v1alpha1",
+            "kind": "UIResource",
+            "metadata": {
+                "annotations": {
+                    "tilt.dev/resource": "redis"
+                },
+                "creationTimestamp": "2026-11-06T03:31:53Z",
+                "name": "redis",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "tilt.dev/v1alpha1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Tiltfile",
+                        "name": "(Tiltfile)",
+                        "uid": "9e48e12b-f36d-41ba-8d23-305c47817659"
+                    }
+                ],
+                "resourceVersion": "47",
+                "uid": "18bc13a7-468a-4f11-8f70-8e3db3306725"
+            },
+            "spec": {},
+            "status": {
+                "buildHistory": [
+                    {
+                        "finishTime": "2026-11-06T03:31:53.908155Z",
+                        "spanID": "build:1",
+                        "startTime": "2026-11-06T03:31:53.539505Z"
+                    }
+                ],
+                "composeResourceInfo": {
+                    "healthStatus": "healthy"
+                },
+                "conditions": [
+                    {
+                        "lastTransitionTime": "2026-11-06T03:31:54.539804Z",
+                        "status": "True",
+                        "type": "UpToDate"
+                    },
+                    {
+                        "lastTransitionTime": "2026-11-06T03:31:54.539804Z",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "disableStatus": {
+                    "disabledCount": 0,
+                    "enabledCount": 1,
+                    "sources": [
+                        {
+                            "configMap": {
+                                "key": "isDisabled",
+                                "name": "redis-disable"
+                            }
+                        }
+                    ],
+                    "state": "Enabled"
+                },
+                "endpointLinks": [
+                    {
+                        "url": "http://localhost:39023/"
+                    }
+                ],
+                "lastDeployTime": "2026-11-06T03:31:53.908155Z",
+                "order": 2,
+                "pendingBuildSince": null,
+                "runtimeStatus": "ok",
+                "specs": [
+                    {
+                        "id": "docker-compose:redis",
+                        "type": "docker-compose"
+                    }
+                ],
+                "updateStatus": "ok"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

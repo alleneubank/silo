@@ -1,0 +1,7 @@
+{"platform":"linux","arch":"x64","bun":"1.4.4","sqlite":{"version":"3.53.4"}}
+janitor 0.3.1 (f9d8de4)
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+k3d version v5.9.0
+k3s version v1.35.5-k3s1 (default)
+Docker 29.9.2 API 1.56
+128

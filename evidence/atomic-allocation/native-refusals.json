@@ -1,0 +1,670 @@
+[
+  {
+    "command": 2,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 3,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "up",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 4,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "ci",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 5,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 6,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "status",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 7,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 8,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "up",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 9,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "ci",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 10,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 11,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "status",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/home/ae/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 14,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 15,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "up",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 16,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "ci",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 17,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 18,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "status",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 19,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 20,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "up",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 21,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "ci",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 22,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 23,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "status",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/invoking-home/.silo/instances/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 26,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 27,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "up",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 28,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "ci",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 29,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 30,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "status",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]},{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 31,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 32,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "up",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 33,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "ci",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 34,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 35,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "status",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 37,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/old",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"lock\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old/.silo.lock\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"unrecognized\":true}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 38,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/old)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/512b66da59d03055d2a2dcd47097c10b8d724707ceb0839c23b320bd6a4a2a4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/old\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 43,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "status",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/beefa06c291590b4c358545dc162135973109153e3e1d5af182cad9c22d7ec4c.json (root: /tmp/native/allocation-rehearsal-plEfOO/late-09)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/beefa06c291590b4c358545dc162135973109153e3e1d5af182cad9c22d7ec4c.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/late-09\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 47,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/legacy-peer",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "status",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"LEGACY_STATE\",\"message\":\"LEGACY_STATE: legacy silo state blocks this account's allocations.\\n  /tmp/native/allocation-rehearsal-plEfOO/old-registry/d1bcbb687961e1515b47f5c54b5b476dcdc7d742245496506b6daffc9ccec754.json (root: /tmp/native/allocation-rehearsal-plEfOO/late-05)\\nStop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.\",\"found\":[{\"kind\":\"registry\",\"path\":\"/tmp/native/allocation-rehearsal-plEfOO/old-registry/d1bcbb687961e1515b47f5c54b5b476dcdc7d742245496506b6daffc9ccec754.json\",\"root\":\"/tmp/native/allocation-rehearsal-plEfOO/late-05\",\"ports\":[48127,48128]}],\"changed\":false,\"legacy\":true}\n",
+    "stderr": ""
+  },
+  {
+    "command": 60,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/a",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "ci",
+      "--timeout=10s",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"PORT_BIND_CONFLICT\",\"message\":\"PORT_BIND_CONFLICT: tilt-ci exited 1; owned claims retained. Tilt started on http://127.0.0.1:49154/\\nv0.37.8-fork.20261009.g753c01455, built 2026-10-09\\nTilt analytics disabled: Environment variable CI=true\\n\\nError: Tilt cannot start because you already have another process on port 49154\\nIf you want to run multiple Tilt instances simultaneously,\\nuse the --port flag or TILT_PORT env variable to set a custom port\\nOriginal error: listen tcp 127.0.0.1:49154: bind: address already in use\\n\",\"launchId\":\"d9ab73ca-0d89-4e69-b30e-d35f80ce3afb\",\"generation\":2}\n",
+    "stderr": "silo info: Generated env file at /tmp/native/allocation-rehearsal-plEfOO/a/.localnet.env\nsilo info: Wrote lockfile\nsilo info: Generated env file at /tmp/native/allocation-rehearsal-plEfOO/a/.localnet.env\nsilo info: Wrote lockfile\n"
+  },
+  {
+    "command": 61,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/a",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--clean",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"CLEANUP_REQUIRED\",\"message\":\"CLEANUP_REQUIRED: declared port 49154 still has a listener or cannot be proved free; no listener was stopped\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 74,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/a",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "up",
+      "--force",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"ALREADY_RUNNING\",\"message\":\"ALREADY_RUNNING: --force cannot disown or retarget a live, retained or uncertain generation. Run down and reconcile first; parallel stacks need separate roots and names.\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 75,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/a",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "--profile",
+      "alternative",
+      "--force",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"ALREADY_RUNNING\",\"message\":\"ALREADY_RUNNING: --force cannot disown or retarget a live, retained or uncertain generation. Run down and reconcile first; parallel stacks need separate roots and names.\"}\n",
+    "stderr": "silo info: Profile: alternative\n"
+  },
+  {
+    "command": 87,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/failed-teardown",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--clean",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"COMMAND_FAILED\",\"message\":\"COMMAND_FAILED: tilt-down exited 1; owned claims retained. Loading Tiltfile at: /tmp/native/allocation-rehearsal-plEfOO/failed-teardown/Tiltfile\\n\\nError: Traceback (most recent call last):\\n  /tmp/native/allocation-rehearsal-plEfOO/failed-teardown/Tiltfile:1:5: in <toplevel>\\nError in fail: intentional fixture teardown failure\\n\",\"launchId\":\"7675c089-0ca0-4b12-a667-419bf3b95bc9\",\"generation\":1}\n",
+    "stderr": ""
+  },
+  {
+    "command": 91,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/files/nested",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-nested",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"PATH_CONFLICT\",\"message\":\"PATH_CONFLICT: file-target/64513/164633169/shared.env belongs to /tmp/native/allocation-rehearsal-plEfOO/files; choose another name or output.\",\"owner\":\"/tmp/native/allocation-rehearsal-plEfOO/files\",\"resource\":{\"domain\":\"file-target\",\"resource\":\"64513/164633169/shared.env\"}}\n",
+    "stderr": ""
+  },
+  {
+    "command": 101,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-backend",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"NAME_CONFLICT\",\"message\":\"NAME_CONFLICT: existing network 'k3d-localnet-proof-plefoo-backend' has no matching ownership receipt. Inspect with docker network inspect 2e0ca6cd042e7e92e354f6dc117cb155eac94720563854303d0ac19ac2000c37; silo will not reuse or delete it.\",\"kind\":\"network\",\"name\":\"k3d-localnet-proof-plefoo-backend\",\"id\":\"2e0ca6cd042e7e92e354f6dc117cb155eac94720563854303d0ac19ac2000c37\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 106,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-backend",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"NAME_CONFLICT\",\"message\":\"NAME_CONFLICT: existing volume 'k3d-localnet-proof-plefoo-backend-images' has no matching ownership receipt. Inspect with docker volume inspect k3d-localnet-proof-plefoo-backend-images; silo will not reuse or delete it.\",\"kind\":\"volume\",\"name\":\"k3d-localnet-proof-plefoo-backend-images\",\"id\":\"k3d-localnet-proof-plefoo-backend-images\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 109,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-backend",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"PATH_CONFLICT\",\"message\":\"PATH_CONFLICT: unreceipted file exists: /tmp/native/allocation-rehearsal-plEfOO/backend/.localnet.env. Inspect its owner; silo will not overwrite or delete it.\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 110,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-backend",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"PATH_CONFLICT\",\"message\":\"PATH_CONFLICT: unreceipted file exists: /tmp/native/allocation-rehearsal-plEfOO/backend/.localnet/kubeconfig. Inspect its owner; silo will not overwrite or delete it.\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 117,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--clean",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"CLEANUP_REQUIRED\",\"message\":\"CLEANUP_REQUIRED: retained resources (container/k3d-localnet-proof-plefoo-backend-server-0, container/k3d-localnet-proof-plefoo-backend-serverlb, container/localnet-proof-plefoo-backend-registry.localhost, network/k3d-localnet-proof-plefoo-backend, volume/k3d-localnet-proof-plefoo-backend-images); ownership snapshots and claims kept. Use explicit owned cluster deletion or resolve retained data with its owner.\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 127,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-backend",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"NAME_CONFLICT\",\"message\":\"NAME_CONFLICT: existing k3d cluster 'localnet-proof-plefoo-backend' has no ownership receipt. Inspect with k3d cluster get localnet-proof-plefoo-backend; silo will not reuse or delete it.\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 132,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-backend",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"NAME_CONFLICT\",\"message\":\"NAME_CONFLICT: existing k3d registry 'localnet-proof-plefoo-backend-registry.localhost' has no ownership receipt. Inspect with k3d registry get localnet-proof-plefoo-backend-registry.localhost; silo will not reuse or delete it.\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 135,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-backend",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"PATH_CONFLICT\",\"message\":\"PATH_CONFLICT: unreceipted file exists: /tmp/native/allocation-rehearsal-plEfOO/backend/.silo.lock. Inspect its owner; silo will not overwrite or delete it.\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 139,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "down",
+      "--clean",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"NAME_CONFLICT\",\"message\":\"NAME_CONFLICT: owned tool created container/unclaimed-allocation-rehearsal-plefoo (0583775578bd0f016e9731a9d39b33d8a6ce7920c5bbe8c4db026093a86b4976) outside declared names. Configure Tilt docker_compose(project_name=COMPOSE_PROJECT_NAME) and claimed names; no cleanup authority was granted for this object.\"}\n",
+    "stderr": ""
+  },
+  {
+    "command": 144,
+    "cwd": "/tmp/native/allocation-rehearsal-plEfOO/backend",
+    "argv": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "env",
+      "proof-plefoo-backend",
+      "--json"
+    ],
+    "code": 1,
+    "stdout": "{\"schemaVersion\":1,\"code\":\"ENGINE_UNAVAILABLE\",\"message\":\"ENGINE_UNAVAILABLE: docker info --format failed; absence is not established\"}\n",
+    "stderr": ""
+  }
+]

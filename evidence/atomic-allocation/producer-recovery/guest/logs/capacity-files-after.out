@@ -1,0 +1,6 @@
+total 20
+drwxrwxr-x 2 ae ae 4096 Nov  6 05:03 .
+drwxrwxr-x 3 ae ae 4096 Nov  6 05:01 ..
+-rw-rw-r-- 1 ae ae   78 Nov  6 05:01 Tiltfile
+-rw-rw-r-- 1 ae ae  272 Nov  6 05:01 compose.yaml
+-rw-rw-r-- 1 ae ae  130 Nov  6 05:01 silo.toml

@@ -1,0 +1,1 @@
+Both cmp checks exit 0: volume metadata and literal sentinel byte-identical.

@@ -1,0 +1,8 @@
+silo info: Loading config
+silo info: Resolved instance name: proof-jwoq5f-late-05 (arg)
+silo info: Allocating ports
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-jwoq5f/late-05/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128

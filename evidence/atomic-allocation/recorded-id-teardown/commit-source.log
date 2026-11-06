@@ -1,0 +1,21 @@
+[38;2;56;56;56m╭──────────────────────────────────────╮[m
+[38;2;56;56;56m│[m lefthook  v2.2.2   hook:  [1mpre-commit[m [38;2;56;56;56m│[m
+[38;2;56;56;56m╰──────────────────────────────────────╯[m
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 22ms on 13 files with 90 rules using 32 threads.
+
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 21ms on 13 files with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 1.22 seconds)
+✓ lint (0.05 seconds)
+✓ format (0.05 seconds)
+✓ typecheck (1.22 seconds)
+[feat/atomic-allocation d9628d1] fix(cleanup): consume recorded ids without delegated teardown
+ 22 files changed, 207 insertions(+), 71 deletions(-)
+ create mode 100644 src/core/lease_types.test.ts

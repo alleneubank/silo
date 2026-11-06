@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/fixtures/capacity/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 61231
+silo info:   TILT_PORT: 61232
+silo info: Project c737d039-6646-411f-b784-a106e93a3e49, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/capacity/.localnet.env; set +a

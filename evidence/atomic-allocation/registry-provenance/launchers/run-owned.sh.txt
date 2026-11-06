@@ -1,0 +1,14 @@
+#!/bin/bash
+set -eu
+lane=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign
+scratch="$lane-tmp/r8"
+name=$1
+deadline=$2
+shift 2
+setsid /usr/bin/timeout "$deadline" "$@" &
+task_pid=$!
+printf '%s\n' "$task_pid" > "$scratch/$name.pid"
+printf '%s\n' "$task_pid" > "$lane-tmp/pids/r8-$name.pid"
+printf 'process pid/pgid=%s; command timeout %s %s; teardown verify exact recorded user/pgid/command then TERM recorded group\n' "$task_pid" "$deadline" "$*" >> "$lane/resources"
+printf 'process pid/pgid=%s; command timeout %s %s; teardown verify exact recorded user/pgid/command then TERM recorded group\n' "$task_pid" "$deadline" "$*" >> /home/ae/.handoffs/boss-mobile-release/silo-redesign/resources
+wait "$task_pid"

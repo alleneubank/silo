@@ -17,6 +17,14 @@ const withConfig = async (section: string, run: (configPath: string) => Promise<
 };
 
 describe("loadConfig", () => {
+  test.each(["pre-down", "post-down"])("rejects delegated teardown hook %s in base and profile", async key => {
+    for (const table of ["hooks", "profiles.private.hooks"]) {
+      await withConfig(`[${table}]\n${key}=["printf must-not-execute"]`, async configPath => {
+        await expect(loadConfig(configPath)).rejects.toThrow(key);
+      });
+    }
+  });
+
   test("accepts owned kubeconfig and production Tilt mode, including profile overrides", async () => {
     await withConfig(`
 [k3d]

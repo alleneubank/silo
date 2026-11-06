@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"NAME_CONFLICT","message":"NAME_CONFLICT: owned tool created container/unclaimed-allocation-rehearsal-md2hni (81b4e3580dbc1995b2f97020ea2581ce5b107c2047fb1dd419617694d5bd56bf) outside declared names. Configure Tilt docker_compose(project_name=COMPOSE_PROJECT_NAME) and claimed names; no cleanup authority was granted for this object."}

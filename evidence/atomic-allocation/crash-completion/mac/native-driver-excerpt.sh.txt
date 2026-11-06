@@ -1,0 +1,8 @@
+#!/bin/bash
+set -eu
+cd /Users/allen/Work/alleneubank/boss-mobile-release-silo-macos
+export TMPDIR=/Users/allen/Work/alleneubank/boss-mobile-release-silo-macos-tmp
+export PATH=/Users/allen/.local/share/mise/installs/bun/1.4.4/bin:/Users/allen/.local/share/mise/installs/github-alleneubank-janitor/0.3.1:$PATH
+unset -f bun 2>/dev/null || true
+bun_binary=/Users/allen/.local/share/mise/installs/bun/1.4.4/bin/bun
+entries=(31fd349e33733585de9c45a70637ab558e2f5c1b5b9b15cb829a536fc1c07d2c.json 524602cff413c50f19cc5358f753d64c13e4f7196be3d9539eabdaf5364300aa.json 88ffd30d8a083fa269faa3515554709219b510e17d19ecd81f90cc3f2e074d3d.json)

@@ -1,61 +1,23 @@
-import { loadConfig } from "../core/config";
 import { appendGithubEnv } from "../core/env";
-import { logger } from "../utils/logger";
+import { storedConfig } from "../core/allocation";
 import { buildTiltCiArgv, tiltCi } from "../backends/tilt";
-import { resolveAndApplyProfile } from "../core/profile";
-import { readLockfile } from "../core/lockfile";
 import { resolveGithubEnvPath, shouldExportCiEnv, withCiEnv } from "../utils/ci";
-import { prepareTiltEnvironment } from "./prepare";
+import { prepareTiltEnvironment, withAllocation } from "./prepare";
 
-export const ci = async (
-  nameArg: string | undefined,
-  options: {
-    config: string;
-    force: boolean;
-    profile: string | undefined;
-    timeout: string | undefined;
-    exportCi: boolean;
-    tiltArgs: string[];
-  }
-): Promise<void> => {
-  logger.info("Loading config");
-  const baseConfig = await loadConfig(options.config);
-  logger.verbose(`Config path: ${baseConfig.configPath}`);
-
-  // Refuse conflicting passthrough before allocation, hooks or cluster effects.
-  const { config: launchConfig } = resolveAndApplyProfile({
-    baseConfig,
-    profileFlag: options.profile,
-    lockfile: await readLockfile(baseConfig.projectRoot),
-    force: options.force,
-  });
-  buildTiltCiArgv({ timeout: options.timeout, extraArgs: options.tiltArgs, webMode: launchConfig.tilt?.webMode });
-
-  const { config, state, urls, envVars } = await prepareTiltEnvironment({
-    baseConfig,
-    nameArg,
-    options,
-  });
-
-  if (shouldExportCiEnv(options.exportCi)) {
-    const githubEnvPath = resolveGithubEnvPath(options.exportCi);
-    if (githubEnvPath) {
-      await appendGithubEnv({
-        state,
-        urls,
-        githubEnvPath,
-      });
-    } else {
-      logger.warn("GITHUB_ENV is not set; skipping CI env export");
-    }
-  }
-
-  logger.info("Running tilt ci");
-  await tiltCi({
-    cwd: config.projectRoot,
-    env: withCiEnv(envVars),
-    timeout: options.timeout,
-    extraArgs: options.tiltArgs,
-    webMode: config.tilt?.webMode,
-  });
+export const ci = async (name: string | undefined, options: {
+  config: string; force: boolean; profile: string | undefined; timeout: string | undefined;
+  exportCi: boolean; tiltArgs: string[];
+  executorEntrypoint?: string;
+}): Promise<boolean> => {
+  const sink = shouldExportCiEnv(options.exportCi) ? resolveGithubEnvPath(options.exportCi) : null;
+  await withAllocation(name, options, async (owner, allocation) => {
+    const config = storedConfig(allocation);
+    const args = { timeout: options.timeout, extraArgs: options.tiltArgs, webMode: config.tilt?.webMode, managesPort: config.ports.TILT_PORT !== undefined };
+    buildTiltCiArgv(args);
+    const env = await prepareTiltEnvironment(owner);
+    if (sink) appendGithubEnv(owner, sink);
+    await tiltCi(owner, withCiEnv(env), args);
+    owner.update(owner.current()!.allocation, owner.resources().length > 0 ? "retained" : "stopped");
+  }, config => { buildTiltCiArgv({ timeout: options.timeout, extraArgs: options.tiltArgs, webMode: config.tilt?.webMode, managesPort: config.ports.TILT_PORT !== undefined }); });
+  return true;
 };

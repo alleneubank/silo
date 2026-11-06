@@ -1,0 +1,9 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'case1104', '--config', '/tmp/guest/case-switch/silo.toml']
+exit=0
+silo info: Generated env file at /tmp/guest/case-switch/Owned.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   TILT_PORT: 49153
+silo info: Project 07019dc7-d57d-4b8e-a2f8-c78bab2e3942, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/guest/case-switch/Owned.env; set +a
+

@@ -1,0 +1,72 @@
+import assert from "node:assert/strict";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+const cli = "/mnt/dist/cli.js";
+const root = "/tmp/timing2";
+rmSync("/tmp/completion-release");
+mkdirSync(root);
+const a = root + "/a", b = root + "/b";
+const env = { ...process.env, CI: "false", GITHUB_ENV: "", SILO_PROFILE: "" };
+delete env.SILO_PORT_REGISTRY_DIR;
+const processes = [];
+const log = (event) => console.log(JSON.stringify({ at: new Date().toISOString(), ...event }));
+async function command(cwd, args) {
+  const proc = Bun.spawn([process.execPath, cli, ...args, "--json"], { cwd, env, detached: true, stdout: "pipe", stderr: "pipe" });
+  processes.push(proc);
+  appendFileSync(root + "/resources", `pid/pgid ${proc.pid}: ${JSON.stringify(args)}; returned handle, then public down --clean\n`);
+  const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
+  assert.equal(code, 0, stdout + stderr);
+  const result = JSON.parse(stdout);
+  log({ cwd, args, result });
+  return result.project;
+}
+async function until(description, condition) {
+  const deadline = Date.now() + 30000;
+  while (!(await condition())) { assert(Date.now() < deadline, description); await Bun.sleep(10); }
+}
+async function body(port) {
+  try { return await (await fetch(`http://127.0.0.1:${port}`, { signal: AbortSignal.timeout(300) })).text(); }
+  catch { return null; }
+}
+writeFileSync(root + "/server.ts", "Bun.serve({hostname:'127.0.0.1',port:Number(process.env.APP_PORT),fetch:()=>new Response(process.env.WORKSPACE_NAME)});setTimeout(()=>process.exit(0),120000);");
+for (const p of [a, b]) {
+  mkdirSync(p);
+  writeFileSync(p + "/silo.toml", 'version=1\n[ports]\nAPP_PORT=48127\nTILT_PORT=48128\n[hosts]\nAPP_HOST="${name}.localhost"\nTILT_HOST="127.0.0.1"\n[tilt]\nwebMode="prod"\n');
+  writeFileSync(p + "/Tiltfile", `local_resource('identity',serve_cmd=['bun', '${root}/server.ts'])\n`);
+}
+let pa, pb;
+try {
+  const ar = await command(a, ["env", "timing-probe-a"]), br = await command(b, ["env", "timing-probe-b"]);
+  const start = (p, hold) => {
+    const args = [process.execPath, ...(hold ? ["--preload", "/tmp/hold-completion.ts"] : []), cli, "up"];
+    const proc = Bun.spawn(args, { cwd: p, env, detached: true, stdout: Bun.file(p + "/up.log"), stderr: Bun.file(p + "/up.log") });
+    processes.push(proc);
+    appendFileSync(root + "/resources", `pid/pgid ${proc.pid}: ${JSON.stringify(args)}; returned handle, then public down --clean\n`);
+    return proc;
+  };
+  pa = start(a, true); pb = start(b, false);
+  const ap = ar.allocation.state.ports.APP_PORT, bp = br.allocation.state.ports.APP_PORT;
+  await until("both native Tilt listeners", async () => await body(ap) === "timing-probe-a" && await body(bp) === "timing-probe-b");
+  const beforeA = await command(a, ["status"]), beforeB = await command(b, ["status"]);
+  const launch = beforeA.launches.find(l => l.kind === "tilt-up"); assert(launch?.phase === "granted");
+  pa.kill("SIGKILL"); await pa.exited;
+  await until("A listener drained and executor poised to commit", async () => await body(ap) === null && existsSync("/tmp/completion-blocked.json"));
+  const pending = await command(a, ["status"]);
+  assert.deepEqual(pending.claims, beforeA.claims);
+  assert(!pending.completions.some(c => c.launchId === launch.id));
+  assert.equal(pending.launches.find(l => l.id === launch.id).phase, "granted");
+  assert.equal(pending.phase, "running");
+  assert.equal(JSON.parse(readFileSync("/tmp/completion-blocked.json", "utf8")).launchId, launch.id);
+  log({ scenario: "listener drained before durable completion; claims retained", launchId: launch.id, pass: true });
+  writeFileSync("/tmp/completion-release", "release");
+  await until("exact durable completion", async () => (await command(a, ["status"])).completions.some(c => c.launchId === launch.id));
+  assert.equal(await body(bp), "timing-probe-b");
+  assert.deepEqual(await command(b, ["status"]), beforeB);
+  await command(a, ["down", "--clean"]);
+  assert.equal(await body(bp), "timing-probe-b");
+  assert.deepEqual(await command(b, ["status"]), beforeB);
+  log({ scenario: "same launch completes then recovers; B unchanged", pass: true });
+} finally {
+  writeFileSync("/tmp/completion-release", "release");
+  for (const proc of processes) if (proc.exitCode === null) { proc.kill("SIGTERM"); await proc.exited; }
+  for (const p of [a, b]) await command(p, ["down", "--clean"]);
+}

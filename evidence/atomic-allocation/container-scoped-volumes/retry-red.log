@@ -1,0 +1,23 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/lease_store.test.ts:
+217 |       } finally { db.close(); }
+218 |       op.finish();
+219 |       op = await open(root, true);
+220 |       for (const launch of op.launches()) op.markLaunchTerminal(launch.id);
+221 |       op.applyCompletions();
+222 |       expect(op.launches().every(launch => launch.phase === "exited" && launch.reconciled)).toBe(true);
+                                                                                                  ^
+error: expect(received).toBe(expected)
+
+Expected: true
+Received: false
+
+      at <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign/src/core/lease_store.test.ts:222:93)
+(fail) atomic account leases > recovery folds a durable successful deletion retry before releasing claims [98.69ms]
+
+ 0 pass
+ 28 filtered out
+ 1 fail
+ 3 expect() calls
+Ran 1 test across 1 file. [118.00ms]

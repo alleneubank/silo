@@ -1,0 +1,3 @@
+silo warn: Port APP_PORT in use (48241), allocated 49152
+silo warn: Port TILT_PORT in use (48242), allocated 49153
+silo warn: Port K3D_API_PORT in use (48243), allocated 49154

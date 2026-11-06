@@ -1,0 +1,13 @@
+[
+    {
+        "CreatedAt": "2026-11-06T01:17:23Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.rehearsal": "allocation-rehearsal-jwoq5f"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-proof-jwoq5f-backend-images/_data",
+        "Name": "k3d-localnet-proof-jwoq5f-backend-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

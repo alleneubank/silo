@@ -1,0 +1,1 @@
+silo error: CLEANUP_REQUIRED: retained resources (container/k3d-localnet-guest-retained-server-0, container/k3d-localnet-guest-retained-serverlb, network/k3d-localnet-guest-retained, volume/k3d-localnet-guest-retained-images); ownership snapshots and claims kept. Use explicit owned cluster deletion or resolve retained data with its owner.

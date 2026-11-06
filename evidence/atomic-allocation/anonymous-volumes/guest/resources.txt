@@ -1,0 +1,36 @@
+Guest fixtures g6401. Every Docker resource below is created solely by this guest.
+docker volume rm guest-g6401-named
+docker volume rm 535fa3c4bba1ab64535eecfe1debaa8ed86ed15ec011094321796ef4af7f6c8b
+docker volume rm guest-g6401-unrelated
+bun /mnt/dist/cli.js down --config /tmp/root-main/silo.toml --clean
+bun /mnt/dist/cli.js down --config /tmp/root-peer/silo.toml --clean
+Main CI tool session 76810 completed with exit 0.
+docker rm -f da215d63d62f2dd1b657649998648e08899cdd9a214daa79205bf2f6152fc98d
+docker rm -f a75599063aecd79e908e86d0407b65ea03febe28c566246ab59032aeb7f1e5fd
+docker rm -f efe832075a849abf752a21222ef58679ee615c616bb91b64f58025dd959ff8f3
+docker volume rm 74f449204e412de9b60c4b767f82783357a1c21852c7b50d9a753577c4a372bb
+docker network rm 8a63f7115f2a2accf6c5ea0cc7ccea156fbf9b994713666701340827a0b52ffd
+Peer CI tool session 17804 completed with exit 0.
+Main CI recorded supervisor PID 3290625, executor leader/group PID 3290626, already exited; teardown through silo down only.
+docker rm -f ef30716e182cfd27a19487250bc5aa475768abbdbd0d517aa99743dbccf2dc7d
+docker volume rm 75cefb5746af84d6ba3d2578f5095f718a95c247da0fcff3bdbd06eb51cc9d49
+docker network rm d71ac424677ed6dd65ca9dc6d28c04eb8270e4ee0e5521df37a64c7f03d6f66b
+docker rm -f guest-g6401-borrower
+docker rm -f guest-g6401-probe-named
+docker rm -f guest-g6401-probe-explicit
+docker rm -f ff10d81701302312589ab69b176dc4b80e38b411e93e2924e3df8105d3ea7d07
+docker rm -f 0c1a7be95d22f9224456fce60dc7e124c28b395d4719ce60b96e9be07e9cc62b
+docker rm -f d95a27f6d6aed386e7f20c63c29b1f5bd0a303374d756252be1cdc8df7da6504
+docker rm -f e50ea05988d941a5f70fbcedb86a0d87ceaf85af81c6eb59cff1d27a16db8db1
+docker volume rm 6227c7207fc279fe0eb745a213a98809457c429fd8ba21f6006dc7af3a87e399
+docker network rm 5b7f60c7b041243a99c54f3361fdb7471b817dcf3e930b881b69836bb21bf9ed
+All recorded service launches are now reconciled by successful clean. No process-table selector or direct process signal was used.
+Probe container names were reserved in teardown ledger but never created; data verification instead reopened the actual silo root.
+Recorded service process: supervisor PID 3290625, executor/group PID 3290626/3290626, phase exited. Exact teardown: bun /mnt/dist/cli.js down --config /tmp/root-main/silo.toml --clean
+Recorded service process: supervisor PID 3313543, executor/group PID 3313545/3313545, phase exited. Exact teardown: bun /mnt/dist/cli.js down --config /tmp/root-peer/silo.toml --clean
+Recorded service process: supervisor PID 3331495, executor/group PID 3331498/3331498, phase exited. Exact teardown: bun /mnt/dist/cli.js down --config /tmp/root-main/silo.toml --clean
+Recorded service process: supervisor PID 3354022, executor/group PID 3354023/3354023, phase exited. Exact teardown: bun /mnt/dist/cli.js down --config /tmp/root-peer/silo.toml --clean
+Recorded service process: supervisor PID 3355809, executor/group PID 3355810/3355810, phase exited. Exact teardown: bun /mnt/dist/cli.js down --config /tmp/root-peer/silo.toml --clean
+Recorded service process: supervisor PID 3357146, executor/group PID 3357147/3357147, phase exited. Exact teardown: bun /mnt/dist/cli.js down --config /tmp/root-peer/silo.toml --clean
+Recorded service process: supervisor PID 3358022, executor/group PID 3358023/3358023, phase exited. Exact teardown: bun /mnt/dist/cli.js down --config /tmp/root-peer/silo.toml --clean
+Recorded service process: supervisor PID 3387231, executor/group PID 3387232/3387232, phase exited. Exact teardown: bun /mnt/dist/cli.js down --config /tmp/root-main/silo.toml --clean

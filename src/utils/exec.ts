@@ -21,8 +21,18 @@ const toText = async (
   if (!stream) {
     return "";
   }
-  const response = new Response(stream);
-  return await response.text();
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  const limit = 1024 * 1024;
+  let size = 0;
+  while (size <= limit) {
+    const chunk = await reader.read();
+    if (chunk.done) return Buffer.concat(chunks).toString("utf8");
+    size += chunk.value.byteLength;
+    if (size > limit) throw new SiloError("Command output exceeds 1 MiB", "COMMAND_OUTPUT_LIMIT");
+    chunks.push(chunk.value);
+  }
+  throw new Error("Unreachable output limit");
 };
 
 export async function runCommand(
@@ -68,18 +78,4 @@ export async function runCommand(
     }
     throw error;
   }
-}
-
-export async function runCommandChecked(
-  cmd: string[],
-  options: CommandOptions
-): Promise<CommandResult> {
-  const result = await runCommand(cmd, options);
-  if (result.exitCode !== 0) {
-    throw new SiloError(
-      `Command failed (${result.exitCode}): ${options.context}`,
-      "COMMAND_FAILED"
-    );
-  }
-  return result;
 }

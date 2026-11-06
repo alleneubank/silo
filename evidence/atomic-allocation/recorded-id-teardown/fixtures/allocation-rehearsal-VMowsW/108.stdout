@@ -1,0 +1,13 @@
+[
+    {
+        "CreatedAt": "2026-11-06T01:27:31Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.rehearsal": "allocation-rehearsal-VMowsW"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-proof-vmowsw-backend-images/_data",
+        "Name": "k3d-localnet-proof-vmowsw-backend-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

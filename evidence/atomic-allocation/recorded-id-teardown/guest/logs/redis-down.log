@@ -1,0 +1,14 @@
+silo info: Removed owned snapshots and released this generation's claims.
+{"schemaVersion":1,"legacy":false,"changed":true,"project":{"schemaVersion":1,"projectId":"e44aca85-f1d0-4ceb-9138-2ec55a84976a","root":"/tmp/redis","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+EXIT=0
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"e44aca85-f1d0-4ceb-9138-2ec55a84976a","root":"/tmp/redis","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+NO_TILTFILE_EVALUATION=0
+[]
+error: no such object: d505d40003e086332fdda9a6c04e4c593f070d18b6f27626f098f77434c47f36
+[]
+Error response from daemon: get 8e750977ea926df023ceeb4a589d0b0949095176cc435d50a1569cf19ef5123f: no such volume
+[]
+Error response from daemon: network 7f0e7b3adabb7b9afa52ca8880416b1161a874ef84ef309d72120f889af497da not found
+silo info: No allocated instance. Nothing to stop.
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"e44aca85-f1d0-4ceb-9138-2ec55a84976a","root":"/tmp/redis","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+REPEATED_EXIT=0

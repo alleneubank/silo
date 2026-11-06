@@ -1,0 +1,4 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'down', '--delete-cluster', '--clean', '--config', '/tmp/guest/sentinel/silo.toml']
+exit=1
+silo error: CLEANUP_REQUIRED: declared port 49152 still has a listener or cannot be proved free; no listener was stopped
+

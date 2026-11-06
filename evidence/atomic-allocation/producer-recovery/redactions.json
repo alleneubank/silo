@@ -1,0 +1,165 @@
+{
+  "reason": "Expired synthetic k3d token field values removed from publication captures; identifying facts and outcomes otherwise retained. Counts are masked field slots, including capture-time masks; helper source constants are excluded.",
+  "redactions": [
+    {
+      "file": "conditions-green.log",
+      "count": 2,
+      "archivedSha256": "77fb0e35478d0a377de65367883dfe4232279af30412ea66dd96dc876ee98099"
+    },
+    {
+      "file": "example-12.stdout",
+      "count": 1,
+      "archivedSha256": "e1409bdfdfa1b009dad4b3d05425c5efec42b24cb176a4ba8c5a93210d827865"
+    },
+    {
+      "file": "fixtures/lifecycle-V3RA5l/25.stdout",
+      "count": 1,
+      "archivedSha256": "a37a87656bf8671cf0ef7726f40cd080343cef932e1b34478c7fc1dbd9a2739e"
+    },
+    {
+      "file": "fixtures/lifecycle-V3RA5l/27.stdout",
+      "count": 1,
+      "archivedSha256": "11b0bd5f46ba34af7faf4ac46c8a55af62c28d03d8816d37c6de7f33a612ff3b"
+    },
+    {
+      "file": "fixtures/lifecycle-V3RA5l/resources",
+      "count": 2,
+      "archivedSha256": "41fff35d6bad925945b2573ee42af3a517082d2265c1af5ec9fb32582949f060"
+    },
+    {
+      "file": "fixtures/lifecycle-V3RA5l/24.stdout",
+      "count": 1,
+      "archivedSha256": "a37a87656bf8671cf0ef7726f40cd080343cef932e1b34478c7fc1dbd9a2739e"
+    },
+    {
+      "file": "fixtures/lifecycle-V3RA5l/26.stdout",
+      "count": 1,
+      "archivedSha256": "11b0bd5f46ba34af7faf4ac46c8a55af62c28d03d8816d37c6de7f33a612ff3b"
+    },
+    {
+      "file": "fixtures/lifecycle-V3RA5l/events.jsonl",
+      "count": 2,
+      "archivedSha256": "7e2764aaf7a153029dd9f703b697a224484cde6b3c357ed98dea71d5f1e46363"
+    },
+    {
+      "file": "fixtures/lifecycle-V3RA5l/37.stdout",
+      "count": 1,
+      "archivedSha256": "a37a87656bf8671cf0ef7726f40cd080343cef932e1b34478c7fc1dbd9a2739e"
+    },
+    {
+      "file": "fixtures/lifecycle-V3RA5l/40.stdout",
+      "count": 1,
+      "archivedSha256": "11b0bd5f46ba34af7faf4ac46c8a55af62c28d03d8816d37c6de7f33a612ff3b"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/11.stdout",
+      "count": 1,
+      "archivedSha256": "0571fb053b15ecfc26f5df07a97a687af20d3c34e7d737c6fdaa216bfaeda91a"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/8.stdout",
+      "count": 1,
+      "archivedSha256": "69931c4c72b3146cdc92b29042ab7ae8e8e8d0cb869ad3d161cf5f5bf9a4f6b0"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/10.stdout",
+      "count": 1,
+      "archivedSha256": "0571fb053b15ecfc26f5df07a97a687af20d3c34e7d737c6fdaa216bfaeda91a"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/23.stdout",
+      "count": 1,
+      "archivedSha256": "0571fb053b15ecfc26f5df07a97a687af20d3c34e7d737c6fdaa216bfaeda91a"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/resources",
+      "count": 2,
+      "archivedSha256": "f66d9fcfa696b302d8cde4bcd87497ef30d62f8607615ebfa072f8fded122e83"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/9.stdout",
+      "count": 1,
+      "archivedSha256": "69931c4c72b3146cdc92b29042ab7ae8e8e8d0cb869ad3d161cf5f5bf9a4f6b0"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/docker-events.jsonl",
+      "count": 16,
+      "archivedSha256": "4c0750245a5fb90ac591fff8ff7d0e22b3e8e0014d2c68584333546621237c17"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/events.jsonl",
+      "count": 2,
+      "archivedSha256": "4099554164714e3de0bb134451e04e3bcffd0c253e082e6118c383687d4c23c1"
+    },
+    {
+      "file": "fixtures/lifecycle-QzU64h/20.stdout",
+      "count": 1,
+      "archivedSha256": "69931c4c72b3146cdc92b29042ab7ae8e8e8d0cb869ad3d161cf5f5bf9a4f6b0"
+    },
+    {
+      "file": "fixtures/lifecycle-YaEd3l/30.stdout",
+      "count": 1,
+      "archivedSha256": "712023cf92a95cb07e176bd1e9d4f01dc137d61f617f083c535f9b613268a969"
+    },
+    {
+      "file": "fixtures/lifecycle-YaEd3l/29.stdout",
+      "count": 1,
+      "archivedSha256": "712023cf92a95cb07e176bd1e9d4f01dc137d61f617f083c535f9b613268a969"
+    },
+    {
+      "file": "fixtures/lifecycle-YaEd3l/27.stdout",
+      "count": 1,
+      "archivedSha256": "6e9135f845cb77962b3c7695347b52bce0ffb01e94bcb1abf26d01faa1d22983"
+    },
+    {
+      "file": "fixtures/lifecycle-YaEd3l/resources",
+      "count": 2,
+      "archivedSha256": "b0fcb876859e54eb88342600ee89074008a62afbd47f8f8d890d7ec2887ba0e3"
+    },
+    {
+      "file": "fixtures/lifecycle-YaEd3l/docker-events.jsonl",
+      "count": 14,
+      "archivedSha256": "749345769d43f0842d4770a3935cbe1a49cb28eaaf2cca74b91addb93635644b"
+    },
+    {
+      "file": "fixtures/lifecycle-YaEd3l/28.stdout",
+      "count": 1,
+      "archivedSha256": "6e9135f845cb77962b3c7695347b52bce0ffb01e94bcb1abf26d01faa1d22983"
+    },
+    {
+      "file": "fixtures/lifecycle-YaEd3l/events.jsonl",
+      "count": 2,
+      "archivedSha256": "77fb0e35478d0a377de65367883dfe4232279af30412ea66dd96dc876ee98099"
+    },
+    {
+      "file": "guest/resources/guest-events.jsonl",
+      "count": 15,
+      "archivedSha256": "47e76c809faf8402c88611c051322ee8bb1284644ae709459582cbb83a1ba12f"
+    },
+    {
+      "file": "conditions-red.log",
+      "count": 2,
+      "archivedSha256": "7e2764aaf7a153029dd9f703b697a224484cde6b3c357ed98dea71d5f1e46363"
+    },
+    {
+      "file": "registry-failure-red.log",
+      "count": 2,
+      "archivedSha256": "aeecc475a97cb87704b9cab3c64205962bbd42233d0684763538e6a16f68b706"
+    },
+    {
+      "file": "example-13.stdout",
+      "count": 2,
+      "archivedSha256": "c87a26eee3604d7bfd1641c369757c2e7180c15a4b68fa12560f1a58602a2409"
+    },
+    {
+      "file": "supporting-73114d2/example-14.stdout",
+      "count": 2,
+      "archivedSha256": "ff385e4a7217609430f8769807470acf34876a5cfebc7b7cdca23de5c6d7bd0a"
+    },
+    {
+      "file": "supporting-73114d2/example-13.stdout",
+      "count": 1,
+      "archivedSha256": "22f5ed11163030ea9cd2ba2501f801a5db966bcfa437e6520642466501bb3934"
+    }
+  ]
+}

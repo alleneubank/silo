@@ -1,0 +1,423 @@
+{
+  "name": "redesign-82648835",
+  "ciCode": 0,
+  "health": true,
+  "failure": null,
+  "beforeProvenance": {
+    "timestamp": "2026-11-06T05:15:33.179Z",
+    "sourceHead": "73114d2d4a47b55dcc31350c8bfcef3ab0587a0e",
+    "cliSha256": "4601b51c88facb43be2f5e8e885db365ef87172f96eb452ffa49068cfd278c3f",
+    "dirtyRuntimeSource": false
+  },
+  "afterProvenance": {
+    "timestamp": "2026-11-06T05:16:32.346Z",
+    "sourceHead": "73114d2d4a47b55dcc31350c8bfcef3ab0587a0e",
+    "cliSha256": "4601b51c88facb43be2f5e8e885db365ef87172f96eb452ffa49068cfd278c3f",
+    "dirtyRuntimeSource": false
+  },
+  "observations": [
+    {
+      "command": 1,
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "ci",
+        "redesign-82648835",
+        "--timeout",
+        "120s",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 2,
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "status",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 3,
+      "argv": [
+        "kubectl",
+        "--kubeconfig",
+        "/home/ae/.kube/localnet-redesign-82648835",
+        "get",
+        "deployments,pods",
+        "-o",
+        "json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 4,
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "31ef5a6153a8655fc842cfb6ab603e48b7a988995b6f321f420217a44f4e0fc1",
+        "--format",
+        "{{json .Mounts}}"
+      ],
+      "code": 0
+    },
+    {
+      "command": 5,
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "70278b9fc7e5787f0b938b5888d5faf832ae42a5e6a28372f1d3da96877ba6d0",
+        "--format",
+        "{{json .Mounts}}"
+      ],
+      "code": 0
+    },
+    {
+      "command": 6,
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "a0726c8b18c2a377e2c99bbbc4278aafc41c34a1e556ab1d8f10503af9a543a8",
+        "--format",
+        "{{json .Mounts}}"
+      ],
+      "code": 0
+    },
+    {
+      "command": 7,
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "db8ee47b30190ac15736c784a74da68d83aaa16ed2a4f8572de762de8ef1480f",
+        "--format",
+        "{{json .Mounts}}"
+      ],
+      "code": 0
+    },
+    {
+      "service": "web",
+      "port": 3000,
+      "health": {
+        "status": "ok",
+        "host": "web.redesign-82648835.localhost"
+      }
+    },
+    {
+      "command": 8,
+      "argv": [
+        "ps",
+        "-o",
+        "user=,pgid=,command=",
+        "-p",
+        "333451"
+      ],
+      "code": 0
+    },
+    {
+      "service": "api",
+      "port": 8080,
+      "health": {
+        "status": "ok",
+        "service": "api",
+        "host": "api.redesign-82648835.localhost"
+      }
+    },
+    {
+      "command": 9,
+      "argv": [
+        "ps",
+        "-o",
+        "user=,pgid=,command=",
+        "-p",
+        "333629"
+      ],
+      "code": 0
+    },
+    {
+      "command": 10,
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 11,
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "status",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 12,
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "31ef5a6153a8655fc842cfb6ab603e48b7a988995b6f321f420217a44f4e0fc1"
+      ],
+      "code": 1
+    },
+    {
+      "command": 13,
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "70278b9fc7e5787f0b938b5888d5faf832ae42a5e6a28372f1d3da96877ba6d0"
+      ],
+      "code": 0
+    },
+    {
+      "command": 14,
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "a0726c8b18c2a377e2c99bbbc4278aafc41c34a1e556ab1d8f10503af9a543a8"
+      ],
+      "code": 0
+    },
+    {
+      "command": 15,
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "db8ee47b30190ac15736c784a74da68d83aaa16ed2a4f8572de762de8ef1480f"
+      ],
+      "code": 0
+    },
+    {
+      "command": 16,
+      "argv": [
+        "kubectl",
+        "--kubeconfig",
+        "/home/ae/.kube/localnet-redesign-82648835",
+        "get",
+        "deployments",
+        "-o",
+        "json"
+      ],
+      "code": 0
+    },
+    {
+      "ordinaryDownKeepsKubernetes": true,
+      "resources": [
+        {
+          "source": "compose",
+          "name": "localnet-redesign-82648835-redis-1",
+          "id": "31ef5a6153a8655fc842cfb6ab603e48b7a988995b6f321f420217a44f4e0fc1",
+          "createdAt": "2026-11-06T05:15:55.869933714Z",
+          "labels": {
+            "com.docker.compose.project": "localnet-redesign-82648835",
+            "com.docker.compose.project.working_dir": "/tmp/full-example",
+            "io.silo.generation": "1",
+            "io.silo.project": "88383137-69d8-4216-85b8-63b416dc7ed7"
+          },
+          "kind": "container",
+          "anonymousVolumes": [
+            {
+              "name": "0784e0e12b6c3c07570df76e6d86be36141976c4547f283a802106b58827b9e2",
+              "createdAt": "2026-11-06T05:16:00Z",
+              "destination": "/data"
+            }
+          ],
+          "deleted": true
+        },
+        {
+          "source": "k3d",
+          "name": "k3d-localnet-redesign-82648835-serverlb",
+          "id": "70278b9fc7e5787f0b938b5888d5faf832ae42a5e6a28372f1d3da96877ba6d0",
+          "createdAt": "2026-11-06T05:15:40.701192208Z",
+          "labels": {
+            "app": "k3d",
+            "io.silo.generation": "1",
+            "io.silo.project": "88383137-69d8-4216-85b8-63b416dc7ed7",
+            "k3d.cluster": "localnet-redesign-82648835",
+            "k3d.role": "loadbalancer"
+          },
+          "kind": "container",
+          "anonymousVolumes": [],
+          "deleted": false
+        },
+        {
+          "source": "k3d",
+          "name": "k3d-localnet-redesign-82648835-server-0",
+          "id": "a0726c8b18c2a377e2c99bbbc4278aafc41c34a1e556ab1d8f10503af9a543a8",
+          "createdAt": "2026-11-06T05:15:40.688606205Z",
+          "labels": {
+            "app": "k3d",
+            "io.silo.generation": "1",
+            "io.silo.project": "88383137-69d8-4216-85b8-63b416dc7ed7",
+            "k3d.cluster": "localnet-redesign-82648835",
+            "k3d.role": "server"
+          },
+          "kind": "container",
+          "anonymousVolumes": [
+            {
+              "name": "45d64a4438dcbf74cd09d5304732074e7598b912dc2cbbf405601f34d2aa330a",
+              "createdAt": "2026-11-06T05:15:40Z",
+              "destination": "/var/lib/cni"
+            },
+            {
+              "name": "8315e8c474fa7788b0673c7cca6b7075747f9e743bce3f3b7bdbfad52f8ed9af",
+              "createdAt": "2026-11-06T05:15:40Z",
+              "destination": "/var/lib/kubelet"
+            },
+            {
+              "name": "f880c2c4571c7097b71e493b590e6afd13499f09cce9066ef8efddba52e939d8",
+              "createdAt": "2026-11-06T05:15:40Z",
+              "destination": "/var/lib/rancher/k3s"
+            },
+            {
+              "name": "0dca68fdd12c54dec5c16fc4e7b134fbb22c30b2e8e48f3cba87011bbef88327",
+              "createdAt": "2026-11-06T05:15:40Z",
+              "destination": "/var/log"
+            }
+          ],
+          "deleted": false
+        },
+        {
+          "source": "k3d",
+          "name": "localnet-redesign-82648835-registry.localhost",
+          "id": "db8ee47b30190ac15736c784a74da68d83aaa16ed2a4f8572de762de8ef1480f",
+          "createdAt": "2026-11-06T05:15:34.555671366Z",
+          "labels": {
+            "app": "k3d",
+            "k3d.cluster": "localnet-redesign-82648835",
+            "k3d.role": "registry"
+          },
+          "kind": "container",
+          "anonymousVolumes": [
+            {
+              "name": "e4cb20664339553a2536247e7739f8304a8bb8a1d7f04fea91d5595b60c5e162",
+              "createdAt": "2026-11-06T05:15:38Z",
+              "destination": "/var/lib/registry"
+            }
+          ],
+          "deleted": false
+        },
+        {
+          "source": "k3d",
+          "name": "k3d-localnet-redesign-82648835",
+          "id": "8e98cb2f2e0c5ab9e8cab17343916796a28605869f1c0283f11f53d9d83abb67",
+          "createdAt": "2026-11-06T05:15:33.954594384Z",
+          "labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "88383137-69d8-4216-85b8-63b416dc7ed7",
+            "k3d.cluster": "localnet-redesign-82648835"
+          },
+          "kind": "network",
+          "deleted": false
+        },
+        {
+          "source": "compose",
+          "name": "localnet-redesign-82648835_default",
+          "id": "b292a9e23f209005e2eff97f0cf74101367cac4a223b8f11c109ad6da81a2153",
+          "createdAt": "2026-11-06T05:15:55.840973553Z",
+          "labels": {
+            "com.docker.compose.project": "localnet-redesign-82648835",
+            "io.silo.generation": "1",
+            "io.silo.project": "88383137-69d8-4216-85b8-63b416dc7ed7"
+          },
+          "kind": "network",
+          "deleted": true
+        },
+        {
+          "source": "k3d",
+          "name": "k3d-localnet-redesign-82648835-images",
+          "id": "k3d-localnet-redesign-82648835-images",
+          "createdAt": "2026-11-06T05:15:34Z",
+          "labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "88383137-69d8-4216-85b8-63b416dc7ed7",
+            "k3d.cluster": "localnet-redesign-82648835"
+          },
+          "kind": "volume",
+          "deleted": false
+        }
+      ]
+    },
+    {
+      "command": 17,
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 1
+    },
+    {
+      "command": 18,
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "status",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 19,
+      "argv": [
+        "docker",
+        "volume",
+        "ls",
+        "--format",
+        "{{.Name}}"
+      ],
+      "code": 0
+    },
+    {
+      "command": 20,
+      "argv": [
+        "docker",
+        "volume",
+        "inspect",
+        "k3d-localnet-redesign-82648835-images"
+      ],
+      "code": 0
+    },
+    {
+      "command": 21,
+      "argv": [
+        "docker",
+        "volume",
+        "rm",
+        "k3d-localnet-redesign-82648835-images"
+      ],
+      "code": 0
+    },
+    {
+      "command": 22,
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    }
+  ],
+  "anonymousMountsAbsent": true,
+  "namedCachePreservedByProduct": true,
+  "fixtureOwnerCacheResolved": true,
+  "generation": 0,
+  "claims": []
+}

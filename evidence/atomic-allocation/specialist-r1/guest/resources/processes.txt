@@ -1,0 +1,33 @@
+3623838 3623838
+3633327 3633327
+3633637 3633637
+3639759 3639759
+3660879 3660879
+3672622 3672622
+kube-before-disable: pid=3724077 pgid=3724077 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-before-disable: pid=3739471 pgid=3739471 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-disable-interrupted: pid=3739490 pgid=3739490 deadline=0.005s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'kube1104', '--force', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-disable-refusal-1: pid=3739492 pgid=3739492 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'kube1104', '--force', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-disable-refusal-2: pid=3740009 pgid=3740009 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'kube1104', '--force', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-after-disable-refusals: pid=3740506 pgid=3740506 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-clean-old-generation: pid=3740556 pgid=3740556 deadline=90s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'down', '--delete-cluster', '--clean', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-disabled-env: pid=3740822 pgid=3740822 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'kube1104', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-final-clean: pid=3741092 pgid=3741092 deadline=90s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'down', '--delete-cluster', '--clean', '--config', '/tmp/guest/kube-switch/silo.toml']
+kube-final-status: pid=3741434 pgid=3741434 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/kube-switch/silo.toml']
+case-env: pid=3741466 pgid=3741466 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'case1104', '--config', '/tmp/guest/case-switch/silo.toml']
+case-down: pid=3741694 pgid=3741694 deadline=90s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'down', '--config', '/tmp/guest/case-switch/silo.toml']
+case-before-capitalization: pid=3741716 pgid=3741716 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/case-switch/silo.toml']
+case-capitalization-interrupted: pid=3741797 pgid=3741797 deadline=0.005s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'case1104', '--force', '--config', '/tmp/guest/case-switch/silo.toml']
+case-capitalization-refusal-1: pid=3741799 pgid=3741799 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'case1104', '--force', '--config', '/tmp/guest/case-switch/silo.toml']
+case-capitalization-refusal-2: pid=3742287 pgid=3742287 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'case1104', '--force', '--config', '/tmp/guest/case-switch/silo.toml']
+case-after-capitalization-refusals: pid=3742800 pgid=3742800 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/case-switch/silo.toml']
+case-clean-original: pid=3742873 pgid=3742873 deadline=90s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'down', '--delete-cluster', '--clean', '--config', '/tmp/guest/case-switch/silo.toml']
+case-new-capitalization-env: pid=3743179 pgid=3743179 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'case1104', '--config', '/tmp/guest/case-switch/silo.toml']
+case-final-clean: pid=3743374 pgid=3743374 deadline=90s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'down', '--delete-cluster', '--clean', '--config', '/tmp/guest/case-switch/silo.toml']
+case-final-status: pid=3743671 pgid=3743671 deadline=45s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/case-switch/silo.toml']
+sentinel-final-clean: pid=3743723 pgid=3743723 deadline=90s command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'down', '--delete-cluster', '--clean', '--config', '/tmp/guest/sentinel/silo.toml']
+3791791 3791791
+3792055 3792055
+3840593 3840593
+3875001 3875001
+3875528 3875528

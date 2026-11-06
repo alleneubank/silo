@@ -1,0 +1,1 @@
+[{"Type":"volume","Name":"b14b512e80bd1cb6845c0b9f0a8e8d507bf9951119e580c981572f4193d83fde","Source":"/var/lib/docker/volumes/b14b512e80bd1cb6845c0b9f0a8e8d507bf9951119e580c981572f4193d83fde/_data","Destination":"/data","Driver":"local","Mode":"","RW":true,"Propagation":""}]

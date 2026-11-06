@@ -1,86 +1,51 @@
-# Port Allocation
+# Port allocation and account ownership
 
-This document describes how silo allocates ports. It is bundled with the CLI
-and can be printed with:
+Run `silo doc ports` for this reference.
 
-```
-silo doc ports
-```
+A new generation tries configured defaults in declaration order, then scans
+49152–65535. `random` or `0` skips the default. Duplicate defaults fall back
+independently. Ports are scalar host-wide claims: TCP, UDP, IPv4 and IPv6 use
+the same number domain. Native binds are availability hints, not reservations.
+A non-silo process can win a later bind; silo fails rather than renumbering an
+exported generation, killing the listener, or treating its response as success.
 
-## Requirements
+All ports, final resource names, overlapping Docker namespace prefixes, and
+physical file targets commit together under SQLite `BEGIN IMMEDIATE`. A unique
+`(domain, resource)` key belongs to a project and generation. A losing allocator
+retries port selection; a name/path conflict refuses. Lock-only allocations
+reserve ports even when nothing listens. Existing generations retain their
+ports without probing them into a different assignment.
 
-- `ports` must define at least one entry.
-- Port values must be integers between 1 and 65535, or `random`/`0` to always
-  allocate from the ephemeral range.
+The authoritative store is `<account-home>/.silo/leases.sqlite`, where
+account-home comes from the operating-system account record. Scrubbed `HOME`,
+worktrees, profiles and changed `SILO_PORT_REGISTRY_DIR` values share this
+allocation domain. There is no public store-location override. A local Unix
+Docker endpoint and a stable engine ID are required. Separate accounts,
+machines and remote engines are outside this domain's guarantee.
 
-## Allocation Strategy
+Peer reads never release, rewrite or expire reservations. No TTL, missing
+lockfile, dead PID or empty backend listing independently authorizes reuse.
+`down --clean` releases only its own generation after terminal command groups,
+completed requests, absent owned backend resources and free declared ports are
+proved. Retained resources and uncertain outcomes keep claims.
 
-Ports are allocated in declaration order. For each port key:
+`--force` reconfigures only a stopped, reconciled generation. It cannot disown
+a live stack. Parallel stacks require separate roots and names.
 
-1. If a lockfile exists and that port is free, reuse it (unless `--force`).
-2. If the configured value is `random`/`0`, skip defaults and allocate from the
-   ephemeral range (49152-65535).
-3. Otherwise, try the configured default. If occupied, allocate the next free
-   port from the ephemeral range (49152-65535).
+## Legacy cutover
 
-Ports are unique per instance. If two keys share the same default value, the
-first one wins and the next one will fall back to an ephemeral port.
+Before the first new allocation on a host, announce the cutover, upgrade or
+retire every permitted old silo invocation, and wait until all old operations
+are terminal. Then each owner stops and recreates its ephemeral projects.
+There is no migrate command, JSON import, or automatic old-client detector.
+An old command paused before publication must finish before the clean scan.
 
-## Multi-Instance Isolation
-
-silo maintains a machine-wide registry of live instances at
-`~/.silo/instances/` (one JSON file per project, keyed on the SHA-256 of the
-absolute project root). Each file records the instance name and the ports
-currently allocated to it.
-
-Before allocating, silo reads the registry and excludes every port owned by a
-peer instance:
-
-- Configured default ports already owned by a peer fall through to the
-  ephemeral range.
-- Lockfile-restored ports already owned by a peer also fall through.
-- The ephemeral scan skips all excluded ports and wraps around the range if
-  needed.
-
-After allocating, silo atomically replaces its own registry entry with the
-final port assignments. Allocations must be serialized across the complete
-read/allocate/write sequence to guarantee disjoint ports. This includes older
-clients; the registry does not provide a machine-wide allocation lock.
-
-### Liveness
-
-Peer reads never modify or remove registry entries. A valid reservation stays
-excluded even when its `.silo.lock` is missing: absence alone cannot prove its
-ports are safe to reuse. Lock-only peers need no listening socket to reserve
-their ports. Unreadable or corrupt peer files, registry enumeration failures,
-and indeterminate lockfile access refuse allocation with the affected path.
-Only a missing registry directory means no peers. Reads are bounded to 10,000
-directory entries and 1 MiB per reservation; oversized input also refuses.
-
-Only the caller's canonical project key is excluded from its peer read and
-removed by its unregister operation. `silo down --clean` unregisters that
-project; it performs no peer garbage collection. If a peer entry prevents
-allocation, have its owner establish that its resources are gone and retire
-its reservation. Deleting another project's entry can free an occupied port.
-
-### Override location
-
-Set `SILO_PORT_REGISTRY_DIR` to relocate the registry directory (primarily for
-tests).
-
-## Availability Check
-
-silo checks whether a port is free by attempting to bind to `0.0.0.0` with a
-100ms timeout. This keeps checks fast and CI-friendly.
-
-## Force Behavior
-
-`--force` ignores the lockfile's stored ports and allocates fresh values using
-the normal default-first strategy. Peer instances' ports (from the registry)
-are still excluded, so `--force` cannot steal ports from another live silo
-instance on the machine.
-
-## k3d Registry Port
-
-When `k3d.registry.enabled = true`, you must define `K3D_REGISTRY_PORT` in
-`[ports]` so silo can create the registry and advertise it to the cluster.
+`env`, `up`, `ci`, `down` and `status` first inspect all `*.json` entries in
+`SILO_PORT_REGISTRY_DIR`, the account-home `.silo/instances`, and the invoking
+HOME's `.silo/instances`, plus the selected root's legacy `.silo.lock`.
+Any entry—including malformed, stale or lock-only state—returns `LEGACY_STATE`
+with a listing and changes nothing. Those directories are never created or
+edited by the new allocator. A version-2 snapshot carrying project/generation
+markers is not a legacy lock. Old clients run after cutover are unsupported;
+the next visible legacy entry blocks new commands but cannot undo an earlier
+old-client allocation.

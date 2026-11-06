@@ -1,0 +1,6 @@
+silo info: Generated env file at /tmp/native/example-r1/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/native/example-r1/.localnet.env
+silo info: Wrote lockfile
+silo info: Exported env vars to /tmp/native/example-r1/github.env
+{"schemaVersion":1,"code":"COMMAND_FAILED","message":"COMMAND_FAILED: tilt-ci exited 1; owned claims retained. Tilt started on http://atomic-r1-example.localhost:10350/\nv0.37.8-fork.20261009.g753c01455, built 2026-10-09\nTilt analytics disabled: Environment variable CI=true\n\nInitial Build\nLoading Tiltfile at: /tmp/native/example-r1/Tiltfile\nSuccessfully loaded Tiltfile (434.037115ms)\nERROR: Cluster status error: Tilt encountered an error connecting to your Kubernetes cluster:\n\tthe server is currently unable to handle the request\nYou will need to restart Tilt after resolving the issue.\n        redis │ \n        redis │ Initial Build\n        redis │ STEP 1/1 — Deploying\n\nError: cluster connection failed\n","launchId":"a1963ca7-fe68-4830-b048-d02ea3d2ac40","generation":1}

@@ -1,0 +1,9 @@
+{"removed":"network","id":"c84e88e12d58740ee953643a0cad02462aa1c9b575631643ec742fde321347dd","name":"k3d-localnet-atomic-r1-example","createdAt":"2026-11-04T04:56:45.783092736Z"}
+{"ownedMountAbsent":"k3d-localnet-atomic-r1-example-images"}
+{"ownedMountAbsent":"6d982da49d67dd21933b5ed0e74ab7198fdfd089fec57b9a26424e9be406a216"}
+{"ownedMountAbsent":"0ea868c40bd95b2c7f8a66ba0382809f6e4d62b01deca0a2f004dd334fe8f243"}
+{"ownedMountAbsent":"dec8acd28ce8da8b0365124f6cb24330cd84575e0b888d526056e1f60275938f"}
+{"ownedMountAbsent":"e6a8f191ac7185f37c16f9b0c34492ef3a1e047456d7d41de5236396c90b01bc"}
+{"ownedMountAbsent":"k3d-localnet-atomic-r1-example-images"}
+{"ownedMountAbsent":"de6616a39c5e588f298f196d70aac863bf6f232f8c3bfed956294969ec425979"}
+{"cleanupOnly":true,"exampleQualification":"failed; original Tilt teardown could not reach its failed k3s API"}

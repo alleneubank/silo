@@ -1,0 +1,1 @@
+local_resource('identity',serve_cmd=['bun',"/tmp/fixtures/allocation-rehearsal-psM0aN/server.ts","/tmp/fixtures/allocation-rehearsal-psM0aN/a/server.pid"])

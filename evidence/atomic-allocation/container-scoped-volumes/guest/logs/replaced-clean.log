@@ -1,0 +1,4 @@
+silo warn: Leaked anonymous volumes: cff13966f0412ddd3164baa0d930858be408aba8c1d4aad84297ae62a83f22a9. Silo never deletes volumes by name; resolve this data with its owner.
+silo error: CLEANUP_REQUIRED: leaked anonymous volumes remain (cff13966f0412ddd3164baa0d930858be408aba8c1d4aad84297ae62a83f22a9 from 7efc81c88797c9e15c8da60c547bac6da1e140b7420806c48648e2b46e8b9a9b). Silo never deletes volumes by name; resolve this data with its owner. Claims retained.
+
+EXIT=1

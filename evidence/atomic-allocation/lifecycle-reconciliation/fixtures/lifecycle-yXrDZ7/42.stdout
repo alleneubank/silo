@@ -1,0 +1,60 @@
+[
+    {
+        "Name": "k3d-localnet-proof-l-017dd080-estart",
+        "Id": "0ba9099d040267f4429a6e3af99aca0c4a8542b5cfc10a89d1891461dde1102d",
+        "Created": "2026-11-06T02:19:00.740601828Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "d3cfb1a2-2362-4981-8403-171c06c9f0ef",
+            "k3d.cluster": "localnet-proof-l-017dd080-estart"
+        },
+        "Containers": {
+            "18538d39583b1893a529730996df5dc8aec03ad40d3ead93f7277e2e048ebbda": {
+                "Name": "k3d-localnet-proof-l-017dd080-estart-server-0",
+                "EndpointID": "c731a3c4c875a37ed0551c32c9cc603a861c171a994b93a0019368609616e347",
+                "MacAddress": "46:70:b8:38:1f:c4",
+                "IPv4Address": "172.24.0.2/16",
+                "IPv6Address": ""
+            },
+            "5aa17e3e704da4a7f1583ce8f327cd0543baeb6f90fe35ab0ce867c31fdfe1b4": {
+                "Name": "k3d-localnet-proof-l-017dd080-estart-serverlb",
+                "EndpointID": "2e90b4e39431bbc1c29247e1bb9fdd9f765239c5a7a3df7d98c784e42d7274e2",
+                "MacAddress": "aa:bd:c0:d2:47:03",
+                "IPv4Address": "172.24.0.3/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 5,
+                        "DynamicIPsAvailable": 65531
+                    }
+                }
+            }
+        }
+    }
+]

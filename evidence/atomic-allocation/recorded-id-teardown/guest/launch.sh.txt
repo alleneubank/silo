@@ -1,0 +1,14 @@
+#!/bin/bash
+set -eu
+lane=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp
+scratch=$lane/r5/guest
+n=$1
+seconds=$2
+shift 2
+setsid /home/linuxbrew/.linuxbrew/bin/timeout "$seconds" "$scratch/view" "$@" > "$scratch/logs/$n.log" 2>&1 < /dev/null &
+pid=$!
+echo "$pid" > "$lane/pids/r5-guest-$n.pid"
+line="r5 guest launch $n PID=$pid PGID=$pid timeout=$seconds log=$scratch/logs/$n.log"
+echo "$line" >> "$lane/resources"
+echo "$line" >> /home/ae/.handoffs/boss-mobile-release/silo-redesign/resources
+echo "$line"

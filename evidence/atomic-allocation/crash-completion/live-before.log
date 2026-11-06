@@ -1,0 +1,63 @@
+$ bun scripts/allocation-rehearsal.ts --suite live --root /tmp/fixtures --silo /mnt/dist/cli.js
+{"environment":{"platform":"linux","arch":"x64","bun":"1.4.4","root":"/tmp/fixtures/allocation-rehearsal-CjYozq","accountHome":"/home/ae","artifact":"/mnt/dist/cli.js","sha256":"9965e0b2fde3397eadc7c507ae2e7afafd7f0a4b3accfdc84411fba803185894"}}
+{"command":2,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-cjyozq-b","--json"],"code":0}
+{"command":1,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-cjyozq-a","--json"],"code":0}
+{"command":3,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":4,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":5,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":6,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-cjyozq-a","--json"],"code":0}
+{"command":7,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":8,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--timeout=10s","--json"],"code":1}
+{"command":9,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"command":10,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":11,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"squatter preserved; no renumbering or release","pass":true}
+{"command":12,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":13,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","--preload","/tmp/fixtures/allocation-rehearsal-CjYozq/crash-export.ts","/mnt/dist/cli.js","env","proof-cjyozq-a"],"code":137}
+{"command":14,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":15,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"native crash after rename before receipt checkpoint recovers own inode; B untouched","pass":true}
+{"command":16,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/gate-crash","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","--preload","/tmp/fixtures/allocation-rehearsal-CjYozq/crash-grant.ts","/mnt/dist/cli.js","up","proof-cjyozq-gate-crash"],"code":137}
+{"command":17,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/gate-crash","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"native owner SIGKILL before durable grant executes no hook and drains actual child group","pass":true}
+{"command":18,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-cjyozq-a","--json"],"code":0}
+{"command":19,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":20,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":21,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--json"],"code":0}
+{"command":22,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--force","--json"],"code":1}
+{"command":23,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--profile","alternative","--force","--json"],"code":1}
+{"command":24,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":25,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":26,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":27,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"live force refusal, owner crash, completion recovery, B untouched","pass":true,"b":"410cc314-3805-4d17-8735-4856c1efac47"}
+{"command":28,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":29,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-cjyozq-a","--json"],"code":0}
+{"command":30,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--profile","alternative","--force","--json"],"code":0}
+{"command":31,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":32,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":33,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/failed-teardown","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","proof-cjyozq-failed-teardown","--timeout=30s","--json"],"code":0}
+{"command":34,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/failed-teardown","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":35,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/failed-teardown","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"command":36,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/failed-teardown","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":37,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/failed-teardown","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"native Tilt teardown failure propagates and retains claims/snapshots","pass":true}
+{"command":38,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/files","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-cjyozq-files","--json"],"code":0}
+{"command":39,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/files/nested","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-cjyozq-nested","--json"],"code":1}
+{"command":40,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/files","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":41,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/CaseRoot","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","alias-allocation-rehearsal-cjyozq-7","--json"],"code":0}
+{"scenario":"native filesystem keeps these spellings distinct","original":"/tmp/fixtures/allocation-rehearsal-CjYozq/CaseRoot","alternate":"/tmp/fixtures/allocation-rehearsal-CjYozq/caseroot"}
+{"command":42,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/CaseRoot","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":43,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/Café","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","alias-allocation-rehearsal-cjyozq-8","--json"],"code":0}
+{"scenario":"native filesystem keeps these spellings distinct","original":"/tmp/fixtures/allocation-rehearsal-CjYozq/Café","alternate":"/tmp/fixtures/allocation-rehearsal-CjYozq/Café"}
+{"command":44,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/Café","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"result":"pass","suite":"live"}
+{"command":45,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/a","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":46,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/b","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":47,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/gate-crash","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":48,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/failed-teardown","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":49,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/files","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":50,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/files/nested","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":51,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/CaseRoot","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":52,"cwd":"/tmp/fixtures/allocation-rehearsal-CjYozq/Café","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"resources":"/tmp/fixtures/allocation-rehearsal-CjYozq/resources","evidence":"/tmp/fixtures/allocation-rehearsal-CjYozq","retainedEvidence":true}

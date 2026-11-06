@@ -1,0 +1,4 @@
+Queried only own recorded public-operation and journal launch PIDs.
+exit=1
+Final public-operation PID verification after sentinel cleanup:
+exit=1

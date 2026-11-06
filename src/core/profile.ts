@@ -16,7 +16,7 @@ interface ProfileResolution {
   source: ProfileSource;
 }
 
-const HOOK_KEYS = ["pre-up", "post-up", "pre-down", "post-down"] as const;
+const HOOK_KEYS = ["pre-up", "post-up"] as const;
 
 const normalizeProfileName = (value?: string): string | undefined => {
   if (value === undefined) {
@@ -27,7 +27,7 @@ const normalizeProfileName = (value?: string): string | undefined => {
 };
 
 /** The profile the caller asked for explicitly: `--profile` first, then env. */
-export const resolveExplicitProfile = (
+const resolveExplicitProfile = (
   profileFlag: string | undefined
 ): string | undefined =>
   normalizeProfileName(profileFlag) ?? normalizeProfileName(process.env.SILO_PROFILE);

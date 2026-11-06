@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+BASE=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/addendum1/guest
+for capture in plain-status named-status borrowed-refusal-state replaced-state-after; do
+  head -n 1 "$BASE/logs/$capture.log" | jq -r '.project.launches[] | [.supervisorPid,.leaderPid,.groupId] | @tsv'
+done > "$BASE/logs/recorded-process-identities.tsv"
+awk '{print $1;print $2;print $3}' "$BASE/logs/recorded-process-identities.tsv" | sort -nu > "$BASE/logs/recorded-process-ids.txt"
+ps -eo uid,pid,pgid,comm | awk 'NR==FNR { recorded[$1]=1; next } FNR==1 || ($2 in recorded) || ($3 in recorded)' "$BASE/logs/recorded-process-ids.txt" - > "$BASE/logs/final-process-absence.log"
+cat "$BASE/logs/final-process-absence.log"
+for project in plain peer named borrowed replaced; do
+  "$BASE/op" "$project" "$project-final-status" bun /mnt/dist/cli.js status --json
+done

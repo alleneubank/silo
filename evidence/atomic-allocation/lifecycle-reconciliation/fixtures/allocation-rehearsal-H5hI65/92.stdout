@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"PATH_CONFLICT","message":"PATH_CONFLICT: file-target/64513/64487724/shared.env belongs to /tmp/fixtures/allocation-rehearsal-H5hI65/files; choose another name or output.","owner":"/tmp/fixtures/allocation-rehearsal-H5hI65/files","resource":{"domain":"file-target","resource":"64513/64487724/shared.env"}}

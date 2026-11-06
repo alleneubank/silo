@@ -1,0 +1,2 @@
+[33mWARN[0m[0000] Failed to remove cluster details from default kubeconfig 
+[33mWARN[0m[0000] failed to get default kubeconfig file: open /home/ae/.kube/config: no such file or directory 

@@ -1,0 +1,1 @@
+ae       3047848 timeout 60s kubectl --kubeconfig /home/ae/.kube/localnet-redesign-a63b43e0 port-forward service/api 8080:8080

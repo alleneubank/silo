@@ -1,0 +1,15 @@
+ 147 pass
+ 0 fail
+ 397 expect() calls
+Ran 147 tests across 15 files. [10.28s]
+$ bun run tsc --noEmit
+Found 0 warnings and 0 errors.
+Finished in 27ms on 70 files with 90 rules using 32 threads.
+[33m[4mConfiguration hints[24m (1)[39m
+changeset    knip.json  [90mRemove from [97mignoreBinaries[90m[39m
+│ Total:     │ 64             │ 6465        │ 87679        │ 0            │ 0 (0%)           │ 0 (0%)            │
+└────────────┴────────────────┴─────────────┴──────────────┴──────────────┴──────────────────┴───────────────────┘
+Found 0 clones.
+Detection time:: 695.605ms
+
+492be5fec07d54662c51d2c11645eeedb81a54435b40d62946513b0553c56e5b  dist/cli.js

@@ -1,0 +1,40 @@
+{
+  "project": "c737d039-6646-411f-b784-a106e93a3e49",
+  "launches": 1023,
+  "resources": [
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-capacity-redis-1",
+      "id": "923fe9561b171c45cdb67661412a6ef12c1c1abfeb99981daa66836a6a623060",
+      "createdAt": "2026-11-06T05:01:18.702796117Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-capacity",
+        "com.docker.compose.project.working_dir": "/tmp/fixtures/capacity",
+        "io.silo.generation": "1",
+        "io.silo.project": "c737d039-6646-411f-b784-a106e93a3e49"
+      },
+      "kind": "container",
+      "anonymousVolumes": [
+        {
+          "name": "3954bf253812b1ed48dd9fb58fd916e81f6cfb757435a8883712bc8fd8acc8bd",
+          "createdAt": "2026-11-06T05:01:22Z",
+          "destination": "/data"
+        }
+      ],
+      "deleted": false
+    },
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-capacity_default",
+      "id": "fbcb1f6495da44e7c163dbdb3dacecb0a4df3b28dc405c317da08c0b4258129b",
+      "createdAt": "2026-11-06T05:01:18.669847086Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-capacity",
+        "io.silo.generation": "1",
+        "io.silo.project": "c737d039-6646-411f-b784-a106e93a3e49"
+      },
+      "kind": "network",
+      "deleted": false
+    }
+  ]
+}

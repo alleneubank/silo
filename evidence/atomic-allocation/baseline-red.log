@@ -1,0 +1,14 @@
+silo info: Generated env file at /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/baseline/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/baseline/b/.localnet.env
+silo info: Wrote lockfile
+{"control":"concurrent-allocation","expected":"disjoint","ports":[{"APP_PORT":48127},{"APP_PORT":48127}],"outcome":"RED: duplicate reservation"}
+silo info: Loading config
+silo info: Resolved instance name: baseline-escape (arg)
+silo info: Allocating ports
+silo info: Generated env file at /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/baseline/canary.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48129
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/baseline/canary.env; set +a
+{"control":"output-escape","expected":"refuse and preserve sentinel","outcome":"RED: peer file overwritten"}

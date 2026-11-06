@@ -1,0 +1,37 @@
+{
+  "recordedAt": "2026-11-04T05:19:01.851Z",
+  "recordHead": "2d99da89b572f5a2d1c3fa2bfedb4401d8e177b3",
+  "executableSourceHead": "4b0a9323f65fef62dfa82936d292110ef6714d40",
+  "command": [
+    "nice",
+    "-n",
+    "15",
+    "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "output": "Bundled 60 modules in 6ms\n\n  cli.js  0.29 MB  (entry point)\n\n$ bun build --target=bun --outdir dist src/cli.ts\n",
+  "sha256": "2675670dc14c3db290a18956f0fdd57f443d7e062b82b2b65e79b64e22e0318e",
+  "sourceChangesSinceExecutableHead": false,
+  "exampleAttribution": {
+    "perRunCommandHashPrologueRetained": false,
+    "source": "author session computed this SHA before invoking the second example; retained CLI stdout and unchanged bundle support attribution",
+    "exitCode": 0,
+    "exitCodeSource": "author terminal completion record, recorded here after the run rather than as a per-run prologue",
+    "command": [
+      "/tmp/tools/bun",
+      "/mnt/dist/cli.js",
+      "ci",
+      "atomic-r1-example",
+      "--config",
+      "/tmp/native/example-r1/silo.toml",
+      "--timeout",
+      "300s",
+      "--export-ci",
+      "--json"
+    ],
+    "githubEnv": "/tmp/native/example-r1/github-second.env",
+    "resultRecord": "example/example-r1-second.log"
+  }
+}

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"CLEANUP_REQUIRED","message":"CLEANUP_REQUIRED: owned kubeconfig snapshot remains at /tmp/fixtures/allocation-rehearsal-wFXjXd/backend/.localnet/kubeconfig. Run down --clean before removing its role; claims retained."}

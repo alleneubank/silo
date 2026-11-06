@@ -1,0 +1,20 @@
+╭───────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-commit[m │
+╰───────────────────────────────────────╯
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 19ms on 1 file with 90 rules using 32 threads.
+
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 17ms on 1 file with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 1.60 seconds)
+✓ format (0.06 seconds)
+✓ lint (0.07 seconds)
+✓ typecheck (1.59 seconds)
+[feat/atomic-allocation cf0b2b2] test(allocation): await exact durable crash completion
+ 2 files changed, 36 insertions(+), 2 deletions(-)

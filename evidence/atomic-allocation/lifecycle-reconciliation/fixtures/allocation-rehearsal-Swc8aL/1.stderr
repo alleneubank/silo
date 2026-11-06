@@ -1,0 +1,8 @@
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-Swc8aL/absent-delete/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info:   K3D_API_PORT: 49152
+silo info: Project 90a0afe5-7fca-4318-a37e-5fd8544651d7, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-Swc8aL/absent-delete/.localnet.env; set +a

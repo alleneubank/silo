@@ -1,0 +1,2 @@
+network create --label io.silo.project=03b9ae88-db68-4161-88b9-34cf5b324cc7 --label io.silo.generation=1 --label k3d.cluster=localnet-r7guest-netfail k3d-localnet-r7guest-netfail
+network create --label io.silo.project=03b9ae88-db68-4161-88b9-34cf5b324cc7 --label io.silo.generation=2 --label k3d.cluster=localnet-r7guest-netfail k3d-localnet-r7guest-netfail

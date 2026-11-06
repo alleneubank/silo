@@ -1,0 +1,17 @@
+base pre-down attempt=1 EXIT=1
+{"schemaVersion":1,"code":"SILO_ERROR","message":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"pre-down\"\n    ],\n    \"path\": [\n      \"hooks\"\n    ],\n    \"message\": \"Unrecognized key(s) in object: 'pre-down'\"\n  }\n]"}
+base pre-down attempt=2 EXIT=1
+{"schemaVersion":1,"code":"SILO_ERROR","message":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"pre-down\"\n    ],\n    \"path\": [\n      \"hooks\"\n    ],\n    \"message\": \"Unrecognized key(s) in object: 'pre-down'\"\n  }\n]"}
+base post-down attempt=1 EXIT=1
+{"schemaVersion":1,"code":"SILO_ERROR","message":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"post-down\"\n    ],\n    \"path\": [\n      \"hooks\"\n    ],\n    \"message\": \"Unrecognized key(s) in object: 'post-down'\"\n  }\n]"}
+base post-down attempt=2 EXIT=1
+{"schemaVersion":1,"code":"SILO_ERROR","message":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"post-down\"\n    ],\n    \"path\": [\n      \"hooks\"\n    ],\n    \"message\": \"Unrecognized key(s) in object: 'post-down'\"\n  }\n]"}
+profile pre-down attempt=1 EXIT=1
+{"schemaVersion":1,"code":"SILO_ERROR","message":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"pre-down\"\n    ],\n    \"path\": [\n      \"profiles\",\n      \"bad\",\n      \"hooks\"\n    ],\n    \"message\": \"Unrecognized key(s) in object: 'pre-down'\"\n  }\n]"}
+profile pre-down attempt=2 EXIT=1
+{"schemaVersion":1,"code":"SILO_ERROR","message":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"pre-down\"\n    ],\n    \"path\": [\n      \"profiles\",\n      \"bad\",\n      \"hooks\"\n    ],\n    \"message\": \"Unrecognized key(s) in object: 'pre-down'\"\n  }\n]"}
+profile post-down attempt=1 EXIT=1
+{"schemaVersion":1,"code":"SILO_ERROR","message":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"post-down\"\n    ],\n    \"path\": [\n      \"profiles\",\n      \"bad\",\n      \"hooks\"\n    ],\n    \"message\": \"Unrecognized key(s) in object: 'post-down'\"\n  }\n]"}
+profile post-down attempt=2 EXIT=1
+{"schemaVersion":1,"code":"SILO_ERROR","message":"[\n  {\n    \"code\": \"unrecognized_keys\",\n    \"keys\": [\n      \"post-down\"\n    ],\n    \"path\": [\n      \"profiles\",\n      \"bad\",\n      \"hooks\"\n    ],\n    \"message\": \"Unrecognized key(s) in object: 'post-down'\"\n  }\n]"}
+NO_HOOK_EXECUTED=0

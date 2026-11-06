@@ -1,0 +1,176 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/case-switch/silo.toml']
+exit=0
+{
+  "schemaVersion": 1,
+  "legacy": false,
+  "changed": false,
+  "project": {
+    "schemaVersion": 1,
+    "projectId": "07019dc7-d57d-4b8e-a2f8-c78bab2e3942",
+    "root": "/tmp/guest/case-switch",
+    "generation": 1,
+    "phase": "stopped",
+    "problem": null,
+    "operation": null,
+    "allocation": {
+      "state": {
+        "name": "case1104",
+        "ports": {
+          "TILT_PORT": 49153
+        },
+        "identity": {
+          "name": "case1104",
+          "prefix": "guest",
+          "composeName": "guest-case1104",
+          "dockerNetwork": "guest-case1104",
+          "volumePrefix": "guest-case1104",
+          "containerPrefix": "guest-case1104-",
+          "hosts": {
+            "APP_HOST": "case1104.localhost",
+            "TILT_HOST": "127.0.0.1"
+          }
+        },
+        "createdAt": "2026-11-04T04:58:43.220Z",
+        "k3dClusterCreated": false
+      },
+      "configPath": "/tmp/guest/case-switch/silo.toml",
+      "configSource": "version = 1\nprefix = \"guest\"\noutput = \"Owned.env\"\n[ports]\nTILT_PORT = \"random\"\n[hosts]\nAPP_HOST = \"${name}.localhost\"\nTILT_HOST = \"127.0.0.1\"\n",
+      "fingerprint": "3c39cd0e7511a17c1fbb68cc0232164b26798f6f77afc12e3bd7c22673cf2da2",
+      "urls": {},
+      "k3dArgs": [],
+      "hostOrder": [
+        "APP_HOST",
+        "TILT_HOST"
+      ],
+      "portOrder": [
+        "TILT_PORT"
+      ],
+      "urlOrder": [],
+      "engine": {
+        "endpoint": "unix:///var/run/docker.sock",
+        "id": "86f30b48-26b3-4a5b-8f5c-8c97fe963463"
+      }
+    },
+    "claims": [
+      {
+        "domain": "compose-name",
+        "resource": "guest-case1104"
+      },
+      {
+        "domain": "container",
+        "resource": "guest-case1104-",
+        "prefix": true
+      },
+      {
+        "domain": "container",
+        "resource": "guest-case1104_",
+        "prefix": true
+      },
+      {
+        "domain": "file-target",
+        "resource": "64513/163609282/.silo.lock"
+      },
+      {
+        "domain": "file-target",
+        "resource": "64513/163609282/owned.env"
+      },
+      {
+        "domain": "file-target",
+        "resource": "64513/163609282/silo.toml"
+      },
+      {
+        "domain": "host-port",
+        "resource": "49153"
+      },
+      {
+        "domain": "hostname",
+        "resource": "case1104.localhost"
+      },
+      {
+        "domain": "instance-name",
+        "resource": "case1104"
+      },
+      {
+        "domain": "network",
+        "resource": "guest-case1104"
+      },
+      {
+        "domain": "network",
+        "resource": "guest-case1104-",
+        "prefix": true
+      },
+      {
+        "domain": "network",
+        "resource": "guest-case1104_",
+        "prefix": true
+      },
+      {
+        "domain": "volume",
+        "resource": "guest-case1104-",
+        "prefix": true
+      },
+      {
+        "domain": "volume",
+        "resource": "guest-case1104_",
+        "prefix": true
+      }
+    ],
+    "resources": [],
+    "launches": [],
+    "files": [
+      {
+        "role": "config",
+        "target": {
+          "path": "/tmp/guest/case-switch/silo.toml",
+          "base": "/tmp/guest/case-switch",
+          "parent": "/tmp/guest/case-switch",
+          "parentDevice": "64513",
+          "parentInode": "163609282",
+          "key": "64513/163609282/silo.toml"
+        },
+        "published": {
+          "identity": "64513/163609286",
+          "hash": "8f4fd44ac151a67a064f07ff15a55903b70c40bad59ca6b43b39dfe5114200ed",
+          "generation": 1
+        },
+        "pending": null
+      },
+      {
+        "role": "env",
+        "target": {
+          "path": "/tmp/guest/case-switch/Owned.env",
+          "base": "/tmp/guest/case-switch",
+          "parent": "/tmp/guest/case-switch",
+          "parentDevice": "64513",
+          "parentInode": "163609282",
+          "key": "64513/163609282/owned.env"
+        },
+        "published": {
+          "identity": "64513/163620997",
+          "hash": "91cf7dc93af19ef5e5c638860c3a97761bdd5abd5910c6d90663a386e94c116f",
+          "generation": 1
+        },
+        "pending": null
+      },
+      {
+        "role": "lock",
+        "target": {
+          "path": "/tmp/guest/case-switch/.silo.lock",
+          "base": "/tmp/guest/case-switch",
+          "parent": "/tmp/guest/case-switch",
+          "parentDevice": "64513",
+          "parentInode": "163609282",
+          "key": "64513/163609282/.silo.lock"
+        },
+        "published": {
+          "identity": "64513/163620998",
+          "hash": "f1fe29cd5b27bfb3874bbf13ac3e5d5246b516e697d291ce721f8200d16a9a7e",
+          "generation": 1
+        },
+        "pending": null
+      }
+    ],
+    "sinks": [],
+    "completions": []
+  }
+}

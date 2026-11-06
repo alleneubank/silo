@@ -1,4 +1,7 @@
 import type { BRAND } from "zod";
+import type { z } from "zod";
+import type { InstanceStateSchema } from "./lease_types";
+import type { LockfileSchema } from "./lockfile";
 
 export type PortConfigValue = number | "random";
 export type ProjectRelativePath = string & BRAND<"ProjectRelativePath">;
@@ -10,7 +13,7 @@ export interface TiltConfig {
 export interface SiloConfig {
   version: 1;
   prefix?: string;
-  output?: string;
+  output?: ProjectRelativePath;
   ports: Record<string, PortConfigValue>;
   hosts?: Record<string, string>;
   urls?: Record<string, string>;
@@ -38,8 +41,6 @@ export interface K3dConfig {
 export interface LifecycleHooks {
   "pre-up"?: string[];
   "post-up"?: string[];
-  "pre-down"?: string[];
-  "post-down"?: string[];
 }
 
 export interface ProfileAppendConfig {
@@ -71,7 +72,7 @@ export interface ProfileConfig {
 export interface ResolvedConfig {
   version: 1;
   prefix: string;
-  output: string;
+  output: ProjectRelativePath;
   ports: Record<string, PortConfigValue>;
   portOrder: string[];
   hosts: Record<string, string>;
@@ -100,38 +101,8 @@ export interface InstanceIdentity {
   kubeconfigPath?: string | undefined;
 }
 
-/**
- * A Tilt stack that `silo up --force` started a parallel stack alongside.
- *
- * The lockfile tracks one instance, so the pid it was holding would otherwise
- * be overwritten and the stack left with no record anywhere. Keeping the ports
- * it owns is what lets `silo status` say which stack answers on which port.
- */
-export interface DisownedTilt {
-  pid: number;
-  name: string;
-  ports: Record<string, number>;
-  startedAt?: string | undefined;
-  disownedAt: string;
-}
-
-export interface InstanceState {
-  name: string;
-  profile?: string | undefined;
-  ports: Record<string, number>;
-  identity: InstanceIdentity;
-  createdAt: string;
-  k3dClusterCreated: boolean;
-  tiltPid?: number | undefined;
-  tiltStartedAt?: string | undefined;
-  disownedTilts?: DisownedTilt[] | undefined;
-}
-
-export interface Lockfile {
-  version: 1;
-  generatedAt: string;
-  instance: InstanceState;
-}
+export type InstanceState = z.infer<typeof InstanceStateSchema>;
+export type Lockfile = z.infer<typeof LockfileSchema>;
 
 export type IdentityVars = Record<string, string> & {
   name: string;

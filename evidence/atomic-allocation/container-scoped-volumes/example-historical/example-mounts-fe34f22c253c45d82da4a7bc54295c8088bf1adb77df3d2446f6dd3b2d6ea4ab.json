@@ -1,0 +1,1 @@
+[{"Type":"volume","Name":"k3d-localnet-redesign-d9ae0db3-images","Source":"/var/lib/docker/volumes/k3d-localnet-redesign-d9ae0db3-images/_data","Destination":"/k3d/images","Driver":"local","Mode":"z","RW":true,"Propagation":""}]

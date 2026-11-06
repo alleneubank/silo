@@ -1,0 +1,14 @@
+Tilt started on http://127.0.0.1:49153/
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+Tilt analytics disabled: Environment variable CI=false
+
+Initial Build
+Loading Tiltfile at: /tmp/fixtures/allocation-rehearsal-H5hI65/b/Tiltfile
+Successfully loaded Tiltfile (327.235µs)
+     identity │ 
+     identity │ Initial Build
+     identity │ Running cmd: bun /tmp/fixtures/allocation-rehearsal-H5hI65/server.ts /tmp/fixtures/allocation-rehearsal-H5hI65/b/server.pid
+
+silo info:   silo doc tilt
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-H5hI65/b/.localnet.env
+silo info: Wrote lockfile

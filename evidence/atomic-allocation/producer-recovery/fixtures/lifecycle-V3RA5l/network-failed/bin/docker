@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+if [ "${1-}" = network ] && [ "${2-}" = create ]; then shift 2; exec /usr/bin/docker network create --subnet "$COLLISION_CIDR" "$@"; fi
+exec /usr/bin/docker "$@"

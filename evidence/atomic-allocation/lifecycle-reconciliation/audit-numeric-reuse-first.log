@@ -1,0 +1,21 @@
+57 | const auditor=Number(readFileSync(lane+'-tmp/pids/r6-resource-audit.pid','utf8'));pids.delete(auditor);pids.delete(process.pid);
+58 | function docker(args:string[]){const result=Bun.spawnSync(['/usr/bin/docker',...args],{stdout:'pipe',stderr:'pipe',timeout:10000,env:{...process.env,DOCKER_HOST:'unix:///var/run/docker.sock',DOCKER_CONTEXT:''}});assert.equal(result.exitCode,0,result.stderr.toString());return result.stdout.toString().trim();}
+59 | const engine=docker(['info','--format','{{.ID}}']);assert.equal(engine,'114f4194-e27d-4d0b-82fc-201ecd0e9997');const present=new Set<string>();let bridge=false;
+60 | for(const kind of['container','network','volume'])for(const line of docker([kind,'ls',...(kind==='container'?['-a']:[]),...(kind==='volume'?[]:['--no-trunc']),'--format','{{json .}}']).split('\n').filter(Boolean)){const row=JSON.parse(line);const id=kind==='volume'?row.Name:row.ID;assert.equal(typeof id,'string');present.add(`${kind}/${id}`);if(kind==='network'&&row.Name==='bridge'){assert.equal(docker(['network','inspect',row.ID,'--format','{{.Name}}']),'bridge');bridge=true;}}
+61 | assert(bridge);const remaining=[...handles.values()].filter(h=>present.has(`${h.kind}/${h.id}`));assert.deepEqual(remaining,[]);
+62 | const running=[];for(const pid of pids){assert(Number.isSafeInteger(pid)&&pid>1);const exists=(n:number)=>{try{process.kill(n,0);return true;}catch(e){assert.equal((e as NodeJS.ErrnoException).code,'ESRCH');return false;}};const processPresent=exists(pid),groupPresent=exists(-pid);if(processPresent||groupPresent)running.push({pid,processPresent,groupPresent});}assert.deepEqual(running,[],'Recorded numeric handles need identity attribution; never signal by census');
+                                                                                                                                                                   ^
+AssertionError: Expected values to be strictly equal:
+
+'EPERM' !== 'ESRCH'
+
+ generatedMessage: true,
+     actual: "EPERM",
+   expected: "ESRCH",
+   operator: "strictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at exists (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r6/audit.ts:62:159)
+
+Bun v1.4.4 (Linux x64)

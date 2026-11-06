@@ -1,0 +1,11 @@
+{"environment":{"platform":"linux","arch":"x64","bun":"1.4.4","root":"/tmp/rehearsal/allocation-rehearsal-qX7yfk","accountHome":"/home/ae","artifact":"/tmp/baseline/cli.js","sha256":"2e4f0501ccc6423900d902a70623a629917153cc7c0a772b6eef3cb779741ec6"}}
+{"command":1,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","env","proof-qx7yfk-registry-hook-timeout","--json"],"code":0}
+{"command":2,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","ci","--timeout","30s","--json"],"code":1}
+{"command":3,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk","argv":["docker","container","inspect","c1cd1c61825f3e0973b3d0b981a8f16f66c5dd36796aee4d484c0ec331bb7270"],"code":0}
+{"command":4,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","status","--json"],"code":0}
+{"observation":"pre-up hook timeout","exit":1,"code":"TIMEOUT","squatterReceipted":false}
+{"command":5,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","down","--delete-cluster","--json"],"code":0}
+{"command":6,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","status","--json"],"code":0}
+{"observation":"down --delete-cluster with timed-out hook pending","exit":0,"code":null,"squatterReceipted":false}
+{"result":"fail","error":"AssertionError [ERR_ASSERTION]: Expected \"actual\" to be strictly unequal to: 0","stack":"AssertionError [ERR_ASSERTION]: Expected \"actual\" to be strictly unequal to: 0\n    at registryProvenance (/mnt/scripts/allocation-rehearsal.ts:1048:10)"}
+{"command":7,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk","argv":["docker","container","inspect","c1cd1c61825f3e0973b3d0b981a8f16f66c5dd36796aee4d484c0ec331bb7270"],"code":1}

@@ -3,3 +3,11 @@ services:
     image: redis:7-alpine
     ports:
       - "${REDIS_PORT}:6379"
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID:?run through silo}"
+      io.silo.generation: "${SILO_GENERATION:?run through silo}"
+networks:
+  default:
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID:?run through silo}"
+      io.silo.generation: "${SILO_GENERATION:?run through silo}"

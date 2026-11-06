@@ -1,0 +1,104 @@
+{
+  "artifactHead": "5d2c870ed38757a73e3e005c9673a6b0bd39b56a",
+  "publicCleanExitedZero": true,
+  "mounts": [
+    {
+      "name": "k3d-localnet-anon-baseline-images",
+      "parents": [
+        {
+          "parent": "7c7e8693d8e6ea34460177b21bd7a8c5d3f2c8de0d9023e640114735ddb70b04",
+          "name": "k3d-localnet-anon-baseline-images",
+          "destination": "/k3d/images",
+          "image": "docker.io/rancher/k3s:v1.35.5-k3s1",
+          "imageDeclared": false
+        },
+        {
+          "parent": "fd8114e7d3ee485aec1c08949d96da12dd47a61a643f0b91c601e1b43cf7a628",
+          "name": "k3d-localnet-anon-baseline-images",
+          "destination": "/k3d/images",
+          "image": "ghcr.io/k3d-io/k3d-proxy:5.9.0",
+          "imageDeclared": false
+        }
+      ],
+      "remainedAfterPublicClean": false
+    },
+    {
+      "name": "a9197728650d18d7f11c6943a33aa28862d490ffda41365d0d62de766951841d",
+      "parents": [
+        {
+          "parent": "7c7e8693d8e6ea34460177b21bd7a8c5d3f2c8de0d9023e640114735ddb70b04",
+          "name": "a9197728650d18d7f11c6943a33aa28862d490ffda41365d0d62de766951841d",
+          "destination": "/var/log",
+          "image": "docker.io/rancher/k3s:v1.35.5-k3s1",
+          "imageDeclared": true
+        }
+      ],
+      "remainedAfterPublicClean": false
+    },
+    {
+      "name": "153e013aea878bef6261f20015e1e8816bf23f44430e8057fcedbacb00397fee",
+      "parents": [
+        {
+          "parent": "7c7e8693d8e6ea34460177b21bd7a8c5d3f2c8de0d9023e640114735ddb70b04",
+          "name": "153e013aea878bef6261f20015e1e8816bf23f44430e8057fcedbacb00397fee",
+          "destination": "/var/lib/cni",
+          "image": "docker.io/rancher/k3s:v1.35.5-k3s1",
+          "imageDeclared": true
+        }
+      ],
+      "remainedAfterPublicClean": false
+    },
+    {
+      "name": "863e54b81ed82834d942addcab52d10e8d23f02cdd7de3f379a8fae521a5a179",
+      "parents": [
+        {
+          "parent": "7c7e8693d8e6ea34460177b21bd7a8c5d3f2c8de0d9023e640114735ddb70b04",
+          "name": "863e54b81ed82834d942addcab52d10e8d23f02cdd7de3f379a8fae521a5a179",
+          "destination": "/var/lib/kubelet",
+          "image": "docker.io/rancher/k3s:v1.35.5-k3s1",
+          "imageDeclared": true
+        }
+      ],
+      "remainedAfterPublicClean": false
+    },
+    {
+      "name": "208033a99c244c6a9a57ed147ecd79090e77a2133518b911f399384d839ac0f1",
+      "parents": [
+        {
+          "parent": "7c7e8693d8e6ea34460177b21bd7a8c5d3f2c8de0d9023e640114735ddb70b04",
+          "name": "208033a99c244c6a9a57ed147ecd79090e77a2133518b911f399384d839ac0f1",
+          "destination": "/var/lib/rancher/k3s",
+          "image": "docker.io/rancher/k3s:v1.35.5-k3s1",
+          "imageDeclared": true
+        }
+      ],
+      "remainedAfterPublicClean": false
+    },
+    {
+      "name": "6e85018136c4972111eec82d85a7e725a87e07d19edeed9c9fab25b5f8ca8b8b",
+      "parents": [
+        {
+          "parent": "14afa53b25cc3e3510edb48df244a7a417cf0ffe5c6411459f081ec49e47d6be",
+          "name": "6e85018136c4972111eec82d85a7e725a87e07d19edeed9c9fab25b5f8ca8b8b",
+          "destination": "/data",
+          "image": "redis:7-alpine",
+          "imageDeclared": true
+        }
+      ],
+      "remainedAfterPublicClean": true
+    },
+    {
+      "name": "4001101767e11677d3216956f8064c39e6e90bf2f67c3f13e99676dff51f6af4",
+      "parents": [
+        {
+          "parent": "4ace377e1cf8e9ef39da97d418e89c1745543c0b3c3510d64a926820f21cab4a",
+          "name": "4001101767e11677d3216956f8064c39e6e90bf2f67c3f13e99676dff51f6af4",
+          "destination": "/var/lib/registry",
+          "image": "docker.io/library/registry:2",
+          "imageDeclared": true
+        }
+      ],
+      "remainedAfterPublicClean": false
+    }
+  ]
+}

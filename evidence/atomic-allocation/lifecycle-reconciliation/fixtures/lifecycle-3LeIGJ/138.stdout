@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "localnet-proof-lifecycle-3leigj-live-up_default",
+        "Id": "883c3995d2fb58cd09e5d8aa7e507f2df1b329f0022adff0f3339f2cf7d46cca",
+        "Created": "2026-11-06T02:28:11.615144573Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "230c458e706413f3014d11501e5b8ad3ddf66c19af59a8dcc4783097bfeaeb27",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "localnet-proof-lifecycle-3leigj-live-up",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "82c2c143-7006-4661-9538-e18931c36594"
+        },
+        "Containers": {
+            "b2eb5eee94b3a224ed8edb7afc080f6d3220588ee9a7d3e1dc2f8010897eb5fc": {
+                "Name": "localnet-proof-lifecycle-3leigj-live-up-redis-1",
+                "EndpointID": "786c65f9e55bf9b97e5c31effd34ca5ccae32e887f627ea3dab96d8cb8e9ceb8",
+                "MacAddress": "1a:d5:a6:f6:14:35",
+                "IPv4Address": "172.24.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

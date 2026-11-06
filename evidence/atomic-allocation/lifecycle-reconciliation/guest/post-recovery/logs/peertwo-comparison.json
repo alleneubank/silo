@@ -1,0 +1,6 @@
+{
+  "containerIdPreserved": true,
+  "networkIdPreserved": true,
+  "supervisorPreserved": true,
+  "phaseAfter": "running"
+}

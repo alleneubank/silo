@@ -1,0 +1,27 @@
+Unable to find image 'redis:7-alpine' locally
+7-alpine: Pulling from library/redis
+e25d07126ba7: Pulling fs layer
+1ea868e596ec: Pulling fs layer
+cef7ad5a05c6: Pulling fs layer
+ae75cb664c8f: Pulling fs layer
+a239ec2b8fe1: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+759efa4719c9: Pulling fs layer
+4f4fb700ef54: Already exists
+e25d07126ba7: Download complete
+ae75cb664c8f: Download complete
+a239ec2b8fe1: Download complete
+1ea868e596ec: Download complete
+759efa4719c9: Download complete
+cef7ad5a05c6: Download complete
+a239ec2b8fe1: Pull complete
+759efa4719c9: Pull complete
+cef7ad5a05c6: Pull complete
+4d584b19579f: Download complete
+b5e4a0ae9c7c: Download complete
+4f4fb700ef54: Pull complete
+e25d07126ba7: Pull complete
+ae75cb664c8f: Pull complete
+1ea868e596ec: Pull complete
+Digest: sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
+Status: Downloaded newer image for redis:7-alpine

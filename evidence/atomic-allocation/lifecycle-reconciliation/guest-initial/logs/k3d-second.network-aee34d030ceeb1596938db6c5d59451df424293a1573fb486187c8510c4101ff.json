@@ -1,0 +1,53 @@
+[
+    {
+        "Name": "k3d-r6guest-cluster",
+        "Id": "aee34d030ceeb1596938db6c5d59451df424293a1573fb486187c8510c4101ff",
+        "Created": "2026-11-06T03:30:50.162417883Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.23.0.0/16",
+                    "Gateway": "172.23.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "b3be5dc8-81b3-4efb-bcb4-76d8ae08c06c",
+            "k3d.cluster": "r6guest-cluster"
+        },
+        "Containers": {
+            "a172f50f35fc37b689362f2b8e4e14de146ea701f1e7610f79d7b6c7015e1b08": {
+                "Name": "k3d-r6guest-cluster-server-0",
+                "EndpointID": "1569db739f56b2a944fb01f0fa4767e6fff79a1de9b315955cf532891856e65d",
+                "MacAddress": "66:ce:25:bc:4f:2f",
+                "IPv4Address": "172.23.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.23.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

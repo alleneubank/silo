@@ -1,0 +1,34 @@
+{"account":"account","projects":11,"activeGenerations":0}
+{"account":"guest-account","projects":3,"activeGenerations":0}
+{"recordedObjectsAndMounts":54,"remains":[{"kind":"volume","id":"4ba8bed046cbc2117cc2d63dc6e5dd2e34ac1e46eeb3f5255b2c7192feb4ac50","name":"4ba8bed046cbc2117cc2d63dc6e5dd2e34ac1e46eeb3f5255b2c7192feb4ac50"}]}
+62 |   ...docker(["network", "ls", "--no-trunc", "--format", "{{.ID}}"] ).split("\n"),
+63 |   ...docker(["volume", "ls", "--format", "{{.Name}}"] ).split("\n"),
+64 | ]);
+65 | const remains = [...expected.values()].filter(r => present.has(r.id));
+66 | console.log(JSON.stringify({ recordedObjectsAndMounts: expected.size, remains }));
+67 | assert.deepEqual(remains, []);
+            ^
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
++ [
++   {
++     id: '4ba8bed046cbc2117cc2d63dc6e5dd2e34ac1e46eeb3f5255b2c7192feb4ac50',
++     kind: 'volume',
++     name: '4ba8bed046cbc2117cc2d63dc6e5dd2e34ac1e46eeb3f5255b2c7192feb4ac50'
++   }
++ ]
+- []
+
+ generatedMessage: true,
+     actual: [
+  [Object ...]
+],
+   expected: [],
+   operator: "deepStrictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/final-audit.ts:67:8
+
+Bun v1.4.4 (Linux x64)

@@ -1,0 +1,100 @@
+I1106 06:07:31.544745      87 kubelet.go:972] "Not starting PodCertificateRequest manager because we are in static kubelet mode or the PodCertificateProjection feature gate is disabled"
+W1106 06:07:31.544786      87 probe.go:272] Flexvolume plugin directory at /usr/libexec/kubernetes/kubelet-plugins/volume/exec/ does not exist. Recreating.
+I1106 06:07:31.545239      87 server.go:1252] "Started kubelet"
+I1106 06:07:31.545296      87 server.go:182] "Starting to listen" address="0.0.0.0" port=10250
+I1106 06:07:31.545293      87 ratelimit.go:56] "Setting rate limiting for endpoint" service="podresources" qps=100 burstTokens=10
+time="2026-11-06T06:07:31Z" level=info msg="Creating embedded CRD addons.k3s.cattle.io"
+I1106 06:07:31.545351      87 server_v1.go:49] "podresources" method="list" useActivePods=true
+I1106 06:07:31.545445      87 server.go:254] "Starting to serve the podresources API" endpoint="unix:/var/lib/kubelet/pod-resources/kubelet.sock"
+I1106 06:07:31.546075      87 server.go:317] "Adding debug handlers to kubelet server"
+I1106 06:07:31.546086      87 fs_resource_analyzer.go:69] "Starting FS ResourceAnalyzer"
+I1106 06:07:31.546107      87 dynamic_serving_content.go:135] "Starting controller" name="kubelet-server-cert-files::/var/lib/rancher/k3s/agent/serving-kubelet.crt::/var/lib/rancher/k3s/agent/serving-kubelet.key"
+I1106 06:07:31.546126      87 volume_manager.go:311] "Starting Kubelet Volume Manager"
+E1106 06:07:31.546126      87 kubelet_node_status.go:392] "Error getting the current node from lister" err="node \"k3d-localnet-proof-w-da10ff3b-create-server-0\" not found"
+I1106 06:07:31.546160      87 desired_state_of_world_populator.go:146] "Desired state populator starts to run"
+I1106 06:07:31.546184      87 reconciler.go:29] "Reconciler: start to sync state"
+E1106 06:07:31.546274      87 kubelet.go:1661] "Image garbage collection failed once. Stats initialization may not have completed yet" err="invalid capacity 0 on image filesystem"
+I1106 06:07:31.546676      87 factory.go:223] Registration of the systemd container factory successfully
+I1106 06:07:31.546753      87 factory.go:221] Registration of the crio container factory failed: Get "http://%2Fvar%2Frun%2Fcrio%2Fcrio.sock/info": dial unix /var/run/crio/crio.sock: connect: no such file or directory
+I1106 06:07:31.547245      87 factory.go:223] Registration of the containerd container factory successfully
+I1106 06:07:31.549314      87 cpu_manager.go:225] "Starting" policy="none"
+I1106 06:07:31.549318      87 cpu_manager.go:226] "Reconciling" reconcilePeriod="10s"
+I1106 06:07:31.549328      87 state_mem.go:41] "Initialized" logger="CPUManager state checkpoint.CPUManager state memory"
+I1106 06:07:31.550833      87 kubelet_network_linux.go:54] "Initialized iptables rules." protocol="IPv4"
+I1106 06:07:31.551167      87 kubelet_network_linux.go:54] "Initialized iptables rules." protocol="IPv6"
+I1106 06:07:31.551176      87 status_manager.go:249] "Starting to sync pod status with apiserver"
+I1106 06:07:31.551193      87 kubelet.go:2506] "Starting kubelet main sync loop"
+E1106 06:07:31.551219      87 kubelet.go:2530] "Skipping pod synchronization" err="[container runtime status check may not have completed yet, PLEG is not healthy: pleg has yet to be successful]"
+time="2026-11-06T06:07:31Z" level=info msg="Creating embedded CRD etcdsnapshotfiles.k3s.cattle.io"
+{"level":"warn","ts":"2026-11-06T06:07:31.551727Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":81,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+E1106 06:07:31.552107      87 nodelease.go:50] "Failed to get node when trying to set owner ref to the node lease" err="nodes \"k3d-localnet-proof-w-da10ff3b-create-server-0\" not found" node="k3d-localnet-proof-w-da10ff3b-create-server-0"
+time="2026-11-06T06:07:31Z" level=info msg="Creating embedded CRD helmcharts.helm.cattle.io"
+I1106 06:07:31.556348      87 handler.go:304] Adding GroupVersion k3s.cattle.io v1 to ResourceManager
+I1106 06:07:31.557336      87 shared_informer.go:377] "Caches are synced"
+time="2026-11-06T06:07:31Z" level=info msg="Creating embedded CRD helmchartconfigs.helm.cattle.io"
+I1106 06:07:31.560586      87 handler.go:304] Adding GroupVersion k3s.cattle.io v1 to ResourceManager
+time="2026-11-06T06:07:31Z" level=info msg="Waiting for CRD helmcharts.helm.cattle.io to become available"
+{"level":"warn","ts":"2026-11-06T06:07:31.575800Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":82,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.599583Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":83,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.624670Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":84,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+I1106 06:07:31.636410      87 controller_descriptor.go:99] "Controller is disabled by a feature gate" controller="podcertificaterequest-cleaner-controller" requiredFeatureGates=["PodCertificateRequest"]
+I1106 06:07:31.636440      87 controllermanager.go:579] "Warning: skipping controller" controller="podcertificaterequest-cleaner-controller"
+I1106 06:07:31.638011      87 handler.go:304] Adding GroupVersion helm.cattle.io v1 to ResourceManager
+I1106 06:07:31.639814      87 handler.go:304] Adding GroupVersion helm.cattle.io v1 to ResourceManager
+E1106 06:07:31.647187      87 kubelet_node_status.go:392] "Error getting the current node from lister" err="node \"k3d-localnet-proof-w-da10ff3b-create-server-0\" not found"
+{"level":"warn","ts":"2026-11-06T06:07:31.648251Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":85,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+E1106 06:07:31.651433      87 kubelet.go:2530] "Skipping pod synchronization" err="container runtime status check may not have completed yet"
+I1106 06:07:31.659351      87 policy_none.go:50] "Start"
+I1106 06:07:31.659375      87 memory_manager.go:187] "Starting memorymanager" policy="None"
+I1106 06:07:31.659387      87 state_mem.go:36] "Initializing new in-memory state store" logger="Memory Manager state checkpoint"
+{"level":"warn","ts":"2026-11-06T06:07:31.675089Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":86,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.700999Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":87,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.728672Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":88,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+E1106 06:07:31.747241      87 kubelet_node_status.go:392] "Error getting the current node from lister" err="node \"k3d-localnet-proof-w-da10ff3b-create-server-0\" not found"
+{"level":"warn","ts":"2026-11-06T06:07:31.753086Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":89,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.779576Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":90,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.806031Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":91,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+Error from server (NotFound): nodes "k3d-localnet-proof-w-da10ff3b-create-server-0" not found
+I1106 06:07:31.830556      87 policy_none.go:44] "Start"
+{"level":"warn","ts":"2026-11-06T06:07:31.830678Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":92,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+E1106 06:07:31.831293      87 manager.go:525] "Failed to read data from checkpoint" err="checkpoint is not found" checkpoint="kubelet_internal_checkpoint"
+I1106 06:07:31.831364      87 eviction_manager.go:194] "Eviction manager: starting control loop"
+I1106 06:07:31.831371      87 container_log_manager.go:146] "Initializing container log rotate workers" workers=1 monitorPeriod="10s"
+I1106 06:07:31.831485      87 plugin_manager.go:121] "Starting Kubelet Plugin Manager"
+E1106 06:07:31.831775      87 eviction_manager.go:272] "eviction manager: failed to check if we have separate container filesystem. Ignoring." err="no imagefs label for configured runtime"
+E1106 06:07:31.831803      87 eviction_manager.go:297] "Eviction manager: failed to get summary stats" err="failed to get node info: node \"k3d-localnet-proof-w-da10ff3b-create-server-0\" not found"
+{"level":"warn","ts":"2026-11-06T06:07:31.857257Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":93,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.881138Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":94,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+E1106 06:07:31.901972      87 csi_plugin.go:403] Failed to initialize CSINode: error updating CSINode annotation: timed out waiting for the condition; caused by: nodes "k3d-localnet-proof-w-da10ff3b-create-server-0" not found
+{"level":"warn","ts":"2026-11-06T06:07:31.908602Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":95,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+I1106 06:07:31.931958      87 kubelet_node_status.go:74] "Attempting to register node" node="k3d-localnet-proof-w-da10ff3b-create-server-0"
+{"level":"warn","ts":"2026-11-06T06:07:31.932588Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":96,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.958839Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":97,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+{"level":"warn","ts":"2026-11-06T06:07:31.984779Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":98,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+I1106 06:07:31.987682      87 kubelet_node_status.go:77] "Successfully registered node" node="k3d-localnet-proof-w-da10ff3b-create-server-0"
+E1106 06:07:31.987700      87 kubelet_node_status.go:474] "Error updating node status, will retry" err="error getting node \"k3d-localnet-proof-w-da10ff3b-create-server-0\": node \"k3d-localnet-proof-w-da10ff3b-create-server-0\" not found"
+time="2026-11-06T06:07:31Z" level=info msg="Annotations and labels have been set successfully on node: k3d-localnet-proof-w-da10ff3b-create-server-0"
+I1106 06:07:31.990678      87 range_allocator.go:113] "No Secondary Service CIDR provided. Skipping filtering out secondary service addresses" logger="node-ipam-controller"
+time="2026-11-06T06:07:31Z" level=info msg="Starting flannel with backend vxlan"
+I1106 06:07:31.993577      87 kubelet_node_status.go:427] "Fast updating node status as it just became ready"
+{"level":"warn","ts":"2026-11-06T06:07:32.012803Z","logger":"etcd-client","caller":"v3@v3.6.7-k3s1/retry_interceptor.go:65","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0xc0021523c0/kine.sock","method":"/etcdserverpb.KV/Range","attempt":99,"error":"rpc error: code = Canceled desc = grpc: the client connection is closing"}
+time="2026-11-06T06:07:32Z" level=info msg="Done waiting for CRD helmcharts.helm.cattle.io to become available"
+time="2026-11-06T06:07:32Z" level=info msg="Waiting for CRD helmchartconfigs.helm.cattle.io to become available"
+time="2026-11-06T06:07:32Z" level=info msg="Done waiting for CRD helmchartconfigs.helm.cattle.io to become available"
+time="2026-11-06T06:07:32Z" level=info msg="Writing static file: /var/lib/rancher/k3s/server/static/charts/traefik-39.0.701+up39.0.7.tgz"
+time="2026-11-06T06:07:32Z" level=info msg="Writing static file: /var/lib/rancher/k3s/server/static/charts/traefik-crd-39.0.701+up39.0.7.tgz"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/ccm.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/coredns.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/local-storage.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/metrics-server/aggregated-metrics-reader.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/metrics-server/auth-delegator.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/metrics-server/auth-reader.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/metrics-server/metrics-apiservice.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/metrics-server/metrics-server-deployment.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/metrics-server/metrics-server-service.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/metrics-server/resource-reader.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/rolebindings.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/runtimes.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Writing manifest: /var/lib/rancher/k3s/server/manifests/traefik.yaml"
+time="2026-11-06T06:07:32Z" level=info msg="Tunnel server egress proxy mode: agent"
+time="2026-11-06T06:07:32Z" level=info msg="Starting dynamiclistener CN filter node controller with SANs: [127.0.0.1 k3d-localnet-proof-w-da10ff3b-create-serverlb 127.0.0.1 ::1 localhost k3d-localnet-proof-w-da10ff3b-create-server-0 172.26.0.2 10.43.0.1 kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local]"

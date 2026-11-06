@@ -1,0 +1,66 @@
+kube-before-disable exit 0
+kube actual target matches reservation: True
+kube stopped after explicit delete: True
+kube-disable-interrupted exit -2
+kube-disable-refusal-1 exit 1
+kube refusal 1: True
+kube snapshots unchanged after refusal 1: True
+kube-disable-refusal-2 exit 1
+kube refusal 2: True
+kube snapshots unchanged after refusal 2: True
+kube-after-disable-refusals exit 0
+kube generation retained: True
+kube reservations retained: True
+kube receipts retained: True
+kube-clean-old-generation exit 0
+kube old clean succeeds: True
+kube original snapshots removed: True
+kube-disabled-env exit 0
+kube disabled env succeeds: True
+kube disabled env exports no kubeconfig: True
+kube disabled does not recreate kubeconfig: True
+kube-final-clean exit 0
+kube final clean succeeds: True
+kube-final-status exit 0
+kube claims empty: True
+sentinel intact after kube switch: True
+case-env exit 0
+case initial env succeeds: True
+case-down exit 0
+case stopped and reconciled: True
+case-before-capitalization exit 0
+case-capitalization-interrupted exit -2
+case-capitalization-refusal-1 exit 1
+case refusal 1: True
+case original snapshots unchanged 1: True
+case new spelling absent 1: True
+case-capitalization-refusal-2 exit 1
+case refusal 2: True
+case original snapshots unchanged 2: True
+case new spelling absent 2: True
+case-after-capitalization-refusals exit 0
+case generation retained: True
+case claims retained: True
+case receipts retained: True
+case-clean-original exit 0
+case clean original succeeds: True
+case original snapshots removed: True
+case-new-capitalization-env exit 0
+case new spelling succeeds: True
+case no stale original output: True
+case-final-clean exit 0
+case final clean succeeds: True
+case-final-status exit 0
+case final claims empty: True
+case all snapshots absent: True
+sentinel intact after both transitions: True
+sentinel-final-clean exit 1
+sentinel owner cleanup succeeds: False
+Traceback (most recent call last):
+  File "/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/guest/transitions.py", line 113, in <module>
+    check('sentinel owner cleanup succeeds',rc==0)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/guest/transitions.py", line 47, in check
+    assert condition, label
+           ^^^^^^^^^
+AssertionError: sentinel owner cleanup succeeds

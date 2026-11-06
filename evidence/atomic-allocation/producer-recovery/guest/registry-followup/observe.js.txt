@@ -1,0 +1,11 @@
+import {appendFileSync} from "node:fs";
+const root="/tmp/registry-followup";
+const [tag,since,kind,filter]=process.argv.slice(2);
+const labelKeys=["io.silo.project","io.silo.generation","k3d.cluster","k3d.role","app","com.docker.compose.project","com.docker.compose.service"];
+const labels=(raw)=>Object.fromEntries(labelKeys.filter(k=>raw?.[k]!==undefined).map(k=>[k,raw[k]]));
+const record=(x)=>{const line=JSON.stringify({observer:tag,time:new Date().toISOString(),...x})+"\n";appendFileSync(`${root}/resources/events.jsonl`,line);appendFileSync("/tmp/shared-resources",line)};
+const child=Bun.spawn(["docker","events","--since",since,"--format","{{json .}}","--filter",`type=${kind}`,"--filter",filter],{stdout:"pipe",stderr:Bun.file(`${root}/logs/${tag}-docker.err`)});
+await Bun.write(`/tmp/pids/r7-guest-regfollow-${tag}-docker.pid`,String(child.pid));
+record({kind:"observer-child",pid:child.pid,command:["docker","events",kind,filter]});
+const decoder=new TextDecoder();let pending="";
+for await(const chunk of child.stdout){pending+=decoder.decode(chunk,{stream:true});let end;while((end=pending.indexOf("\n"))>=0){const line=pending.slice(0,end);pending=pending.slice(end+1);if(!line)continue;const e=JSON.parse(line);record({kind:"event",resourceKind:e.Type,action:e.Action,id:e.Actor.ID,name:e.Actor.Attributes?.name,labels:labels(e.Actor.Attributes),eventTime:e.timeNano});if(e.Action==="create"){const args=kind==="container"?["docker","inspect",e.Actor.ID]:["docker",kind,"inspect",e.Actor.ID];const r=Bun.spawnSync(args,{stdout:"pipe",stderr:"pipe",timeout:10000});if(r.exitCode===0){const values=JSON.parse(r.stdout.toString()).map(o=>({id:o.Id??o.Name,name:o.Name,createdAt:o.Created??o.CreatedAt,labels:labels(o.Config?.Labels??o.Labels),mounts:(o.Mounts??[]).map(m=>({type:m.Type,name:m.Name,destination:m.Destination,source:m.Source}))}));record({kind:"inspection",resourceKind:kind,id:e.Actor.ID,values})}else{record({kind:"inspection-failed",resourceKind:kind,id:e.Actor.ID,exitCode:r.exitCode})}}}}

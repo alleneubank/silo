@@ -1,0 +1,25 @@
+services:
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - type: volume
+        source: borrowed
+        target: /borrowed
+      - type: volume
+        source: sentinel
+        target: /named
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID}"
+      io.silo.generation: "${SILO_GENERATION}"
+networks:
+  default:
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID}"
+      io.silo.generation: "${SILO_GENERATION}"
+volumes:
+  borrowed:
+    external: true
+    name: e164c38a6b8f74b240239f5a7a30bfba6cd60f8c6a9f725dc2ac927865c31205
+  sentinel:
+    external: true
+    name: silo-sentinel-allocation-rehearsal-m7l4v7

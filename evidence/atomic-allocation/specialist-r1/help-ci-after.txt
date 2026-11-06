@@ -1,0 +1,18 @@
+silo ci [name] [options] [-- <tilt args>]
+
+Run Tilt in CI mode (tilt ci) after env + k3d setup.
+
+Sets CI=true for Tilt so CI-gated resources run. See silo doc commands.
+
+Arguments:
+  [name]          Instance name (e.g., main, feature-x, dev)
+
+Options:
+  -f, --force     Reconfigure only stopped, reconciled state
+  -p, --profile   Use named profile for env generation
+  --timeout       Passed through to tilt ci --timeout
+  --export-ci     Export env vars to $GITHUB_ENV (auto in CI)
+  -c, --config    Path to config file (default: silo.toml)
+  -v, --verbose   Show verbose output
+  -h, --help      Show help
+

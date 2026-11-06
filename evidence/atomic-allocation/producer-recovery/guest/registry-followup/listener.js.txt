@@ -1,0 +1,4 @@
+const port=Number(process.argv[2]);
+const server=Bun.serve({port,hostname:"127.0.0.1",fetch:()=>new Response("r7 registry followup synthetic squatter")});
+await Bun.write("/tmp/registry-followup/logs/listener-ready.json",JSON.stringify({port:server.port,hostname:server.hostname,pid:process.pid,at:new Date().toISOString()}));
+await Bun.write("/tmp/pids/r7-guest-regfollow-listener-child.pid",String(process.pid));

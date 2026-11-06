@@ -1,0 +1,73 @@
+import assert from "node:assert/strict";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { Database } from "bun:sqlite";
+import { BackendReceiptSchema, LaunchSchema } from "/mnt/src/core/lease_types";
+const roots = ["/tmp/fixtures", "/tmp/controlled-live-fixtures", "/tmp/timing", "/tmp/timing2", "/tmp/pids"];
+const handles = new Set<number>();
+const resourceTexts: string[] = [];
+function visit(root: string) {
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const file = root + "/" + entry.name;
+    if (entry.isDirectory()) visit(file);
+    else if (entry.name === "resources") {
+      const text = readFileSync(file, "utf8"); resourceTexts.push(text);
+      for (const match of text.matchAll(/(?:\bprocess |pid\/pgid |supervisor=|group=)(\d+)/g)) handles.add(Number(match[1]));
+    } else if (entry.name === "server.pid" || root === "/tmp/pids") handles.add(Number(readFileSync(file, "utf8").trim()));
+  }
+}
+for (const root of roots) visit(root);
+const db = new Database("/home/ae/.silo/leases.sqlite", { readonly: true });
+const projects = db.query("SELECT id,root,generation,operation_token FROM projects").all();
+assert(projects.length > 0);
+for (const project of projects) {
+  assert(roots.some(root => String(project.root).startsWith(root + "/")));
+  assert.equal(project.generation, 0); assert.equal(project.operation_token, null);
+}
+assert.equal(db.query("SELECT count(*) n FROM claims").get().n, 0);
+assert.equal(db.query("SELECT count(*) n FROM resources WHERE deleted = 0").get().n, 0);
+for (const row of db.query("SELECT receipt FROM launches").all()) {
+  const launch = LaunchSchema.parse(JSON.parse(row.receipt));
+  for (const pid of [launch.supervisorPid, launch.groupId, launch.leaderPid]) if (pid !== null) handles.add(pid);
+}
+const objects = db.query("SELECT receipt FROM resources").all().map(row => BackendReceiptSchema.parse(JSON.parse(row.receipt)));
+db.close();
+for (const pid of handles) {
+  assert(Number.isSafeInteger(pid) && pid > 1);
+  for (const target of [pid, -pid]) {
+    let absent = false;
+    try { process.kill(target, 0); } catch (error) { assert.equal(error.code, "ESRCH"); absent = true; }
+    assert(absent, `Recorded handle ${target} is still present; no cleanup signal sent`);
+  }
+}
+async function docker(args: string[]) {
+  const proc = Bun.spawn(["docker", ...args], { stdout: "pipe", stderr: "pipe" });
+  const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
+  assert.equal(code, 0, stderr); return stdout.trim();
+}
+const inventory = {};
+for (const [kind, format] of [["container", "{{.ID}}"], ["network", "{{.ID}}"], ["volume", "{{.Name}}"]]) {
+  const listing = await docker([kind, "ls", ...(kind === "container" ? ["-a", "--no-trunc"] : kind === "network" ? ["--no-trunc"] : []), "--format", format]);
+  inventory[kind] = listing ? listing.split("\n") : [];
+  if (inventory[kind].length > 0) {
+    const known = inventory[kind][0];
+    assert.equal(await docker([kind, "inspect", known, "--format", kind === "volume" ? "{{.Name}}" : "{{.Id}}"]), known);
+  }
+}
+assert(inventory.network.includes(await docker(["network", "inspect", "bridge", "--format", "{{.Id}}"])), "Known-present namespace control");
+const recordedObjects = objects.map(({ kind, id, name }) => ({ kind, id, name }));
+for (const text of resourceTexts) {
+  for (const match of text.matchAll(/^(?:network|volume) (\S+) name=(\S+);/gm)) {
+    const kind = match[0].startsWith("network") ? "network" : "volume";
+    recordedObjects.push({ kind, id: match[1], name: match[2] });
+  }
+  for (const match of text.matchAll(/^(?:synthetic stopped k3d (?:server|registry) container|outside-claim synthetic container) ([a-f0-9]{64})/gm)) recordedObjects.push({ kind: "container", id: match[1], name: match[1] });
+}
+const log = readFileSync("/tmp/logs/allocation-final.log", "utf8").trim().split("\n");
+const mounts = log.map(line => { try { return JSON.parse(line); } catch { return {}; } }).find(event => event.scenario === "owned container volume handles before deletion").names;
+for (const name of mounts) recordedObjects.push({ kind: "volume", id: name, name });
+for (const object of recordedObjects) assert(!inventory[object.kind].includes(object.kind === "volume" ? object.name : object.id), `Recorded object remains: ${JSON.stringify(object)}`);
+assert(!existsSync("/home/ae/.silo/leases.sqlite-journal"));
+console.log(JSON.stringify({ at: new Date().toISOString(), projects, activeGenerations: 0, claims: 0, liveResources: 0,
+  handlesChecked: [...handles].sort((a,b) => a-b), everyRecordedPidAndSameNumberGroupAbsent: true,
+  objectsChecked: recordedObjects, capturedMounts: mounts, allRecordedObjectsAbsent: true,
+  inventoryCounts: Object.fromEntries(Object.entries(inventory).map(([kind, ids]) => [kind, ids.length])), result: "pass" }, null, 2));

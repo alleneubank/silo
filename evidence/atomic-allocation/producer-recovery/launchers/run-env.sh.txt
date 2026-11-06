@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+lane=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign
+export TMPDIR="$lane-tmp/r7/tmp"
+export BUN_INSTALL_CACHE_DIR="$lane-tmp/r7/cache"
+export PATH="/home/ae/.local/share/mise/installs/bun/1.4.4/bin:/home/ae/.local/share/mise/installs/github-alleneubank-janitor/0.3.1:/home/ae/.local/share/mise/installs/github-alleneubank-tilt/0.37.8-fork.20261009.g753c01455:$lane-tmp/r7/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin"
+exec "$@"

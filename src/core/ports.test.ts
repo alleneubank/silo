@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { EPHEMERAL_PORT_END, EPHEMERAL_PORT_START } from "./constants";
-import { allocatePorts, type PortAllocationEvent } from "./ports";
+import { allocatePorts, checkPortFree, type PortAllocationEvent } from "./ports";
 
 const alwaysFree = async (_port: number): Promise<boolean> => true;
 
@@ -166,6 +166,17 @@ describe("allocatePorts", () => {
 });
 
 describe("checkPortFree (integration)", () => {
+  test("a UDP listener excludes the scalar host port", async () => {
+    const socket = await Bun.udpSocket({ hostname: "127.0.0.1", port: 0 });
+    try { expect(await checkPortFree(socket.port)).toBe(false); }
+    finally { socket.close(); }
+  });
+
+  test("an IPv6 loopback listener excludes the scalar host port", async () => {
+    const server = Bun.listen({ hostname: "::1", port: 0, socket: { data() {} } });
+    try { expect(await checkPortFree(server.port)).toBe(false); }
+    finally { server.stop(); }
+  });
   // Integration test: bind a real server on 127.0.0.1 and verify the
   // default checkPortFree (used when isPortFree is not injected) detects it.
   // We call allocatePorts without isPortFree so it uses the real check.

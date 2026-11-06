@@ -1,0 +1,121 @@
+[
+  {
+    "id": "43b582eeb5fdfcca3ef6572a8c82f2e5f1881d76b787f70c9c1549916e8ceccf",
+    "name": "/localnet-proof-p5lcbk-backend-registry.localhost",
+    "created": "2026-11-05T02:41:01.968865339Z",
+    "project": null,
+    "cluster": "localnet-proof-p5lcbk-backend",
+    "mounts": [
+      {
+        "Destination": "/var/lib/registry",
+        "Driver": "local",
+        "Mode": "",
+        "Name": "01caac2672186bc0cd75b4b604ca19fa5b00d53952d17727b0589fa9005c122b",
+        "Propagation": "",
+        "RW": true,
+        "Source": "/var/lib/docker/volumes/01caac2672186bc0cd75b4b604ca19fa5b00d53952d17727b0589fa9005c122b/_data",
+        "Type": "volume"
+      }
+    ]
+  },
+  {
+    "id": "6286009950cdcb9ad6163afb69284cc40f517a5e8bb8fbe7ae3d49501fa05f90",
+    "name": "/k3d-localnet-proof-p5lcbk-backend-server-0",
+    "created": "2026-11-05T02:41:05.122230022Z",
+    "project": "d91467e8-cb7d-4b13-9331-2524245ffd9b",
+    "cluster": "localnet-proof-p5lcbk-backend",
+    "mounts": [
+      {
+        "Destination": "/var/log",
+        "Driver": "local",
+        "Mode": "",
+        "Name": "954af89d24535d7d6752bbc8c777a7b4fbd016ce22e7bcf5c5ba8aa848d3e33f",
+        "Propagation": "",
+        "RW": true,
+        "Source": "/var/lib/docker/volumes/954af89d24535d7d6752bbc8c777a7b4fbd016ce22e7bcf5c5ba8aa848d3e33f/_data",
+        "Type": "volume"
+      },
+      {
+        "Destination": "/var/lib/cni",
+        "Driver": "local",
+        "Mode": "",
+        "Name": "e34f8f29005c762cd955765d4a0e04a96107c303bd1813f8ce41c1f1cfe38dd2",
+        "Propagation": "",
+        "RW": true,
+        "Source": "/var/lib/docker/volumes/e34f8f29005c762cd955765d4a0e04a96107c303bd1813f8ce41c1f1cfe38dd2/_data",
+        "Type": "volume"
+      },
+      {
+        "Destination": "/var/lib/kubelet",
+        "Driver": "local",
+        "Mode": "",
+        "Name": "6b16ac7f467d910cb09f32ca9da4f3f5888948b37b3de7082d777f63d8948a5d",
+        "Propagation": "",
+        "RW": true,
+        "Source": "/var/lib/docker/volumes/6b16ac7f467d910cb09f32ca9da4f3f5888948b37b3de7082d777f63d8948a5d/_data",
+        "Type": "volume"
+      },
+      {
+        "Destination": "/var/lib/rancher/k3s",
+        "Driver": "local",
+        "Mode": "",
+        "Name": "a3c6b22fb4f1dd1e77395727a20db589e23ed59685514e105b73cff5e5214d39",
+        "Propagation": "",
+        "RW": true,
+        "Source": "/var/lib/docker/volumes/a3c6b22fb4f1dd1e77395727a20db589e23ed59685514e105b73cff5e5214d39/_data",
+        "Type": "volume"
+      }
+    ]
+  },
+  {
+    "id": "c5a992e9d4358dda91baa66d4c10ba416090efe169ee4a9d008ef10adc6887d0",
+    "name": "/k3d-localnet-proof-p5lcbk-backend-serverlb",
+    "created": "2026-11-05T02:41:07.230447316Z",
+    "project": "d91467e8-cb7d-4b13-9331-2524245ffd9b",
+    "cluster": "localnet-proof-p5lcbk-backend",
+    "mounts": []
+  },
+  {
+    "Name": "k3d-localnet-proof-p5lcbk-backend",
+    "Id": "720fc4b7614c66d141bbb72fae6f0987b650177b12e0eb27c986f807608c9902",
+    "Created": "2026-11-05T02:41:01.759111894Z",
+    "Scope": "local",
+    "Driver": "bridge",
+    "EnableIPv4": true,
+    "EnableIPv6": false,
+    "IPAM": {
+      "Driver": "default",
+      "Options": {},
+      "Config": [
+        {
+          "Subnet": "172.24.0.0/16",
+          "Gateway": "172.24.0.1"
+        }
+      ]
+    },
+    "Internal": false,
+    "Attachable": false,
+    "Ingress": false,
+    "ConfigFrom": {
+      "Network": ""
+    },
+    "ConfigOnly": false,
+    "Options": {},
+    "Labels": {
+      "io.silo.generation": "2",
+      "io.silo.project": "d91467e8-cb7d-4b13-9331-2524245ffd9b",
+      "k3d.cluster": "localnet-proof-p5lcbk-backend"
+    },
+    "Containers": {},
+    "Status": {
+      "IPAM": {
+        "Subnets": {
+          "172.24.0.0/16": {
+            "IPsInUse": 3,
+            "DynamicIPsAvailable": 65533
+          }
+        }
+      }
+    }
+  }
+]

@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-06T05:59:08Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "2",
+            "io.silo.project": "79037d4f-1c5f-4848-b0aa-e680679f7dec",
+            "k3d.cluster": "localnet-cluster-restart-oz89"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-cluster-restart-oz89-images/_data",
+        "Name": "k3d-localnet-cluster-restart-oz89-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

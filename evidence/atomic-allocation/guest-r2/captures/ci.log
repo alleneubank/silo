@@ -1,0 +1,6 @@
+runner PID=1335677
+1335677 1335677 1335677 sh -c printf "runner PID=%s\n" "$$"; ps -o pid=,pgid=,sid=,args= -p "$$"; exec timeout 240 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/guest-r2-silo /tmp/guest-r2/retained ci guest-r2-retained --timeout 120s
+silo info: Generated env file at /tmp/guest-r2/retained/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/guest-r2/retained/.localnet.env
+silo info: Wrote lockfile

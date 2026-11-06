@@ -1,0 +1,3 @@
+silo error: LEGACY_STATE: legacy silo state blocks this account's allocations.
+  /home/ae/.silo/instances/5d5756c990e6133c88b46e8e7104353b71393eeab01ac05fc35abde2a033e0d0.json (root: /tmp/guest/old)
+Stop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. No data, ports, clusters or volumes carry over. Silo deleted nothing.

@@ -1,0 +1,41 @@
+silo info: Generated env file at /tmp/fixtures/failed/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/fixtures/failed/.localnet.env
+silo info: Wrote lockfile
+silo error: COMMAND_FAILED: tilt-ci exited 1; owned claims retained. Tilt started on http://127.0.0.1:39114/
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+Tilt analytics disabled: Environment variable CI=true
+
+Initial Build
+Loading Tiltfile at: /tmp/fixtures/failed/Tiltfile
+Successfully loaded Tiltfile (32.771317ms)
+        redis │ 
+        redis │ Initial Build
+        redis │ STEP 1/1 — Deploying
+        redis │  Network r6guest-failed Creating 
+        redis │  Network r6guest-failed Creating 
+        redis │  Network r6guest-failed Created 
+        redis │  Network r6guest-failed Created 
+        redis │  Container r6guest-failed-redis-1 Creating 
+        redis │  Container r6guest-failed-redis-1 Created 
+        redis │  Container r6guest-failed-redis-1 Starting 
+        redis │  Container r6guest-failed-redis-1 Started 
+        redis │ 1:C 06 Nov 2026 03:43:04.599 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+        redis │ 1:C 06 Nov 2026 03:43:04.599 * Redis version=7.4.12, bits=64, commit=00000000, modified=0, pid=1, just started
+        redis │ 1:C 06 Nov 2026 03:43:04.599 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+        redis │ 1:M 06 Nov 2026 03:43:04.599 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+        redis │ 1:M 06 Nov 2026 03:43:04.599 * monotonic clock: POSIX clock_gettime
+        redis │ 1:M 06 Nov 2026 03:43:04.599 * Running mode=standalone, port=6379.
+        redis │ 1:M 06 Nov 2026 03:43:04.599 * Server initialized
+        redis │ 1:M 06 Nov 2026 03:43:04.599 * Ready to accept connections tcp
+        redis │ 
+        redis │      Step 1 - 1.84s (Deploying)
+        redis │      DONE IN: 1.84s 
+        redis │ 
+dependent-fa… │ 
+dependent-fa… │ Initial Build
+dependent-fa… │ Running cmd: exit 42
+dependent-fa… │ ERROR: Build Failed: Command "exit 42" failed: exit status 42
+
+Error: Command "exit 42" failed: exit status 42
+

@@ -1,0 +1,12 @@
+import { Database } from 'bun:sqlite';
+import { mkdirSync, writeFileSync, appendFileSync, existsSync } from 'node:fs';
+import { ProjectOperation } from '/mnt/src/core/lease_store';
+import assert from 'node:assert/strict';
+const dir='/tmp/hot-journal';mkdirSync(dir,{recursive:true});const root=dir+'/project';mkdirSync(root,{recursive:true});const storePath=dir+'/leases.sqlite';
+if(process.argv[2]==='writer') { const db=new Database(storePath);db.exec('PRAGMA journal_mode=DELETE; PRAGMA cache_size=1; BEGIN IMMEDIATE; CREATE TABLE spill (value BLOB); INSERT INTO spill VALUES (zeroblob(4000000));');writeFileSync(dir+'/ready','ready');await Bun.sleep(50000);process.exit(77); }
+const owner=await ProjectOperation.open(root,{storePath});owner.finish();
+const writer=Bun.spawn(['timeout','60s',process.execPath,import.meta.path,'writer'],{detached:true,stdin:'ignore',stdout:'pipe',stderr:'pipe'});writeFileSync('/tmp/pids/r6-hot-writer.pid',String(writer.pid));appendFileSync('/mnt/resources',`r6 hot-journal writer pid/pgid=${writer.pid}; timeout60 bun /tmp/hot-journal.ts writer; teardown only verified exact group\n`);
+const end=Date.now()+10000;while(!existsSync(dir+'/ready')){assert(Date.now()<end);await Bun.sleep(25);}
+assert(existsSync(storePath+'-journal'));const ps=Bun.spawnSync(['ps','-o','uid=,pgid=,command=','-p',String(writer.pid)]);const identity=ps.stdout.toString();console.log({writer:writer.pid,identity,journal:existsSync(storePath+'-journal')});const fields=identity.trim().split(/\s+/);assert.equal(Number(fields[0]),process.geteuid!());assert.equal(Number(fields[1]),writer.pid);assert(identity.includes('/tmp/hot-journal.ts writer'));process.kill(-writer.pid,'SIGKILL');await writer.exited;
+try{const recovered=await ProjectOperation.open(root,{storePath});recovered.finish();console.log('MUTATOR_RECOVERY_PASS');}catch(e){console.log('MUTATOR_RECOVERY_FAIL',e);}
+const db=new Database(storePath);console.log('NATIVE_WRITABLE_RECOVERY',db.query('PRAGMA user_version').get());db.close();

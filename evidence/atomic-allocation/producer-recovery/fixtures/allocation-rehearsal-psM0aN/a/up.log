@@ -1,0 +1,12 @@
+Tilt started on http://127.0.0.1:48128/
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+Tilt analytics disabled: Environment variable CI=false
+
+Initial Build
+Loading Tiltfile at: /tmp/fixtures/allocation-rehearsal-psM0aN/a/Tiltfile
+Successfully loaded Tiltfile (413.207µs)
+     identity │ 
+     identity │ Initial Build
+     identity │ Running cmd: bun /tmp/fixtures/allocation-rehearsal-psM0aN/server.ts /tmp/fixtures/allocation-rehearsal-psM0aN/a/server.pid
+
+silo info:   silo doc tilt

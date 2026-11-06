@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/fixtures/failed/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   REDIS_PORT: 39113
+silo info:   TILT_PORT: 39114
+silo info: Project 459c4e34-4251-40db-8382-d1428d4f76f0, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/failed/.localnet.env; set +a

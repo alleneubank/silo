@@ -1,0 +1,449 @@
+diff --git a/src/backends/ownership.ts b/src/backends/ownership.ts
+index bbb57d3..c243e7c 100644
+--- a/src/backends/ownership.ts
++++ b/src/backends/ownership.ts
+@@ -175,7 +175,7 @@ export const assertNamesAvailable = async (claims: Claim[], cwd: string, owned:
+ };
+ 
+ /** Records only this generation's creation results, with its declared namespace and provenance. */
+-export const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation?: Launch): Promise<BackendReceipt[]> => {
++export const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation: Extract<Launch, { phase: "exited" }>): Promise<BackendReceipt[]> => {
+   await assertEngine(owner);
+   const allocation = owner.current()!.allocation;
+   const cluster = allocation.state.identity.k3dClusterName;
+@@ -202,7 +202,14 @@ export const captureOwnedResources = async (owner: ProjectOperation, source: Bac
+   const namespace = await enumerate(owner.root);
+   await assertLabelledScope(owner, namespace);
+   const entries = namespace.filter(e => selected(e, owner.resourceClaims()) && isK3d(e) === (source === "k3d"));
+-  const prior = owner.resources(true);
++  // An absent immutable object remains in audit history, but cannot reserve a
++  // name against the next creation result. No deletion occurs during capture.
++  for (const receipt of owner.resources().filter(r => r.source === source)) {
++    if (!namespace.some(e => e.kind === receipt.kind && (receipt.kind === "volume" ? e.name === receipt.name : e.id === receipt.id))) {
++      owner.recordResourceAbsence(receipt);
++    }
++  }
++  const prior = owner.resources();
+   const captured: BackendReceipt[] = [];
+   for (const entry of entries) {
+     const existing = prior.find(r => r.kind === entry.kind && r.name === entry.name);
+@@ -215,13 +222,13 @@ export const captureOwnedResources = async (owner: ProjectOperation, source: Bac
+     }
+     const labels = current.receipt.labels;
+     const projectLabel = labels["io.silo.project"] === owner.projectId && labels["io.silo.generation"] === String(owner.generation);
+-    const registryFromCompletedCreate = source === "k3d" && creation?.phase === "exited" && creation.exitCode === 0 &&
++    const registryFromCompletedCreate = source === "k3d" && creation.exitCode === 0 &&
+       entry.kind === "container" && entry.name === registry &&
+       labels["k3d.cluster"] === allocation.state.identity.k3dClusterName;
+     const composeRoot = labels["com.docker.compose.project.working_dir"];
+     const composeFromOwnedLaunch = source === "compose" && entry.kind === "container" &&
+       labels["com.docker.compose.project"] === allocation.state.identity.composeName && composeRoot !== undefined &&
+-      realpathSync(composeRoot) === owner.root && owner.launches().some(l => l.effect === "workload" && (l.phase === "granted" || (l.phase === "exited" && l.started)));
++      realpathSync(composeRoot) === owner.root && creation.started && (creation.effect === "workload" || creation.effect === "hook");
+     if (!projectLabel && !registryFromCompletedCreate && !composeFromOwnedLaunch) conflict(entry);
+     validatePublications(current);
+     captured.push(current.receipt);
+@@ -230,6 +237,16 @@ export const captureOwnedResources = async (owner: ProjectOperation, source: Bac
+   return captured;
+ };
+ 
++/** Seals finished producers' recording before any cleanup effect can begin. */
++export const captureFinishedComposeProducers = async (owner: ProjectOperation): Promise<void> => {
++  const pending = owner.launches().filter((launch): launch is Extract<Launch, { phase: "exited" }> =>
++    launch.phase === "exited" && launch.started && !launch.reconciled && (launch.effect === "workload" || launch.effect === "hook"));
++  if (pending.length === 0) return;
++  for (const launch of pending) owner.markLaunchTerminal(launch.id);
++  await captureOwnedResources(owner, "compose", pending[0]!);
++  for (const launch of pending) owner.checkpointLaunch({ ...launch, terminal: true, reconciled: true });
++};
++
+ /** Revalidates exact IDs and creation identities before any deletion capability is used. */
+ export const verifyResource = async (owner: ProjectOperation, receipt: BackendReceipt): Promise<boolean> => {
+   await assertEngine(owner);
+@@ -276,11 +293,12 @@ const deleteResources = async (owner: ProjectOperation, source: BackendReceipt["
+     if (await verifyResource(owner, receipt)) {
+       const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force", "--volumes"] : []), receipt.id], {
+         kind: `owned-${kind}-delete`, effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
++        deletionTarget: { kind, id: receipt.id },
+       });
+       if (await verifyResource(owner, receipt)) throw new SiloError(`CLEANUP_REQUIRED: deletion left ${kind}/${receipt.name}`, "CLEANUP_REQUIRED");
+       owner.checkpointLaunch({ ...result.launch, reconciled: true });
+     }
+-    owner.forgetResource(receipt);
++    owner.recordResourceAbsence(receipt);
+   }
+ };
+ 
+diff --git a/src/backends/tilt.ts b/src/backends/tilt.ts
+index 63a0607..e40c248 100644
+--- a/src/backends/tilt.ts
++++ b/src/backends/tilt.ts
+@@ -1,5 +1,5 @@
+ import { TILT_CI_TIMEOUT_MS } from "../core/constants";
+-import { runOwnedCommand, startOwnedCommand } from "../core/owned_command";
++import { startOwnedCommand } from "../core/owned_command";
+ import type { ProjectOperation } from "../core/lease_store";
+ import type { TiltConfig } from "../core/types";
+ import { SiloError } from "../utils/errors";
+@@ -22,5 +22,9 @@ export const startTilt = (owner: ProjectOperation, env: Record<string, string>,
+     kind: "tilt-up", effect: "workload", env, timeoutMs: null, capture: false,
+   });
+ 
+-export const tiltCi = (owner: ProjectOperation, env: Record<string, string>, options: TiltCiOptions) =>
+-  runOwnedCommand(owner, buildTiltCiArgv(options), { kind: "tilt-ci", effect: "workload", env, timeoutMs: TILT_CI_TIMEOUT_MS });
++export const tiltCi = async (owner: ProjectOperation, env: Record<string, string>, options: TiltCiOptions) => {
++  const running = await startOwnedCommand(owner, buildTiltCiArgv(options), { kind: "tilt-ci", effect: "workload", env, timeoutMs: TILT_CI_TIMEOUT_MS });
++  const result = await running.exited;
++  const recorded = owner.recordCommandResult(result.launch);
++  return { ...result, launch: recorded, exitCode: recorded.exitCode ?? result.exitCode };
++};
+diff --git a/src/commands/ci.ts b/src/commands/ci.ts
+index ee9e843..864ba4b 100644
+--- a/src/commands/ci.ts
++++ b/src/commands/ci.ts
+@@ -1,7 +1,8 @@
+ import { appendGithubEnv } from "../core/env";
+ import { storedConfig } from "../core/allocation";
+ import { buildTiltCiArgv, tiltCi } from "../backends/tilt";
+-import { captureOwnedResources } from "../backends/ownership";
++import { captureFinishedComposeProducers } from "../backends/ownership";
++import { commandFailure } from "../core/owned_command";
+ import { resolveGithubEnvPath, shouldExportCiEnv, withCiEnv } from "../utils/ci";
+ import { prepareTiltEnvironment, withAllocation } from "./prepare";
+ 
+@@ -17,9 +18,11 @@ export const ci = async (name: string | undefined, options: {
+     buildTiltCiArgv(args);
+     const env = await prepareTiltEnvironment(owner);
+     if (sink) appendGithubEnv(owner, sink);
+-    await tiltCi(owner, withCiEnv(env), args);
+-    await captureOwnedResources(owner, "compose");
+-    owner.update(owner.current()!.allocation, owner.resources().length > 0 ? "retained" : "stopped");
++    const result = await tiltCi(owner, withCiEnv(env), args);
++    const failure = result.exitCode === 0 ? null : commandFailure(result, "tilt-ci", owner.generation);
++    await captureFinishedComposeProducers(owner);
++    owner.update(owner.current()!.allocation, failure ? "cleanup-required" : owner.resources().length > 0 ? "retained" : "stopped", failure?.message ?? null);
++    if (failure) throw failure;
+   }, config => { buildTiltCiArgv({ timeout: options.timeout, extraArgs: options.tiltArgs, webMode: config.tilt?.webMode, managesPort: config.ports.TILT_PORT !== undefined }); });
+   return true;
+ };
+diff --git a/src/commands/down.ts b/src/commands/down.ts
+index 03638c5..dd4f529 100644
+--- a/src/commands/down.ts
++++ b/src/commands/down.ts
+@@ -1,7 +1,7 @@
+ import { ProjectOperation } from "../core/lease_store";
+ import { writeEnvAndLockfile } from "../core/env";
+ import { deleteCluster } from "../backends/k3d";
+-import { assertEngine, assertNamesAvailable, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
++import { assertEngine, assertNamesAvailable, captureFinishedComposeProducers, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
+ import { stopOwnedCommand } from "../core/owned_command";
+ import { logger } from "../utils/logger";
+ import { SiloError } from "../utils/errors";
+@@ -24,16 +24,17 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
+     owner.applyCompletions();
+     const missing = owner.launches().find(l => l.phase === "granted");
+     if (missing) throw new SiloError(`CLEANUP_REQUIRED: ${missing.kind}/${missing.id} has no completion fact; process death cannot resolve an outstanding request`, "CLEANUP_REQUIRED");
++    await captureFinishedComposeProducers(owner);
+     const effects = owner.launches().filter(l => l.phase === "exited" && !l.reconciled && l.effect !== "none");
+     if (effects.length > 0 || owner.resources().length > 0) {
+       await assertEngine(owner);
+-      await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources(true));
++      await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+     }
+-    // Cleanup consumes durable creation receipts. Discovering a matching name
+-    // or label here must never grant new deletion authority.
++    // Finished producers are sealed above. No capture can run after deletion
++    // starts or renew authority on a later cleanup retry.
+     await deleteOwnedContainers(owner, "compose");
+     await deleteOwnedNetworks(owner, "compose");
+-    for (const receipt of owner.resources()) if (!(await verifyResource(owner, receipt))) owner.forgetResource(receipt);
++    for (const receipt of owner.resources()) if (!(await verifyResource(owner, receipt))) owner.recordResourceAbsence(receipt);
+     if (options["delete-cluster"] && owner.resources().some(r => r.source === "k3d")) await deleteCluster(owner);
+     terminalGroups(owner);
+     const leaks = await findAnonymousLeaks(owner);
+diff --git a/src/commands/prepare.ts b/src/commands/prepare.ts
+index 26c87e8..d933b87 100644
+--- a/src/commands/prepare.ts
++++ b/src/commands/prepare.ts
+@@ -7,7 +7,7 @@ import { ensureToolsAvailable } from "../utils/validate";
+ import { runHooks } from "../hooks/runner";
+ import { ensureCluster, writeKubeconfig } from "../backends/k3d";
+ import { advertiseLocalRegistry } from "../backends/registry";
+-import { assertEngine, assertNamesAvailable, captureOwnedResources } from "../backends/ownership";
++import { assertEngine, assertNamesAvailable, captureFinishedComposeProducers } from "../backends/ownership";
+ import { resolveRegistryAdvertiseSettings } from "../core/registry";
+ import { SiloError } from "../utils/errors";
+ import type { Allocation } from "../core/lease_types";
+@@ -55,7 +55,7 @@ export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<R
+     });
+   }
+   await runHooks(owner, { hooks: config.hooks["post-up"], env, phase: "post-up" });
+-  await captureOwnedResources(owner, "compose");
++  await captureFinishedComposeProducers(owner);
+   writeEnvAndLockfile(owner);
+   for (const role of ["env", "lock", ...(config.k3d?.enabled ? ["kubeconfig" as const] : [])] as const) owner.file(role).verify();
+   return env;
+diff --git a/src/commands/up.ts b/src/commands/up.ts
+index 5b7e092..6768ec0 100644
+--- a/src/commands/up.ts
++++ b/src/commands/up.ts
+@@ -2,7 +2,7 @@ import { ProjectOperation } from "../core/lease_store";
+ import { storedConfig } from "../core/allocation";
+ import { writeEnvAndLockfile } from "../core/env";
+ import { startTilt } from "../backends/tilt";
+-import { captureOwnedResources } from "../backends/ownership";
++import { captureFinishedComposeProducers } from "../backends/ownership";
+ import { logger, logKeyValues } from "../utils/logger";
+ import { runningStackHintLines } from "../utils/breadcrumbs";
+ import { SiloError } from "../utils/errors";
+@@ -55,10 +55,10 @@ export const up = async (name: string | undefined, options: {
+     if (observed.phase !== "running" || observed.allocation.state.tiltPid !== result.launch.supervisorPid || journal?.phase !== "granted") return true;
+     const recorded = owner.recordCommandResult(result.launch);
+     result = { ...result, launch: recorded, exitCode: recorded.exitCode ?? result.exitCode };
+-    await captureOwnedResources(owner, "compose");
++    await captureFinishedComposeProducers(owner);
+     const current = owner.current()!;
+     const { tiltPid: _pid, tiltStartedAt: _at, ...state } = current.allocation.state;
+-    const phase = result.exitCode === 0 ? "stopped" : "cleanup-required";
++    const phase = result.exitCode === 0 ? (owner.resources().length > 0 ? "retained" : "stopped") : "cleanup-required";
+     owner.update({ ...current.allocation, state }, phase, result.exitCode === 0 ? null : `Tilt exited ${result.exitCode}; down must reconcile before reuse`);
+     writeEnvAndLockfile(owner);
+   } catch (error) {
+diff --git a/src/core/lease_store.test.ts b/src/core/lease_store.test.ts
+index ce53929..fc04892 100644
+--- a/src/core/lease_store.test.ts
++++ b/src/core/lease_store.test.ts
+@@ -1,4 +1,5 @@
+ import { afterEach, beforeAll, beforeEach, describe, expect, spyOn, test } from "bun:test";
++import assert from "node:assert/strict";
+ import * as fs from "node:fs";
+ import { Database } from "bun:sqlite";
+ import { chmodSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+@@ -9,6 +10,7 @@ import { fileIdentity, prepareFileTarget } from "./file_target";
+ import { appendGithubEnv, writeEnvAndLockfile } from "./env";
+ import { runOwnedCommand, startOwnedCommand } from "./owned_command";
+ import type { Allocation, Claim, FileReceipt } from "./lease_types";
++import { BackendReceiptSchema } from "./lease_types";
+ 
+ let base: string;
+ let storePath: string;
+@@ -63,6 +65,57 @@ const claims = (name: string, port: number): Claim[] => [
+ ];
+ 
+ describe("atomic account leases", () => {
++  test("an unsupported proposal store is refused without changing its bytes", async () => {
++    const root = project("old-format");
++    const op = await open(root); op.finish();
++    const db = new Database(storePath);
++    db.exec("PRAGMA user_version = 1"); db.close();
++    const before = readFileSync(storePath);
++    await expect(open(root)).rejects.toThrow("LEASE_STORE_UNAVAILABLE");
++    expect(() => ProjectOperation.inspect(root, storePath)).toThrow("LEASE_STORE_UNAVAILABLE");
++    expect(readFileSync(storePath)).toEqual(before);
++  });
++
++  test.each(["container", "network"])("a fresh %s ID can reuse a proven-absent name while history remains", async kind => {
++    const root = project("receipt-cycle"); const op = await open(root);
++    const name = "localnet-reusable";
++    const first = BackendReceiptSchema.parse({ kind, source: "compose", name, id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {}, anonymousVolumes: [{ name: "audit-only-mount", createdAt: "2026-11-06T00:00:00Z", destination: "/data" }] });
++    const second = BackendReceiptSchema.parse({ ...first, id: "b".repeat(64), createdAt: "2026-11-06T00:01:00Z" });
++    try {
++      await op.allocate(allocation(root, "receipt-cycle"), [...claims("receipt-cycle", 3000), { domain: kind, resource: name }], targets(root));
++      op.recordResources([first]);
++      expect(() => op.recordResources([second])).toThrow("NAME_CONFLICT");
++      expect(op.resources()).toEqual([first]);
++      op.recordResourceAbsence(first);
++      op.recordResources([second]);
++      expect(op.resources()).toEqual([second]);
++      expect(op.resources(true)).toHaveLength(2);
++      expect(op.resources(true)).toEqual(expect.arrayContaining([first, second]));
++      expect(ProjectOperation.inspect(root, storePath)?.resources).toEqual(expect.arrayContaining([first, second]));
++      expect(() => op.recordResources([first])).toThrow("NAME_CONFLICT");
++    } finally { op.finish(); }
++  });
++
++  test("terminal exact-target absence reconciles only that ID's completed deletion", async () => {
++    const root = project("absent-delete"); const op = await open(root);
++    const first = BackendReceiptSchema.parse({ kind: "network", source: "compose", name: "network-a", id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {} });
++    const other = BackendReceiptSchema.parse({ ...first, name: "network-b", id: "b".repeat(64) });
++    assert(first.kind === "network"); assert(other.kind === "network");
++    try {
++      await op.allocate(allocation(root, "absent-delete"), [...claims("absent-delete", 3000), { domain: "network", resource: "network-", prefix: true }], targets(root));
++      op.recordResources([first, other]);
++      await expect(runOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "exact-delete", effect: "delete", deletionTarget: { kind: first.kind, id: first.id }, timeoutMs: 5000 })).rejects.toThrow("COMMAND_FAILED");
++      const failed = op.launches()[0]!;
++      op.recordResourceAbsence(first);
++      expect(op.launches()[0]?.reconciled).toBe(false);
++      op.markLaunchTerminal(failed.id);
++      op.recordResourceAbsence(other);
++      expect(op.launches()[0]?.reconciled).toBe(false);
++      op.recordResourceAbsence(first);
++      expect(op.launches()[0]?.reconciled).toBe(true);
++      expect(op.resources()).toEqual([]);
++    } finally { op.finish(); }
++  });
+   test("export parent preparation never creates or enters a legacy registry tree", async () => {
+     const root = project("a"); const registryDir = path.join(root, "registry");
+     const op = await ProjectOperation.open(root, { storePath, legacyInputs: { ...legacyInputs, registryDir } });
+diff --git a/src/core/lease_store.ts b/src/core/lease_store.ts
+index 743b081..cc12ce4 100644
+--- a/src/core/lease_store.ts
++++ b/src/core/lease_store.ts
+@@ -17,7 +17,7 @@ import { checkPortFree, type PortCheckFn } from "./ports";
+ const MAX_PROJECTS = 10_000;
+ const MAX_CLAIMS = 4096;
+ const MAX_LAUNCHES = 1024;
+-const SCHEMA_VERSION = 1;
++const SCHEMA_VERSION = 2;
+ const APPLICATION_ID = 0x53494c4f;
+ 
+ const SCHEMA = `
+@@ -72,11 +72,15 @@ CREATE TABLE resources (
+   generation INTEGER NOT NULL,
+   kind TEXT NOT NULL,
+   name TEXT NOT NULL,
++  id TEXT NOT NULL,
++  created_at TEXT NOT NULL,
+   receipt TEXT NOT NULL,
+   deleted INTEGER NOT NULL DEFAULT 0,
+-  PRIMARY KEY (project_id, generation, kind, name),
++  PRIMARY KEY (project_id, generation, kind, id, created_at),
+   FOREIGN KEY (project_id, generation) REFERENCES allocations(project_id, generation)
+ );
++CREATE UNIQUE INDEX resource_object_id ON resources(project_id, generation, kind, id) WHERE kind != 'volume';
++CREATE UNIQUE INDEX resource_live_name ON resources(project_id, generation, kind, name) WHERE deleted = 0;
+ CREATE TABLE completions (
+   project_id TEXT NOT NULL,
+   generation INTEGER NOT NULL,
+@@ -93,7 +97,7 @@ CREATE TABLE sinks (
+   PRIMARY KEY (project_id, generation, target_key),
+   FOREIGN KEY (project_id, generation) REFERENCES allocations(project_id, generation)
+ );
+-PRAGMA user_version = 1;
++PRAGMA user_version = ${SCHEMA_VERSION};
+ PRAGMA application_id = ${APPLICATION_ID};
+ `;
+ 
+@@ -375,7 +379,8 @@ export class ProjectOperation {
+       const previous = LaunchSchema.parse(JSON.parse(row.receipt));
+       if (previous.phase === "exited" && previous.exitCode !== null && previous.effect === "delete" &&
+         (previous.terminal || previous.id === completed.id) && previous.kind === completed.kind &&
+-        JSON.stringify(previous.command) === JSON.stringify(completed.command)) {
++        JSON.stringify(previous.command) === JSON.stringify(completed.command) &&
++        JSON.stringify(previous.deletionTarget) === JSON.stringify(completed.deletionTarget)) {
+         this.checkpointLaunch({ ...previous, reconciled: true });
+       }
+     }
+@@ -531,7 +536,8 @@ export class ProjectOperation {
+     return this.db.query<Claim, [string, number]>("SELECT domain, resource, is_prefix AS prefix FROM claims WHERE project_id = ? AND generation = ?").all(this.projectId, this.generation).map(c => ({ domain: c.domain, resource: c.resource, ...(c.prefix ? { prefix: true } : {}) }));
+   }
+ 
+-  planLaunch(input: Pick<Launch, "kind" | "command" | "effect">): Extract<Launch, { phase: "planned" }> {
++  planLaunch(input: Pick<Launch, "kind" | "command" | "effect" | "deletionTarget">): Extract<Launch, { phase: "planned" }> {
++    assert(input.deletionTarget === undefined || input.effect === "delete", "Only a deletion may carry a deletion target");
+     const launch: Extract<Launch, { phase: "planned" }> = { ...input, id: randomUUID(), phase: "planned", reconciled: false, terminal: false, supervisorPid: null, leaderPid: null, groupId: null, supervisorIdentity: null, exitCode: null };
+     this.transaction(() => {
+       if (this.launches().length >= MAX_LAUNCHES) throw new SiloError("Too many launch records; clean this generation", "STORE_FULL");
+@@ -551,7 +557,7 @@ export class ProjectOperation {
+       if (!old) throw new SiloError("Launch intent no longer belongs to this operation", "STALE_OPERATION");
+       const transitions = { planned: ["planned", "granted", "cancelled"], granted: ["granted", "exited"], exited: ["exited"], cancelled: ["cancelled"] };
+       assert(transitions[old.phase].includes(launch.phase), `Invalid launch transition: ${old.phase} -> ${launch.phase}`);
+-      assert.deepEqual([launch.kind, launch.effect, launch.command], [old.kind, old.effect, old.command], "Launch identity is immutable");
++      assert.deepEqual([launch.kind, launch.effect, launch.command, launch.deletionTarget], [old.kind, old.effect, old.command, old.deletionTarget], "Launch identity is immutable");
+       if (old.phase !== "planned") assert.deepEqual(
+         [launch.supervisorPid, launch.leaderPid, launch.groupId, launch.supervisorIdentity],
+         [old.supervisorPid, old.leaderPid, old.groupId, old.supervisorIdentity], "Executor identity is immutable",
+@@ -597,16 +603,32 @@ export class ProjectOperation {
+       for (const resource of resources) {
+         const claimed = this.resourceClaims().some(c => c.domain === resource.kind && (c.resource === resource.name || (c.prefix && resource.name.startsWith(c.resource))));
+         if (!claimed) throw new SiloError(`NAME_CONFLICT: resource lies outside this allocation's claims: ${resource.name}`, "NAME_CONFLICT");
+-        const old = this.resources(true).find(r => r.kind === resource.kind && r.name === resource.name);
+-        if (old && (old.id !== resource.id || old.createdAt !== resource.createdAt)) throw new SiloError(`NAME_CONFLICT: resource identity changed: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
+-        if (!old) this.db.query("INSERT INTO resources (project_id, generation, kind, name, receipt) VALUES (?, ?, ?, ?, ?)").run(this.projectId, this.generation, resource.kind, resource.name, JSON.stringify(BackendReceiptSchema.parse(resource)));
++        const active = this.resources();
++        const sameName = active.find(r => r.kind === resource.kind && r.name === resource.name);
++        if (sameName && (sameName.id !== resource.id || sameName.createdAt !== resource.createdAt)) throw new SiloError(`NAME_CONFLICT: live resource identity changed: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
++        const old = this.resources(true).find(r => r.kind === resource.kind && r.id === resource.id && (r.kind !== "volume" || r.createdAt === resource.createdAt));
++        if (old && (old.name !== resource.name || old.createdAt !== resource.createdAt || !active.some(r => r.kind === old.kind && r.id === old.id && r.createdAt === old.createdAt))) {
++          throw new SiloError(`NAME_CONFLICT: resource identity changed or reappeared: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
++        }
++        if (!old) this.db.query("INSERT INTO resources (project_id, generation, kind, name, id, created_at, receipt) VALUES (?, ?, ?, ?, ?, ?, ?)").run(this.projectId, this.generation, resource.kind, resource.name, resource.id, resource.createdAt, JSON.stringify(BackendReceiptSchema.parse(resource)));
+       }
+     });
+   }
+ 
+-  forgetResource(resource: BackendReceipt): void {
++  /** The backend must first prove this exact identity absent on the allocation's engine. */
++  recordResourceAbsence(resource: BackendReceipt): void {
+     this.transaction(() => {
+-      this.db.query("UPDATE resources SET deleted = 1 WHERE project_id = ? AND generation = ? AND kind = ? AND name = ? AND receipt = ?").run(this.projectId, this.generation, resource.kind, resource.name, JSON.stringify(resource));
++      const stored = this.resources(true).find(r => r.kind === resource.kind && r.id === resource.id && r.createdAt === resource.createdAt);
++      assert.deepEqual(stored, resource, "Absence must consume this generation's exact receipt");
++      if (resource.kind !== "volume") {
++        for (const launch of this.launches()) {
++          if (launch.phase === "exited" && launch.terminal && launch.exitCode !== null && launch.effect === "delete" &&
++            launch.deletionTarget?.kind === resource.kind && launch.deletionTarget.id === resource.id) {
++            this.checkpointLaunch({ ...launch, reconciled: true });
++          }
++        }
++      }
++      this.db.query("UPDATE resources SET deleted = 1 WHERE project_id = ? AND generation = ? AND kind = ? AND id = ? AND created_at = ? AND receipt = ?").run(this.projectId, this.generation, resource.kind, resource.id, resource.createdAt, JSON.stringify(resource));
+     });
+   }
+ 
+diff --git a/src/core/lease_types.ts b/src/core/lease_types.ts
+index 206a1cc..595abf4 100644
+--- a/src/core/lease_types.ts
++++ b/src/core/lease_types.ts
+@@ -38,9 +38,14 @@ export const FileReceiptSchema = z.object({
+ });
+ export type FileReceipt = z.infer<typeof FileReceiptSchema>;
+ 
++const DockerObjectIdSchema = z.string().regex(/^[a-f0-9]{64}$/).brand<"DockerObjectId">();
++const DockerDeletionTargetSchema = z.object({ kind: z.enum(["container", "network"]), id: DockerObjectIdSchema });
++export type DockerDeletionTarget = z.infer<typeof DockerDeletionTargetSchema>;
++
+ const LaunchBaseSchema = z.object({
+   id: z.string(), kind: z.string(), command: z.array(z.string()).max(1024),
+   effect: z.enum(["none", "workload", "create", "delete", "hook"]),
++  deletionTarget: DockerDeletionTargetSchema.optional(),
+ });
+ const UnlaunchedSchema = LaunchBaseSchema.extend({
+   supervisorPid: z.null(), leaderPid: z.null(), groupId: z.null(), supervisorIdentity: z.null(), exitCode: z.null(),
+@@ -74,7 +79,6 @@ const BackendIdentitySchema = z.object({
+   name: z.string(), id: z.string(),
+   createdAt: z.string(), labels: z.record(z.string()),
+ });
+-const DockerObjectIdSchema = z.string().regex(/^[a-f0-9]{64}$/).brand<"DockerObjectId">();
+ export const BackendReceiptSchema = z.discriminatedUnion("kind", [
+   BackendIdentitySchema.extend({ kind: z.literal("container"), id: DockerObjectIdSchema, anonymousVolumes: z.array(AnonymousVolumeSchema).max(256) }),
+   BackendIdentitySchema.extend({ kind: z.literal("network"), id: DockerObjectIdSchema }),
+diff --git a/src/core/owned_command.ts b/src/core/owned_command.ts
+index 486a794..4ba9be0 100644
+--- a/src/core/owned_command.ts
++++ b/src/core/owned_command.ts
+@@ -1,5 +1,5 @@
+ import { ProjectOperation, processAbsent } from "./lease_store";
+-import type { Launch } from "./lease_types";
++import type { DockerDeletionTarget, Launch } from "./lease_types";
+ import { runCommand } from "../utils/exec";
+ import { SiloError } from "../utils/errors";
+ import { withTimeout } from "../utils/timeout";
+@@ -34,6 +34,7 @@ type CommandOptions = {
+   env?: Record<string, string>;
+   timeoutMs: number | null;
+   capture?: boolean;
++  deletionTarget?: DockerDeletionTarget;
+ };
+ export type OwnedCommandResult = { exitCode: number; stdout: string; stderr: string; launch: Extract<Launch, { phase: "exited" }> };
+ export type RunningCommand = {
+@@ -80,7 +81,8 @@ export const startOwnedCommand = async (
+   owner: ProjectOperation, command: string[], options: CommandOptions,
+ ): Promise<RunningCommand> => {
+   if (options.timeoutMs === null && options.kind !== "tilt-up") throw new Error("Only the interactive Tilt session may have an until-stop lifetime");
+-  const intent = owner.planLaunch({ kind: options.kind, command, effect: options.effect });
++  const intent = owner.planLaunch({ kind: options.kind, command, effect: options.effect,
++    ...(options.deletionTarget === undefined ? {} : { deletionTarget: options.deletionTarget }) });
+   const proc = Bun.spawn([
+     TILT_SUPERVISOR_BIN, "--pgroup-only", "--watch-pid", String(process.pid), "--grace-ms", String(TILT_DRAIN_GRACE_MS),
+     "--", process.execPath, owner.executorEntrypoint, "__silo_execute", intent.id, owner.root,

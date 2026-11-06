@@ -1,159 +1,80 @@
-import { loadConfig } from "../core/config";
-import { buildSiloProcessEnv, resolveEnvPath } from "../core/env";
-import { readLockfile, updateLockfile } from "../core/lockfile";
-import { unregisterInstance } from "../core/port_registry";
-import { applyProfile } from "../core/profile";
-import { logger } from "../utils/logger";
-import { promises as fs } from "fs";
-import { runHooks } from "../hooks/runner";
+import { ProjectOperation } from "../core/lease_store";
+import { writeEnvAndLockfile } from "../core/env";
 import { deleteCluster } from "../backends/k3d";
-import { tiltDown } from "../backends/tilt";
-import { buildTemplateVars } from "../core/variables";
-import { resolveTemplateRecord } from "../core/instance";
-import { buildEnvVars } from "../core/env";
-import { stopProcess } from "../utils/process";
-import {
-  describeDisownedStacks,
-  findLiveDisowned,
-  probeTilt,
-} from "../core/liveness";
-import { downKeptClusterHint } from "../utils/breadcrumbs";
+import { assertEngine, assertNamesAvailable, captureFinishedProducers, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
+import { stopOwnedCommand } from "../core/owned_command";
+import { logger } from "../utils/logger";
 import { SiloError } from "../utils/errors";
-import { ensureToolsAvailable } from "../utils/validate";
+import { commandRoot } from "./prepare";
 
-export const down = async (options: {
-  config: string;
-  "delete-cluster": boolean;
-  clean: boolean;
-}): Promise<void> => {
-  process.env.SILO_ACTIVE = "1";
+const terminalGroups = (owner: ProjectOperation): void => {
+  for (const launch of owner.launches()) owner.markLaunchTerminal(launch.id);
+};
 
-  logger.info("Loading config");
-  const baseConfig = await loadConfig(options.config);
-  logger.verbose(`Config path: ${baseConfig.configPath}`);
-  const lockfile = await readLockfile(baseConfig.projectRoot);
-  if (!lockfile) {
-    throw new SiloError("No lockfile found. Nothing to stop.", "LOCKFILE_MISSING");
-  }
-
-  const profileName = lockfile.instance.profile;
-  const config = profileName ? applyProfile(baseConfig, profileName) : baseConfig;
-
-  const templateVars = buildTemplateVars({
-    identity: lockfile.instance.identity,
-    ports: lockfile.instance.ports,
-  });
-  const urls = resolveTemplateRecord(config.urls, config.urlOrder, templateVars);
-  const envFilePath = resolveEnvPath(config);
-  const siloEnv = buildSiloProcessEnv({ state: lockfile.instance, envFilePath });
-  const envVars = { ...buildEnvVars(lockfile.instance, urls), ...siloEnv };
-  Object.assign(process.env, siloEnv);
-
-  const liveDisowned = await findLiveDisowned({
-    disowned: lockfile.instance.disownedTilts,
-  });
-  if (liveDisowned.length > 0) {
-    // Refuse before anything is torn down: --clean removes the lockfile and
-    // releases the project's port reservations, which are the only record that
-    // these stacks exist and the only thing keeping peers off their ports.
-    if (options.clean) {
-      throw new SiloError(
-        `--clean would erase the only record of ${liveDisowned.length} running stack(s): ` +
-          `${describeDisownedStacks(liveDisowned)}. Stop them with 'kill <pid>' first.`,
-        "DISOWNED_RUNNING"
-      );
+export const down = async (options: { config: string; "delete-cluster": boolean; clean: boolean; executorEntrypoint?: string }): Promise<boolean> => {
+  const root = commandRoot(options.config);
+  const owner = await ProjectOperation.openExisting(root, { recover: true, ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }) });
+  if (!owner) { logger.info("No allocated instance. Nothing to stop."); return false; }
+  try {
+    const initial = owner.current();
+    if (!initial) { logger.info("No allocated instance. Nothing to stop."); return false; }
+    for (const role of ["env", "lock", "kubeconfig"] as const) if (owner.fileReceipt(role)) owner.file(role).recover();
+    for (const launch of owner.launches()) await stopOwnedCommand(launch);
+    terminalGroups(owner);
+    owner.applyCompletions();
+    for (const launch of owner.launches()) {
+      const target = launch.deletionTarget;
+      if (!launch.terminal || launch.reconciled || launch.effect !== "delete" || !target) continue;
+      const receipt = owner.resources(true).find(r => r.kind === target.kind && r.id === target.id);
+      if (receipt && !(await verifyResource(owner, receipt))) owner.recordResourceAbsence(receipt);
     }
-
-    logger.warn(
-      `${liveDisowned.length} stack(s) disowned by 'silo up --force' are still running; 'silo down' does not stop them.`
-    );
-    liveDisowned.forEach((entry) => {
-      logger.warn(`  pid ${entry.pid} (instance '${entry.name}')`);
-    });
-    logger.warn(
-      "Stop them with 'kill <pid>'. 'tilt down' below tears down resources they may share."
-    );
-  }
-
-  logger.info(`Running pre-down hooks (${config.hooks["pre-down"]?.length ?? 0})`);
-  await runHooks({
-    hooks: config.hooks["pre-down"],
-    env: envVars,
-    cwd: config.projectRoot,
-    phase: "pre-down",
-  });
-
-  try {
-    await ensureToolsAvailable(["tilt"]);
-    logger.info("Running tilt down");
-    await tiltDown({ cwd: config.projectRoot, env: envVars });
+    const missing = owner.launches().find(l => l.phase === "granted");
+    if (missing) throw new SiloError(`CLEANUP_REQUIRED: ${missing.kind}/${missing.id} has no completion fact; process death cannot resolve an outstanding request`, "CLEANUP_REQUIRED");
+    await captureFinishedProducers(owner);
+    const effects = owner.launches().filter(l => l.phase === "exited" && !l.reconciled && l.effect !== "none");
+    if (effects.length > 0 || owner.resources().length > 0) {
+      await assertEngine(owner);
+      await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+    }
+    // Finished producers are sealed above. No capture can run after deletion
+    // starts or renew authority on a later cleanup retry.
+    await deleteOwnedContainers(owner, "compose");
+    await deleteOwnedNetworks(owner, "compose");
+    for (const receipt of owner.resources()) if (!(await verifyResource(owner, receipt))) owner.recordResourceAbsence(receipt);
+    if (options["delete-cluster"] && owner.resources().some(r => r.source === "k3d")) await deleteCluster(owner);
+    terminalGroups(owner);
+    const leaks = await findAnonymousLeaks(owner);
+    const leakProblem = leaks.length > 0 ? `Leaked anonymous volumes: ${leaks.map(v => v.name).join(", ")}. Silo never deletes volumes by name; resolve this data with its owner.` : null;
+    if (leakProblem) logger.warn(leakProblem);
+    for (const launch of owner.launches()) {
+      if (launch.phase === "planned") owner.markLaunchTerminal(launch.id);
+      else if (launch.phase === "exited" && (launch.effect === "none" || (launch.effect === "delete" && launch.exitCode === 0))) {
+        owner.checkpointLaunch({ ...launch, reconciled: true });
+      }
+    }
+    const uncertain = owner.launches().filter(l => l.phase === "granted" || (l.phase === "exited" && !l.reconciled));
+    if (uncertain.length > 0) {
+      throw new SiloError(`CLEANUP_REQUIRED: unresolved external requests (${uncertain.map(l => `${l.kind}/${l.id}`).join(", ")}); process death and empty listings cannot cancel them. Claims retained.`, "CLEANUP_REQUIRED");
+    }
+    const current = owner.current()!;
+    const { tiltPid: _pid, tiltStartedAt: _at, ...state } = current.allocation.state;
+    const retained = owner.resources();
+    const hasRetainedData = retained.length > 0 || leaks.length > 0;
+    owner.update({ ...current.allocation, state }, retained.length > 0 ? "retained" : "stopped", leakProblem);
+    if (options.clean) {
+      if (retained.length > 0) throw new SiloError(`CLEANUP_REQUIRED: retained resources (${retained.map(r => `${r.kind}/${r.name}`).join(", ")}); ownership snapshots and claims kept. Explicit cluster deletion removes owned containers/networks. Silo never deletes volumes by name; resolve retained named volumes with their owner.`, "CLEANUP_REQUIRED");
+      const proof = await owner.prepareRetirement();
+      for (const role of ["env", "kubeconfig", "lock"] as const) if (owner.fileReceipt(role)) owner.file(role).remove();
+      owner.retire(proof);
+      logger.info("Removed owned snapshots and released this generation's claims.");
+    } else {
+      writeEnvAndLockfile(owner);
+      logger.info(hasRetainedData ? "Stopped Tilt; resources and claims retained. Inspect status before clean." : "Stopped; allocation remains reserved until down --clean.");
+    }
+    return options.clean || options["delete-cluster"] || effects.length > 0 || initial.phase !== (retained.length > 0 ? "retained" : "stopped");
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    logger.warn(`tilt down failed: ${message}`);
-  }
-
-  const tiltPid = lockfile.instance.tiltPid;
-  if (tiltPid !== undefined && (await probeTilt(tiltPid))) {
-    logger.info(`Stopping Tilt (pid ${tiltPid})`);
-    await stopProcess(tiltPid);
-    logger.info("Stopped Tilt");
-  }
-
-  // Drop the stopped pid, and any disowned stack that has since exited, so the
-  // lockfile only ever names processes that are actually running.
-  const recordedDisowned = lockfile.instance.disownedTilts?.length ?? 0;
-  if (
-    lockfile.instance.tiltPid ||
-    lockfile.instance.tiltStartedAt ||
-    recordedDisowned !== liveDisowned.length
-  ) {
-    await updateLockfile(config.projectRoot, (current) => {
-      const {
-        tiltPid: _tiltPid,
-        tiltStartedAt: _tiltStartedAt,
-        disownedTilts: _disownedTilts,
-        ...rest
-      } = current.instance;
-      return {
-        ...rest,
-        ...(liveDisowned.length > 0 ? { disownedTilts: liveDisowned } : {}),
-      };
-    });
-  }
-
-  if (options["delete-cluster"] && lockfile.instance.identity.k3dClusterName) {
-    logger.info(`Deleting k3d cluster '${lockfile.instance.identity.k3dClusterName}'`);
-    await deleteCluster(lockfile.instance.identity.k3dClusterName, config.projectRoot);
-    await updateLockfile(config.projectRoot, (current) => ({
-      ...current.instance,
-      k3dClusterCreated: false,
-    }));
-  }
-
-  try {
-    logger.info(`Running post-down hooks (${config.hooks["post-down"]?.length ?? 0})`);
-    await runHooks({
-      hooks: config.hooks["post-down"],
-      env: envVars,
-      cwd: config.projectRoot,
-      phase: "post-down",
-    });
-  } catch (error) {
-    logger.warn(`post-down hook failed: ${(error as Error).message}`);
-  }
-
-  if (options.clean) {
-    logger.info("Removing env file and lockfile");
-    await fs.rm(envFilePath, { force: true });
-    await fs.rm(`${config.projectRoot}/.silo.lock`, { force: true });
-    // Release this instance's ports in the machine-wide registry so peer
-    // silo instances can claim them. When --clean is not passed, the entry
-    // stays so peer allocations continue to avoid these ports until the
-    // project's own unregister operation retires it.
-    await unregisterInstance({ projectRoot: config.projectRoot });
-  }
-
-  if (!options["delete-cluster"] && lockfile.instance.k3dClusterCreated) {
-    logger.info(downKeptClusterHint());
-  }
+    const current = owner.current();
+    if (current) owner.noteFailure(error);
+    throw error;
+  } finally { owner.finish(); }
 };

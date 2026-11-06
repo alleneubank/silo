@@ -1,0 +1,24 @@
+{"at":"2026-11-04T22:16:08.920Z","cwd":"/tmp/timing/a","args":["down","--clean"],"result":{"schemaVersion":1,"legacy":false,"changed":false,"project":null}}
+{"at":"2026-11-04T22:16:08.957Z","cwd":"/tmp/timing/b","args":["down","--clean"],"result":{"schemaVersion":1,"legacy":false,"changed":false,"project":null}}
+11 | async function command(cwd, args) {
+12 |   const proc = Bun.spawn([process.execPath, cli, ...args, "--json"], { cwd, env, detached: true, stdout: "pipe", stderr: "pipe" });
+13 |   processes.push(proc);
+14 |   appendFileSync(root + "/resources", `pid/pgid ${proc.pid}: ${JSON.stringify(args)}; returned handle, then public down --clean\n`);
+15 |   const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
+16 |   assert.equal(code, 0, stdout + stderr);
+              ^
+AssertionError: {"schemaVersion":1,"code":"INVALID_CONFIG","message":"hosts must include APP_HOST"}
+
+
+1 !== 0
+
+ generatedMessage: false,
+     actual: 1,
+   expected: 0,
+   operator: "strictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at command (/tmp/timing-probe.ts:16:10)
+
+Bun v1.4.4 (Linux x64)

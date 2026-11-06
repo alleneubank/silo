@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+if [ "${1-}" = network ] && [ "${2-}" = create ]; then shift 2; exec "$REHEARSAL_DOCKER" network create --subnet "$REHEARSAL_SUBNET" "$@"; fi
+exec "$REHEARSAL_DOCKER" "$@"

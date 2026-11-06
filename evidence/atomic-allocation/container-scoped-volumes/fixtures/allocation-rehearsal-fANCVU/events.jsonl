@@ -1,0 +1,14 @@
+{"environment":{"platform":"linux","arch":"x64","bun":"1.4.4","root":"/tmp/fixtures/allocation-rehearsal-fANCVU","accountHome":"/home/ae","artifact":"/tmp/baseline-cli.js","sha256":"40fd990ead9815f2f679b43e16eb65fc111fe0a798e08988e9a85667206e43a6"}}
+{"command":1,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU/paused-replacement","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","env","proof-fancvu-paused-replacement","--json"],"code":0}
+{"command":2,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU","argv":["docker","container","create","--name","localnet-proof-fancvu-paused-replacement-audit","--label","io.silo.project=b632e57e-9776-4171-b4aa-4c45406f0112","--label","io.silo.generation=1","redis:7-alpine"],"code":0}
+{"command":3,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU","argv":["docker","container","inspect","6d3a5c4cdb318dcf753699fec31f882c23ea36dcc95281e7644ebfd17b469ebe"],"code":0}
+{"command":4,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU","argv":["docker","volume","inspect","7bfe8696730e6f1367650e2a52c35de210406c693344c5f88a8a3f75dc40ee5a"],"code":0}
+{"command":5,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU","argv":["docker","container","rm","6d3a5c4cdb318dcf753699fec31f882c23ea36dcc95281e7644ebfd17b469ebe"],"code":0}
+{"command":7,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU","argv":["docker","volume","rm","7bfe8696730e6f1367650e2a52c35de210406c693344c5f88a8a3f75dc40ee5a"],"code":0}
+{"command":8,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU","argv":["docker","volume","create","--label","com.docker.volume.anonymous=","7bfe8696730e6f1367650e2a52c35de210406c693344c5f88a8a3f75dc40ee5a"],"code":0}
+{"command":9,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU","argv":["docker","volume","inspect","7bfe8696730e6f1367650e2a52c35de210406c693344c5f88a8a3f75dc40ee5a"],"code":0}
+{"command":6,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU/paused-replacement","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--clean","--json"],"code":0}
+{"command":10,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU","argv":["docker","volume","ls","--format","{{.Name}}"],"code":0}
+{"result":"fail","error":"AssertionError [ERR_ASSERTION]: A leaked/replaced name must not be deleted and retired","stack":"AssertionError [ERR_ASSERTION]: A leaked/replaced name must not be deleted and retired\n    at pausedReplacement (/mnt/scripts/allocation-rehearsal.ts:526:12)"}
+{"command":11,"cwd":"/tmp/fixtures/allocation-rehearsal-fANCVU/paused-replacement","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"resources":"/tmp/fixtures/allocation-rehearsal-fANCVU/resources","evidence":"/tmp/fixtures/allocation-rehearsal-fANCVU","retainedEvidence":true}

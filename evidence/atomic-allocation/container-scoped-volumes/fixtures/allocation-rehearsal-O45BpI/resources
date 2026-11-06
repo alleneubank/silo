@@ -1,0 +1,36 @@
+process 2870331 pgid=2870331: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-o45bpi-inherited-volumes","--json"]; teardown via returned subprocess handle or verified recorded group
+named volume intent silo-inherited-allocation-rehearsal-o45bpi; teardown exact snapshot-verified author docker volume rm
+process 2870579 pgid=2870579: ["docker","volume","create","silo-inherited-allocation-rehearsal-o45bpi"]; teardown via returned subprocess handle or verified recorded group
+process 2870595 pgid=2870595: ["docker","volume","inspect","silo-inherited-allocation-rehearsal-o45bpi"]; teardown via returned subprocess handle or verified recorded group
+process 2870613 pgid=2870613: ["docker","container","create","--volume","silo-inherited-allocation-rehearsal-o45bpi:/named","redis:7-alpine"]; teardown via returned subprocess handle or verified recorded group
+inherited donor container 7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454; teardown exact recorded ID with --volumes
+process 2870793 pgid=2870793: ["docker","container","inspect","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454"]; teardown via returned subprocess handle or verified recorded group
+process 2870810 pgid=2870810: ["docker","container","inspect","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+inherited anonymous volume fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9 from donor 7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454; cleanup only with last exact recorded fixture parent
+process 2870828 pgid=2870828: ["docker","volume","inspect","fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9"]; teardown via returned subprocess handle or verified recorded group
+inherited borrower intent localnet-proof-o45bpi-inherited-volumes-inherited; teardown exact returned ID with --volumes only while donor exists
+process 2870845 pgid=2870845: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--timeout","60s","--json"]; teardown via returned subprocess handle or verified recorded group
+inherited borrower 8f6f72bf78ac2066b699a49ef8c01701bf42d90bd73ae3407b7e16aaf2fee044; teardown exact recorded ID with --volumes while donor exists
+process 2871510 pgid=2871510: ["docker","container","inspect","8f6f72bf78ac2066b699a49ef8c01701bf42d90bd73ae3407b7e16aaf2fee044"]; teardown via returned subprocess handle or verified recorded group
+process 2871525 pgid=2871525: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 2871544 pgid=2871544: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 2871923 pgid=2871923: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 2871945 pgid=2871945: ["docker","container","inspect","8f6f72bf78ac2066b699a49ef8c01701bf42d90bd73ae3407b7e16aaf2fee044"]; teardown via returned subprocess handle or verified recorded group
+process 2871962 pgid=2871962: ["docker","container","inspect","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454"]; teardown via returned subprocess handle or verified recorded group
+process 2872006 pgid=2872006: ["docker","volume","inspect","fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9"]; teardown via returned subprocess handle or verified recorded group
+process 2872056 pgid=2872056: ["docker","volume","inspect","silo-inherited-allocation-rehearsal-o45bpi"]; teardown via returned subprocess handle or verified recorded group
+process 2872075 pgid=2872075: ["docker","container","rm","--volumes","8f6f72bf78ac2066b699a49ef8c01701bf42d90bd73ae3407b7e16aaf2fee044"]; teardown via returned subprocess handle or verified recorded group
+process 2872106 pgid=2872106: ["docker","volume","inspect","fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9"]; teardown via returned subprocess handle or verified recorded group
+process 2872123 pgid=2872123: ["docker","container","create","--volumes-from","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454","redis:7-alpine"]; teardown via returned subprocess handle or verified recorded group
+last inherited user 7d278ff6d69ef3a13d84262d8151e2d906238ec6a9f28277d86b8f1d8467c07d; teardown exact recorded ID with --volumes; this fixture owns donor and both volumes
+process 2872409 pgid=2872409: ["docker","container","inspect","7d278ff6d69ef3a13d84262d8151e2d906238ec6a9f28277d86b8f1d8467c07d"]; teardown via returned subprocess handle or verified recorded group
+process 2872430 pgid=2872430: ["docker","container","inspect","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454"]; teardown via returned subprocess handle or verified recorded group
+process 2872452 pgid=2872452: ["docker","container","rm","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454"]; teardown via returned subprocess handle or verified recorded group
+process 2872522 pgid=2872522: ["docker","volume","inspect","fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9"]; teardown via returned subprocess handle or verified recorded group
+process 2872540 pgid=2872540: ["docker","container","rm","--volumes","7d278ff6d69ef3a13d84262d8151e2d906238ec6a9f28277d86b8f1d8467c07d"]; teardown via returned subprocess handle or verified recorded group
+process 2872604 pgid=2872604: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 2872620 pgid=2872620: ["docker","volume","inspect","silo-inherited-allocation-rehearsal-o45bpi"]; teardown via returned subprocess handle or verified recorded group
+process 2872637 pgid=2872637: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 2873696 pgid=2873696: ["docker","volume","inspect","silo-inherited-allocation-rehearsal-o45bpi"]; teardown via returned subprocess handle or verified recorded group
+process 2873713 pgid=2873713: ["docker","volume","rm","silo-inherited-allocation-rehearsal-o45bpi"]; teardown via returned subprocess handle or verified recorded group
+process 2873730 pgid=2873730: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"]; teardown via returned subprocess handle or verified recorded group

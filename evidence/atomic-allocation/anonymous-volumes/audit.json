@@ -1,0 +1,1418 @@
+{
+  "at": "2026-11-04T23:18:56.180Z",
+  "stores": [
+    {
+      "store": "/home/ae/.silo/leases.sqlite",
+      "projects": [
+        {
+          "id": "a687a385-1499-43d1-8bd7-e785920f6c77",
+          "root": "/tmp/fixtures/example-baseline",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "80db5572-659c-4f01-a2c2-452e9ec7dfaa",
+          "root": "/tmp/fixtures/allocation-rehearsal-CPpQc3/anonymous-volumes",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "96aef8bf-0348-4f30-90f7-b3ce49ceaf1a",
+          "root": "/tmp/fixtures/allocation-rehearsal-jQL2Gi/anonymous-volumes",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "929cf597-eef5-42b5-afee-0c7a9552b83f",
+          "root": "/tmp/fixtures/allocation-rehearsal-7MAfVO/anonymous-volumes",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "174314c1-e7ed-4720-9b4a-4b174fb6f7c4",
+          "root": "/tmp/fixtures/allocation-rehearsal-7MAfVO/anonymous-retry",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "8dc46fc2-c512-45c7-a1b1-92a612c19215",
+          "root": "/tmp/fixtures/allocation-rehearsal-4xz7Mx/anonymous-volumes",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "2227fbb4-374c-4d66-9839-225819f56835",
+          "root": "/tmp/fixtures/allocation-rehearsal-4xz7Mx/anonymous-retry",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "3f6b92a0-86f1-49e7-b169-fe0b38108fa6",
+          "root": "/tmp/fixtures/allocation-rehearsal-VQfLSj/anonymous-volumes",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "7afc4c74-fc9f-431e-bcad-40799c98cf75",
+          "root": "/tmp/fixtures/allocation-rehearsal-VQfLSj/anonymous-retry",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "dd83114f-f2a6-45f7-8386-a726970874c1",
+          "root": "/tmp/fixtures/allocation-rehearsal-VQfLSj/anonymous-identity",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "f6fd8b27-4e8f-4d6c-bf31-41e1e4699c76",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/legacy-peer",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "06de48bc-78c2-494a-80f2-3518c0b09891",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/a",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "f41d1f51-6295-4a12-b42f-a8db5242e6e3",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/b",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "bf4add8f-15d7-42a2-8724-a071306e7f2e",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/gate-crash",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "77b063bb-10cc-4178-b3c9-4a05d994bffd",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/failed-teardown",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "7af2ae67-6be8-4a80-ad9a-0fff7aa048b5",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/files",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "741f5188-869e-479f-b672-7ccef54e1844",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/files/nested",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "7cdbaeb0-cccd-4069-a418-e9d1c02caefb",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/CaseRoot",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "fbdaa66f-635b-44a7-b506-aab057445f84",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/Café",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "32ce9154-9a69-4e56-8105-87e9ecb68047",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/backend",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "68b0efbe-c203-448f-97bc-a9bcf7db5c1b",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/anonymous-volumes",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "3406c5bd-3da9-4ba5-93dd-1140ae63af21",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/anonymous-retry",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "501d823a-323e-453e-8580-b0698e715ae5",
+          "root": "/tmp/fixtures/allocation-rehearsal-wvvhXm/anonymous-identity",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "2fe75086-ea4b-4e68-83d5-4c42c1d05607",
+          "root": "/tmp/fixtures/example-fixed",
+          "generation": 0,
+          "operation_token": null
+        }
+      ],
+      "claims": 0,
+      "activeResources": 0
+    },
+    {
+      "store": "/tmp/guest/account/.silo/leases.sqlite",
+      "projects": [
+        {
+          "id": "6e6de392-5401-480c-b5c8-4abcc1807b2e",
+          "root": "/tmp/root-main",
+          "generation": 0,
+          "operation_token": null
+        },
+        {
+          "id": "53828345-b79a-4026-abe9-cdb88b168cfe",
+          "root": "/tmp/root-peer",
+          "generation": 0,
+          "operation_token": null
+        }
+      ],
+      "claims": 0,
+      "activeResources": 0
+    }
+  ],
+  "handlesChecked": [
+    2692031,
+    2692032,
+    2692328,
+    2692329,
+    2692664,
+    2692665,
+    2693040,
+    2693041,
+    2702582,
+    2702583,
+    2702689,
+    2702690,
+    2703126,
+    2703127,
+    2758463,
+    2758464,
+    2758555,
+    2759539,
+    2759540,
+    2761567,
+    2761586,
+    2761606,
+    2761641,
+    2763361,
+    2763364,
+    2763432,
+    2763433,
+    2765049,
+    2765050,
+    2766135,
+    2766175,
+    2766191,
+    2766210,
+    2766307,
+    2766309,
+    2766988,
+    2766989,
+    2767509,
+    2767510,
+    2834521,
+    2835332,
+    2835333,
+    2837028,
+    2837052,
+    2837078,
+    2837100,
+    2838744,
+    2838745,
+    2840605,
+    2840606,
+    2841155,
+    2841237,
+    2841296,
+    2891752,
+    2893255,
+    2893257,
+    2896159,
+    2896212,
+    2896245,
+    2896272,
+    2898634,
+    2898635,
+    2901895,
+    2901896,
+    2902864,
+    2902942,
+    2903017,
+    2903069,
+    2903227,
+    2903249,
+    2903280,
+    2903306,
+    2903330,
+    2903383,
+    2904701,
+    2904702,
+    2906900,
+    2906958,
+    2906986,
+    2908912,
+    2908913,
+    2911128,
+    2911149,
+    2911168,
+    2911222,
+    2912173,
+    2912245,
+    2912374,
+    2912417,
+    2912982,
+    2912983,
+    2913117,
+    2913165,
+    2913223,
+    2913300,
+    2913347,
+    2914800,
+    2914826,
+    2914850,
+    2914871,
+    2914906,
+    2914959,
+    2943942,
+    2943943,
+    2944718,
+    2945612,
+    2945613,
+    2947081,
+    2947105,
+    2947125,
+    2947143,
+    2948206,
+    2948207,
+    2949910,
+    2949911,
+    2950646,
+    2950677,
+    2950713,
+    2950764,
+    2950802,
+    2950825,
+    2950852,
+    2950880,
+    2950915,
+    2950950,
+    2952344,
+    2952345,
+    2953960,
+    2953982,
+    2954001,
+    2955021,
+    2955022,
+    2956782,
+    2956799,
+    2956820,
+    2956847,
+    2957425,
+    2957471,
+    2957603,
+    2957633,
+    2957973,
+    2957974,
+    2958077,
+    2958118,
+    2958156,
+    2958188,
+    2958300,
+    2960183,
+    2960184,
+    2960820,
+    2960860,
+    2960957,
+    2961062,
+    2961103,
+    2961157,
+    2961260,
+    2961359,
+    2961437,
+    2961477,
+    2961601,
+    3011334,
+    3012298,
+    3012299,
+    3014777,
+    3014828,
+    3014856,
+    3014883,
+    3016418,
+    3016419,
+    3018107,
+    3018108,
+    3018772,
+    3018804,
+    3018853,
+    3018906,
+    3018981,
+    3019011,
+    3019042,
+    3019071,
+    3019106,
+    3019137,
+    3020409,
+    3020410,
+    3022095,
+    3022118,
+    3022219,
+    3023468,
+    3023469,
+    3025314,
+    3025339,
+    3025365,
+    3025394,
+    3026021,
+    3026054,
+    3026091,
+    3026127,
+    3026533,
+    3026534,
+    3026619,
+    3026650,
+    3026672,
+    3026702,
+    3026731,
+    3028382,
+    3028383,
+    3028923,
+    3028946,
+    3029032,
+    3029052,
+    3029068,
+    3029088,
+    3030110,
+    3030111,
+    3032390,
+    3032434,
+    3032451,
+    3033840,
+    3033841,
+    3035761,
+    3035822,
+    3035851,
+    3035877,
+    3035895,
+    3036217,
+    3036329,
+    3036429,
+    3036461,
+    3037102,
+    3037130,
+    3037153,
+    3037180,
+    3037200,
+    3037220,
+    3037255,
+    3037290,
+    3156464,
+    3156574,
+    3156614,
+    3156634,
+    3156703,
+    3156773,
+    3156795,
+    3156867,
+    3156909,
+    3156972,
+    3156995,
+    3157016,
+    3157070,
+    3157094,
+    3157113,
+    3157131,
+    3157152,
+    3157174,
+    3157256,
+    3157340,
+    3157358,
+    3157375,
+    3157395,
+    3157413,
+    3157467,
+    3157489,
+    3157509,
+    3157530,
+    3157555,
+    3157606,
+    3157632,
+    3157650,
+    3157668,
+    3157687,
+    3157828,
+    3157845,
+    3157934,
+    3157952,
+    3157983,
+    3158001,
+    3158109,
+    3158597,
+    3158657,
+    3158716,
+    3158734,
+    3158784,
+    3158822,
+    3158857,
+    3158877,
+    3158989,
+    3159012,
+    3159649,
+    3159685,
+    3159867,
+    3159870,
+    3160466,
+    3160507,
+    3161050,
+    3161098,
+    3161478,
+    3161510,
+    3162365,
+    3162366,
+    3162484,
+    3163665,
+    3163666,
+    3164702,
+    3164738,
+    3165296,
+    3165342,
+    3165740,
+    3165777,
+    3166127,
+    3166759,
+    3166760,
+    3166820,
+    3167197,
+    3167504,
+    3167505,
+    3168561,
+    3168562,
+    3168563,
+    3168565,
+    3169201,
+    3169246,
+    3169271,
+    3169533,
+    3169729,
+    3169897,
+    3169927,
+    3169958,
+    3170007,
+    3170065,
+    3170095,
+    3171018,
+    3171019,
+    3172370,
+    3173586,
+    3173588,
+    3174744,
+    3175083,
+    3175727,
+    3175754,
+    3176112,
+    3177202,
+    3177203,
+    3179469,
+    3179585,
+    3180564,
+    3180565,
+    3180750,
+    3180814,
+    3181740,
+    3181741,
+    3182417,
+    3182652,
+    3182981,
+    3183599,
+    3184005,
+    3184485,
+    3184817,
+    3185256,
+    3185577,
+    3185924,
+    3185973,
+    3185994,
+    3186430,
+    3186447,
+    3186523,
+    3186543,
+    3186579,
+    3186912,
+    3186929,
+    3186948,
+    3187324,
+    3187714,
+    3188143,
+    3189064,
+    3189066,
+    3189552,
+    3189554,
+    3190057,
+    3190058,
+    3208997,
+    3208998,
+    3209617,
+    3209618,
+    3211056,
+    3211098,
+    3211142,
+    3211184,
+    3211208,
+    3211232,
+    3211264,
+    3211294,
+    3213756,
+    3213757,
+    3216184,
+    3220762,
+    3220763,
+    3221518,
+    3221519,
+    3222506,
+    3222507,
+    3224015,
+    3224016,
+    3224407,
+    3224408,
+    3224872,
+    3224873,
+    3225501,
+    3225518,
+    3225920,
+    3225921,
+    3226302,
+    3226303,
+    3226983,
+    3226984,
+    3227659,
+    3227694,
+    3228543,
+    3228581,
+    3229949,
+    3229970,
+    3230316,
+    3230369,
+    3230700,
+    3230754,
+    3230772,
+    3230790,
+    3230807,
+    3230830,
+    3230857,
+    3230887,
+    3230971,
+    3230999,
+    3231017,
+    3231048,
+    3231069,
+    3231089,
+    3231108,
+    3231232,
+    3231251,
+    3231272,
+    3231323,
+    3231340,
+    3231632,
+    3231651,
+    3231676,
+    3231978,
+    3232401,
+    3232441,
+    3232458,
+    3232843,
+    3232876,
+    3232911,
+    3232940,
+    3233296,
+    3233459,
+    3234372,
+    3234373,
+    3235911,
+    3235971,
+    3236036,
+    3236068,
+    3237796,
+    3237797,
+    3239602,
+    3239613,
+    3240162,
+    3240214,
+    3240239,
+    3240267,
+    3240293,
+    3240314,
+    3240333,
+    3240353,
+    3240373,
+    3240391,
+    3241402,
+    3241404,
+    3242920,
+    3242950,
+    3242977,
+    3244392,
+    3244393,
+    3245603,
+    3245620,
+    3245637,
+    3245660,
+    3246090,
+    3246169,
+    3246300,
+    3246316,
+    3246628,
+    3246629,
+    3246737,
+    3246780,
+    3246808,
+    3246857,
+    3246939,
+    3248524,
+    3248528,
+    3249002,
+    3249022,
+    3249066,
+    3249082,
+    3249097,
+    3249117,
+    3250017,
+    3250018,
+    3251655,
+    3251682,
+    3251700,
+    3252628,
+    3252629,
+    3254000,
+    3254027,
+    3254045,
+    3254065,
+    3254084,
+    3254366,
+    3254392,
+    3254410,
+    3254427,
+    3255040,
+    3255063,
+    3255085,
+    3255205,
+    3255231,
+    3255248,
+    3255331,
+    3255356,
+    3255379,
+    3255402,
+    3255427,
+    3255451,
+    3255477,
+    3255505,
+    3255545,
+    3255588,
+    3255613,
+    3255640,
+    3255730,
+    3255788,
+    3255869,
+    3255892,
+    3271442,
+    3272049,
+    3272050,
+    3272367,
+    3272369,
+    3272758,
+    3272759,
+    3273214,
+    3273215,
+    3287385,
+    3287386,
+    3287531,
+    3287532,
+    3287948,
+    3287949,
+    3290625,
+    3290626,
+    3306418,
+    3306442,
+    3306910,
+    3306979,
+    3307000,
+    3307047,
+    3307067,
+    3307127,
+    3307162,
+    3309597,
+    3309598,
+    3313543,
+    3313545,
+    3313956,
+    3313988,
+    3318726,
+    3318727,
+    3319977,
+    3319978,
+    3320965,
+    3320966,
+    3322041,
+    3322042,
+    3322745,
+    3322748,
+    3323325,
+    3323326,
+    3324029,
+    3324032,
+    3324831,
+    3324832,
+    3325685,
+    3325686,
+    3326458,
+    3326459,
+    3328071,
+    3328072,
+    3329290,
+    3329362,
+    3329387,
+    3331495,
+    3331498,
+    3335118,
+    3335120,
+    3354022,
+    3354023,
+    3355809,
+    3355810,
+    3357146,
+    3357147,
+    3358022,
+    3358023,
+    3373031,
+    3373032,
+    3373939,
+    3373940,
+    3387231,
+    3387232,
+    3410707,
+    3410708,
+    3413913,
+    3413914
+  ],
+  "everyRecordedPidAndSameNumberGroupAbsent": true,
+  "objectsChecked": [
+    {
+      "kind": "container",
+      "id": "afdc82c8ee1ccba132e0daf0cc7f73885b29a104c6de1923e7c7b06120ab53e2",
+      "name": "localnet-proof-cppqc3-anonymous-volumes-redis-1"
+    },
+    {
+      "kind": "network",
+      "id": "0d75f216208b9384a5376fcf1c327642a79e7d561436177b78890f277c584871",
+      "name": "localnet-proof-cppqc3-anonymous-volumes_default"
+    },
+    {
+      "kind": "volume",
+      "id": "5d741e0e2c990b32d86cb219ab1b7bfdb7ab685ffe5bab8e4a66945552621439",
+      "name": "5d741e0e2c990b32d86cb219ab1b7bfdb7ab685ffe5bab8e4a66945552621439"
+    },
+    {
+      "kind": "container",
+      "id": "cbed3e0ef1886bba7da0a553867c7c62241d17e64d1d5d001f4e97ab9fba8856",
+      "name": "cbed3e0ef1886bba7da0a553867c7c62241d17e64d1d5d001f4e97ab9fba8856"
+    },
+    {
+      "kind": "volume",
+      "id": "f5b332f66be921ba19f0b88066299a653fd1a5f0fdcff261cf3b1ccc2c0ac7ba",
+      "name": "f5b332f66be921ba19f0b88066299a653fd1a5f0fdcff261cf3b1ccc2c0ac7ba"
+    },
+    {
+      "kind": "volume",
+      "id": "3c84f62302bc60fcf39a998b713c1cfca2bd4686bfed5303211c3b274d16c0d1",
+      "name": "3c84f62302bc60fcf39a998b713c1cfca2bd4686bfed5303211c3b274d16c0d1"
+    },
+    {
+      "kind": "container",
+      "id": "79d5a196f1c9bc3f25eeb73c734d4a93d94531bee1040a63a9cdf78b932c49ff",
+      "name": "localnet-proof-wvvhxm-anonymous-identity-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "aeb1d917ce8fcdd1b18a8659f12adf3a15d18d029a6f795ab52370fc062708ce",
+      "name": "aeb1d917ce8fcdd1b18a8659f12adf3a15d18d029a6f795ab52370fc062708ce"
+    },
+    {
+      "kind": "network",
+      "id": "429abe0493d338703a0af7374abd06ed7173760800f297827570c62f1eafc8a7",
+      "name": "localnet-proof-wvvhxm-anonymous-identity_default"
+    },
+    {
+      "kind": "volume",
+      "id": "k3d-localnet-proof-wvvhxm-backend-images",
+      "name": "k3d-localnet-proof-wvvhxm-backend-images"
+    },
+    {
+      "kind": "container",
+      "id": "4398b8a43b38fa728e8cb1e2ae06529e9a344b8cddba01e37368405cfc4e2adb",
+      "name": "4398b8a43b38fa728e8cb1e2ae06529e9a344b8cddba01e37368405cfc4e2adb"
+    },
+    {
+      "kind": "volume",
+      "id": "c91babea0c4d78a690dfba4402a3b5bfad4ee17657a379392f691b3b3be9e528",
+      "name": "c91babea0c4d78a690dfba4402a3b5bfad4ee17657a379392f691b3b3be9e528"
+    },
+    {
+      "kind": "container",
+      "id": "a16dd14daec37c951e5df683419633292ab6f6f1d843db8a2c7be7e2baca3ceb",
+      "name": "localnet-proof-wvvhxm-anonymous-volumes-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "8ff150512e2bddec027796518ab72b882092eeab3588d58eeb400e9077464887",
+      "name": "8ff150512e2bddec027796518ab72b882092eeab3588d58eeb400e9077464887"
+    },
+    {
+      "kind": "network",
+      "id": "73f9c62cdef7436035735a397f2517f38edbb9c160ea1e45537f35db6786698b",
+      "name": "localnet-proof-wvvhxm-anonymous-volumes_default"
+    },
+    {
+      "kind": "volume",
+      "id": "10c6c138a0052c7d2f67905ae36ebfb45623f6566ff334f3d7951c66db826e41",
+      "name": "10c6c138a0052c7d2f67905ae36ebfb45623f6566ff334f3d7951c66db826e41"
+    },
+    {
+      "kind": "volume",
+      "id": "silo-sentinel-allocation-rehearsal-wvvhxm",
+      "name": "silo-sentinel-allocation-rehearsal-wvvhxm"
+    },
+    {
+      "kind": "network",
+      "id": "4b71383cfdc71f5720c12b212af9d8bb4c2792336718bd6992bd716593013448",
+      "name": "k3d-localnet-proof-wvvhxm-backend"
+    },
+    {
+      "kind": "container",
+      "id": "bc5e07a90efd69eda0734e2a52bd52b55d8ce2b5540c4b41baae64c5eb63fa41",
+      "name": "k3d-localnet-proof-wvvhxm-backend-server-0"
+    },
+    {
+      "kind": "volume",
+      "id": "d41e9bc4b8b307ac483c4028a8f05cd1022ec0a502ed8d935c32f1726b834cac",
+      "name": "d41e9bc4b8b307ac483c4028a8f05cd1022ec0a502ed8d935c32f1726b834cac"
+    },
+    {
+      "kind": "volume",
+      "id": "1949c8d29c3b3adb3513350590b8c6c134a97da88d3055189401e1f2bbc23c1a",
+      "name": "1949c8d29c3b3adb3513350590b8c6c134a97da88d3055189401e1f2bbc23c1a"
+    },
+    {
+      "kind": "volume",
+      "id": "8aaf1061af55e89b98320beff566c762a1ab3bc5943ffa94c5b26cd02d9ea898",
+      "name": "8aaf1061af55e89b98320beff566c762a1ab3bc5943ffa94c5b26cd02d9ea898"
+    },
+    {
+      "kind": "volume",
+      "id": "906d881e32c4f718ce4df6100c5047fb8baee45b37ea424a16b31911c975ed36",
+      "name": "906d881e32c4f718ce4df6100c5047fb8baee45b37ea424a16b31911c975ed36"
+    },
+    {
+      "kind": "container",
+      "id": "0179a79290d3bbc6125f83f4fecbc903ff33b592233be8400c63ceefd4d331ce",
+      "name": "k3d-localnet-proof-wvvhxm-backend-serverlb"
+    },
+    {
+      "kind": "container",
+      "id": "17b98cdbaab3b8cd0dd320501d4635e3440aa097743473bad1a2f9ab48b392d0",
+      "name": "localnet-proof-wvvhxm-backend-registry.localhost"
+    },
+    {
+      "kind": "volume",
+      "id": "ef2720b25377d3c4d3499e14e9355946cd142e5d94f812c0ca6dafdd4734a040",
+      "name": "ef2720b25377d3c4d3499e14e9355946cd142e5d94f812c0ca6dafdd4734a040"
+    },
+    {
+      "kind": "network",
+      "id": "1842ab8aa52ff2ce3f0e84bc41e238121ad057f142a33cef6a9d575600ffb3ce",
+      "name": "k3d-localnet-proof-wvvhxm-backend"
+    },
+    {
+      "kind": "container",
+      "id": "a99e36bb5e4c62cfe0f3668b022294740094bd9a0c8437c2878d8c79caa7f1b7",
+      "name": "k3d-localnet-proof-wvvhxm-backend-server-0"
+    },
+    {
+      "kind": "volume",
+      "id": "737b846937ac70eaba2cbbb41a59806b0d0ffd9cee96fe0987a5f845e559d950",
+      "name": "737b846937ac70eaba2cbbb41a59806b0d0ffd9cee96fe0987a5f845e559d950"
+    },
+    {
+      "kind": "volume",
+      "id": "bb41936d07207276ae4085c64923e83008be768f4e5b08c24188e400d8e9b0ba",
+      "name": "bb41936d07207276ae4085c64923e83008be768f4e5b08c24188e400d8e9b0ba"
+    },
+    {
+      "kind": "volume",
+      "id": "ff99a64fbe33170386c92d9621ef271f22ef05a7e432562653a6927954ca4637",
+      "name": "ff99a64fbe33170386c92d9621ef271f22ef05a7e432562653a6927954ca4637"
+    },
+    {
+      "kind": "volume",
+      "id": "f53e8a2b037e6449f403bec0eacb4571cd260547f9d3b0423e7dcb5b245d1ab9",
+      "name": "f53e8a2b037e6449f403bec0eacb4571cd260547f9d3b0423e7dcb5b245d1ab9"
+    },
+    {
+      "kind": "container",
+      "id": "3f5b90bbc7e6d3230f3fa3698be5854d03e602702b3fe6c20541de93c39e9a44",
+      "name": "localnet-proof-wvvhxm-anonymous-retry-redis-1"
+    },
+    {
+      "kind": "network",
+      "id": "dace847f5f643dd626c6acef83f59e1aa7933d50dadf78d69ed6d6c371d7fe10",
+      "name": "localnet-proof-wvvhxm-anonymous-retry_default"
+    },
+    {
+      "kind": "container",
+      "id": "1cbe5b0a5ba8adde2f8c626debd290e17244a4512a2d8ca40cbc3f24c837d4ba",
+      "name": "tender_boyd"
+    },
+    {
+      "kind": "container",
+      "id": "c514e04e37fab2296a9323701e2279a2399fef6ab22a8ad13a6fc73d0b25c953",
+      "name": "unclaimed-allocation-rehearsal-wvvhxm"
+    },
+    {
+      "kind": "volume",
+      "id": "c4b73788f715b7f17887a2f47b584c5d632c8236be52f9cecc53b1d091dccfd3",
+      "name": "c4b73788f715b7f17887a2f47b584c5d632c8236be52f9cecc53b1d091dccfd3"
+    },
+    {
+      "kind": "volume",
+      "id": "1d6efed84c0f0cf4f46ddf2dd2ea2e350b1fa43a4f3aececd788248c55814f2c",
+      "name": "1d6efed84c0f0cf4f46ddf2dd2ea2e350b1fa43a4f3aececd788248c55814f2c"
+    },
+    {
+      "kind": "volume",
+      "id": "4e5dfdddf1a9a79f8279fb429a088982f3258fe852a5bb46131730ff72ca72da",
+      "name": "4e5dfdddf1a9a79f8279fb429a088982f3258fe852a5bb46131730ff72ca72da"
+    },
+    {
+      "kind": "volume",
+      "id": "ceda9cb6864fbc8e8111e91cdb7a4a1ab3ece2729581bdbcaa9e27f2ec8fd60d",
+      "name": "ceda9cb6864fbc8e8111e91cdb7a4a1ab3ece2729581bdbcaa9e27f2ec8fd60d"
+    },
+    {
+      "kind": "container",
+      "id": "34be31786d3b1f25fb6f1d11845951f2cc7c6b8eed2b889ec359fe969c599ec6",
+      "name": "localnet-proof-vqflsj-anonymous-volumes-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "8d187c5590cd810801363a35d3b684706252af1b77973db1f5d788a259a71df9",
+      "name": "8d187c5590cd810801363a35d3b684706252af1b77973db1f5d788a259a71df9"
+    },
+    {
+      "kind": "network",
+      "id": "68f943cec377fe8fd864e6baa4c594e54ab75de138fe2a7a84163576d29783ff",
+      "name": "localnet-proof-vqflsj-anonymous-volumes_default"
+    },
+    {
+      "kind": "volume",
+      "id": "e73cfb2d31a3feb6608c69981924be67c0997dfcb8b7e92db6965f37c590d85d",
+      "name": "e73cfb2d31a3feb6608c69981924be67c0997dfcb8b7e92db6965f37c590d85d"
+    },
+    {
+      "kind": "container",
+      "id": "22d749c44c7a22ff9ed24c12d8d797e8dcc0598b459a85d8a7c1563d3f697321",
+      "name": "localnet-proof-vqflsj-anonymous-retry-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "47c2a8cde67bce7d5e6e4fe83c2d5aa5e082479738656f9c8533c03d2fc0a337",
+      "name": "47c2a8cde67bce7d5e6e4fe83c2d5aa5e082479738656f9c8533c03d2fc0a337"
+    },
+    {
+      "kind": "network",
+      "id": "47afe05ff31b283b87e8ceff31b6988f35bcbb432396dbaa4cadc664023fea89",
+      "name": "localnet-proof-vqflsj-anonymous-retry_default"
+    },
+    {
+      "kind": "container",
+      "id": "af537adef7be9452f1393f300195bc4ca3e1659b076973f0bf2702ae4f3dcf16",
+      "name": "af537adef7be9452f1393f300195bc4ca3e1659b076973f0bf2702ae4f3dcf16"
+    },
+    {
+      "kind": "volume",
+      "id": "4f96d003d873d13ed5749336e02d55bdc6c292904d00101415a758b124668264",
+      "name": "4f96d003d873d13ed5749336e02d55bdc6c292904d00101415a758b124668264"
+    },
+    {
+      "kind": "container",
+      "id": "4496eb3ab94f2bcd9c77717886f11ee2048974590ed340539e56a220e0bc24ae",
+      "name": "localnet-proof-vqflsj-anonymous-identity-redis-1"
+    },
+    {
+      "kind": "network",
+      "id": "b5ba5fc0dfbbb595fc3edf4921d3ae4240cc0cb25501746acdc80f99ebe67113",
+      "name": "localnet-proof-vqflsj-anonymous-identity_default"
+    },
+    {
+      "kind": "volume",
+      "id": "silo-sentinel-allocation-rehearsal-vqflsj",
+      "name": "silo-sentinel-allocation-rehearsal-vqflsj"
+    },
+    {
+      "kind": "container",
+      "id": "4f704e3ed7d058021b18f5b46c6514f5a78ce2a12325a3c7723bf30d9e1e599a",
+      "name": "bold_bell"
+    },
+    {
+      "kind": "volume",
+      "id": "d9b9463aab9343597e8adf45af270d6186d101c7efd74ff4be21a511809b9bee",
+      "name": "d9b9463aab9343597e8adf45af270d6186d101c7efd74ff4be21a511809b9bee"
+    },
+    {
+      "kind": "container",
+      "id": "ec34e90fb79cce67bf1596d79d37f564c99e10a151191b96fb61c06410426454",
+      "name": "localnet-proof-jql2gi-anonymous-volumes-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "094bbd1bca22fb2694156496d1ea04e5dfd9511fb48531d2f93257ca346ba63a",
+      "name": "094bbd1bca22fb2694156496d1ea04e5dfd9511fb48531d2f93257ca346ba63a"
+    },
+    {
+      "kind": "network",
+      "id": "d713d3aac863dccc1594aaef67ac1e8f083bce9fd4fec3d366d2724138515b84",
+      "name": "localnet-proof-jql2gi-anonymous-volumes_default"
+    },
+    {
+      "kind": "container",
+      "id": "08fd7ea9b5a08916474020347841b10df3fa8d3b0b27d7ec8fe09d6b67b26cab",
+      "name": "localnet-proof-7mafvo-anonymous-volumes-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "ea8221b885beec2a967bd67211c87ea4d87cffe376f21b52be851516e107a478",
+      "name": "ea8221b885beec2a967bd67211c87ea4d87cffe376f21b52be851516e107a478"
+    },
+    {
+      "kind": "network",
+      "id": "b03490ccb529a1e39ec211c3a42752fce55ab91f4c76ae455f637c2c8bb7bebe",
+      "name": "localnet-proof-7mafvo-anonymous-volumes_default"
+    },
+    {
+      "kind": "container",
+      "id": "e0b7bc18f930e14e9081c0df005e0ad550774401e0424c653f227c1ec3ecdabe",
+      "name": "localnet-proof-7mafvo-anonymous-retry-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "e4ff583e5fcdd8987b8343a7bba6970bf3fceec7f965ffa9b35d21aaac367335",
+      "name": "e4ff583e5fcdd8987b8343a7bba6970bf3fceec7f965ffa9b35d21aaac367335"
+    },
+    {
+      "kind": "network",
+      "id": "869c4cdb828bcad8ce500725ed92c13017dd9afd5b05f30a78504b340eb78e44",
+      "name": "localnet-proof-7mafvo-anonymous-retry_default"
+    },
+    {
+      "kind": "volume",
+      "id": "silo-sentinel-allocation-rehearsal-7mafvo",
+      "name": "silo-sentinel-allocation-rehearsal-7mafvo"
+    },
+    {
+      "kind": "volume",
+      "id": "bce02abfee6ca4b0da062c7a93ee9318eaac5a02120d6297932bd7d493e73f44",
+      "name": "bce02abfee6ca4b0da062c7a93ee9318eaac5a02120d6297932bd7d493e73f44"
+    },
+    {
+      "kind": "container",
+      "id": "a7ae986665da1cc62bcc29fd44fd121441f050337284bf2d1cbde5acf5af205b",
+      "name": "dazzling_johnson"
+    },
+    {
+      "kind": "container",
+      "id": "22f5a8a1a21a64060cd80db526acfd0973a8ede643b7135c0c36e6fe2cbcd1ca",
+      "name": "nice_blackburn"
+    },
+    {
+      "kind": "volume",
+      "id": "199dd89a71d015a729b9e402446c9ec755d52e75b8722b7af9fe0bd7192a5dfb",
+      "name": "199dd89a71d015a729b9e402446c9ec755d52e75b8722b7af9fe0bd7192a5dfb"
+    },
+    {
+      "kind": "container",
+      "id": "93164a068f09571027e395d4c64ea92c8605b9d924d8de6b388c34a4796d091f",
+      "name": "localnet-proof-4xz7mx-anonymous-volumes-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "37a3ba7defa1d20f2dbc436fe0523db5ec64efb1dab2fc6c0c545de5093c8346",
+      "name": "37a3ba7defa1d20f2dbc436fe0523db5ec64efb1dab2fc6c0c545de5093c8346"
+    },
+    {
+      "kind": "network",
+      "id": "57715a3a3f3f8f03c5c3305526ea8a8e63b676ba7931cda87b3c4ef0186a547b",
+      "name": "localnet-proof-4xz7mx-anonymous-volumes_default"
+    },
+    {
+      "kind": "container",
+      "id": "b299b87b891ff03e2b1be06f83a7f58ca9367a5f83c3982579cdc7495d0c8cdb",
+      "name": "localnet-proof-4xz7mx-anonymous-retry-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "aff19ee17499823aadf2983f51516e933ac47318c408067bbd75a49bf9789e78",
+      "name": "aff19ee17499823aadf2983f51516e933ac47318c408067bbd75a49bf9789e78"
+    },
+    {
+      "kind": "network",
+      "id": "a09e8953b07a457a5cb25c8a1145889f482d805c16431669952e09b76ae7b99c",
+      "name": "localnet-proof-4xz7mx-anonymous-retry_default"
+    },
+    {
+      "kind": "volume",
+      "id": "silo-sentinel-allocation-rehearsal-4xz7mx",
+      "name": "silo-sentinel-allocation-rehearsal-4xz7mx"
+    },
+    {
+      "kind": "container",
+      "id": "aa273a50837d52bdec9936880baafd36e1eddee1e1b6f451d1c6c5d1ac5113f5",
+      "name": "unruffled_dirac"
+    },
+    {
+      "kind": "volume",
+      "id": "7b37bcff872e677e3fa55851970e9c3540f0f48002fa3c8e63eb08e0117c5346",
+      "name": "7b37bcff872e677e3fa55851970e9c3540f0f48002fa3c8e63eb08e0117c5346"
+    },
+    {
+      "kind": "container",
+      "id": "2160ad648e6c3f768e7d6898025624035e8adf709576e642b858437463901bca",
+      "name": "hopeful_chatelet"
+    },
+    {
+      "kind": "volume",
+      "id": "58d0148594f2e35f94b30d251c8418c69ebcf370627825ef090231d88e84c0b8",
+      "name": "58d0148594f2e35f94b30d251c8418c69ebcf370627825ef090231d88e84c0b8"
+    },
+    {
+      "kind": "container",
+      "id": "da215d63d62f2dd1b657649998648e08899cdd9a214daa79205bf2f6152fc98d",
+      "name": "guest-g6401main-redis-1"
+    },
+    {
+      "kind": "container",
+      "id": "a75599063aecd79e908e86d0407b65ea03febe28c566246ab59032aeb7f1e5fd",
+      "name": "guest-g6401main-named-1"
+    },
+    {
+      "kind": "container",
+      "id": "efe832075a849abf752a21222ef58679ee615c616bb91b64f58025dd959ff8f3",
+      "name": "guest-g6401main-explicit-1"
+    },
+    {
+      "kind": "container",
+      "id": "ef30716e182cfd27a19487250bc5aa475768abbdbd0d517aa99743dbccf2dc7d",
+      "name": "guest-g6401peer-redis-1"
+    },
+    {
+      "kind": "container",
+      "id": "ff10d81701302312589ab69b176dc4b80e38b411e93e2924e3df8105d3ea7d07",
+      "name": "ff10d81701302312589ab69b176dc4b80e38b411e93e2924e3df8105d3ea7d07"
+    },
+    {
+      "kind": "container",
+      "id": "0c1a7be95d22f9224456fce60dc7e124c28b395d4719ce60b96e9be07e9cc62b",
+      "name": "guest-g6401main-redis-1"
+    },
+    {
+      "kind": "container",
+      "id": "d95a27f6d6aed386e7f20c63c29b1f5bd0a303374d756252be1cdc8df7da6504",
+      "name": "guest-g6401main-named-1"
+    },
+    {
+      "kind": "container",
+      "id": "e50ea05988d941a5f70fbcedb86a0d87ceaf85af81c6eb59cff1d27a16db8db1",
+      "name": "guest-g6401main-explicit-1"
+    },
+    {
+      "kind": "volume",
+      "id": "guest-g6401-named",
+      "name": "guest-g6401-named"
+    },
+    {
+      "kind": "volume",
+      "id": "535fa3c4bba1ab64535eecfe1debaa8ed86ed15ec011094321796ef4af7f6c8b",
+      "name": "535fa3c4bba1ab64535eecfe1debaa8ed86ed15ec011094321796ef4af7f6c8b"
+    },
+    {
+      "kind": "volume",
+      "id": "guest-g6401-unrelated",
+      "name": "guest-g6401-unrelated"
+    },
+    {
+      "kind": "volume",
+      "id": "74f449204e412de9b60c4b767f82783357a1c21852c7b50d9a753577c4a372bb",
+      "name": "74f449204e412de9b60c4b767f82783357a1c21852c7b50d9a753577c4a372bb"
+    },
+    {
+      "kind": "network",
+      "id": "8a63f7115f2a2accf6c5ea0cc7ccea156fbf9b994713666701340827a0b52ffd",
+      "name": "guest-g6401main_default"
+    },
+    {
+      "kind": "volume",
+      "id": "75cefb5746af84d6ba3d2578f5095f718a95c247da0fcff3bdbd06eb51cc9d49",
+      "name": "75cefb5746af84d6ba3d2578f5095f718a95c247da0fcff3bdbd06eb51cc9d49"
+    },
+    {
+      "kind": "network",
+      "id": "d71ac424677ed6dd65ca9dc6d28c04eb8270e4ee0e5521df37a64c7f03d6f66b",
+      "name": "guest-g6401peer_default"
+    },
+    {
+      "kind": "volume",
+      "id": "6227c7207fc279fe0eb745a213a98809457c429fd8ba21f6006dc7af3a87e399",
+      "name": "6227c7207fc279fe0eb745a213a98809457c429fd8ba21f6006dc7af3a87e399"
+    },
+    {
+      "kind": "network",
+      "id": "5b7f60c7b041243a99c54f3361fdb7471b817dcf3e930b881b69836bb21bf9ed",
+      "name": "guest-g6401main_default"
+    },
+    {
+      "kind": "container",
+      "id": "33e0734c25be9c0b931bf27b0b2326fe4fc044ac6ec36ea148fe89d2dfbb523b",
+      "name": "/k3d-localnet-anon-fixed-server-0"
+    },
+    {
+      "kind": "volume",
+      "id": "efa6fe8f2269c162695fa0c7d7e65bafd0f15005698f0533abd04e64232ba76d",
+      "name": "efa6fe8f2269c162695fa0c7d7e65bafd0f15005698f0533abd04e64232ba76d"
+    },
+    {
+      "kind": "volume",
+      "id": "102ad94d1a1075201ae21bd85024cd03a76a3223dc2607efc8d362196986b777",
+      "name": "102ad94d1a1075201ae21bd85024cd03a76a3223dc2607efc8d362196986b777"
+    },
+    {
+      "kind": "volume",
+      "id": "fee11e720ecd1910c66709f5de41dbef38ec90066ef98f6d0d25aba2d9980de0",
+      "name": "fee11e720ecd1910c66709f5de41dbef38ec90066ef98f6d0d25aba2d9980de0"
+    },
+    {
+      "kind": "volume",
+      "id": "f6cac3663935c0065a66936f6c8a993eb0fc97108a6cada7bfad63e6265cac64",
+      "name": "f6cac3663935c0065a66936f6c8a993eb0fc97108a6cada7bfad63e6265cac64"
+    },
+    {
+      "kind": "container",
+      "id": "f119a87c73522d3654c78e9e58bc87504eaee6d8c59bc1a17074f7cc4d69c3dc",
+      "name": "/k3d-localnet-anon-fixed-serverlb"
+    },
+    {
+      "kind": "container",
+      "id": "23cce72a768c532e8406ad6667f104caea1d18b40b5f4d88fdc42fb6e879ce07",
+      "name": "/localnet-anon-fixed-redis-1"
+    },
+    {
+      "kind": "volume",
+      "id": "a2b5dbb7b824e2712fc66e8970d8725b72403419f82c9205ebd0f463873ccbb3",
+      "name": "a2b5dbb7b824e2712fc66e8970d8725b72403419f82c9205ebd0f463873ccbb3"
+    },
+    {
+      "kind": "container",
+      "id": "38fa69b0e189ae7a3d82703efff49853e52203db2e3e42f803cc532c8a2a2383",
+      "name": "/localnet-anon-fixed-registry.localhost"
+    },
+    {
+      "kind": "volume",
+      "id": "908d544cc340baa84335bbd55adf0b01eba063c97f43b2bfdd5364f630e1713c",
+      "name": "908d544cc340baa84335bbd55adf0b01eba063c97f43b2bfdd5364f630e1713c"
+    },
+    {
+      "kind": "network",
+      "id": "7230c45984ce8a590db726775a1351cd4572549dd338ad86c6cabd3dab42b6a3",
+      "name": "k3d-localnet-anon-fixed"
+    },
+    {
+      "kind": "network",
+      "id": "138064b3112cddd3d95dea7ff9169a201a193638f5391ed3ba39f497727bcea4",
+      "name": "localnet-anon-fixed_default"
+    },
+    {
+      "kind": "volume",
+      "id": "k3d-localnet-anon-fixed-images",
+      "name": "k3d-localnet-anon-fixed-images"
+    },
+    {
+      "kind": "network",
+      "id": "62c0df7002b5f5614d41442b8147a746e1b700d531d340a1cd67689d37437331",
+      "name": "k3d-localnet-anon-baseline"
+    },
+    {
+      "kind": "volume",
+      "id": "k3d-localnet-anon-baseline-images",
+      "name": "k3d-localnet-anon-baseline-images"
+    },
+    {
+      "kind": "container",
+      "id": "fd8114e7d3ee485aec1c08949d96da12dd47a61a643f0b91c601e1b43cf7a628",
+      "name": "/k3d-localnet-anon-baseline-serverlb"
+    },
+    {
+      "kind": "container",
+      "id": "7c7e8693d8e6ea34460177b21bd7a8c5d3f2c8de0d9023e640114735ddb70b04",
+      "name": "/k3d-localnet-anon-baseline-server-0"
+    },
+    {
+      "kind": "container",
+      "id": "4ace377e1cf8e9ef39da97d418e89c1745543c0b3c3510d64a926820f21cab4a",
+      "name": "/localnet-anon-baseline-registry.localhost"
+    },
+    {
+      "kind": "container",
+      "id": "14afa53b25cc3e3510edb48df244a7a417cf0ffe5c6411459f081ec49e47d6be",
+      "name": "/localnet-anon-baseline-redis-1"
+    },
+    {
+      "kind": "network",
+      "id": "dee9246f791ad0fe4453c6d9772dd163199ffc56bdcda9945d96bad6e09df03e",
+      "name": "localnet-anon-baseline_default"
+    },
+    {
+      "kind": "volume",
+      "id": "a9197728650d18d7f11c6943a33aa28862d490ffda41365d0d62de766951841d",
+      "name": "a9197728650d18d7f11c6943a33aa28862d490ffda41365d0d62de766951841d"
+    },
+    {
+      "kind": "volume",
+      "id": "153e013aea878bef6261f20015e1e8816bf23f44430e8057fcedbacb00397fee",
+      "name": "153e013aea878bef6261f20015e1e8816bf23f44430e8057fcedbacb00397fee"
+    },
+    {
+      "kind": "volume",
+      "id": "863e54b81ed82834d942addcab52d10e8d23f02cdd7de3f379a8fae521a5a179",
+      "name": "863e54b81ed82834d942addcab52d10e8d23f02cdd7de3f379a8fae521a5a179"
+    },
+    {
+      "kind": "volume",
+      "id": "208033a99c244c6a9a57ed147ecd79090e77a2133518b911f399384d839ac0f1",
+      "name": "208033a99c244c6a9a57ed147ecd79090e77a2133518b911f399384d839ac0f1"
+    },
+    {
+      "kind": "volume",
+      "id": "6e85018136c4972111eec82d85a7e725a87e07d19edeed9c9fab25b5f8ca8b8b",
+      "name": "6e85018136c4972111eec82d85a7e725a87e07d19edeed9c9fab25b5f8ca8b8b"
+    },
+    {
+      "kind": "volume",
+      "id": "4001101767e11677d3216956f8064c39e6e90bf2f67c3f13e99676dff51f6af4",
+      "name": "4001101767e11677d3216956f8064c39e6e90bf2f67c3f13e99676dff51f6af4"
+    }
+  ],
+  "allRecordedObjectsAbsent": true,
+  "inventoryCounts": {
+    "container": 11,
+    "network": 3,
+    "volume": 833
+  },
+  "result": "pass"
+}

@@ -1,0 +1,44 @@
+[
+    {
+        "Name": "k3d-localnet-proof-l-2bb17dcc-delete",
+        "Id": "c719f81991439d0eef47758e6a3f5d805f71cc76e5f2705a36007d445519c329",
+        "Created": "2026-11-06T02:40:15.807655048Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.26.0.0/16",
+                    "Gateway": "172.26.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "b199274d-7644-4bad-a2fd-50a7b436ca5b"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.26.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]

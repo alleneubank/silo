@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { applyRegistryPortOverride, resolveRegistryAdvertiseSettings } from "./registry";
+import { resolveRegistryAdvertiseSettings } from "./registry";
+import { ProjectRelativePathSchema } from "./file_target";
 import { buildInstanceIdentity } from "./identity";
 import type { InstanceState, ResolvedConfig } from "./types";
 
 const baseConfig: ResolvedConfig = {
   version: 1,
   prefix: "localnet",
-  output: ".localnet.env",
+  output: ProjectRelativePathSchema.parse(".localnet.env"),
   ports: { K3D_REGISTRY_PORT: 5000 },
   portOrder: ["K3D_REGISTRY_PORT"],
   hosts: { APP_HOST: "${name}.localhost" },
@@ -40,43 +41,6 @@ const buildState = (port: number, name = "demo"): InstanceState => {
     k3dClusterCreated: true,
   };
 };
-
-describe("applyRegistryPortOverride", () => {
-  test("preserves the already-resolved kubeconfig when reconciling registry ports", () => {
-    const state = buildState(49157);
-    state.identity.kubeconfigPath = "/owned/project/.localnet/kubeconfig";
-    const result = applyRegistryPortOverride({ state, config: baseConfig, actualPort: 49163 });
-    expect(result.state.identity.kubeconfigPath).toBe("/owned/project/.localnet/kubeconfig");
-  });
-  test("updates registry port and urls when drift detected", () => {
-    const state = buildState(49157);
-    const result = applyRegistryPortOverride({
-      state,
-      config: baseConfig,
-      actualPort: 49163,
-    });
-
-    expect(result.changed).toBe(true);
-    expect(result.state.ports.K3D_REGISTRY_PORT).toBe(49163);
-    expect(result.state.identity.k3dRegistryName).toBe(
-      "localnet-demo-registry.localhost:49163"
-    );
-    expect(result.urls.REGISTRY_URL).toBe("http://localhost:49163");
-  });
-
-  test("keeps registry port when actual matches", () => {
-    const state = buildState(49157);
-    const result = applyRegistryPortOverride({
-      state,
-      config: baseConfig,
-      actualPort: 49157,
-    });
-
-    expect(result.changed).toBe(false);
-    expect(result.state.ports.K3D_REGISTRY_PORT).toBe(49157);
-    expect(result.urls.REGISTRY_URL).toBe("http://localhost:49157");
-  });
-});
 
 describe("resolveRegistryAdvertiseSettings", () => {
   test("throws when k3d hostFrom override does not match resolved registry identity", () => {

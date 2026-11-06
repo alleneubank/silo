@@ -1,0 +1,8 @@
+silo info: Generated env file at /tmp/fixtures/lifecycle-3LeIGJ/absent-delete/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49152
+silo info:   TILT_PORT: 49153
+silo info:   K3D_API_PORT: 49154
+silo info: Project 4734a5e4-6ac5-467e-8f67-889587a4b492, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/lifecycle-3LeIGJ/absent-delete/.localnet.env; set +a

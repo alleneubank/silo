@@ -1,0 +1,13 @@
+[
+    {
+        "CreatedAt": "2026-11-06T07:04:34Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.rehearsal": "allocation-rehearsal-MD2HNi"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-proof-md2hni-backend-images/_data",
+        "Name": "k3d-localnet-proof-md2hni-backend-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

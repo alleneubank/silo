@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/fixtures/lifecycle-YaEd3l/launch-cap/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49158
+silo info:   TILT_PORT: 49159
+silo info: Project 7eb6aaa4-ccc2-4bbc-91f1-d7fb18343849, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/lifecycle-YaEd3l/launch-cap/.localnet.env; set +a

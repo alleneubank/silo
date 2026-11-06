@@ -1,0 +1,12 @@
+const root="/tmp/registry-followup";
+const run=args=>{const r=Bun.spawnSync(args,{stdout:"pipe",stderr:"pipe",timeout:10000});if(r.exitCode!==0)throw Error(`${args.join(" ")}: exit ${r.exitCode}`);return r.stdout.toString()};
+const events=(await Bun.file(`${root}/resources/events.jsonl`).text()).trim().split("\n").map(s=>JSON.parse(s));
+const before=events.find(e=>e.observer==="cache"&&e.kind==="inspection").values[0];
+const current=JSON.parse(run(["docker","volume","inspect",before.name]))[0];
+const project=(await Bun.file(`${root}/logs/retained-status.json`).json()).project;
+const receipt=project.resources.find(r=>r.kind==="volume"&&r.id===before.name);
+if(!receipt||current.Name!==before.name||current.CreatedAt!==before.createdAt||current.CreatedAt!==receipt.createdAt||current.Labels["io.silo.project"]!==project.projectId||current.Labels["io.silo.generation"]!==String(project.generation)||current.Labels["k3d.cluster"]!==before.labels["k3d.cluster"])throw Error("cache identity/labels differ");
+const users=run(["docker","ps","-a","--no-trunc","--filter",`volume=${before.name}`,"--format","{{.ID}}"]);
+if(users.trim())throw Error("cache still has users");
+await Bun.write(`${root}/logs/cache-owner-verification.json`,JSON.stringify({before,current:{name:current.Name,createdAt:current.CreatedAt,labels:before.labels},receipt,users:[],verifiedAt:new Date().toISOString()},null,2));
+await Bun.write(`${root}/logs/cache-owner-removal.out`,run(["docker","volume","rm",before.name]));

@@ -1,0 +1,8 @@
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-R3jymh/retry-crash/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info:   K3D_API_PORT: 49152
+silo info: Project b9e7cd3a-a132-48f7-bbc1-7cb19bf5c10c, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-R3jymh/retry-crash/.localnet.env; set +a

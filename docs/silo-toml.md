@@ -55,8 +55,8 @@ kubeconfigPath = ".localnet/kubeconfig" # Optional; default: ~/.kube/<cluster-na
 args = [
   # "--agents=2",  # Optional: adds worker nodes for multi-node testing
   # Route host ports to cluster ingress via the k3d loadbalancer
-  "--port=8080:80@loadbalancer",
-  "--port=8443:443@loadbalancer",
+  "--port=${API_PORT}:80@loadbalancer",
+  "--port=${ADMIN_PORT}:443@loadbalancer",
 ]
 
 [k3d.registry]
@@ -74,15 +74,15 @@ webMode = "prod" # Optional; use Tilt's embedded production assets
 [hooks]
 pre-up = ["./scripts/check-deps.sh"]
 post-up = ["./scripts/seed-db.sh", "./scripts/generate-certs.sh"]
-pre-down = ["./scripts/backup-state.sh"]
-post-down = []
 ```
 
 ## Top-Level Fields
 
 - `version` (required): Must be `1`.
 - `prefix` (optional): Resource naming prefix. Default: `localnet`.
-- `output` (optional): Env file path. Default: `.localnet.env`.
+- `output` (optional): Literal ASCII project-relative env file path. Default:
+  `.localnet.env`. No traversal, expansion, symlinks, hardlinks or physical
+  aliases with another file role. Existing unreceipted outputs refuse.
 - `ports` (required): Map of port names to default values (at least one entry).
   Use `random` or `0` to always allocate from the ephemeral range.
 - `hosts` (optional): Hostname templates. Default: `APP_HOST = "${name}.localhost"`.
@@ -96,8 +96,9 @@ post-down = []
 
 Ports are allocated in declaration order. For each port key:
 
-1. If a lockfile exists and that port is free, it is reused.
-2. If the configured value is `random`/`0`, the next free ephemeral port
+1. An existing generation retains its committed ports; a lockfile is only a
+   snapshot. Reconfiguration requires stopped/reconciled state and `--force`.
+2. For a new generation, if the configured value is `random`/`0`, a free ephemeral port
    (49152-65535) is allocated.
 3. Otherwise, the configured default is tried. If occupied, the next free
    ephemeral port (49152-65535) is allocated.
@@ -139,7 +140,7 @@ Enable k3d integration to create/delete a cluster as part of `silo up/down`.
 [k3d]
 enabled = true
 args = [
-  "--port=8080:80@loadbalancer",
+  "--port=${API_PORT}:80@loadbalancer",
 ]
 
 [k3d.registry]
@@ -155,7 +156,10 @@ The loadbalancer routes traffic from your host into the cluster. Without it, you
 need `kubectl port-forward` for every service.
 
 Notes:
-- Registry port is allocated via `ports.K3D_REGISTRY_PORT` (default: 5000).
+- Registry port requires `ports.K3D_REGISTRY_PORT`. The k3d API port is also
+  claimed (`K3D_API_PORT`, automatically added if omitted).
+- User mappings must use declared allocated host ports. Silo owns network,
+  registry creation, API port, labels and kubeconfig control flags.
 - `k3d.args` can use interpolation variables (see below).
 - `k3d.kubeconfigPath` is an optional literal project-relative file path, such
   as `.localnet/kubeconfig`. It resolves from the directory containing
@@ -164,8 +168,8 @@ Notes:
   Omission keeps `~/.kube/<cluster-name>`. Disabled k3d exports no kubeconfig.
   Paths use letters, numbers, `_`, `-`, `.`, and `/`, with no empty, `.` or
   `..` components. Absolute paths, home expansion, interpolation, backslashes
-  and path-list separators are rejected. Symlinks are trusted local inputs;
-  project-relative validation does not provide a filesystem sandbox.
+  and path-list separators are rejected. Parent/final symlinks and hardlinks
+  refuse. File receipts protect the physical target across configuration edits.
 
 ## Tilt
 
@@ -204,8 +208,6 @@ Hooks run shell commands at lifecycle points:
 [hooks]
 pre-up = ["./scripts/check-deps.sh"]
 post-up = ["./scripts/seed-db.sh"]
-pre-down = ["./scripts/backup-state.sh"]
-post-down = []
 ```
 
 Hooks inherit all generated env vars (ports, hosts, URLs, etc).

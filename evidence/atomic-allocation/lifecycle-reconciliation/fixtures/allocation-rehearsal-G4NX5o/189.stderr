@@ -1,0 +1,4 @@
+silo warn: Leaked anonymous volumes: 124c7112e7b03ad4cd305f6f2c7094bb2b573e609c3f8072b596d23ecce96a33. Silo never deletes volumes by name; resolve this data with its owner.
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-G4NX5o/anonymous-retry/.localnet.env
+silo info: Wrote lockfile
+silo info: Stopped Tilt; resources and claims retained. Inspect status before clean.

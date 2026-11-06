@@ -1,0 +1,24 @@
+silo info: Loading config
+silo info: Validating tools: tilt, janitor, k3d
+silo info: Resolved instance name: red-mw1n3yjg (arg)
+silo info: Allocating ports
+silo info: Generated env file at /tmp/native/baseline-controls/cluster-adopter/.localnet.env
+silo info: Wrote lockfile
+silo info: Running pre-up hooks (0)
+silo info: Ensuring k3d cluster 'localnet-red-mw1n3yjg'
+silo info: Writing kubeconfig
+silo info: Reusing k3d cluster 'localnet-red-mw1n3yjg'
+silo info: Running post-up hooks (0)
+silo info: Running tilt ci
+Tilt started on http://red-mw1n3yjg.localhost:49153/
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+Tilt analytics disabled: Environment variable CI=true
+
+Initial Build
+Loading Tiltfile at: /tmp/native/baseline-controls/cluster-adopter/Tiltfile
+Successfully loaded Tiltfile (413.915µs)
+        proof │ 
+        proof │ Initial Build
+        proof │ Running cmd: printf baseline-proof
+        proof │ baseline-proof
+SUCCESS. All workloads are healthy.

@@ -1,0 +1,4 @@
+[]
+Error response from daemon: get guest-r2-control-20261104-0345: no such volume
+
+exit=1

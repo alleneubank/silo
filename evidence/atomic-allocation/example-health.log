@@ -1,0 +1,3 @@
+deployment.apps/web condition met
+deployment.apps/api condition met
+{"status":"ok","host":"127.0.0.1:49152"}{"status":"ok","service":"api","host":"127.0.0.1:49152"}

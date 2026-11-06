@@ -1,0 +1,2 @@
+Error response from daemon: error while removing network: network k3d-localnet-proof-l-bb85166b-gistry has active endpoints (name:"localnet-proof-l-bb85166b-gistry-registry.localhost" id:"5b010ef5ae04")
+exit status 1

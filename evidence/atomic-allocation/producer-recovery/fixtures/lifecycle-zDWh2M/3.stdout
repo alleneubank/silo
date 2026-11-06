@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"COMMAND_FAILED","message":"COMMAND_FAILED: k3d-volume-create exited 1; owned claims retained. \nError response from daemon: create k3d-localnet-proof-l-4927d34a-failed-images: invalid option: \"r7-unsupported\"\n","launchId":"12a0f57a-731f-45df-b502-c4a4c252864a","generation":1}

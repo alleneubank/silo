@@ -1,0 +1,15 @@
+import {Database} from 'bun:sqlite';
+import {mkdirSync,writeFileSync,existsSync,appendFileSync,readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+import {accountStorePath} from '/mnt/src/core/allocation_domain';
+const root='/tmp/hot-journal-public';mkdirSync(root,{recursive:true});
+const storePath=accountStorePath();
+if(process.argv[2]==='writer'){const db=new Database(storePath);db.exec('PRAGMA journal_mode=DELETE; PRAGMA cache_size=1; BEGIN IMMEDIATE; CREATE TABLE spill (value BLOB); INSERT INTO spill VALUES (zeroblob(4000000));');writeFileSync(root+'/ready','ready');await Bun.sleep(50000);process.exit(77);}
+const cli='/mnt/dist/cli.js';
+const invoke=(args:string[])=>{const r=Bun.spawnSync([process.execPath,cli,...args,'--json'],{cwd:root,stdout:'pipe',stderr:'pipe',timeout:20000});console.log({args,code:r.exitCode,stdout:r.stdout.toString(),stderr:r.stderr.toString()});return r;};
+writeFileSync(root+'/silo.toml','version=1\n[ports]\nAPP_PORT="random"\n');assert.equal(invoke(['env','hot-journal-r6']).exitCode,0);
+const before=JSON.parse(invoke(['status']).stdout.toString()).project;assert(before.claims.length>0);
+const writer=Bun.spawn(['timeout','60s',process.execPath,import.meta.path,'writer'],{detached:true,stdin:'ignore',stdout:'pipe',stderr:'pipe'});writeFileSync('/tmp/pids/r6-hot-public-writer.pid',String(writer.pid));appendFileSync('/mnt/resources',`r6 hot-journal public writer pid/pgid=${writer.pid}; timeout60 bun /tmp/hot-journal-public.ts writer; teardown exact verified group\n`);
+const end=Date.now()+10000;while(!existsSync(root+'/ready')){assert(Date.now()<end);await Bun.sleep(25);}assert(existsSync(storePath+'-journal'));
+const ps=Bun.spawnSync(['ps','-o','uid=,pgid=,command=','-p',String(writer.pid)]);const identity=ps.stdout.toString();console.log({identity,journal:true});const fields=identity.trim().split(/\s+/);assert.equal(Number(fields[0]),process.geteuid!());assert.equal(Number(fields[1]),writer.pid);assert(identity.includes('/tmp/hot-journal-public.ts writer'));process.kill(-writer.pid,'SIGKILL');await writer.exited;
+assert.notEqual(invoke(['status']).exitCode,0);assert.equal(invoke(['down','--clean']).exitCode,0);const after=JSON.parse(invoke(['status']).stdout.toString()).project;assert.equal(after.generation,0);assert.deepEqual(after.claims,[]);const db=new Database(storePath,{readonly:true});assert.equal(db.query("SELECT count(*) AS n FROM sqlite_master WHERE name='spill'").get().n,0);db.close();console.log({result:'pass',source:Bun.spawnSync(['git','-C','/mnt','rev-parse','HEAD']).stdout.toString().trim(),sha256:new Bun.CryptoHasher('sha256').update(readFileSync(cli)).digest('hex')});

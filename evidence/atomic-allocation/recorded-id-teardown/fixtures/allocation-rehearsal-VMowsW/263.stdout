@@ -1,0 +1,11 @@
+[
+    {
+        "CreatedAt": "2026-11-06T01:28:40Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/silo-inherited-allocation-rehearsal-vmowsw/_data",
+        "Name": "silo-inherited-allocation-rehearsal-vmowsw",
+        "Options": null,
+        "Scope": "local"
+    }
+]

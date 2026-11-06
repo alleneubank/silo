@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/compose/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   REDIS_PORT: 39011
+silo info:   TILT_PORT: 39012
+silo info: Project 03e9e241-ec7a-4a39-9575-1820151c199f, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/compose/.localnet.env; set +a

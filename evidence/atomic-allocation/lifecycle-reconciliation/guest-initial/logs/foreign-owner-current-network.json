@@ -1,0 +1,48 @@
+[
+    {
+        "Name": "r6guest-foreign_default",
+        "Id": "7bcbf34ceaca40966198bb4f62922f6877129841ea3353bd955c94dc303ffbee",
+        "Created": "2026-11-06T03:32:55.557712765Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.23.0.0/16",
+                    "Gateway": "172.23.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "74c47560010ed3cc65204ed41e809eed80912edb6377aaf8c21e067d59adfad6",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "r6guest-foreign",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "ee111043-3e02-468a-b07c-62c959f71f13"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.23.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]

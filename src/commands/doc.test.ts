@@ -88,19 +88,4 @@ describe("doc topics", () => {
     expect(message).toContain("tilt");
   });
 
-  it("documents the lifecycle vs Tilt API split", async () => {
-    const docPath = path.join(docsRoot, "tilt.md");
-    const contents = await Bun.file(docPath).text();
-    expect(contents).toContain("Pid-alive is not");
-    expect(contents).toContain("tilt get uiresources --port");
-  });
-
-  it("documents npm-based Tilt extension loading for CI", async () => {
-    const docPath = path.join(docsRoot, "tilt.md");
-    const contents = await Bun.file(docPath).text();
-    expect(contents).toContain(
-      "load('./node_modules/@0xbigboss/silo/tilt-extensions/silo/require/Tiltfile', 'SILO_REQUIRE')"
-    );
-    expect(contents).toContain("CI environments");
-  });
 });

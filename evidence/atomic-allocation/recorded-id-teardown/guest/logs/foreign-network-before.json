@@ -1,0 +1,48 @@
+[
+    {
+        "Name": "guestr5-r5foreign_default",
+        "Id": "8479c389cdc7b4e3df66e3ad331374c97dfd000b9b4f695dfa1119b69345390c",
+        "Created": "2026-11-06T01:21:00.830610951Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "5068144ee87dd43903601c052d4af720ca84c81d672187da53f62d4392dca54c",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "guestr5-r5foreign",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "ee3df172-b5f1-4b6f-8441-09a7e12b48b3"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]

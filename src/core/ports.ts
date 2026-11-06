@@ -9,13 +9,13 @@ import type { PortConfigValue } from "./types";
 
 const isPortInRange = (port: number): boolean => port >= 1 && port <= 65535;
 
-type PortCheckFn = (port: number) => Promise<boolean>;
+export type PortCheckFn = (port: number) => Promise<boolean>;
 
 // Hostnames to check — a port is only free if binding succeeds on all of them.
 // 0.0.0.0 catches wildcard listeners; 127.0.0.1 catches loopback-only listeners
 // (e.g. Tilt). Checking only 0.0.0.0 misses ports bound exclusively to 127.0.0.1,
 // which causes "address already in use" when another process binds loopback.
-const PORT_CHECK_HOSTNAMES = ["0.0.0.0", "127.0.0.1"] as const;
+const PORT_CHECK_HOSTNAMES = ["0.0.0.0", "127.0.0.1", "::", "::1"] as const;
 
 const tryBind = async (hostname: string, port: number): Promise<boolean> => {
   try {
@@ -28,16 +28,26 @@ const tryBind = async (hostname: string, port: number): Promise<boolean> => {
     });
     server.stop();
     return true;
-  } catch {
+  } catch (error) {
+    if (hostname.includes(":") && error instanceof Error && "code" in error &&
+      ["EAFNOSUPPORT", "EPROTONOSUPPORT", "EADDRNOTAVAIL"].includes(String(error.code))) return true;
     return false;
   }
 };
 
-const checkPortFree: PortCheckFn = async (port: number): Promise<boolean> => {
+export const checkPortFree: PortCheckFn = async (port: number): Promise<boolean> => {
   const attempt = async (): Promise<boolean> => {
     for (const hostname of PORT_CHECK_HOSTNAMES) {
       if (!(await tryBind(hostname, port))) {
         return false;
+      }
+      try {
+        const udp = await Bun.udpSocket({ hostname, port });
+        udp.close();
+      } catch (error) {
+        const unsupported = hostname.includes(":") && error instanceof Error && "code" in error &&
+          ["EAFNOSUPPORT", "EPROTONOSUPPORT", "EADDRNOTAVAIL"].includes(String(error.code));
+        if (!unsupported) return false;
       }
     }
     return true;
@@ -61,7 +71,7 @@ const EPHEMERAL_RANGE_SIZE = EPHEMERAL_PORT_END - EPHEMERAL_PORT_START + 1;
 // Scan the ephemeral range starting at startAt, wrapping back to
 // EPHEMERAL_PORT_START after hitting EPHEMERAL_PORT_END. Skips ports in
 // `used` (already-allocated in this call) and `excluded` (owned by other
-// live silo instances, per the port registry).
+// silo generations, per their committed claims).
 const findEphemeralPort = async (params: {
   used: Set<number>;
   excluded: Set<number>;
@@ -88,9 +98,7 @@ export const allocatePorts = async (params: {
   order: string[];
   lockfilePorts: Record<string, number> | undefined;
   force: boolean;
-  // Ports reserved by other live silo instances on this machine. The
-  // caller is expected to compute this from the port registry before
-  // invoking allocation. When omitted, treated as empty (tests).
+  // Candidate selection only: the lease transaction decides final ownership.
   excludedPorts?: Set<number>;
   onEvent?: (event: PortAllocationEvent) => void;
   isPortFree?: PortCheckFn;

@@ -1,0 +1,60 @@
+[
+    {
+        "Name": "k3d-r6guest-cluster",
+        "Id": "33c5fc508d9321b4749ff2787404b33537fd0d99c8fd948fefe23f51e53c73fc",
+        "Created": "2026-11-06T03:43:49.471014701Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.29.0.0/16",
+                    "Gateway": "172.29.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "2f5bd0b3-9dbe-4e70-adb9-cb41fbd29d6c",
+            "k3d.cluster": "r6guest-cluster"
+        },
+        "Containers": {
+            "386cdb82962a5687595bdd02369b10e24a244dc2a485e5b1dba6218c433fc20d": {
+                "Name": "k3d-r6guest-cluster-serverlb",
+                "EndpointID": "faf941b6bd76634f346a2b5291e60ec8e9d841561ef855978173abdf2a3a1597",
+                "MacAddress": "ce:4f:31:ba:1b:19",
+                "IPv4Address": "172.29.0.3/16",
+                "IPv6Address": ""
+            },
+            "8f3c7bae63083234a0301abada597397377254a4b7ec841a769e5ee2f50a98c5": {
+                "Name": "k3d-r6guest-cluster-server-0",
+                "EndpointID": "5d7622ba90838404654267f3fe4c022a97f51a545353f55f59b1acf36c72a232",
+                "MacAddress": "4a:f8:e3:17:9f:3b",
+                "IPv4Address": "172.29.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.29.0.0/16": {
+                        "IPsInUse": 5,
+                        "DynamicIPsAvailable": 65531
+                    }
+                }
+            }
+        }
+    }
+]
