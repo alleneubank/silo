@@ -1,7 +1,7 @@
 # Recorded-ID teardown qualification
 
-Verified Linux proposal; unmerged draft. Matching specialist round 5 and native
-Mac qualification remain pending. The human ratified recorded-ID-only cleanup
+Verified Linux proposal; no lane merge. Matching specialist round 5 and native
+Mac qualification remain required before landing. The human ratified recorded-ID-only cleanup
 on 2026-11-05 through silo-redesign addendum 6. This record supersedes the
 round-4 cleanup behavior; its unchanged rejection is retained in
 `verdict-specialist-r4.md`.

@@ -75,8 +75,10 @@ CLI SHA-256 `b14266a4564fa89dd7440d5cce5de08f51dd587173a9b3ee475b49b2743c2e53`.
 Record-only descendants reuse these inputs. The author drove the built CLI on
 onyx Linux with real Docker, Tilt, k3d and Janitor in disposable account filesystem
 views. [Raw evidence and scenario details](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/recorded-id-teardown/README.md).
-This link is the intended publication target; the evidence is local until the
-proposal push, and hosted reachability was not queried.
+Origin accepted the proposal at `1bef40bcbf92904041b600865dc48f6adddb3fb3`
+with the authorized a7359a45 lease and normal passing hooks. This URL is the
+publication target; hosted page reachability was not queried. The final
+record-only descendant and push result will be sealed in the coordinator handoff.
 
 | Check / scenario | Observation |
 | --- | --- |

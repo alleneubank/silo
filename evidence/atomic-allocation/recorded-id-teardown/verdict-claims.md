@@ -115,3 +115,39 @@ final handoff must separately establish its exact committed/pushed ref and close
 This verdict does not qualify hosted CI, native Mac/APFS/account/process/fsync,
 final 1.0.0 binaries, production cutover, hostile same-account code, arbitrary
 transient/delayed producer effects, alternate engines or every crash boundary.
+
+## Operational addendum — accepted proposal push
+
+Reviewed at 2026-11-06T01:45 UTC, only the new publication/status claims. HEAD
+and local `origin/feat/atomic-allocation` both resolve to
+`1bef40bcbf92904041b600865dc48f6adddb3fb3`; the tracking reflog says "update by
+push". The staged metadata initially inspected has blob prefixes report
+`303e59c`, PR ops `6eaab58`, PR body `0eeb3c8`.
+
+| New claim | Verdict / evidence |
+| --- | --- |
+| Origin accepted a7359a45 → 1bef40b on feat/atomic-allocation | Supported by `~/.handoffs/boss-mobile-release/silo-redesign/network-push-r5.log`: `To github.com:alleneubank/silo.git`, exact abbreviated ref update, and `recorded_exit_code=0`. Full local HEAD/tracking refs and push reflog corroborate the accepted target. This supersedes the earlier pending-push observation, without asserting a later remote ref or hosted PR state. |
+| Normal network-push hooks passed 139/356, knip and zero duplicate blocks | Supported by that raw log: 139 pass, 0 fail, 356 assertions, zero jscpd clones, and successful jscpd/knip/test hook summary. Knip's nonfatal configuration hint remains visible. No tests were independently rerun for this addendum. |
+| Exact authorized lease, noninteractive SSH, no credential changes | Human lease authority is in durable addendum 6. Successful SSH Git transport is consistent with the raw target/result. Exact invocation flags and absence of credential edits are supplied operation/author testimony; the raw push output itself does not echo argv or audit credential configuration. No contrary evidence was observed. |
+| Evidence is now committed, including historical logs and claims verdict | Supported by actual 1bef40b tree entries; the new README and original claims verdict are committed at that ref. The prior index-only limitation remains the historical basis of the earlier review, not current evidence-membership status. |
+| Executable inputs remain unchanged | Supported by empty `git diff 77e3d68 -- src scripts package.json .github/workflows`, metadata-only staged paths, and live bundle SHA-256 still b14266a4564fa89dd7440d5cce5de08f51dd587173a9b3ee475b49b2743c2e53. This permits reuse of the earlier executable evidence within its existing limits. |
+| Hosted evidence page reachable / PR unmerged | Not established by push success. The PR body correctly retains "hosted page reachability was not queried". No GitHub query occurred. Report's initial "proposal remains unmerged" should instead say "This lane performed no merge"; its standing draft-PR pointer is already qualified as unqueried. |
+| Final descendant, follow-up push and scratch teardown already sealed | Not supported yet. The initial staged report/pr-ops use "are in" and "is recorded", but the actual durable handoff files still seal the previous a7359a45 round. Correct to future tense: "The final record-only descendant, actual follow-up push result and resource closeout will be recorded in the coordinator handoff after closeout." A future leased metadata push is pending, not part of the accepted 1bef40b observation. |
+| PR body is "local only" | Ambiguous after 1bef40b published its prior version. Prefer "The updated body has not been applied to the hosted PR" to describe the lane's action precisely. |
+| Default-branch Dependabot notice | Supported as a notice in the raw push output: GitHub reports one high default-branch vulnerability. The report correctly attributes it and does not claim independent triage. |
+
+Final re-read: the status/seal corrections above are now folded into staged
+report `b1460a3`, PR ops `543900b`, PR body `0eeb3c8`, and README `763e352`.
+Report/pr-ops use future tense for the final seal and scratch closeout; report
+says this lane performed no merge and the updated body has not been applied to
+the hosted PR. The README also avoids a current global PR-state assertion.
+The staged local citation `origin-push-implementation.log` is blob `d3c4b24`;
+`cmp` verifies it is byte-identical to the reviewed handoff network log. It is
+staged evidence, not yet a member of the accepted 1bef40b tree. HEAD and local
+origin tracking remain 1bef40b at this re-read.
+
+Operational addendum verdict: green on the corrected staged basis. Final
+descendant publication and resource closeout still need their own actual
+record; this review makes no prediction of their success and grants no merge,
+release, cutover or new product authority. No new tests or network actions were
+run. Only this verdict file was written.
