@@ -2,8 +2,7 @@ import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import { K3D_CREATE_TIMEOUT_MS, K3D_LIST_TIMEOUT_MS } from "../core/constants";
 import type { ProjectOperation } from "../core/lease_store";
-import { runOwnedCommand } from "../core/owned_command";
-import { assertEngine, assertNamesAvailable, captureOwnedResources, deleteOwnedContainers, deleteOwnedNetworks, verifyResource } from "./ownership";
+import { assertEngine, assertNamesAvailable, runProducerCommand, deleteOwnedContainers, deleteOwnedNetworks, verifyResource } from "./ownership";
 
 const CONTROL_FLAGS = new Set([
   "--config", "-c", "--network", "--registry-create", "--api-port", "--runtime-label",
@@ -36,9 +35,7 @@ export const stripDebugOutput = (output: string): string => output.split("\n").f
 }).join("\n");
 
 const recordCreation = async (owner: ProjectOperation, command: string[], kind: string): Promise<void> => {
-  const result = await runOwnedCommand(owner, command, { kind, effect: "create", timeoutMs: K3D_CREATE_TIMEOUT_MS });
-  await captureOwnedResources(owner, "k3d", result.launch);
-  owner.checkpointLaunch({ ...result.launch, reconciled: true });
+  await runProducerCommand(owner, command, { kind, effect: "create", timeoutMs: K3D_CREATE_TIMEOUT_MS });
 };
 
 /** Every backend mutation is bound to this allocation, never to a lockfile name. */

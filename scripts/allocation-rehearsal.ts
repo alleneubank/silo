@@ -40,7 +40,7 @@ const ResultSchema = z.object({
   code: z.string().optional(), changed: z.boolean().optional(), legacy: z.boolean().optional(), found: z.array(z.object({ path: z.string() }).passthrough()).optional(),
   project: z.object({ projectId: z.string(), generation: z.number(), phase: z.string().nullable(), allocation: AllocationSchema.nullable(),
     claims: z.array(z.object({ domain: z.string(), resource: z.string(), prefix: z.boolean().optional() })),
-    resources: z.array(BackendReceiptSchema), launches: z.array(LaunchSchema), completions: z.array(ExecutorCompletionSchema), files: z.array(FileReceiptSchema),
+    resources: z.array(BackendReceiptSchema.and(z.object({ deleted: z.boolean() }))), launches: z.array(LaunchSchema), completions: z.array(ExecutorCompletionSchema), files: z.array(FileReceiptSchema),
   }).passthrough().nullable().optional(),
 });
 async function command(cwd: string, argv: string[], env = safeEnv, timeout = 180_000) {
@@ -826,6 +826,9 @@ async function lifecycle() {
   await silo(compose, ["down"]);
   await silo(compose, ["ci", "--timeout", "60s"]);
   const second = await state(compose);
+  assert(first.resources.every(r => !r.deleted));
+  assert(second.resources.some(r => r.deleted));
+  assert(second.resources.some(r => !r.deleted));
   assert.equal(second.generation, first.generation);
   assert.deepEqual(second.claims, first.claims);
   for (const receipt of first.resources.filter(r => r.kind !== "volume")) {
@@ -901,6 +904,82 @@ async function unreceiptedCompose() {
   await silo(p, ["down", "--clean"]);
 }
 
+async function producers() {
+  const capped = composeProject("launch-cap");
+  await silo(capped, ["ci", name(capped), "--timeout", "60s"]);
+  const before = await state(capped);
+  assert(before.resources.filter(r => !r.deleted && r.kind !== "volume").length >= 2);
+  const owner = await ProjectOperation.open(capped);
+  try {
+    while (owner.launches().length < 1023) {
+      const intent = owner.planLaunch({ kind: "completed-fixture-intent", command: ["true"], effect: "none" });
+      owner.markLaunchTerminal(intent.id);
+    }
+    assert.equal(owner.launches().length, 1023);
+  } finally { owner.finish(); }
+  await silo(capped, ["down", "--clean"]);
+  assert.deepEqual((await silo(capped, ["status"])).project?.claims, []);
+  for (const receipt of before.resources.filter(r => r.kind !== "volume")) assert.notEqual((await command(capped, ["docker", receipt.kind, "inspect", receipt.id])).code, 0);
+  log({ scenario: "1023 launch records with live Compose receipts still permit public cleanup and retirement", pass: true });
+
+  const cluster = project("failed-k3d-create");
+  const clusterConfig = '\n[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n[k3d.registry]\nenabled=false\n';
+  appendFileSync(path.join(cluster, "silo.toml"), clusterConfig);
+  await silo(cluster, ["env", name(cluster)]);
+  const reserved = await state(cluster); assert(reserved.allocation);
+  const port = reserved.allocation.state.ports.K3D_API_PORT!;
+  const squatter = Bun.serve({ hostname: "127.0.0.1", port, fetch: () => new Response("owned-k3d-squatter") });
+  recordResource(`in-process k3d API squatter port=${port}; teardown through returned Bun server.stop handle\n`);
+  let partial: Awaited<ReturnType<typeof state>>;
+  try {
+    const failed = await command(cluster, [process.execPath, cli, "ci", "--timeout", "30s", "--json"]);
+    assert.notEqual(failed.code, 0);
+    partial = await state(cluster);
+    assert(partial.resources.some(r => r.kind === "container" && r.source === "k3d" && !r.deleted));
+    assert(partial.launches.some(l => l.kind === "k3d-cluster-create" && l.phase === "exited" && l.exitCode !== null && l.exitCode !== 0 && l.reconciled));
+    assert.deepEqual(partial.claims, reserved.claims);
+    assert.equal(await body(port), "owned-k3d-squatter");
+  } finally { await squatter.stop(true); }
+  await silo(cluster, ["down", "--delete-cluster"]);
+  for (const receipt of partial.resources.filter(r => r.kind === "container")) {
+    assert.notEqual((await command(cluster, ["docker", "container", "inspect", receipt.id])).code, 0);
+    for (const mount of receipt.anonymousVolumes) assert.notEqual((await command(cluster, ["docker", "volume", "inspect", mount.name])).code, 0);
+  }
+  await silo(cluster, ["down", "--clean"], "CLEANUP_REQUIRED");
+  for (const cache of partial.resources.filter(r => r.kind === "volume")) {
+    const current = z.array(z.object({ Name: z.string(), CreatedAt: z.string(), Labels: z.record(z.string()) })).length(1).parse(JSON.parse(await docker(["volume", "inspect", cache.name])))[0]!;
+    assert.equal(current.Name, cache.name); assert.equal(current.CreatedAt, cache.createdAt);
+    assert.equal(current.Labels["io.silo.project"], partial.projectId); assert.equal(current.Labels["io.silo.generation"], String(partial.generation));
+    recordResource(`failed-create cache ${cache.name}; independent fixture-owner teardown after exact creation and labels check\n`);
+    await docker(["volume", "rm", cache.name]);
+  }
+  await silo(cluster, ["down", "--clean"]);
+  log({ scenario: "port-squatter k3d failure captures labelled outputs, exact cleanup retains cache, owner resolution permits retirement", pass: true });
+
+  const network = project("failed-network-create");
+  appendFileSync(path.join(network, "silo.toml"), clusterConfig);
+  await silo(network, ["env", name(network)]);
+  const blocker = await docker(["network", "create", "--label", `io.silo.rehearsal=${path.basename(root)}`, `${name(network)}-ipam-blocker`]);
+  const blockerSnapshot = await fixtureSnapshot("network", blocker);
+  cleanupObjects.push({ kind: "network", id: blocker, name: `${name(network)}-ipam-blocker`, created: blockerSnapshot });
+  recordResource(`IPAM blocker network ${blocker}; fixture-only teardown exact recorded ID after identity check\n`);
+  const subnet = await docker(["network", "inspect", blocker, "--format", "{{(index .IPAM.Config 0).Subnet}}"]);
+  const bin = path.join(network, "bin"); mkdirSync(bin);
+  const wrapper = path.join(bin, "docker");
+  const realDocker = Bun.which("docker"); assert(realDocker);
+  writeFileSync(wrapper, '#!/bin/sh\nset -eu\nif [ "${1-}" = network ] && [ "${2-}" = create ]; then shift 2; exec "$REHEARSAL_DOCKER" network create --subnet "$REHEARSAL_SUBNET" "$@"; fi\nexec "$REHEARSAL_DOCKER" "$@"\n');
+  chmodSync(wrapper, 0o755);
+  const failed = await command(network, [process.execPath, cli, "ci", "--timeout", "30s", "--json"], { ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, REHEARSAL_DOCKER: realDocker, REHEARSAL_SUBNET: subnet });
+  assert.notEqual(failed.code, 0); assert(/overlap/i.test(failed.stdout + failed.stderr));
+  const knownFailure = await state(network);
+  assert(knownFailure.launches.some(l => l.kind === "k3d-network-create" && l.phase === "exited" && l.exitCode !== null && l.exitCode !== 0 && l.reconciled));
+  assert.deepEqual(knownFailure.resources, []);
+  await silo(network, ["down", "--delete-cluster", "--clean"]);
+  assert.deepEqual(await fixtureSnapshot("network", blocker), blockerSnapshot);
+  await docker(["network", "rm", blocker]); cleanupObjects.pop();
+  log({ scenario: "real overlapping-IPAM network create failure records absence and retires without touching the blocker", pass: true });
+}
+
 log({ environment: { platform: process.platform, arch: process.arch, bun: Bun.version, root, accountHome, artifact: cli, sha256: digest(cli) } });
 let failure: unknown;
 try {
@@ -919,6 +998,7 @@ try {
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "compose-replacement") await unreceiptedCompose();
   if (values.suite === "all" || values.suite === "lifecycle") await lifecycle();
   if (values.suite === "live-compose-replacement") await composeReplacement(true);
+  if (values.suite === "all" || values.suite === "producers") await producers();
   log({ result: "pass", suite: values.suite });
 } catch (error) { failure = error; log({ result: "fail", error: String(error), stack: error instanceof Error ? error.stack : null }); }
 finally {

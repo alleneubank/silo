@@ -23,19 +23,28 @@ stopped, reconciled generation; live, retained or uncertain state refuses.
 Use separate roots and names for parallel stacks. Omitted names reuse the
 stored name or generate a bounded unique candidate for a new root.
 
-The same configuration can restart within its generation: `ci`, `down`, `ci`,
+The same configuration can restart within its generation with down between runs:
+`ci`, `down`, `ci`,
 then `down --clean`. Old immutable-ID receipts remain audit history while the
 new creation result records fresh IDs under the same names. k3d supports the
 corresponding `ci`, `down --delete-cluster`, `ci` loop; its owned named cache
 remains until independent owner resolution before final clean.
+This loop does not qualify Compose's in-place service rebuild/recreate: inherited
+anonymous data can survive and require independent owner resolution.
 
-Finished producer recording is sealed before the first deletion. A cleanup retry
+Finite creating tools, including k3d network/volume/cluster creates, hooks and
+Tilt CI, record labelled outputs before reporting a known failure. Down also
+records a finished producer after importing its completion. Recording is sealed
+before the first deletion. A cleanup retry
 cannot adopt a same-name replacement from that old launch. Missing producer facts
 or unsupported provenance still refuse. A terminal exact-ID delete can instead
 resolve through verified target absence; status reports `phase: resolved`,
 `resolution: target-absent`, `exitCode: null` when its completion fact was lost.
 Unknown creates and untargeted commands cannot use that proof. Resources in status
-include historical receipts; use their immutable IDs to inspect physical presence.
+include historical receipts with `deleted: true` for recorded absence and false
+for active receipts. The flag is stored knowledge; use immutable IDs for a fresh
+physical-presence check. At the 1024-launch limit, terminal reconciled launch and
+completion history can be compacted while uncertainty and resource history remain.
 
 The unreleased SQLite proposal format is 2. Format-1 stores refuse without
 migration/reset; drain the matching old proposal before owner-led recreation.

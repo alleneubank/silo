@@ -7,7 +7,7 @@ import { ensureToolsAvailable } from "../utils/validate";
 import { runHooks } from "../hooks/runner";
 import { ensureCluster, writeKubeconfig } from "../backends/k3d";
 import { advertiseLocalRegistry } from "../backends/registry";
-import { assertEngine, assertNamesAvailable, captureFinishedComposeProducers } from "../backends/ownership";
+import { assertEngine, assertNamesAvailable } from "../backends/ownership";
 import { resolveRegistryAdvertiseSettings } from "../core/registry";
 import { SiloError } from "../utils/errors";
 import type { Allocation } from "../core/lease_types";
@@ -40,7 +40,6 @@ export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<R
   writeEnvAndLockfile(owner);
   const env = processEnvironment(owner);
   await runHooks(owner, { hooks: config.hooks["pre-up"], env, phase: "pre-up" });
-  await captureFinishedComposeProducers(owner);
   if (config.k3d?.enabled) {
     await ensureCluster(owner);
     await writeKubeconfig(owner);
@@ -56,7 +55,6 @@ export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<R
     });
   }
   await runHooks(owner, { hooks: config.hooks["post-up"], env, phase: "post-up" });
-  await captureFinishedComposeProducers(owner);
   writeEnvAndLockfile(owner);
   for (const role of ["env", "lock", ...(config.k3d?.enabled ? ["kubeconfig" as const] : [])] as const) owner.file(role).verify();
   return env;

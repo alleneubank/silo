@@ -28,7 +28,7 @@ export const commandLiveness = async (launch: Launch): Promise<"terminal" | "liv
   return identity === launch.supervisorIdentity && identity.includes(launch.id) ? "live" : "unknown";
 };
 
-type CommandOptions = {
+export type CommandOptions = {
   kind: string;
   effect: Launch["effect"];
   env?: Record<string, string>;
@@ -133,7 +133,7 @@ export const startOwnedCommand = async (
   }
 };
 
-export const runOwnedCommand = async (owner: ProjectOperation, command: string[], options: CommandOptions): Promise<OwnedCommandResult> => {
+export const runOwnedCommand = async (owner: ProjectOperation, command: string[], options: CommandOptions & { effect: "none" | "delete" }): Promise<OwnedCommandResult> => {
   const running = await startOwnedCommand(owner, command, options);
   const result = await running.exited;
   const recorded = owner.recordCommandResult(result.launch);

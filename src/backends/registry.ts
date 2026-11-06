@@ -2,7 +2,7 @@ import os from "os";
 import path from "path";
 import { promises as fs } from "fs";
 import { KUBECTL_APPLY_TIMEOUT_MS } from "../core/constants";
-import { runOwnedCommand } from "../core/owned_command";
+import { runProducerCommand } from "./ownership";
 import type { ProjectOperation } from "../core/lease_store";
 import { withRetry } from "../utils/retry";
 
@@ -68,7 +68,7 @@ export const advertiseLocalRegistry = async (params: {
     );
     await withRetry(
       () =>
-        runOwnedCommand(owner, ["kubectl", "apply", "-f", manifestPath], {
+        runProducerCommand(owner, ["kubectl", "apply", "-f", manifestPath], {
           ...(kubeconfigPath ? { env: { KUBECONFIG: kubeconfigPath } } : {}),
           timeoutMs: KUBECTL_APPLY_TIMEOUT_MS,
           kind: "registry-advertise",

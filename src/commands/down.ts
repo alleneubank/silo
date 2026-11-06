@@ -1,7 +1,7 @@
 import { ProjectOperation } from "../core/lease_store";
 import { writeEnvAndLockfile } from "../core/env";
 import { deleteCluster } from "../backends/k3d";
-import { assertEngine, assertNamesAvailable, captureFinishedComposeProducers, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
+import { assertEngine, assertNamesAvailable, captureFinishedProducers, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
 import { stopOwnedCommand } from "../core/owned_command";
 import { logger } from "../utils/logger";
 import { SiloError } from "../utils/errors";
@@ -30,7 +30,7 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     }
     const missing = owner.launches().find(l => l.phase === "granted");
     if (missing) throw new SiloError(`CLEANUP_REQUIRED: ${missing.kind}/${missing.id} has no completion fact; process death cannot resolve an outstanding request`, "CLEANUP_REQUIRED");
-    await captureFinishedComposeProducers(owner);
+    await captureFinishedProducers(owner);
     const effects = owner.launches().filter(l => l.phase === "exited" && !l.reconciled && l.effect !== "none");
     if (effects.length > 0 || owner.resources().length > 0) {
       await assertEngine(owner);
@@ -48,7 +48,7 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     if (leakProblem) logger.warn(leakProblem);
     for (const launch of owner.launches()) {
       if (launch.phase === "planned") owner.markLaunchTerminal(launch.id);
-      else if (launch.phase === "exited" && (launch.effect === "none" || launch.effect === "workload" || launch.effect === "hook" || launch.exitCode === 0)) {
+      else if (launch.phase === "exited" && (launch.effect === "none" || (launch.effect === "delete" && launch.exitCode === 0))) {
         owner.checkpointLaunch({ ...launch, reconciled: true });
       }
     }

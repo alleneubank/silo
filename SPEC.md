@@ -127,6 +127,11 @@ replay such an append; its runner file must be inspected with its owner.
 are consumer snapshots, not ownership authorities. Missing snapshots do not
 release claims. `status --json` is read-only and does not initialize a store.
 It exposes ownership, resources, launches, completion facts and problems.
+Each resource has `deleted`: true records a tombstone, while false denotes an
+active receipt rather than a fresh physical-presence check. At the 1024-launch
+generation limit, terminal reconciled launches and their completion facts can
+be compacted. Unresolved facts and resource/mount history remain; successful
+restart history cannot consume the capacity needed for exact cleanup.
 Process liveness is not application readiness; operators use the Tilt API for
 resource health with the allocated `TILT_PORT`.
 
@@ -183,10 +188,12 @@ audit data, and status includes historical receipts rather than asserting their
 physical liveness. Volume audit identity includes name and creation time; it
 never grants deletion authority.
 
-Before deletion, finished started Tilt workloads and startup hooks with durable
-completion facts are recorded using the success path's claimed namespace,
-labels and physical-root provenance. Nonzero CI and down-stopped live up use the
-same boundary. Recording is durably reconciled before any deletion starts; a
+Before deletion, every finished started producer with a known exit is recorded
+using its success path's claimed namespace, labels and physical-root provenance.
+Direct k3d network, volume and cluster creates use k3d provenance; hooks and Tilt
+workloads can also produce Compose outputs. Finite producers capture before
+reporting failure, and down applies the same boundary after importing completions.
+Recording is durably reconciled before any deletion starts; a
 cleanup retry cannot renew that producer's capture or adopt a replacement Q.
 Pre-up hook results are recorded before k3d's namespace preflight, so the next
 stage recognizes the generation's own newly created objects.
@@ -252,6 +259,14 @@ cover durable successful retry reconciliation. Named-volume behavior follows
   supported stores remain recoverable after interrupted SQLite transactions.
   Check: clean unsupported-format byte-preservation test and native hot-journal
   recovery probe. No automatic schema migration or reset is performed.
+- REQ-LAUNCH-001: terminal reconciled launch history cannot exhaust cleanup
+  capacity; unresolved facts and resource audit history survive compaction.
+  Check: lease-store capacity test and native `--suite producers` at 1023 records.
+- REQ-CLEANUP-008: finished creating tools reconcile only after labelled outputs
+  are recorded or their claimed namespace is proven empty. Check: native
+  `--suite producers` port-squatter k3d and overlapping-IPAM network failures.
+- REQ-STATUS-001: JSON resource receipts distinguish tombstones with `deleted`.
+  Check: receipt-cycle unit tests and the native same-generation lifecycle loop.
 
 Trusted hooks/Tiltfiles must consume generated identities and ports. In
 particular Tilt requires explicit `docker_compose(project_name=...)`; its

@@ -36,9 +36,10 @@ deletion retry is reconciled on recovery even if the caller crashed first.
 BREAKING: down stops verified recorded processes and deletes recorded immutable
 container/network IDs only; it never runs tilt down, compose down or arbitrary
 teardown hooks. Pre-down/post-down config keys are rejected, including profiles.
-Kubernetes workloads remain with a retained cluster. Finished owned Tilt workloads
-and startup hooks are recorded before deletion, including failed CI and live up
-stopped by down. Recording is sealed once per producer; a cleanup retry cannot
+Kubernetes workloads remain with a retained cluster. Finished owned producers,
+including k3d network/volume/cluster creates, hooks, failed CI and live up stopped
+by down, are recorded before deletion. Known failed creates reconcile after their
+outputs or absence are recorded. Recording is sealed once per producer; a cleanup retry cannot
 adopt a replacement from that old launch. Unknown producers/missing non-delete
 facts still require independent owner resolution.
 
@@ -50,6 +51,9 @@ No success is invented and unknown creates remain unresolved. Unreleased proposa
 store format 1 is refused without schema migration by format 2; SQLite's native
 rollback recovery remains available to writable lifecycle commands. Owners drain the matching old
 proposal before recreating. There is no automatic store migration or reset.
+Terminal reconciled launch/completion history is compacted at the 1024-record
+limit, preserving unresolved facts and resource/mount history for cleanup.
+JSON resource receipts expose `deleted` to distinguish recorded tombstones.
 
 Pin Bun 1.4.4 and Janitor 0.3.1. Release remains gated on matching specialist
 review and native Linux/macOS rehearsal; this changeset does not authorize

@@ -5,7 +5,7 @@ import { SiloError } from "../utils/errors";
 import type { ProjectOperation } from "../core/lease_store";
 import type { Allocation, AnonymousVolume, BackendReceipt, Claim, Launch } from "../core/lease_types";
 import { BackendReceiptSchema } from "../core/lease_types";
-import { runOwnedCommand } from "../core/owned_command";
+import { commandFailure, runOwnedCommand, startOwnedCommand, type CommandOptions } from "../core/owned_command";
 import { K3D_DELETE_TIMEOUT_MS } from "../core/constants";
 
 const MAX_OBJECTS = 10_000;
@@ -175,7 +175,7 @@ export const assertNamesAvailable = async (claims: Claim[], cwd: string, owned: 
 };
 
 /** Records only this generation's creation results, with its declared namespace and provenance. */
-export const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation: Extract<Launch, { phase: "exited" }>): Promise<BackendReceipt[]> => {
+const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation: Extract<Launch, { phase: "exited" }>): Promise<BackendReceipt[]> => {
   await assertEngine(owner);
   const allocation = owner.current()!.allocation;
   const cluster = allocation.state.identity.k3dClusterName;
@@ -238,13 +238,32 @@ export const captureOwnedResources = async (owner: ProjectOperation, source: Bac
 };
 
 /** Seals finished producers' recording before any cleanup effect can begin. */
-export const captureFinishedComposeProducers = async (owner: ProjectOperation): Promise<void> => {
+export const captureFinishedProducers = async (owner: ProjectOperation): Promise<void> => {
   const pending = owner.launches().filter((launch): launch is Extract<Launch, { phase: "exited" }> =>
-    launch.phase === "exited" && launch.started && !launch.reconciled && (launch.effect === "workload" || launch.effect === "hook"));
+    launch.phase === "exited" && launch.started && launch.exitCode !== null && !launch.reconciled &&
+    (launch.effect === "create" || launch.effect === "workload" || launch.effect === "hook"));
   if (pending.length === 0) return;
   for (const launch of pending) owner.markLaunchTerminal(launch.id);
-  await captureOwnedResources(owner, "compose", pending[0]!);
+  // Direct creators operate on k3d's claimed namespace. Hooks and workloads can
+  // also create Compose objects, whose root/launch provenance remains required.
+  await captureOwnedResources(owner, "k3d", pending[0]!);
+  const compose = pending.find(launch => launch.effect === "workload" || launch.effect === "hook");
+  if (compose) await captureOwnedResources(owner, "compose", compose);
   for (const launch of pending) owner.checkpointLaunch({ ...launch, terminal: true, reconciled: true });
+};
+
+/** Finite producers seal their outputs even when the creating command fails. */
+export const runProducerCommand = async (owner: ProjectOperation, command: string[], options: CommandOptions & { effect: "create" | "workload" | "hook" }): Promise<void> => {
+  const running = await startOwnedCommand(owner, command, options);
+  const result = await running.exited;
+  const launch = owner.recordCommandResult(result.launch);
+  const completed = { ...result, launch, exitCode: launch.exitCode ?? result.exitCode };
+  await captureFinishedProducers(owner);
+  if (completed.exitCode !== 0) {
+    const failure = commandFailure(completed, options.kind, owner.generation);
+    owner.noteFailure(failure);
+    throw failure;
+  }
 };
 
 /** Revalidates exact IDs and creation identities before any deletion capability is used. */

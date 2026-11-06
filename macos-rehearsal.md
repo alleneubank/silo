@@ -122,7 +122,7 @@ cat "$TMPDIR/rehearsal.log"
 A successful run contains `{"result":"pass","suite":"all"}` **and** no
 later cleanup failure, and exits zero. Keep the entire log and fixture evidence.
 The suites may be selected independently with `--suite legacy`, `live`,
-`backend`, `volumes` or `lifecycle` when a source change justifies rerunning only affected
+`backend`, `volumes`, `lifecycle` or `producers` when a source change justifies rerunning only affected
 scenarios. `volumes` includes the focused `same-second`, `paused-delete`,
 `parent-volumes`, `inherited-volumes`, `retry-crash` and `compose-replacement` cases. These focused
 names are also valid suite selectors. The replacement tests seed a real
@@ -137,6 +137,12 @@ The lost-completion case kills only the exact recorded executor group after
 verifying its UID, group and launch UUID; it does not select a process from a
 process-table search. A missing fact is closed as target-absent with null exit,
 never as an invented successful execution. Unknown creates must still refuse.
+
+`producers` exercises cleanup with 1023 launch records and live receipts, an API
+port squatter causing a real partial k3d create, and a real Docker network-create
+failure from overlapping fixture IPAM. The latter wrapper forwards to Docker
+with the fixture's occupied subnet; it does not stub a daemon response. The
+partial cluster uses exact cleanup and separate owner cache resolution.
 
 | Scenario driven by that command | Required observation |
 | --- | --- |

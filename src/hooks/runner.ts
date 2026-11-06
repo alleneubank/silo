@@ -1,5 +1,5 @@
 import { HOOK_TIMEOUT_MS } from "../core/constants";
-import { runOwnedCommand } from "../core/owned_command";
+import { runProducerCommand } from "../backends/ownership";
 import type { ProjectOperation } from "../core/lease_store";
 
 export const runHooks = async (owner: ProjectOperation, params: {
@@ -13,7 +13,7 @@ export const runHooks = async (owner: ProjectOperation, params: {
   }
 
   for (const hook of hooks) {
-    await runOwnedCommand(owner, ["/bin/sh", "-c", hook], {
+    await runProducerCommand(owner, ["/bin/sh", "-c", hook], {
       env,
       timeoutMs: HOOK_TIMEOUT_MS,
       kind: `hook-${phase}`,

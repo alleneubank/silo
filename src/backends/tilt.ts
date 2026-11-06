@@ -1,5 +1,6 @@
 import { TILT_CI_TIMEOUT_MS } from "../core/constants";
 import { startOwnedCommand } from "../core/owned_command";
+import { runProducerCommand } from "./ownership";
 import type { ProjectOperation } from "../core/lease_store";
 import type { TiltConfig } from "../core/types";
 import { SiloError } from "../utils/errors";
@@ -23,8 +24,5 @@ export const startTilt = (owner: ProjectOperation, env: Record<string, string>, 
   });
 
 export const tiltCi = async (owner: ProjectOperation, env: Record<string, string>, options: TiltCiOptions) => {
-  const running = await startOwnedCommand(owner, buildTiltCiArgv(options), { kind: "tilt-ci", effect: "workload", env, timeoutMs: TILT_CI_TIMEOUT_MS });
-  const result = await running.exited;
-  const recorded = owner.recordCommandResult(result.launch);
-  return { ...result, launch: recorded, exitCode: recorded.exitCode ?? result.exitCode };
+  return runProducerCommand(owner, buildTiltCiArgv(options), { kind: "tilt-ci", effect: "workload", env, timeoutMs: TILT_CI_TIMEOUT_MS });
 };

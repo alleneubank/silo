@@ -201,7 +201,7 @@ export type ProjectInspection = {
   schemaVersion: 1; projectId: string; root: string; generation: number;
   phase: LifecyclePhase | "unallocated"; problem: string | null;
   operation: { token: string; pid: number | null; startedAt: string | null } | null;
-  allocation: Allocation | null; claims: Claim[]; resources: BackendReceipt[]; launches: Launch[];
+  allocation: Allocation | null; claims: Claim[]; resources: (BackendReceipt & { deleted: boolean })[]; launches: Launch[];
   files: FileReceipt[]; sinks: unknown[];
   completions: ExecutorCompletion[];
 };
@@ -298,7 +298,8 @@ export class ProjectOperation {
           operation: project.operation_token ? { token: project.operation_token, pid: project.operation_pid, startedAt: project.operation_started } : null,
           allocation: record?.allocation ?? null,
           claims: db.query<Claim, typeof params>("SELECT domain, resource, is_prefix AS prefix FROM claims WHERE project_id = ? AND generation = ? ORDER BY domain, resource").all(...params).map(c => ({ domain: c.domain, resource: c.resource, ...(c.prefix ? { prefix: true } : {}) })),
-          resources: records("resources").map(r => BackendReceiptSchema.parse(JSON.parse(r.receipt))),
+          resources: db.query<JsonRow & { deleted: number }, typeof params>("SELECT receipt, deleted FROM resources WHERE project_id = ? AND generation = ?").all(...params)
+            .map(r => ({ ...BackendReceiptSchema.parse(JSON.parse(r.receipt)), deleted: r.deleted === 1 })),
           launches: records("launches").map(r => LaunchSchema.parse(JSON.parse(r.receipt))),
           files: records("files").map(r => FileReceiptSchema.parse(JSON.parse(r.receipt))),
           sinks: records("sinks").map(r => JSON.parse(r.receipt) as unknown),
@@ -547,7 +548,15 @@ export class ProjectOperation {
     assert(input.deletionTarget === undefined || input.effect === "delete", "Only a deletion may carry a deletion target");
     const launch: Extract<Launch, { phase: "planned" }> = { ...input, id: randomUUID(), phase: "planned", reconciled: false, terminal: false, supervisorPid: null, leaderPid: null, groupId: null, supervisorIdentity: null, exitCode: null };
     this.transaction(() => {
-      if (this.launches().length >= MAX_LAUNCHES) throw new SiloError("Too many launch records; clean this generation", "STORE_FULL");
+      if (this.launches().length >= MAX_LAUNCHES) {
+        // Only facts whose processes and effects are resolved can be discarded.
+        // Resource/mount history is independent and remains available for audit.
+        for (const old of this.launches().filter(l => l.terminal && l.reconciled)) {
+          this.db.query("DELETE FROM completions WHERE project_id = ? AND generation = ? AND launch_id = ?").run(this.projectId, this.generation, old.id);
+          this.db.query("DELETE FROM launches WHERE project_id = ? AND generation = ? AND id = ?").run(this.projectId, this.generation, old.id);
+        }
+      }
+      if (this.launches().length >= MAX_LAUNCHES) throw new SiloError("Launch capacity is occupied by unresolved processes or effects; inspect status and reconcile their exact targets", "STORE_FULL");
       this.db.query("INSERT INTO launches (project_id, generation, id, receipt) VALUES (?, ?, ?, ?)").run(this.projectId, this.generation, launch.id, JSON.stringify(LaunchSchema.parse(launch)));
     });
     return launch;

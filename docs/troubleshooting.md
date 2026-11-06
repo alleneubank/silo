@@ -6,6 +6,17 @@ cleanup. The producer's recording is sealed before deletion, so a retry cannot
 adopt a same-name replacement. Missing non-delete completion facts, inherited
 mount ambiguity and unsupported provenance still retain claims.
 
+A k3d create with a known failed exit records its labelled partial outputs before
+reporting the error. Use `down --delete-cluster` for exact cleanup; its named cache
+still requires independent owner resolution before final clean. A failed network
+or volume create with no output can reconcile through complete namespace
+verification. Missing create completion facts remain unresolved.
+
+Resolved launch history is compacted at the 1024-record limit. `STORE_FULL` then
+means unresolved processes or effects occupy capacity; inspect their exact
+recorded targets and restore the original engine before retrying. Do not delete
+ownership state to clear the limit. Resource/mount audit history is retained.
+
 A failed exact-ID delete can recover after the target disappears independently.
 Retry down on its recorded engine. A lost completion may show a `resolved` /
 `target-absent` launch with null exit code; this is an absence proof, not a

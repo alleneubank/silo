@@ -65,6 +65,29 @@ const claims = (name: string, port: number): Claim[] => [
 ];
 
 describe("atomic account leases", () => {
+  test("resolved launch history yields capacity without discarding uncertainty or resource history", async () => {
+    const root = project("history-capacity"); const op = await open(root);
+    try {
+      await op.allocate(allocation(root, "history-capacity"), [...claims("history-capacity", 3000), { domain: "container", resource: "old-parent" }], targets(root));
+      const receipt = BackendReceiptSchema.parse({ kind: "container", source: "compose", name: "old-parent", id: "c".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {}, anonymousVolumes: [{ name: "retained-audit", createdAt: "2026-11-06T00:00:00Z", destination: "/data" }] });
+      op.recordResources([receipt]); op.recordResourceAbsence(receipt);
+      const running = await startOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "pending-creation", effect: "create", timeoutMs: 5000 });
+      const result = await running.exited;
+      op.recordCommandResult(result.launch);
+      op.markLaunchTerminal(result.launch.id);
+      const unresolved = op.launches().find(l => l.id === result.launch.id)!;
+      for (let index = 0; index < 1023; index++) {
+        const old = op.planLaunch({ kind: "finished-intent", command: ["true"], effect: "none" });
+        op.markLaunchTerminal(old.id);
+      }
+      const cleanup = op.planLaunch({ kind: "cleanup", command: ["true"], effect: "delete" });
+      expect(op.launches()).toEqual(expect.arrayContaining([unresolved, cleanup]));
+      expect(op.resources(true)).toEqual([receipt]);
+      expect(op.resources()).toEqual([]);
+      await expect(retire(op)).rejects.toThrow("CLEANUP_REQUIRED");
+    } finally { op.finish(); }
+  }, 15_000);
+
   test("existing-only acquisition never creates a missing store or project", async () => {
     const known = project("known"); const unknown = project("unknown");
     expect(await ProjectOperation.openExisting(known, { storePath, legacyInputs })).toBe(null);
@@ -102,7 +125,7 @@ describe("atomic account leases", () => {
       expect(op.resources()).toEqual([second]);
       expect(op.resources(true)).toHaveLength(2);
       expect(op.resources(true)).toEqual(expect.arrayContaining([first, second]));
-      expect(ProjectOperation.inspect(root, storePath)?.resources).toEqual(expect.arrayContaining([first, second]));
+      expect(ProjectOperation.inspect(root, storePath)?.resources).toEqual(expect.arrayContaining([{ ...first, deleted: true }, { ...second, deleted: false }]));
       expect(() => op.recordResources([first])).toThrow("NAME_CONFLICT");
     } finally { op.finish(); }
   });
@@ -233,11 +256,14 @@ describe("atomic account leases", () => {
     } finally { op.finish(); }
   });
 
-  test("a failed creating tool keeps its port, even after its executor is absent", async () => {
+  test("an uncaptured creating tool keeps its port, even after its executor is absent", async () => {
     const root = project("a"); const op = await open(root);
     try {
       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
-      await expect(runOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "uncertain-create", effect: "create", timeoutMs: 5000 })).rejects.toThrow("COMMAND_FAILED");
+      const running = await startOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "uncertain-create", effect: "create", timeoutMs: 5000 });
+      const result = await running.exited;
+      op.recordCommandResult(result.launch);
+      expect(result.exitCode).toBe(17);
       await expect(retire(op)).rejects.toThrow("CLEANUP_REQUIRED");
       expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: "3000" });
     } finally { op.finish(); }
@@ -252,7 +278,7 @@ describe("atomic account leases", () => {
     const canary = path.join(root, "must-not-exist");
     try {
       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
-      await expect(runOwnedCommand(op, ["/bin/sh", "-c", "printf executed > must-not-exist"], {
+      await expect(startOwnedCommand(op, ["/bin/sh", "-c", "printf executed > must-not-exist"], {
         kind: "refused-supervisor", effect: "create", timeoutMs: 5000, env: { PATH: bin },
       })).rejects.toMatchObject({
         code: "LAUNCH_FAILED",
@@ -560,7 +586,7 @@ describe("atomic account leases", () => {
       db.exec("CREATE TRIGGER fail_grant BEFORE UPDATE ON launches BEGIN SELECT RAISE(FAIL, 'fixture checkpoint failure'); END");
       const canary = path.join(root, "must-not-exist");
       try {
-        await expect(runOwnedCommand(op, [process.execPath, "-e", 'await Bun.write(process.argv[1], "executed")', canary], { kind: "refused-grant", effect: "hook", timeoutMs: 5000 })).rejects.toThrow("fixture checkpoint failure");
+        await expect(startOwnedCommand(op, [process.execPath, "-e", 'await Bun.write(process.argv[1], "executed")', canary], { kind: "refused-grant", effect: "hook", timeoutMs: 5000 })).rejects.toThrow("fixture checkpoint failure");
         expect(existsSync(canary)).toBe(false);
       } finally { db.exec("DROP TRIGGER fail_grant"); db.close(); }
     } finally { op.finish(); }
