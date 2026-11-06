@@ -20,11 +20,15 @@ const cli = path.resolve(values.silo);
 const root = mkdtempSync(path.join(path.resolve(values.root), "allocation-rehearsal-"));
 const events = path.join(root, "events.jsonl");
 const resourceFile = path.join(root, "resources");
+const redactCapture = (value: string): string => value
+  .replace(/K3S_TOKEN=[^"\\\s]+/g, "K3S_TOKEN=[REDACTED_EPHEMERAL_FIXTURE_TOKEN]")
+  .replace(/((?:\\?")k3d\.cluster\.token(?:\\?")\s*:\s*(?:\\?"))[^"\\]*(\\?")/g, "$1[REDACTED_EPHEMERAL_FIXTURE_TOKEN]$2");
 const recordResource = (line: string) => {
-  appendFileSync(resourceFile, line);
-  appendFileSync(path.resolve("resources"), `rehearsal ${root}: ${line}`);
+  const safe = redactCapture(line);
+  appendFileSync(resourceFile, safe);
+  appendFileSync(path.resolve("resources"), `rehearsal ${root}: ${safe}`);
 };
-const log = (event: unknown) => { const line = JSON.stringify(event); console.log(line); appendFileSync(events, line + "\n"); };
+const log = (event: unknown) => { const line = redactCapture(JSON.stringify(event)); console.log(line); appendFileSync(events, line + "\n"); };
 const digest = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
 const safeEnv: NodeJS.ProcessEnv = { ...process.env, CI: "false", GITHUB_ENV: "", SILO_PROFILE: "" };
 delete safeEnv.SILO_PORT_REGISTRY_DIR;
@@ -51,7 +55,7 @@ async function command(cwd: string, argv: string[], env = safeEnv, timeout = 180
   const timer = setTimeout(() => { proc.kill("SIGTERM"); }, timeout);
   const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
   clearTimeout(timer); processes.delete(proc);
-  writeFileSync(path.join(root, `${id}.stdout`), stdout); writeFileSync(path.join(root, `${id}.stderr`), stderr);
+  writeFileSync(path.join(root, `${id}.stdout`), redactCapture(stdout)); writeFileSync(path.join(root, `${id}.stderr`), redactCapture(stderr));
   log({ command: id, cwd, argv, code });
   return { stdout, stderr, code };
 }
@@ -924,7 +928,8 @@ async function producers() {
 
   const cluster = project("failed-k3d-create");
   const clusterConfig = '\n[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n[k3d.registry]\nenabled=false\n';
-  appendFileSync(path.join(cluster, "silo.toml"), clusterConfig);
+  appendFileSync(path.join(cluster, "silo.toml"), clusterConfig.replace("enabled=false", "enabled=true"));
+  writeFileSync(path.join(cluster, "silo.toml"), readFileSync(path.join(cluster, "silo.toml"), "utf8").replace("[ports]\n", '[ports]\nK3D_REGISTRY_PORT="random"\n'));
   await silo(cluster, ["env", name(cluster)]);
   const reserved = await state(cluster); assert(reserved.allocation);
   const port = reserved.allocation.state.ports.K3D_API_PORT!;
@@ -936,6 +941,7 @@ async function producers() {
     assert.notEqual(failed.code, 0);
     partial = await state(cluster);
     assert(partial.resources.some(r => r.kind === "container" && r.source === "k3d" && !r.deleted));
+    assert(partial.resources.some(r => r.kind === "container" && r.labels["k3d.role"] === "registry" && !r.deleted));
     assert(partial.launches.some(l => l.kind === "k3d-cluster-create" && l.phase === "exited" && l.exitCode !== null && l.exitCode !== 0 && l.reconciled));
     assert.deepEqual(partial.claims, reserved.claims);
     assert.equal(await body(port), "owned-k3d-squatter");

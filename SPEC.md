@@ -150,8 +150,9 @@ cache volumes are precreated with project/generation labels. The named cache
 is retained after cluster deletion: k3d 5.9.0 requires it for its tools node,
 and Silo never deletes volumes by name. Its owner resolves that cache before
 clean can release the generation. k3d nodes receive those
-labels. Registry provenance requires the completed owned creation request and
-matching cluster/name. k3d 5.9 uses the requested registry hostname without a
+labels. Registry provenance requires a started producer's known completion and
+matching cluster/name; a nonzero exit uses the same provenance as success.
+Unknown completion cannot grant capture. k3d 5.9 uses the requested registry hostname without a
 `k3d-` prefix; claims and capture use that actual name. Compose container
 provenance includes project label, physical working root and owned launch;
 other objects require ownership labels. Backend publications must be claimed.

@@ -27,6 +27,9 @@ const InspectSchema = z.object({
 });
 type NamespaceEntry = { kind: BackendReceipt["kind"]; name: string; id: string };
 type InspectedObject = { receipt: BackendReceipt; publishedPorts: number[]; bindings: Record<string, number[]>; running: boolean };
+type FinishedProducer = Extract<Launch, { phase: "exited" }> & {
+  started: true; exitCode: number; effect: "create" | "workload" | "hook";
+};
 
 const query = async (argv: string[], cwd: string): Promise<string> => {
   const result = await runCommand(argv, { cwd, timeoutMs: TOOL_TIMEOUT_MS, context: argv.slice(0, 3).join(" "), stdio: "pipe" });
@@ -175,7 +178,7 @@ export const assertNamesAvailable = async (claims: Claim[], cwd: string, owned: 
 };
 
 /** Records only this generation's creation results, with its declared namespace and provenance. */
-const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation: Extract<Launch, { phase: "exited" }>): Promise<BackendReceipt[]> => {
+const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation: FinishedProducer): Promise<BackendReceipt[]> => {
   await assertEngine(owner);
   const allocation = owner.current()!.allocation;
   const cluster = allocation.state.identity.k3dClusterName;
@@ -222,14 +225,14 @@ const captureOwnedResources = async (owner: ProjectOperation, source: BackendRec
     }
     const labels = current.receipt.labels;
     const projectLabel = labels["io.silo.project"] === owner.projectId && labels["io.silo.generation"] === String(owner.generation);
-    const registryFromCompletedCreate = source === "k3d" && creation.exitCode === 0 &&
+    const registryFromFinishedProducer = source === "k3d" &&
       entry.kind === "container" && entry.name === registry &&
       labels["k3d.cluster"] === allocation.state.identity.k3dClusterName;
     const composeRoot = labels["com.docker.compose.project.working_dir"];
     const composeFromOwnedLaunch = source === "compose" && entry.kind === "container" &&
       labels["com.docker.compose.project"] === allocation.state.identity.composeName && composeRoot !== undefined &&
-      realpathSync(composeRoot) === owner.root && creation.started && (creation.effect === "workload" || creation.effect === "hook");
-    if (!projectLabel && !registryFromCompletedCreate && !composeFromOwnedLaunch) conflict(entry);
+      realpathSync(composeRoot) === owner.root && (creation.effect === "workload" || creation.effect === "hook");
+    if (!projectLabel && !registryFromFinishedProducer && !composeFromOwnedLaunch) conflict(entry);
     validatePublications(current);
     captured.push(current.receipt);
   }
@@ -239,7 +242,7 @@ const captureOwnedResources = async (owner: ProjectOperation, source: BackendRec
 
 /** Seals finished producers' recording before any cleanup effect can begin. */
 export const captureFinishedProducers = async (owner: ProjectOperation): Promise<void> => {
-  const pending = owner.launches().filter((launch): launch is Extract<Launch, { phase: "exited" }> =>
+  const pending = owner.launches().filter((launch): launch is FinishedProducer =>
     launch.phase === "exited" && launch.started && launch.exitCode !== null && !launch.reconciled &&
     (launch.effect === "create" || launch.effect === "workload" || launch.effect === "hook"));
   if (pending.length === 0) return;
