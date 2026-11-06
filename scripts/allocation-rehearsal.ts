@@ -592,7 +592,8 @@ async function inheritedVolumes() {
   const borrowerBefore = await fixtureSnapshot("container", borrower);
   cleanupObjects.push({ kind: "container", id: borrower, name: borrowerName, created: borrowerBefore });
   const before = await state(p);
-  await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
+  // Failed creation capture granted no receipt; cleanup cannot adopt it.
+  await silo(p, ["down", "--clean"], "NAME_CONFLICT");
   assert.deepEqual((await state(p)).claims, before.claims);
   assert.deepEqual(await fixtureSnapshot("container", borrower), borrowerBefore);
   assert.deepEqual(await fixtureSnapshot("container", donor), donorBefore);
@@ -795,7 +796,7 @@ try {
 } catch (error) { failure = error; log({ result: "fail", error: String(error), stack: error instanceof Error ? error.stack : null }); }
 finally {
   for (const proc of processes) if (proc.exitCode === null) { proc.kill("SIGTERM"); await proc.exited; }
-  for (const object of cleanupObjects) {
+  for (const object of [...cleanupObjects].reverse()) {
     const current = await fixtureSnapshot(object.kind, object.id);
     assert.deepEqual(current, object.created, "Refusing replacement fixture cleanup"); await docker([object.kind, "rm", ...(object.kind === "container" ? ["--volumes"] : []), object.id]);
   }
