@@ -1,0 +1,46 @@
+a94bfd50723cb1d61c52006c5e10acb651d8da1f
+4c50596b5171ecda81912351d98c28f28f1b791aeee1a7aac31422648f8befc5  dist/cli.js
+
+Prior teardown references (positive control):
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/backends/tilt.ts:1:import { TILT_CI_TIMEOUT_MS, TILT_DOWN_TIMEOUT_MS } from "../core/constants";
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/backends/tilt.ts:25:export const tiltDown = (owner: ProjectOperation, env: Record<string, string>) =>
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/backends/tilt.ts:26:  runOwnedCommand(owner, ["tilt", "down"], { kind: "tilt-down", effect: "delete", env, timeoutMs: TILT_DOWN_TIMEOUT_MS });
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/commands/down.ts:7:import { tiltDown } from "../backends/tilt";
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/commands/down.ts:34:    const needsTiltTeardown = hadWorkload || effects.some(l => l.kind === "tilt-down");
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/commands/down.ts:49:      const result = await tiltDown(owner, env);
+
+Current delegated-teardown search (exit 1 means no match):
+rg_exit=1
+
+Current authority/capture/absence call sites:
+src/core/owned_command.ts:37:  deletionTarget?: DockerDeletionTarget;
+src/core/owned_command.ts:85:    ...(options.deletionTarget === undefined ? {} : { deletionTarget: options.deletionTarget }) });
+src/core/lease_store.ts:239:  static openExisting(root: string, options: OperationOptions = {}): Promise<ProjectOperation | null> {
+src/core/lease_store.ts:358:      this.checkpointLaunch({ ...launch, phase: "exited", started: completion.started, exitCode: completion.exitCode, reconciled: !completion.started || launch.effect === "none" });
+src/core/lease_store.ts:391:        JSON.stringify(previous.deletionTarget) === JSON.stringify(completed.deletionTarget)) {
+src/core/lease_store.ts:546:  planLaunch(input: Pick<Launch, "kind" | "command" | "effect" | "deletionTarget">): Extract<Launch, { phase: "planned" }> {
+src/core/lease_store.ts:547:    assert(input.deletionTarget === undefined || input.effect === "delete", "Only a deletion may carry a deletion target");
+src/core/lease_store.ts:567:      assert.deepEqual([launch.kind, launch.effect, launch.command, launch.deletionTarget], [old.kind, old.effect, old.command, old.deletionTarget], "Launch identity is immutable");
+src/core/lease_store.ts:575:      const next = { ...launch, terminal: old.terminal || launch.terminal, reconciled: old.reconciled || launch.reconciled };
+src/core/lease_store.ts:626:  recordResourceAbsence(resource: BackendReceipt): void {
+src/core/lease_store.ts:632:          if (!launch.terminal || launch.effect !== "delete" || launch.deletionTarget?.kind !== resource.kind || launch.deletionTarget.id !== resource.id) continue;
+src/core/lease_store.ts:634:          else if (launch.phase === "granted") this.checkpointLaunch({ ...launch, phase: "resolved", effect: "delete", deletionTarget: launch.deletionTarget,
+src/commands/up.ts:5:import { captureFinishedComposeProducers } from "../backends/ownership";
+src/commands/up.ts:58:    await captureFinishedComposeProducers(owner);
+src/commands/prepare.ts:10:import { assertEngine, assertNamesAvailable, captureFinishedComposeProducers } from "../backends/ownership";
+src/commands/prepare.ts:43:  await captureFinishedComposeProducers(owner);
+src/commands/prepare.ts:59:  await captureFinishedComposeProducers(owner);
+src/commands/ci.ts:4:import { captureFinishedComposeProducers } from "../backends/ownership";
+src/commands/ci.ts:23:    await captureFinishedComposeProducers(owner);
+src/commands/down.ts:4:import { assertEngine, assertNamesAvailable, captureFinishedComposeProducers, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
+src/commands/down.ts:16:  const owner = await ProjectOperation.openExisting(root, { recover: true, ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }) });
+src/commands/down.ts:26:      const target = launch.deletionTarget;
+src/commands/down.ts:29:      if (receipt && !(await verifyResource(owner, receipt))) owner.recordResourceAbsence(receipt);
+src/commands/down.ts:33:    await captureFinishedComposeProducers(owner);
+src/commands/down.ts:43:    for (const receipt of owner.resources()) if (!(await verifyResource(owner, receipt))) owner.recordResourceAbsence(receipt);
+src/backends/ownership.ts:62:    const args = ["docker", kind, "ls", ...(kind === "container" ? ["-a"] : []), ...(kind === "volume" ? [] : ["--no-trunc"]), "--format", "{{json .}}"];
+src/backends/ownership.ts:136:    if (host.VolumesFrom?.length) throw new SiloError("CLEANUP_REQUIRED: inherited volume provenance is ambiguous; removing this container with volumes could delete inherited data. No deletion permitted.", "CLEANUP_REQUIRED");
+src/backends/ownership.ts:209:      owner.recordResourceAbsence(receipt);
+src/backends/ownership.ts:241:export const captureFinishedComposeProducers = async (owner: ProjectOperation): Promise<void> => {
+src/backends/ownership.ts:296:        deletionTarget: { kind, id: receipt.id },
+src/backends/ownership.ts:301:    owner.recordResourceAbsence(receipt);

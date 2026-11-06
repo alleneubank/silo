@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/live/.localnet.env
+silo info: Wrote lockfile
+silo info: Instance 'live' is already running (supervisor 2677505); generation 1
+silo info: Ports:
+silo info:   REDIS_PORT: 39019
+silo info:   TILT_PORT: 39020
+silo info: Run down before changing it. Parallel stacks need separate roots and names.

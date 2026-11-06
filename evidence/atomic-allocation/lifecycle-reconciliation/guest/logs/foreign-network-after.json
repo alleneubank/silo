@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "r6guest-foreign",
+        "Id": "a5d5f1942d919d9850f445c1ee4876e718dbc01b79c9fc72303b0de6acbc2b24",
+        "Created": "2026-11-06T03:43:49.239695498Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.27.0.0/16",
+                    "Gateway": "172.27.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "3e389ec71b08178908f1734608d54927bf6d9814a57d6952b194f6d1b7d88bb3",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "r6guest-foreign",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "7318552e-d9b6-4db4-93c4-f41ad529232b"
+        },
+        "Containers": {
+            "43333d10c509bd712b97792622be629881924d60ebadf41790a02495d8d46565": {
+                "Name": "r6guest-foreign-redis-1",
+                "EndpointID": "60c0f28ac7a2461ddb1ce2c5ce815d01ea8a5c98b4d8ee9a7ea8b9c55979ee6b",
+                "MacAddress": "ae:04:f1:8c:00:84",
+                "IPv4Address": "172.27.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.27.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"PATH_CONFLICT","message":"PATH_CONFLICT: unreceipted file exists: /tmp/fixtures/allocation-rehearsal-G4NX5o/backend/.localnet.env. Inspect its owner; silo will not overwrite or delete it."}

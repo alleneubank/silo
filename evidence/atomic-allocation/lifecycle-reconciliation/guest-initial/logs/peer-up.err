@@ -1,0 +1,40 @@
+silo info: Generated env file at /tmp/peer/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/peer/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/peer/.localnet.env
+silo info: Wrote lockfile
+silo info: Tilt API is on port 39024 (pid-alive is not resource health).
+silo info:   tilt get uiresources --port 39024
+silo info:   silo doc tilt
+Tilt started on http://127.0.0.1:39024/
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+Tilt analytics disabled: Environment variable CI=false
+
+Initial Build
+Loading Tiltfile at: /tmp/peer/Tiltfile
+Successfully loaded Tiltfile (42.045045ms)
+        redis │ 
+        redis │ Initial Build
+        redis │ STEP 1/1 — Deploying
+        redis │  Network r6guest-peer_default Creating 
+        redis │  Network r6guest-peer_default Creating 
+        redis │  Network r6guest-peer_default Created 
+        redis │  Network r6guest-peer_default Created 
+        redis │  Container r6guest-peer-redis-1 Creating 
+        redis │  Container r6guest-peer-redis-1 Created 
+        redis │  Container r6guest-peer-redis-1 Starting 
+        redis │  Container r6guest-peer-redis-1 Started 
+        redis │ 1:C 06 Nov 2026 03:31:53.839 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+        redis │ 1:C 06 Nov 2026 03:31:53.839 * Redis version=7.4.12, bits=64, commit=00000000, modified=0, pid=1, just started
+        redis │ 1:C 06 Nov 2026 03:31:53.839 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+        redis │ 1:M 06 Nov 2026 03:31:53.839 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+        redis │ 1:M 06 Nov 2026 03:31:53.839 * monotonic clock: POSIX clock_gettime
+        redis │ 1:M 06 Nov 2026 03:31:53.840 * Running mode=standalone, port=6379.
+        redis │ 1:M 06 Nov 2026 03:31:53.840 * Server initialized
+        redis │ 1:M 06 Nov 2026 03:31:53.840 * Ready to accept connections tcp
+        redis │ 
+        redis │      Step 1 - 0.37s (Deploying)
+        redis │      DONE IN: 0.37s 
+        redis │ 
+        redis │ 1:M 06 Nov 2026 03:32:15.263 * DB saved on disk

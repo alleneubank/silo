@@ -1,0 +1,77 @@
+[
+    {
+        "Name": "bridge",
+        "Id": "4fdb79a9130c6570c1c62acc4ac570f754b2cb2c03c9fb411c84982550da0302",
+        "Created": "2026-10-24T00:09:30.938815054Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "127.0.0.1",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1500"
+        },
+        "Labels": {},
+        "Containers": {
+            "2c930c94e1b3e2981f7dc85eb657ac36399234e70ad92f85e9980c9432276686": {
+                "Name": "romantic_fermat",
+                "EndpointID": "64bf7edd5c9492e9815c0163d739507dbf1390b5e96f7626db55718639970119",
+                "MacAddress": "8e:80:a5:e4:4c:6c",
+                "IPv4Address": "172.17.0.2/16",
+                "IPv6Address": ""
+            },
+            "96a0d35c0894faf9f21a096414f23bfbd54c42a2e8edbb97a468b0d4971831ea": {
+                "Name": "amazing_solomon",
+                "EndpointID": "7277b07f78b72ed5ee19d03d322dcbbfd51c196dbb651d24b99936a775624323",
+                "MacAddress": "be:c9:87:37:4c:2e",
+                "IPv4Address": "172.17.0.5/16",
+                "IPv6Address": ""
+            },
+            "f66d236eb4a3c36dc13c8b586a2504ba0beadd208121cf604d2e9d51d31eeeac": {
+                "Name": "recursing_wing",
+                "EndpointID": "f3e20fedd4e607653abffab84cb24335d7c7d32157cca459ace1b0443f10a101",
+                "MacAddress": "42:4c:a0:03:41:1d",
+                "IPv4Address": "172.17.0.3/16",
+                "IPv6Address": ""
+            },
+            "f9ea195e5dad58a508afb82747c19d903453fadf1863731d920852c034286180": {
+                "Name": "eloquent_cannon",
+                "EndpointID": "addf384c209b2fbefea8bfc58b31caf36cfca299ab8482d52f2cda04487a1f05",
+                "MacAddress": "c2:be:0c:b1:14:b8",
+                "IPv4Address": "172.17.0.4/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.17.0.0/16": {
+                        "IPsInUse": 7,
+                        "DynamicIPsAvailable": 65529
+                    }
+                }
+            }
+        }
+    }
+]

@@ -1,0 +1,20 @@
+[38;2;56;56;56m╭──────────────────────────────────────╮[m
+[38;2;56;56;56m│[m lefthook  v2.2.2   hook:  [1mpre-commit[m [38;2;56;56;56m│[m
+[38;2;56;56;56m╰──────────────────────────────────────╯[m
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 20ms on 3 files with 90 rules using 32 threads.
+
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 21ms on 3 files with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 2.29 seconds)
+✓ format (0.07 seconds)
+✓ lint (0.07 seconds)
+✓ typecheck (2.29 seconds)
+[feat/atomic-allocation a94bfd5] fix(store): allow native rollback recovery during cleanup
+ 7 files changed, 57 insertions(+), 28 deletions(-)

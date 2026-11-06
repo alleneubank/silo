@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+if [ "${1-}" = network ] && [ "${2-}" = rm ] && [ "${3-}" = "$LOST_TARGET" ]; then
+  "$LOST_DOCKER" "$@"
+  printf paused > "$LOST_PAUSED"
+  count=0
+  while [ ! -f "$LOST_RELEASE" ]; do count=$((count+1)); [ "$count" -lt 2000 ] || exit 78; sleep 0.02; done
+  exit 0
+fi
+exec "$LOST_DOCKER" "$@"

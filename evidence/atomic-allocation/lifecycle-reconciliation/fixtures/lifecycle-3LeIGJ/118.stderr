@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/fixtures/lifecycle-3LeIGJ/live-up/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49152
+silo info:   TILT_PORT: 49153
+silo info: Project 82c2c143-7006-4661-9538-e18931c36594, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/lifecycle-3LeIGJ/live-up/.localnet.env; set +a

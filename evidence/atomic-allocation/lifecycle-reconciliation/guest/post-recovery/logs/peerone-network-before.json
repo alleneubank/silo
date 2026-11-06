@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "r6post-postpeerone",
+        "Id": "0e6364bb79a94f37aeeb4154ee408e35aeb0e15f8df0c5e19f7e84e2674478bc",
+        "Created": "2026-11-06T04:10:32.236831097Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.30.0.0/16",
+                    "Gateway": "172.30.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "6928ca5d9b54f7a88335ad6d67846afffbeb47d1a8f4bdebb227cc629f7d9bb4",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "r6post-postpeerone",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "0537a0c6-3b8f-47c4-82d8-66124b25ae2b"
+        },
+        "Containers": {
+            "c8f3e81ab2e2d1232c373bebe608a234dc040ee00995963a717474701546cf8b": {
+                "Name": "r6post-postpeerone-redis-1",
+                "EndpointID": "7072a9aa6b8087f343d36e4562fbc6e8049c10f526a7aaf1c7fa183d433e32d1",
+                "MacAddress": "96:6f:38:52:6c:ad",
+                "IPv4Address": "172.30.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.30.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

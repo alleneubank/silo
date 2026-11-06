@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+if [ "${1-}" = volume ] && [ "${2-}" = rm ] && [ "${3-}" = "$VOLUME_PROBE_TARGET" ]; then
+  printf paused > "$VOLUME_PROBE_PAUSED"
+  count=0
+  while [ ! -f "$VOLUME_PROBE_RELEASE" ]; do
+    count=$((count + 1))
+    [ "$count" -lt 1500 ] || exit 78
+    sleep 0.02
+  done
+fi
+exec "$VOLUME_PROBE_DOCKER" "$@"

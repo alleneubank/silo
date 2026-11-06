@@ -1,0 +1,1 @@
+local_resource('cluster-ready', 'kubectl get nodes')

@@ -1,11 +1,13 @@
 # Current qualification
 
-The recorded-ID-only teardown proposal and its current Linux observations are
-indexed in [recorded-id-teardown](recorded-id-teardown/README.md). Earlier
+The lifecycle reconciliation proposal and its current Linux observations are
+indexed in [lifecycle-reconciliation](lifecycle-reconciliation/README.md).
+The earlier [recorded-ID teardown](recorded-id-teardown/README.md) was rejected
+by specialist round 5; its source identities and observations are historical. Earlier
 records below retain their original source identities and superseded behavior;
 they are not matching specialist approval of the current candidate.
 
-# Atomic allocation evidence
+# Historical atomic allocation evidence
 
 Current proposed cleanup source: `20997dc740bd1df00c351cb4db6b4ba20734e47b`,
 CLI SHA-256 `90a44fcc8641b959544e2cb9e9525d469b8749ea8abc680ababe87b7329e7e0f`.

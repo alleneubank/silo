@@ -169,6 +169,7 @@ never as an invented successful execution. Unknown creates must still refuse.
 | Finished failed/stopped producer | CI creates Redis then a dependent resource fails; clean records/removes its exact IDs. Live up creates Redis; down stops its recorded group and records/removes its exact IDs. A partial-cleanup retry preserves recreated Q/W/data/claims without recording Q. |
 | Failed delete, target externally absent | Real network deletion fails on an endpoint. Fixture owner removes only its recorded endpoint and network IDs; public cleanup reconciles the failed request and retires. |
 | Delete completion lost | After real network deletion succeeds, pause before completion and kill only the verified recorded executor group. The request remains granted with no fact. Recovery reports resolved/target-absent with null exit, reconciles prior matching failure, then clean retires. |
+| Supported SQLite hot journal | In a disposable account, interrupt an actual SQLite transaction after journal/page spill. Read-only status may refuse recovery; public down must roll back the interrupted transaction and retire normally. Unsupported schema remains unmigrated; SQLite rollback is not schema migration. Linux probe source is retained under lifecycle-reconciliation/launchers as reference only. |
 
 Repeat the same command on **both case-insensitive and case-sensitive native
 filesystems**, using locations supplied by the Mac account owner (no disk or

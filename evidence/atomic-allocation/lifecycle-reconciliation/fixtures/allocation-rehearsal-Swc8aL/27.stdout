@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-06T02:33:18Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "4cad7325-e3bb-4930-a9bd-628f54cd38a8",
+            "k3d.cluster": "localnet-proof-s-ea54d000-estart"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-proof-s-ea54d000-estart-images/_data",
+        "Name": "k3d-localnet-proof-s-ea54d000-estart-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

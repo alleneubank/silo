@@ -1,56 +1,71 @@
 done
 
-Lane implementation, Linux qualification and the authorized leased proposal push
-are complete. The lane performed no merge; specialist round 5 and then native
-Mac qualification are coordinator gates. No matching approval or release is claimed.
+The addendum-7 implementation and Linux qualification are verified. The proposal
+remains draft pending coordinator-owned specialist round 6, then native Mac and
+final artifact gates. No lane merge, release, cutover or S1 adoption occurred.
 
-Origin accepted `a7359a4548ef5ce3f715a05c705c3c9a39876461` →
-`1bef40bcbf92904041b600865dc48f6adddb3fb3` for `feat/atomic-allocation` using
-the exact addendum-6 lease. SSH succeeded without credential changes. Normal
-pre-push hooks passed: 139 tests / 356 assertions, knip and zero duplicate blocks.
-The final record-only descendant and cleanup seal will be written to coordinator handoff
-`~/.handoffs/boss-mobile-release/silo-redesign/pr-ops.md` and `report.md`.
-Raw implementation push output:
-`evidence/atomic-allocation/recorded-id-teardown/origin-push-implementation.log`.
+Source commits: bfaba97c49f8034f253977eef56d2098fc1deca2 (ID receipt history,
+finished-producer capture sealing, typed exact-delete absence reconciliation and
+native lifecycle scenarios), followed by a94bfd50723cb1d61c52006c5e10acb651d8da1f
+(native SQLite rollback recovery through existing-only cleanup acquisition).
+Qualified CLI SHA-256:
+4c50596b5171ecda81912351d98c28f28f1b791aeee1a7aac31422648f8befc5.
+Later evidence-only commits preserve these executable inputs. The exact final
+proposal ref, authorized leased push outcome and scratch/resource closeout are
+sealed in the coordinator handoff pr-ops.md/report.md after transport completes.
 
-Runtime implementation: `d9628d1fe8ec47ca401998e35a8786a85bb0ebe6`.
-Final source/harness: `77e3d68f9b8dffff2aec9c31bc2833349c36c3f3`.
-CLI SHA-256: `b14266a4564fa89dd7440d5cce5de08f51dd587173a9b3ee475b49b2743c2e53`.
-Record-only descendants preserve those executable inputs.
+All five requested distinguishing checks failed first on the exact round-5
+3d94c7fa/b14266a4 bundle. The corrected built public CLI passes same-generation
+Compose/k3d restart, failed CI and stopped-live-up exact cleanup, failed deletion
+followed by external exact-ID absence, and lost exact-delete completion recovery.
+Capture seals before any deletion; partial-cleanup retries preserve recreated
+Q/W/data and claims. Only recorded immutable container/network IDs can be removed;
+no Tilt/Compose down or selector teardown. Named volumes require their own owner.
+The format-2 proposal refuses format 1 without schema migration/reset; SQLite may
+recover an interrupted transaction before application schema validation.
 
-Addendum 6 is implemented: no delegated teardown or cleanup-time adoption;
-only verified recorded process stops and immutable Docker container/network IDs.
-Anonymous volumes remain parent-scoped; named/unreceipted/orphaned/replaced data
-retain claims. Down hooks are rejected; Tiltfile is not evaluated and retained
-Kubernetes workloads remain running. Cited historical raw logs are included in
-committed evidence with an explicit log-ignore exception.
+Checks: 146 tests / 393 assertions, typecheck, lint, knip, zero duplicate blocks,
+build, normal commit hooks and actual local-bare pre-push hooks pass. The final
+all-suite recorded 478 commands, including expected refusal/fault probes; all
+36 final commands (30 public cleanup calls) exited 0. The copied full example
+passed CI and web/API health, kept two ready
+Kubernetes deployments after ordinary down, and retired after exact cluster
+cleanup plus separate receipt-verified fixture-owner cache resolution. A real
+killed SQLite writer demonstrated the supported hot-journal failure before its
+repair; public down then recovered, removed snapshots and released claims.
 
-Checks: typecheck, lint, knip, zero duplicate blocks, build, 139 tests / 356
-assertions, normal commit and local-bare/network push hooks. Author Linux all-suite
-passes 371 commands with 24 final public cleanup calls all zero. Real Compose race
-is red at a7359a45 and green at the stated bundle. Copied full example passes CI,
-web/API health, ordinary-down Kubernetes retention and exact cluster cleanup/cache
-refusal/recovery. Fresh guest and claims verdicts are green at their recorded
-source/index basis. Evidence and verdicts:
-`evidence/atomic-allocation/recorded-id-teardown/README.md` and raw files beside it.
-Failed probes and fixture corrections are retained and distinguished from passes.
+Evidence: evidence/atomic-allocation/lifecycle-reconciliation/README.md, raw logs,
+fixture outputs/events/handles, source/build provenance and the scoped audit.
+Expired synthetic k3d token values are redacted in publication captures, with
+the affected files/counts recorded in redactions.json.
+The fresh CLI/docs-only guest and its current-build follow-up are under guest/;
+the initial author-document-exposed guest is retained under guest-initial/ with
+that limitation. The guest disclosed delayed secondary event copying in its
+first run and label-filtered network event omissions in its follow-up; canonical
+container recording and exact status/inspect network identities are retained.
+The remaining k3d row used an additional name/type observer. These recording
+limitations are not hidden as uncontaminated or fully immediate event coverage.
 
-Scoped fixture audit at 2026-11-06T01:30:43.963Z: author 54 / guest 4 projects
-unallocated, zero claims, active resources or operations; 150 recorded Docker
-handles and 1,252 recorded PID/group numbers absent. Its auditor group was
-separately confirmed absent. Subsequent wrapper and scratch closeout will be recorded
-in the final handoff; dependencies and hooks remain installed under the lane rule.
+The baseline red account intentionally preserves one unresolved generation and
+21 claims in format 1, with no live receipted object or operation. Its fixture
+owner removed physical objects by recorded exact handles; no product success was
+manufactured. At 04:18:40Z the audit found all 426 recorded Docker handles absent;
+67 author, 6 initial-guest and 13 confirmation-guest projects had zero active
+generations/claims/resources/operations. Of 2,236 numeric PID/group handles,
+2,235 were absent and one was independently proven recycled as an unrelated
+UID-0 thread with the old group absent. It was preserved without signalling.
+The audit is limited to recorded resources, not the whole host.
+Installed dependencies and hooks remain under the amended lane rule.
 
-Standing draft-PR pointer: https://github.com/alleneubank/silo/pull/58; live PR
-state was not queried or edited. Round 4 required changes at a7359a45; its verdict
-is retained. `specialist-request-r5.md` requests coordinator-owned review;
-`macos-request.md` schedules Mac after approval. The updated body has not been
-applied to the hosted PR.
-No new waiver, merge, release, real cutover, production or S1 adoption occurred.
+Prior verdict: changes required at 3d94c7fa, unchanged in the new evidence record.
+Current request: specialist-request-r6.md, full fd710d9d..final proposal with a
+read-only shell; then macos-request.md / macos-rehearsal.md after approval.
+PR body is pr-body.md for coordinator use with the standing draft PR58 pointer
+https://github.com/alleneubank/silo/pull/58; live PR state was not queried.
 
-Not checked: native Mac/APFS/account/process/fsync and final 1.0.0 Intel/Apple
-Silicon artifacts; hosted CI; real cutover; lost facts, arbitrary transient
-containers/delayed producer effects, external Kubernetes, alternate engines or
-every daemon interruption. Historical unattributed Mac volumes remain untouched.
-The remote push output also contains a default-branch Dependabot notice; it was
-not triaged by this cleanup lane.
+Not checked: matching round-6 approval, native Mac/APFS/account/process/fsync,
+final Intel/Apple Silicon 1.0.0 artifacts, hosted CI, actual cutover/mixed old
+clients, arbitrary transient containers before capture, delayed producer effects,
+unknown create completion loss, external Kubernetes, alternate/remote engines or
+drivers and every daemon/database interruption boundary. No new waiver.
+Historical unattributed Mac volumes and all unrecorded resources remain untouched.

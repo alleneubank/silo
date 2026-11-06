@@ -1,0 +1,9 @@
+silo warn: Port APP_PORT in use (48127), allocated 49154
+silo warn: Port TILT_PORT in use (48128), allocated 49155
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-G4NX5o/inherited-volumes/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49154
+silo info:   TILT_PORT: 49155
+silo info: Project cd25a9bb-d38b-4209-a1f3-7da88467403d, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-G4NX5o/inherited-volumes/.localnet.env; set +a

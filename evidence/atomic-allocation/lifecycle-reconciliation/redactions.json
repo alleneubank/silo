@@ -1,0 +1,60 @@
+{
+  "reason": "Expired synthetic k3d token values removed from publication captures; all identifying facts/outcomes otherwise retained.",
+  "redactions": [
+    {
+      "file": "supporting-bfaba/example-13.stdout",
+      "count": 1,
+      "archivedSha256": "74d42c4ab2cc8ecfa303961edc53942f48651471fb78c2e686156661e5f58998"
+    },
+    {
+      "file": "example-15.stdout",
+      "count": 1,
+      "archivedSha256": "d870a0efbbc63b40dc2edbedf32aa6f3ad5f08c41ffd99a6215355c3ced8dedc"
+    },
+    {
+      "file": "fixtures/lifecycle-3LeIGJ/56.stdout",
+      "count": 1,
+      "archivedSha256": "5e4ca99b77821bd6514364c4d278084b1cc30dba4a968829e626eaa2db506204"
+    },
+    {
+      "file": "fixtures/lifecycle-3LeIGJ/38.stdout",
+      "count": 1,
+      "archivedSha256": "4e1a1886cd7eda046af1665edc50683945b2bf875da7d8a035e7de34dd0a3975"
+    },
+    {
+      "file": "fixtures/lifecycle-3LeIGJ/57.stdout",
+      "count": 1,
+      "archivedSha256": "5e4ca99b77821bd6514364c4d278084b1cc30dba4a968829e626eaa2db506204"
+    },
+    {
+      "file": "fixtures/lifecycle-3LeIGJ/37.stdout",
+      "count": 1,
+      "archivedSha256": "4e1a1886cd7eda046af1665edc50683945b2bf875da7d8a035e7de34dd0a3975"
+    },
+    {
+      "file": "fixtures/lifecycle-yXrDZ7/39.stdout",
+      "count": 1,
+      "archivedSha256": "1623c25446278988d28b0aea13028965fc68b4e0d2ec8d6d1db1635aa8f086d2"
+    },
+    {
+      "file": "fixtures/lifecycle-yXrDZ7/40.stdout",
+      "count": 1,
+      "archivedSha256": "1623c25446278988d28b0aea13028965fc68b4e0d2ec8d6d1db1635aa8f086d2"
+    },
+    {
+      "file": "guest-initial/logs/k3d-second.container-a172f50f35fc37b689362f2b8e4e14de146ea701f1e7610f79d7b6c7015e1b08.json",
+      "count": 1,
+      "archivedSha256": "a9c5b3170e5043d60444397d33a2de08c618c94b274916c739d521d982e447cc"
+    },
+    {
+      "file": "guest-initial/logs/k3d-first.container-2e87b0cd34256752887ce6abc44f9a8a34cc1006009ec3a35d07f64178656b0f.json",
+      "count": 1,
+      "archivedSha256": "6cb68d4204d72a015f2e427fe9a3340ed64a98dbddcba6b8243f04689ef81905"
+    },
+    {
+      "file": "guest/logs/cluster-nodes2.json",
+      "count": 1,
+      "archivedSha256": "9143660a611eb7d29dfdf54945a7de5e9a020b45884e154d64b9e6db846b08fc"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+docker_compose('compose.yaml',project_name=os.getenv('COMPOSE_PROJECT_NAME'))
+local_resource('fails-after-redis',cmd='exit 17',resource_deps=['redis'])

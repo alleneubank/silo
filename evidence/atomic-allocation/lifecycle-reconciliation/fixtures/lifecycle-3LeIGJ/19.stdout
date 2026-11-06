@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "localnet-proof-lifecycle-3leigj-compose-restart_default",
+        "Id": "0ffd00d029a711a1699adf23c3f59d4e64b5de660cad71d885c35f82127556bd",
+        "Created": "2026-11-06T02:27:19.143667939Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "128f089425559eec48c5b4d915b83236753f877821a81e055f06cae327dd8dd8",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "localnet-proof-lifecycle-3leigj-compose-restart",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "d0090782-675a-4e44-82b9-4396c5c370f0"
+        },
+        "Containers": {
+            "c58198f085f268289306a21575f2c3d9ce5e21e300259f3fca6d6808208239e6": {
+                "Name": "localnet-proof-lifecycle-3leigj-compose-restart-redis-1",
+                "EndpointID": "44220feb46620357178fe90d3232a67a11187e42b6f8bd8395b19c298d7c3ea1",
+                "MacAddress": "9a:50:da:a0:f8:af",
+                "IPv4Address": "172.24.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

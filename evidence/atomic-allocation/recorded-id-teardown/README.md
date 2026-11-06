@@ -1,5 +1,10 @@
 # Recorded-ID teardown qualification
 
+Historical record: specialist round 5 required changes at 3d94c7fa. The current
+proposal and corrected lifecycle contract are in
+[lifecycle-reconciliation](../lifecycle-reconciliation/README.md). Statements
+below describe this record's original inputs and pending gates at that time.
+
 Verified Linux proposal; no lane merge. Matching specialist round 5 and native
 Mac qualification remain required before landing. The human ratified recorded-ID-only cleanup
 on 2026-11-05 through silo-redesign addendum 6. This record supersedes the

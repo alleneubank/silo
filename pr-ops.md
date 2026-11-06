@@ -1,19 +1,17 @@
-# Proposal operations — addendum 6
+# Proposal operations — addendum 7
 
-Completed: origin accepted `a7359a4548ef5ce3f715a05c705c3c9a39876461` →
-`1bef40bcbf92904041b600865dc48f6adddb3fb3` for `refs/heads/feat/atomic-allocation`.
-The push used the exact human-authorized lease against a7359a45, explicit refspec,
-noninteractive SSH and normal passing hooks. No credentials were changed.
-Raw output: `evidence/atomic-allocation/recorded-id-teardown/origin-push-implementation.log`.
+The lane prepares a normal-hook proposal push of refs/heads/feat/atomic-allocation
+with an exact lease against 3d94c7fa6d38eb95f7fc08c7aa55f8f37cad7867, as authorized
+by addendum 7. The coordinator handoff pr-ops.md seals the actual outcome and
+final ref after the command; this committed packet does not predict success.
 
-A record-only closeout completes report/publication metadata. Its exact final ref,
-leased follow-up result and resource teardown seal will be written to the coordinator handoff
-`pr-ops.md`; executable inputs remain source77e3d68 / CLI b14266a4.
+Qualified source a94bfd50723cb1d61c52006c5e10acb651d8da1f;
+CLI SHA-256 4c50596b5171ecda81912351d98c28f28f1b791aeee1a7aac31422648f8befc5.
+Record-only descendants preserve these executable inputs.
 
-Coordinator actions: update draft PR58 using local `pr-body.md`; run the fifth
-specialist per `specialist-request-r5.md` over fd710d9d..the final sealed head,
-then native Mac per `macos-request.md` after approval. The lane does not edit the
-PR or launch the specialist. Preserve historical unattributed Mac volumes.
-
-Inspected deployment map: CI/example/release track main (plus PR events).
-Feature pushes are proposals. No merge, release, cutover or S1 adoption is granted.
+Coordinator: update draft PR58 using pr-body.md, run specialist round 6 with a
+read-only shell per specialist-request-r6.md over fd710d9d..the final sealed head,
+then native Mac per macos-request.md after approval. The lane performs no PR edit,
+merge, release, cutover or S1 adoption. Preserve historical unattributed Mac data.
+Inspected deployment map: CI/example/release track main and PR events; feature
+pushes are proposals. No credential or authentication configuration is changed.

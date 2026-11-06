@@ -1,0 +1,38 @@
+{
+  writer: 315208,
+  identity: "30033  315208 timeout 60s /home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun /tmp/hot-journal.ts writer\n",
+  journal: true,
+}
+MUTATOR_RECOVERY_FAIL 182 |       }).immediate();
+183 |     }
+184 |     return db;
+185 |   } catch (cause) {
+186 |     connection?.close();
+187 |     throw new SiloError(`LEASE_STORE_UNAVAILABLE: cannot open ${storePath}; allocation refused`, "LEASE_STORE_UNAVAILABLE", { cause });
+                ^
+LEASE_STORE_UNAVAILABLE: cannot open /tmp/hot-journal/leases.sqlite; allocation refused
+ details: {},
+    code: "LEASE_STORE_UNAVAILABLE"
+
+      at openDatabase (/mnt/src/core/lease_store.ts:187:11)
+      at open (/mnt/src/core/lease_store.ts:242:16)
+
+147 |   if (!stat.isDirectory()) throw new SiloError(`Project root is not a directory: ${canonical}`, "INVALID_ROOT");
+148 |   return { canonical, physical: `${stat.dev}/${stat.ino}`, hash: digest(canonical) };
+149 | };
+150 | 
+151 | const databaseVersion = (db: Database, create: boolean): number => {
+152 |   const version = db.query<{ user_version: number }, []>("PRAGMA user_version").get()!.user_version;
+                                                                                      ^
+SQLiteError: attempt to write a readonly database
+      errno: 776,
+ byteOffset: -1,
+       code: "SQLITE_READONLY_ROLLBACK"
+
+      at databaseVersion (/mnt/src/core/lease_store.ts:152:81)
+      at openDatabase (/mnt/src/core/lease_store.ts:170:56)
+      at open (/mnt/src/core/lease_store.ts:242:16)
+
+NATIVE_WRITABLE_RECOVERY {
+  user_version: 2,
+}

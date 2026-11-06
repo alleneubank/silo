@@ -1,0 +1,6 @@
+30033 2534532 2534532 timeout --signal=TERM --kill-after=10s 600 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r6/guest/view bash /tmp/watch compose
+30033 2560998 2560998 timeout --signal=TERM --kill-after=10s 600 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r6/guest/view bash /tmp/watch k3d
+30033 2642825 2642825 timeout --signal=TERM --kill-after=10s 600 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r6/guest/view bash /tmp/watch failed
+30033 2676254 2676254 timeout --signal=TERM --kill-after=10s 600 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r6/guest/view bash /tmp/watch live
+30033 2676285 2676285 timeout --signal=TERM --kill-after=10s 600 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r6/guest/view bash /tmp/watch peer
+30033 2888740 2888740 timeout --signal=TERM --kill-after=10s 600 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r6/guest/view bash /tmp/watch foreign

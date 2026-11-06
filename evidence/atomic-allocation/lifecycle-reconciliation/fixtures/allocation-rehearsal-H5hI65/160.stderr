@@ -1,0 +1,10 @@
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-H5hI65/backend/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info:   K3D_REGISTRY_PORT: 48130
+silo info:   HTTP_PORT: 48131
+silo info:   K3D_API_PORT: 49152
+silo info: Project 41007f1a-f545-4fb5-87c4-45b651c09f69, generation 4: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-H5hI65/backend/.localnet.env; set +a

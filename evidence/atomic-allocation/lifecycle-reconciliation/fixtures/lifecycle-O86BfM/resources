@@ -1,0 +1,14 @@
+process pid/pgid=1235728; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-lifecycle-o86bfm-lost-delete","--json"]; stop only verified exact returned group
+process pid/pgid=1237127; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; stop only verified exact returned group
+process pid/pgid=1237223; timeout180 ["docker","network","create","--label","io.silo.project=b199274d-7644-4bad-a2fd-50a7b436ca5b","--label","io.silo.generation=1","k3d-localnet-proof-l-2bb17dcc-delete"]; stop only verified exact returned group
+process pid/pgid=1237406; timeout180 ["docker","network","inspect","c719f81991439d0eef47758e6a3f5d805f71cc76e5f2705a36007d445519c329"]; stop only verified exact returned group
+Docker object {"kind":"network","id":"c719f81991439d0eef47758e6a3f5d805f71cc76e5f2705a36007d445519c329","name":"k3d-localnet-proof-l-2bb17dcc-delete","created":"2026-11-06T02:40:15.807655048Z","labels":{"io.silo.generation":"1","io.silo.project":"b199274d-7644-4bad-a2fd-50a7b436ca5b"}}; author-fixture teardown exact container/network ID, volumes only with parent; named owned cache independently after exact creation check
+process pid/pgid=1237483; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"]; stop only verified exact returned group
+process pid/pgid=1240446; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; stop only verified exact returned group
+process pid/pgid=1240544; timeout180 ["ps","-o","uid=,pgid=,command=","-p","1239731"]; stop only verified exact returned group
+fault injection: verified recorded executor group 1239731 launch 07e24d88-e333-49ec-ad19-91cf0b4661c4; SIGKILL after physical delete before completion fact
+process pid/pgid=1240617; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; stop only verified exact returned group
+process pid/pgid=1240706; timeout180 ["docker","network","ls","--no-trunc","--format","{{.ID}}"]; stop only verified exact returned group
+process pid/pgid=1240831; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"]; stop only verified exact returned group
+process pid/pgid=1240993; timeout180 ["docker","network","ls","--no-trunc","--format","{{.ID}}"]; stop only verified exact returned group
+process pid/pgid=1241053; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"]; stop only verified exact returned group

@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import {Database} from 'bun:sqlite';
+import{readFileSync,readdirSync,existsSync,writeFileSync,statSync}from'node:fs';
+import{BackendReceiptSchema,LaunchSchema}from'/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign/src/core/lease_types';
+const lane='/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign',scratch=lane+'-tmp/r6';
+const handles=new Map<string,{kind:string,id:string}>(),pids=new Set<number>();
+function add(kind:string,id:string){assert(['container','network','volume'].includes(kind));assert(id.length>0&&!/\s/.test(id));if(kind!=='volume')assert.match(id,/^[a-f0-9]{64}$/);handles.set(`${kind}/${id}`,{kind,id});}
+function receipt(input:unknown){const r=BackendReceiptSchema.parse(input);add(r.kind,r.id);if(r.kind==='container')for(const child of r.anonymousVolumes)add('volume',child.name);}
+function walk(value:any,hint?:string){
+if(Array.isArray(value)){for(const v of value)walk(v,hint);return;}if(!value||typeof value!=='object')return;
+if(value.Name&&['bridge','host','none'].includes(value.Name)&&value.IPAM)return;
+if(value.kind&&value.id&&['container','network','volume'].includes(value.kind)){if(value.source)receipt(value);else add(value.kind,value.id);}
+if(value.Type&&value.Actor?.ID&&['container','network','volume'].includes(value.Type)&&!['bridge','host','none'].includes(value.Actor.Attributes?.name))add(value.Type,value.Actor.ID);
+if(value.Type==='volume'&&value.Name)add('volume',value.Name);
+if(value.Id&&(hint==='container'||value.Config&&value.State))add('container',value.Id);
+else if(value.Id&&(hint==='network'||value.IPAM))add('network',value.Id);
+else if(!value.Id&&value.Name&&value.CreatedAt&&value.Driver)add('volume',value.Name);
+for(const child of Object.values(value))if(child&&typeof child==='object')walk(child);
+}
+const stores=[];
+for(const [name,file,archival] of [['author',scratch+'/account/.silo/leases.sqlite',false],['baseline-format1',scratch+'/red-account/.silo/leases.sqlite',true],['guest-initial',scratch+'/guest/account/.silo/leases.sqlite',false],['guest-confirmation',scratch+'/guest-confirmation/account/.silo/leases.sqlite',false]] as const){
+assert(existsSync(file),file);const db=new Database(file,{readonly:true});const count=(sql:string)=>db.query<{count:number},[]>(sql).get()!.count;
+const version=db.query<{user_version:number},[]>('PRAGMA user_version').get()!.user_version;
+const summary={name,archival,format:version,projects:count('SELECT count(*) AS count FROM projects'),activeGenerations:count('SELECT count(*) AS count FROM projects WHERE generation>0'),claims:count('SELECT count(*) AS count FROM claims'),activeResources:count('SELECT count(*) AS count FROM resources WHERE deleted=0'),operations:count('SELECT count(*) AS count FROM projects WHERE operation_token IS NOT NULL')};assert.equal(summary.operations,0);
+if(!archival){assert.equal(version,2);assert.equal(summary.activeGenerations,0);assert.equal(summary.claims,0);assert.equal(summary.activeResources,0);}else{assert.equal(version,1);assert.equal(summary.activeGenerations,1);}
+for(const row of db.query<{receipt:string},[]>('SELECT receipt FROM resources').all())receipt(JSON.parse(row.receipt));
+for(const row of db.query<{receipt:string},[]>('SELECT receipt FROM launches').all()){const l=LaunchSchema.parse(JSON.parse(row.receipt));for(const pid of [l.supervisorPid,l.leaderPid,l.groupId])if(pid!==null)pids.add(pid);}
+stores.push(summary);db.close();}
+const prior=Bun.spawnSync(['git','-C',lane,'show','3d94c7fa6d38eb95f7fc08c7aa55f8f37cad7867:resources'],{stdout:'pipe',stderr:'pipe',timeout:10000});assert.equal(prior.exitCode,0);const current=readFileSync(lane+'/resources','utf8');const old=prior.stdout.toString();assert(current.startsWith(old));const ledgers=[current.slice(old.length)];
+for(const name of readdirSync(scratch+'/fixtures')){
+const root=scratch+'/fixtures/'+name;if(!existsSync(root+'/events.jsonl'))continue;ledgers.push(readFileSync(root+'/resources','utf8'));
+for(const line of readFileSync(root+'/events.jsonl','utf8').trim().split('\n')){const e=JSON.parse(line);walk(e);
+if(e.code===0&&e.argv?.[0]==='docker'){
+const kind=e.argv[1];if(['container','network','volume'].includes(kind)&&['create','run'].includes(e.argv[2]))add(kind,readFileSync(`${root}/${e.command}.stdout`,'utf8').trim());
+if(e.argv[2]==='inspect'&&!['bridge','host','none'].includes(e.argv[3])){const text=readFileSync(`${root}/${e.command}.stdout`,'utf8').trim();if(text.startsWith('[')||text.startsWith('{'))walk(JSON.parse(text),kind);}
+}
+if(e.replacementId)add('container',e.replacementId);if(typeof e.volume==='string')add('volume',e.volume);
+if(e.scenario==='cleanup cannot adopt an unreceipted matching Compose object'){add('container',e.id);add('network',e.network);}
+}}
+for(const guest of ['guest','guest-confirmation']){
+ledgers.push(readFileSync(`${scratch}/${guest}/resources${guest==='guest-confirmation'?'/ledger':''}`,'utf8'));
+if(guest==='guest-confirmation')ledgers.push(readFileSync(`${scratch}/${guest}/resources/events.jsonl`,'utf8'));
+for(const file of readdirSync(`${scratch}/${guest}/logs`)){if(file.includes('bridge'))continue;const full=`${scratch}/${guest}/logs/${file}`;let text;try{text=readFileSync(full,'utf8').trim();}catch{continue;}if(text.startsWith('{')||text.startsWith('[')){try{walk(JSON.parse(text));}catch(error){if(!(error instanceof SyntaxError))throw error;for(const line of text.split('\n'))if(line.startsWith('{')){try{walk(JSON.parse(line));}catch(e){if(!(e instanceof SyntaxError))throw e;}}}}}
+}
+const post=scratch+'/guest-confirmation/post-recovery';
+for(const dir of ['resources','logs'])for(const file of readdirSync(post+'/'+dir)){
+ const full=post+'/'+dir+'/'+file;if(!statSync(full).isFile())continue;
+ const text=readFileSync(full,'utf8').trim();if(dir==='resources')ledgers.push(text);
+ for(const line of text.split('\n'))if(line.startsWith('{')||line.startsWith('[')){try{walk(JSON.parse(line));}catch(error){if(!(error instanceof SyntaxError))throw error;}}
+ if(text.startsWith('{')||text.startsWith('[')){try{walk(JSON.parse(text));}catch(error){if(!(error instanceof SyntaxError))throw error;}}
+}
+for(const file of readdirSync(scratch+'/evidence').filter(f=>f.startsWith('example-')&&f.endsWith('.json')))walk(JSON.parse(readFileSync(scratch+'/evidence/'+file,'utf8')));
+for(const text of ledgers){for(const match of text.matchAll(/(?:process pid\/pgid=|process |pid\/pgid |port-forward pid\/pgid=|\bPID |\bgroup[= ]|supervisor=|leader=)(\d+)/g))pids.add(Number(match[1]));
+for(const line of text.split('\n')){const at=line.indexOf('{');if(at>=0){const part=line.slice(at).replace(/; author-fixture.*$/,'');try{walk(JSON.parse(part));}catch(e){if(!(e instanceof SyntaxError))throw e;}}}}
+for(const file of readdirSync(lane+'-tmp/pids').filter(f=>f.startsWith('r6-')&&f.endsWith('.pid')))pids.add(Number(readFileSync(lane+'-tmp/pids/'+file,'utf8')));
+for(const name of readdirSync(scratch+'/fixtures')){const file=scratch+'/fixtures/'+name+'/ungranted.json';if(!existsSync(file))continue;const l=LaunchSchema.parse(JSON.parse(readFileSync(file,'utf8')));for(const pid of[l.supervisorPid,l.leaderPid,l.groupId])if(pid!==null)pids.add(pid);}
+const auditor=Number(readFileSync(lane+'-tmp/pids/r6-resource-audit.pid','utf8'));pids.delete(auditor);pids.delete(process.pid);
+function docker(args:string[]){const result=Bun.spawnSync(['/usr/bin/docker',...args],{stdout:'pipe',stderr:'pipe',timeout:10000,env:{...process.env,DOCKER_HOST:'unix:///var/run/docker.sock',DOCKER_CONTEXT:''}});assert.equal(result.exitCode,0,result.stderr.toString());return result.stdout.toString().trim();}
+const engine=docker(['info','--format','{{.ID}}']);assert.equal(engine,'114f4194-e27d-4d0b-82fc-201ecd0e9997');const present=new Set<string>();let bridge=false;
+for(const kind of['container','network','volume'])for(const line of docker([kind,'ls',...(kind==='container'?['-a']:[]),...(kind==='volume'?[]:['--no-trunc']),'--format','{{json .}}']).split('\n').filter(Boolean)){const row=JSON.parse(line);const id=kind==='volume'?row.Name:row.ID;assert.equal(typeof id,'string');present.add(`${kind}/${id}`);if(kind==='network'&&row.Name==='bridge'){assert.equal(docker(['network','inspect',row.ID,'--format','{{.Name}}']),'bridge');bridge=true;}}
+assert(bridge);const remaining=[...handles.values()].filter(h=>present.has(`${h.kind}/${h.id}`));assert.deepEqual(remaining,[]);
+const running=[];for(const pid of pids){assert(Number.isSafeInteger(pid)&&pid>1);const exists=(n:number)=>{try{process.kill(n,0);return true;}catch(e){if((e as NodeJS.ErrnoException).code==='EPERM')return true;assert.equal((e as NodeJS.ErrnoException).code,'ESRCH');return false;}};const processPresent=exists(pid),groupPresent=exists(-pid);if(processPresent||groupPresent)running.push({pid,processPresent,groupPresent});}console.log(JSON.stringify({running}));for(const item of running){const result=Bun.spawnSync(['ps','-o','uid=,pgid=,lstart=,command=','-p',String(item.pid)],{stdout:'pipe',stderr:'pipe',timeout:5000});console.log(JSON.stringify({pid:item.pid,code:result.exitCode,identity:result.stdout.toString(),error:result.stderr.toString()}));}const priorAudit=JSON.parse(readFileSync(scratch+'/pre-recovery-evidence/audit.json','utf8'));
+const recycledNumbers=running.map(item=>{assert.equal(item.groupPresent,false);assert(priorAudit.recordedPidsAndGroups.includes(item.pid));assert.equal(priorAudit.allRecordedNumericHandlesAbsent,true);const status=readFileSync('/proc/'+item.pid+'/status','utf8');const uid=Number(status.match(/^Uid:\s+(\d+)/m)![1]);assert.notEqual(uid,process.geteuid!());return{...item,currentUid:uid,currentTgid:Number(status.match(/^Tgid:\s+(\d+)/m)![1]),currentName:status.match(/^Name:\s+(.+)$/m)![1],provenAbsentAt:priorAudit.timestamp,attribution:'Recycled numeric handle, unrelated UID; prior owned process/group absent. No signal.'};});
+const result={timestamp:new Date().toISOString(),sourceHead:'a94bfd50723cb1d61c52006c5e10acb651d8da1f',engine,stores,recordedDockerHandles:[...handles.values()],allRecordedDockerHandlesAbsent:true,recordedPidsAndGroups:[...pids].sort((a,b)=>a-b),allRecordedNumericHandlesAbsent:running.length===0,allRecordedOwnedProcessesAbsent:true,recycledNumbers,excludedAuditorGroup:auditor,remaining,scope:'Only these disposable stores/fixture ledgers/captured IDs. Baseline format1 uncertainty retained for evidence; no claim of host-wide absence. Shared images/cache and unrecorded objects preserved.'};writeFileSync(scratch+'/evidence/audit.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({timestamp:result.timestamp,stores,handles:handles.size,pids:pids.size,remaining,auditor,recycledNumbers}));

@@ -1,0 +1,1 @@
+docker_compose('compose.yaml', project_name=os.getenv('COMPOSE_PROJECT_NAME'))

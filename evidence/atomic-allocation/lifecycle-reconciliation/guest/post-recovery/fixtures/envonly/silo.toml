@@ -1,0 +1,10 @@
+version = 1
+prefix = "r6post"
+[ports]
+REDIS_PORT = 39223
+TILT_PORT = 39224
+[hosts]
+APP_HOST = "${name}.localhost"
+TILT_HOST = "127.0.0.1"
+[tilt]
+webMode = "prod"

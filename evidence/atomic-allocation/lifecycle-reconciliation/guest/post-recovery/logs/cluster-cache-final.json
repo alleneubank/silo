@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-06T04:14:12Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "467240b6-c0e6-4318-92ac-c399ae4e5dc6",
+            "k3d.cluster": "r6post-postcluster"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-r6post-postcluster-images/_data",
+        "Name": "k3d-r6post-postcluster-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

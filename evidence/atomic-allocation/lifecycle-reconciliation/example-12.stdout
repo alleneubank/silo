@@ -1,0 +1,252 @@
+[
+    {
+        "Id": "155683c891c41dcfbf1c7effe566691dc6a17b2adf3b92d9bac761b4cb9f04af",
+        "Created": "2026-11-06T04:13:06.38245382Z",
+        "Path": "/entrypoint.sh",
+        "Args": [
+            "/etc/docker/registry/config.yml"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 666371,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-11-06T04:13:13.582194689Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "Image": "sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373",
+        "ResolvConfPath": "/var/lib/docker/containers/155683c891c41dcfbf1c7effe566691dc6a17b2adf3b92d9bac761b4cb9f04af/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/155683c891c41dcfbf1c7effe566691dc6a17b2adf3b92d9bac761b4cb9f04af/hostname",
+        "HostsPath": "/var/lib/docker/containers/155683c891c41dcfbf1c7effe566691dc6a17b2adf3b92d9bac761b4cb9f04af/hosts",
+        "LogPath": "/var/lib/docker/containers/155683c891c41dcfbf1c7effe566691dc6a17b2adf3b92d9bac761b4cb9f04af/155683c891c41dcfbf1c7effe566691dc6a17b2adf3b92d9bac761b4cb9f04af-json.log",
+        "Name": "/localnet-redesign-0a4b6c25-registry.localhost",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "unconfined",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {
+                "5000/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "5000"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": true,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": [
+                "label=disable"
+            ],
+            "Tmpfs": {
+                "/run": "",
+                "/var/run": ""
+            },
+            "UTSMode": "",
+            "UsernsMode": "host",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": null,
+            "ReadonlyPaths": null,
+            "Init": true
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "592140f6300535942d005f4e6da3ba9d764e4cfaed5491b24b74d1f6926e5b1f",
+                "Source": "/var/lib/docker/volumes/592140f6300535942d005f4e6da3ba9d764e4cfaed5491b24b74d1f6926e5b1f/_data",
+                "Destination": "/var/lib/registry",
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "localnet-redesign-0a4b6c25-registry.localhost",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "5000/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            ],
+            "Cmd": [
+                "/etc/docker/registry/config.yml"
+            ],
+            "Image": "docker.io/library/registry:2",
+            "Volumes": {
+                "/var/lib/registry": {}
+            },
+            "WorkingDir": "/",
+            "Entrypoint": [
+                "/entrypoint.sh"
+            ],
+            "Labels": {
+                "app": "k3d",
+                "k3d.cluster": "localnet-redesign-0a4b6c25",
+                "k3d.registry.host": "0.0.0.0",
+                "k3d.registry.hostIP": "0.0.0.0",
+                "k3d.role": "registry",
+                "k3d.version": "v5.9.0",
+                "k3s.registry.port.external": "5000",
+                "k3s.registry.port.internal": "5000"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "9d1a27a796e65a8e7bc6a0103e18d2fdf799d3be0bd3720c5774af9a2cdf6b14",
+            "SandboxKey": "/var/run/docker/netns/9d1a27a796e6",
+            "Ports": {
+                "5000/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "5000"
+                    }
+                ]
+            },
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "4fdb79a9130c6570c1c62acc4ac570f754b2cb2c03c9fb411c84982550da0302",
+                    "EndpointID": "4e2d7951c36397421f52984335d8831ec95da43871ecd1237054d1c5cd654c6f",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.2",
+                    "MacAddress": "36:10:a5:0a:eb:35",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                },
+                "k3d-localnet-redesign-0a4b6c25": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "1607e5f27e6fef4d3b0dadc525d6bb3aeab489978dc920e9ecb206d4575d19ae",
+                    "EndpointID": "a0fd8dda5e2b3567f7d52d994b6839ce220f621ec6f7fc3d233b08d1ef24faf6",
+                    "Gateway": "172.23.0.1",
+                    "IPAddress": "172.23.0.3",
+                    "MacAddress": "ea:7f:cf:65:b9:d7",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "localnet-redesign-0a4b6c25-registry.localhost",
+                        "155683c891c4"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:46faa9a1ae6813194b53921a370f2f4f8c5e1aae228a89bceafef5847a6a3278",
+            "size": 1915,
+            "annotations": {
+                "com.docker.official-images.bashbrew.arch": "amd64",
+                "org.opencontainers.image.base.digest": "sha256:fd032399cd767f310a1d1274e81cab9f0fd8a49b3589eba2c3420228cd45b6a7",
+                "org.opencontainers.image.base.name": "alpine:3.18",
+                "org.opencontainers.image.created": "2025-02-14T19:23:30Z",
+                "org.opencontainers.image.revision": "39dd72feaab7066334829d6945c54bc51a0aee98",
+                "org.opencontainers.image.source": "https://github.com/distribution/distribution-library-image.git#39dd72feaab7066334829d6945c54bc51a0aee98:.",
+                "org.opencontainers.image.url": "https://hub.docker.com/_/registry",
+                "org.opencontainers.image.version": "2.8.3"
+            },
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]
