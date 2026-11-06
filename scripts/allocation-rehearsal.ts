@@ -986,6 +986,72 @@ async function producers() {
   log({ scenario: "real overlapping-IPAM network create failure records absence and retires without touching the blocker", pass: true });
 }
 
+/** k3d registries carry no Silo labels: only the cluster create that requested one may vouch for it. */
+async function registryProvenance(variants: readonly ("ci" | "timeout")[]) {
+  const squat = (hold: string) => `#!/bin/sh\nset -eu\nregistry="\${K3D_REGISTRY_NAME%%:*}"\nid=$(docker run -d --name "$registry" --publish "127.0.0.1:$K3D_REGISTRY_PORT:5000" --label "k3d.cluster=$K3D_CLUSTER_NAME" --label "rehearsal.fixture=${path.basename(root)}" redis:7-alpine sleep 900)\nprintf '%s\\n' "$id" > squatter.id\n${hold}`;
+  const registryProject = (label: string, hold: string) => {
+    const p = project(label, '[hooks]\npre-up=["sh squat.sh"]\n');
+    appendFileSync(path.join(p, "silo.toml"), '\n[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n[k3d.registry]\nenabled=true\n');
+    writeFileSync(path.join(p, "silo.toml"), readFileSync(path.join(p, "silo.toml"), "utf8").replace("[ports]\n", '[ports]\nK3D_REGISTRY_PORT="random"\n'));
+    writeFileSync(path.join(p, "squat.sh"), squat(hold));
+    return p;
+  };
+  const adoptSquatter = async (p: string) => {
+    const id = readFileSync(path.join(p, "squatter.id"), "utf8").trim();
+    const created = await fixtureSnapshot("container", id);
+    cleanupObjects.push({ kind: "container", id, name: "registry squatter", created });
+    recordResource(`hook-started registry squatter container ${id}; fixture-only teardown exact recorded ID after identity check\n`);
+    return { id, created };
+  };
+  const observe = async (p: string, step: string, id: string, result: { code: number; stdout: string }) => {
+    const parsed = ResultSchema.parse(JSON.parse(result.stdout));
+    const current = await state(p);
+    log({ observation: step, exit: result.code, code: parsed.code ?? null, squatterReceipted: current.resources.some(r => r.id === id && !r.deleted) });
+    return { parsed, current };
+  };
+  const releaseSquatter = async (p: string, squatter: { id: string; created: z.infer<typeof FixtureSnapshotSchema> }) => {
+    assert.deepEqual(await fixtureSnapshot("container", squatter.id), squatter.created);
+    await docker(["container", "rm", "--force", "--volumes", squatter.id]); cleanupObjects.pop();
+    await silo(p, ["down", "--delete-cluster", "--clean"]);
+    assert.deepEqual((await silo(p, ["status"])).project?.claims, []);
+  };
+
+  if (variants.includes("ci")) {
+    const hooked = registryProject("registry-hook-squatter", "");
+    await silo(hooked, ["env", name(hooked)]);
+    const reserved = await state(hooked);
+    const ci = await command(hooked, [process.execPath, cli, "ci", "--timeout", "30s", "--json"]);
+    const squatter = await adoptSquatter(hooked);
+    const afterCi = await observe(hooked, "pre-up hook squatter then ci", squatter.id, ci);
+    assert.notEqual(ci.code, 0); assert.equal(afterCi.parsed.code, "NAME_CONFLICT", ci.stdout);
+    assert(!afterCi.current.resources.some(r => r.id === squatter.id));
+    assert.deepEqual(afterCi.current.claims, reserved.claims);
+    assert.deepEqual(await fixtureSnapshot("container", squatter.id), squatter.created);
+    const down = await command(hooked, [process.execPath, cli, "down", "--delete-cluster", "--json"]);
+    const afterDown = await observe(hooked, "down --delete-cluster after refused hook capture", squatter.id, down);
+    assert.notEqual(down.code, 0); assert.equal(afterDown.parsed.code, "NAME_CONFLICT", down.stdout);
+    assert.deepEqual(await fixtureSnapshot("container", squatter.id), squatter.created);
+    await releaseSquatter(hooked, squatter);
+    log({ scenario: "pre-up hook cannot vouch for a same-name registry: ci refuses NAME_CONFLICT and the squatter is preserved", pass: true });
+  }
+  if (!variants.includes("timeout")) return;
+
+  const timed = registryProject("registry-hook-timeout", "exec sleep 900\n");
+  await silo(timed, ["env", name(timed)]);
+  const timedOut = await command(timed, [process.execPath, cli, "ci", "--timeout", "30s", "--json"], safeEnv, 420_000);
+  const pending = await adoptSquatter(timed);
+  const afterTimeout = await observe(timed, "pre-up hook timeout", pending.id, timedOut);
+  assert.notEqual(timedOut.code, 0);
+  assert(afterTimeout.current.launches.some(l => l.kind === "hook-pre-up" && !l.reconciled));
+  const pendingDown = await command(timed, [process.execPath, cli, "down", "--delete-cluster", "--json"]);
+  const afterPendingDown = await observe(timed, "down --delete-cluster with timed-out hook pending", pending.id, pendingDown);
+  assert.notEqual(pendingDown.code, 0); assert.equal(afterPendingDown.parsed.code, "NAME_CONFLICT", pendingDown.stdout);
+  assert(!afterPendingDown.current.resources.some(r => r.id === pending.id));
+  assert.deepEqual(await fixtureSnapshot("container", pending.id), pending.created);
+  await releaseSquatter(timed, pending);
+  log({ scenario: "timed-out pre-up hook pending at down cannot vouch for a same-name registry; squatter preserved", pass: true });
+}
+
 log({ environment: { platform: process.platform, arch: process.arch, bun: Bun.version, root, accountHome, artifact: cli, sha256: digest(cli) } });
 let failure: unknown;
 try {
@@ -1005,13 +1071,15 @@ try {
   if (values.suite === "all" || values.suite === "lifecycle") await lifecycle();
   if (values.suite === "live-compose-replacement") await composeReplacement(true);
   if (values.suite === "all" || values.suite === "producers") await producers();
+  if (values.suite === "all" || values.suite === "producers" || values.suite === "registry-provenance") await registryProvenance(["ci", "timeout"]);
+  if (values.suite === "registry-hook-timeout") await registryProvenance(["timeout"]);
   log({ result: "pass", suite: values.suite });
 } catch (error) { failure = error; log({ result: "fail", error: String(error), stack: error instanceof Error ? error.stack : null }); }
 finally {
   for (const proc of processes) if (proc.exitCode === null) { proc.kill("SIGTERM"); await proc.exited; }
   for (const object of [...cleanupObjects].reverse()) {
     const current = await fixtureSnapshot(object.kind, object.id);
-    assert.deepEqual(current, object.created, "Refusing replacement fixture cleanup"); await docker([object.kind, "rm", ...(object.kind === "container" ? ["--volumes"] : []), object.id]);
+    assert.deepEqual(current, object.created, "Refusing replacement fixture cleanup"); await docker([object.kind, "rm", ...(object.kind === "container" ? ["--force", "--volumes"] : []), object.id]);
   }
   for (const p of projects) {
     try { await silo(p, ["down", "--delete-cluster", "--clean"]); }

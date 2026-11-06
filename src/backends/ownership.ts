@@ -30,6 +30,11 @@ type InspectedObject = { receipt: BackendReceipt; publishedPorts: number[]; bind
 type FinishedProducer = Extract<Launch, { phase: "exited" }> & {
   started: true; exitCode: number; effect: "create" | "workload" | "hook";
 };
+/** Which finished launches a capture may attribute unlabelled outputs to. */
+type CaptureProvenance = { registryRequested: boolean; composeLaunched: boolean };
+
+/** The only launch kind that asks k3d to create the claimed registry. */
+export const K3D_CLUSTER_CREATE_KIND = "k3d-cluster-create";
 
 const query = async (argv: string[], cwd: string): Promise<string> => {
   const result = await runCommand(argv, { cwd, timeoutMs: TOOL_TIMEOUT_MS, context: argv.slice(0, 3).join(" "), stdio: "pipe" });
@@ -178,7 +183,7 @@ export const assertNamesAvailable = async (claims: Claim[], cwd: string, owned: 
 };
 
 /** Records only this generation's creation results, with its declared namespace and provenance. */
-const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation: FinishedProducer): Promise<BackendReceipt[]> => {
+const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], provenance: CaptureProvenance): Promise<BackendReceipt[]> => {
   await assertEngine(owner);
   const allocation = owner.current()!.allocation;
   const cluster = allocation.state.identity.k3dClusterName;
@@ -225,14 +230,14 @@ const captureOwnedResources = async (owner: ProjectOperation, source: BackendRec
     }
     const labels = current.receipt.labels;
     const projectLabel = labels["io.silo.project"] === owner.projectId && labels["io.silo.generation"] === String(owner.generation);
-    const registryFromFinishedProducer = source === "k3d" &&
+    const registryFromClusterCreate = source === "k3d" && provenance.registryRequested &&
       entry.kind === "container" && entry.name === registry &&
       labels["k3d.cluster"] === allocation.state.identity.k3dClusterName;
     const composeRoot = labels["com.docker.compose.project.working_dir"];
     const composeFromOwnedLaunch = source === "compose" && entry.kind === "container" &&
       labels["com.docker.compose.project"] === allocation.state.identity.composeName && composeRoot !== undefined &&
-      realpathSync(composeRoot) === owner.root && (creation.effect === "workload" || creation.effect === "hook");
-    if (!projectLabel && !registryFromFinishedProducer && !composeFromOwnedLaunch) conflict(entry);
+      realpathSync(composeRoot) === owner.root && provenance.composeLaunched;
+    if (!projectLabel && !registryFromClusterCreate && !composeFromOwnedLaunch) conflict(entry);
     validatePublications(current);
     captured.push(current.receipt);
   }
@@ -247,11 +252,18 @@ export const captureFinishedProducers = async (owner: ProjectOperation): Promise
     (launch.effect === "create" || launch.effect === "workload" || launch.effect === "hook"));
   if (pending.length === 0) return;
   for (const launch of pending) owner.markLaunchTerminal(launch.id);
+  // k3d's registry carries no Silo labels; only the finished cluster create
+  // that requested this exact registry may vouch for it, whatever its exit.
+  const registryName = owner.current()!.allocation.state.identity.k3dRegistryName;
+  const provenance: CaptureProvenance = {
+    registryRequested: registryName !== undefined && pending.some(launch => launch.kind === K3D_CLUSTER_CREATE_KIND &&
+      launch.command.some((arg, index) => arg === "--registry-create" && launch.command[index + 1] === registryName)),
+    composeLaunched: pending.some(launch => launch.effect === "workload" || launch.effect === "hook"),
+  };
   // Direct creators operate on k3d's claimed namespace. Hooks and workloads can
   // also create Compose objects, whose root/launch provenance remains required.
-  await captureOwnedResources(owner, "k3d", pending[0]!);
-  const compose = pending.find(launch => launch.effect === "workload" || launch.effect === "hook");
-  if (compose) await captureOwnedResources(owner, "compose", compose);
+  await captureOwnedResources(owner, "k3d", provenance);
+  if (provenance.composeLaunched) await captureOwnedResources(owner, "compose", provenance);
   for (const launch of pending) owner.checkpointLaunch({ ...launch, terminal: true, reconciled: true });
 };
 

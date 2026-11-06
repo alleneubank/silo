@@ -2,7 +2,7 @@ import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import { K3D_CREATE_TIMEOUT_MS, K3D_LIST_TIMEOUT_MS } from "../core/constants";
 import type { ProjectOperation } from "../core/lease_store";
-import { assertEngine, assertNamesAvailable, runProducerCommand, deleteOwnedContainers, deleteOwnedNetworks, verifyResource } from "./ownership";
+import { K3D_CLUSTER_CREATE_KIND, assertEngine, assertNamesAvailable, runProducerCommand, deleteOwnedContainers, deleteOwnedNetworks, verifyResource } from "./ownership";
 
 const CONTROL_FLAGS = new Set([
   "--config", "-c", "--network", "--registry-create", "--api-port", "--runtime-label",
@@ -65,7 +65,7 @@ export const ensureCluster = async (owner: ProjectOperation): Promise<void> => {
   ];
   if (allocation.state.identity.k3dRegistryName) command.push("--registry-create", allocation.state.identity.k3dRegistryName);
   command.push(...allocation.k3dArgs);
-  await recordCreation(owner, command, "k3d-cluster-create");
+  await recordCreation(owner, command, K3D_CLUSTER_CREATE_KIND);
   owner.update({ ...allocation, state: { ...allocation.state, k3dClusterCreated: true } }, current.phase);
 };
 
