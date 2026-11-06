@@ -1,0 +1,16 @@
+process pid/pgid=378886; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","env","proof-lifecycle-hdicfo-volume-failed","--json"]; stop only verified exact returned group
+process pid/pgid=379227; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","status","--json"]; stop only verified exact returned group
+creation observer pid/pgid=379248; timeout600 sh /tmp/watch.sh; teardown verified exact recorded group
+process pid/pgid=379251; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","ci","--timeout","30s","--json"]; stop only verified exact returned group
+process pid/pgid=380628; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","status","--json"]; stop only verified exact returned group
+process pid/pgid=380654; timeout180 ["docker","network","inspect","bridge","--format","{{.Name}}"]; stop only verified exact returned group
+process pid/pgid=380671; timeout180 ["docker","container","ls","-a","--no-trunc","--format","{{json .}}"]; stop only verified exact returned group
+process pid/pgid=380689; timeout180 ["docker","network","ls","--no-trunc","--format","{{json .}}"]; stop only verified exact returned group
+process pid/pgid=380705; timeout180 ["docker","network","inspect","61ea9e5c8735e6c86e21e302d3e6a95177a7c31fba99933715f321c009e5cdc0","--format","{\"Id\":{{json .Id}},\"Name\":{{json .Name}},\"Created\":{{json .Created}},\"Labels\":{{json .Labels}}}"]; stop only verified exact returned group
+process pid/pgid=380753; timeout180 ["docker","network","inspect","61ea9e5c8735e6c86e21e302d3e6a95177a7c31fba99933715f321c009e5cdc0","--format","{\"Id\":{{json .Id}},\"Name\":{{json .Name}},\"Created\":{{json .Created}},\"Labels\":{{json .Labels}}}"]; stop only verified exact returned group
+Docker object {"kind":"network","id":"61ea9e5c8735e6c86e21e302d3e6a95177a7c31fba99933715f321c009e5cdc0","name":"k3d-localnet-proof-l-f11842e4-failed","created":"2026-11-06T05:17:27.315751688Z","labels":{"io.silo.generation":"1","io.silo.project":"0ba5fd39-29b2-4e1f-b0ed-7d14d1b80d61","k3d.cluster":"localnet-proof-l-f11842e4-failed"}}; author-fixture teardown exact container/network ID, volumes only with parent; named owned cache independently after exact creation check
+process pid/pgid=380770; timeout180 ["docker","volume","ls","--format","{{json .}}"]; stop only verified exact returned group
+process pid/pgid=380813; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--delete-cluster","--clean","--json"]; stop only verified exact returned group
+process pid/pgid=382853; timeout180 ["docker","network","ls","--no-trunc","--format","{{.ID}}"]; stop only verified exact returned group
+process pid/pgid=382885; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--delete-cluster","--clean","--json"]; stop only verified exact returned group
+process pid/pgid=383129; timeout180 ["ps","-o","uid=,pgid=,command=","-p","379248"]; stop only verified exact returned group

@@ -1,0 +1,3 @@
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-whXiSW/compose-restart/.localnet.env
+silo info: Wrote lockfile
+silo info: Stopped; allocation remains reserved until down --clean.

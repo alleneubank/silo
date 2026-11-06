@@ -1,7 +1,9 @@
 # Current qualification
 
-The lifecycle reconciliation proposal and its current Linux observations are
-indexed in [lifecycle-reconciliation](lifecycle-reconciliation/README.md).
+The producer recovery proposal and its current Linux observations are
+indexed in [producer-recovery](producer-recovery/README.md).
+The prior [lifecycle reconciliation](lifecycle-reconciliation/README.md) received
+round-6 approve with conditions at 6c942863; its inputs and observations are historical.
 The earlier [recorded-ID teardown](recorded-id-teardown/README.md) was rejected
 by specialist round 5; its source identities and observations are historical. Earlier
 records below retain their original source identities and superseded behavior;

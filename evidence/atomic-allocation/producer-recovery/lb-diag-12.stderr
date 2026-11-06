@@ -1,0 +1,2 @@
+I1106 05:59:25.385694 2518538 loader.go:405] Config loaded from file:  /tmp/fixtures/allocation-rehearsal-whXiSW/cluster-restart/.localnet/kubeconfig
+I1106 05:59:25.389759 2518538 round_trippers.go:632] "Response" verb="GET" url="https://127.0.0.1:49152/readyz?timeout=5s" status="200 OK" milliseconds=3

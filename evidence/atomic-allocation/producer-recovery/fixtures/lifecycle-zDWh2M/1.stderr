@@ -1,0 +1,8 @@
+silo info: Generated env file at /tmp/fixtures/lifecycle-zDWh2M/volume-failed/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49155
+silo info:   TILT_PORT: 49156
+silo info:   K3D_API_PORT: 49157
+silo info: Project b8354274-8b33-46c8-b70a-ada1f3cdcb6c, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/lifecycle-zDWh2M/volume-failed/.localnet.env; set +a

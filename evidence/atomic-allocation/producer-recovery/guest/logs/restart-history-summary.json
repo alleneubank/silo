@@ -1,0 +1,160 @@
+{
+  "file": "restart-ci-1-status",
+  "project": "28589099-8041-402e-bb38-f0f3426ad316",
+  "generation": 1,
+  "claims": 15,
+  "resources": [
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-restart-redis-1",
+      "id": "05a06fd79d41d3cb9bade5e8ffef8dbddcd55eb1a460d17b3c68db4e75c7f0f7",
+      "createdAt": "2026-11-06T05:03:40.227484887Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-restart",
+        "com.docker.compose.project.working_dir": "/tmp/fixtures/restart",
+        "io.silo.generation": "1",
+        "io.silo.project": "28589099-8041-402e-bb38-f0f3426ad316"
+      },
+      "kind": "container",
+      "anonymousVolumes": [
+        {
+          "name": "ed0f9323133d2565a39c165ba220eb48fc2abbfef315d9e917c0971034d07c0c",
+          "createdAt": "2026-11-06T05:03:45Z",
+          "destination": "/data"
+        }
+      ],
+      "deleted": false
+    },
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-restart_default",
+      "id": "eddea0c781c76c3845879a776a6e1c2fa8dbe29cd65eb17b659e3c2b207460fb",
+      "createdAt": "2026-11-06T05:03:40.206944895Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-restart",
+        "io.silo.generation": "1",
+        "io.silo.project": "28589099-8041-402e-bb38-f0f3426ad316"
+      },
+      "kind": "network",
+      "deleted": false
+    }
+  ]
+}
+{
+  "file": "restart-down-1-status",
+  "project": "28589099-8041-402e-bb38-f0f3426ad316",
+  "generation": 1,
+  "claims": 15,
+  "resources": [
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-restart-redis-1",
+      "id": "05a06fd79d41d3cb9bade5e8ffef8dbddcd55eb1a460d17b3c68db4e75c7f0f7",
+      "createdAt": "2026-11-06T05:03:40.227484887Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-restart",
+        "com.docker.compose.project.working_dir": "/tmp/fixtures/restart",
+        "io.silo.generation": "1",
+        "io.silo.project": "28589099-8041-402e-bb38-f0f3426ad316"
+      },
+      "kind": "container",
+      "anonymousVolumes": [
+        {
+          "name": "ed0f9323133d2565a39c165ba220eb48fc2abbfef315d9e917c0971034d07c0c",
+          "createdAt": "2026-11-06T05:03:45Z",
+          "destination": "/data"
+        }
+      ],
+      "deleted": true
+    },
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-restart_default",
+      "id": "eddea0c781c76c3845879a776a6e1c2fa8dbe29cd65eb17b659e3c2b207460fb",
+      "createdAt": "2026-11-06T05:03:40.206944895Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-restart",
+        "io.silo.generation": "1",
+        "io.silo.project": "28589099-8041-402e-bb38-f0f3426ad316"
+      },
+      "kind": "network",
+      "deleted": true
+    }
+  ]
+}
+{
+  "file": "restart-ci-2-status",
+  "project": "28589099-8041-402e-bb38-f0f3426ad316",
+  "generation": 1,
+  "claims": 15,
+  "resources": [
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-restart-redis-1",
+      "id": "05a06fd79d41d3cb9bade5e8ffef8dbddcd55eb1a460d17b3c68db4e75c7f0f7",
+      "createdAt": "2026-11-06T05:03:40.227484887Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-restart",
+        "com.docker.compose.project.working_dir": "/tmp/fixtures/restart",
+        "io.silo.generation": "1",
+        "io.silo.project": "28589099-8041-402e-bb38-f0f3426ad316"
+      },
+      "kind": "container",
+      "anonymousVolumes": [
+        {
+          "name": "ed0f9323133d2565a39c165ba220eb48fc2abbfef315d9e917c0971034d07c0c",
+          "createdAt": "2026-11-06T05:03:45Z",
+          "destination": "/data"
+        }
+      ],
+      "deleted": true
+    },
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-restart-redis-1",
+      "id": "452ef19c842df09f5f0e9d835c599d395946c6046f1c43f1f1232c4666095e5e",
+      "createdAt": "2026-11-06T05:03:56.915088215Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-restart",
+        "com.docker.compose.project.working_dir": "/tmp/fixtures/restart",
+        "io.silo.generation": "1",
+        "io.silo.project": "28589099-8041-402e-bb38-f0f3426ad316"
+      },
+      "kind": "container",
+      "anonymousVolumes": [
+        {
+          "name": "9dc8ad69c868c908c39ec6cdc519de5b13b5527cec2b6c1dac44ed465d7c7bb8",
+          "createdAt": "2026-11-06T05:03:58Z",
+          "destination": "/data"
+        }
+      ],
+      "deleted": false
+    },
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-restart_default",
+      "id": "50a312bb51c6a94ee617cf9126289838dbf1380fc94b083bbb3529c5e9e7ab51",
+      "createdAt": "2026-11-06T05:03:56.891970284Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-restart",
+        "io.silo.generation": "1",
+        "io.silo.project": "28589099-8041-402e-bb38-f0f3426ad316"
+      },
+      "kind": "network",
+      "deleted": false
+    },
+    {
+      "source": "compose",
+      "name": "localnet-r7guest-restart_default",
+      "id": "eddea0c781c76c3845879a776a6e1c2fa8dbe29cd65eb17b659e3c2b207460fb",
+      "createdAt": "2026-11-06T05:03:40.206944895Z",
+      "labels": {
+        "com.docker.compose.project": "localnet-r7guest-restart",
+        "io.silo.generation": "1",
+        "io.silo.project": "28589099-8041-402e-bb38-f0f3426ad316"
+      },
+      "kind": "network",
+      "deleted": true
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-m7l4V7/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Instance 'proof-m7l4v7-a' is already running (supervisor 107425); generation 4
+silo info: Ports:
+silo info:   APP_PORT: 49152
+silo info:   TILT_PORT: 49153
+silo info: Run down before changing it. Parallel stacks need separate roots and names.

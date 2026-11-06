@@ -1,5 +1,10 @@
 # Lifecycle reconciliation qualification
 
+Historical record: round 6 approved with conditions at 6c942863. The current
+author repairs, qualification and pending matching review are indexed in
+[producer-recovery](../producer-recovery/README.md). Statements below retain
+this record's original inputs and then-pending gates.
+
 Verified Linux proposal; matching specialist round 6 and native Mac qualification
 remain required. No lane merge or release. Addendum 7 directs the repairs to the
 round-5 findings while retaining the human's recorded-ID-only deletion boundary.

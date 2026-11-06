@@ -3,100 +3,121 @@
 Atomically reserve project ports, names and physical file targets in an account
 SQLite store, fencing lifecycle effects to a generation. Cleanup stops verified
 recorded processes and deletes only recorded immutable Docker container/network
-IDs. Finished failed or stopped workloads can be recorded once before deletion;
-restarts retain ID history and recoverable exact-delete failures can retire.
+IDs. Completed history yields cleanup capacity; finite creating tools record
+known failed outputs before reporting failure. JSON receipts expose tombstones.
 
 ## Why
 
-The 0.9.0 allocator can collide with peers and overwrite escaping outputs.
-The earlier proposal delegated project teardown after exact-parent removal;
-recorded-ID-only cleanup removed that authority. Round 5 then exposed ordinary
-same-generation restart and failed/live producer cleanup becoming permanently
-wedged. This revision repairs those flows without widening deletion authority.
+Legacy 0.9.0 allocation can collide with peers and overwrite escaping outputs.
+The earlier proposal's delegated project teardown could delete replacements;
+recorded-ID-only cleanup removed that authority. Round 6 resolved the prior
+restart/finished-Compose/delete-absence findings, then required two availability
+repairs: accumulated launches exhausting cleanup and known failed k3d/network
+creates remaining unretirable. This revision addresses both without widening
+Docker deletion authority.
 
 ## How
 
 - Transactional claims, generation fences, owned-file capabilities, verified
-  Janitor groups and durable facts retain authority after uncertainty.
-- ID-keyed receipts preserve tombstones; a fresh same-name ID requires proof of
-  prior absence. Finished producer capture is sealed before deletion and never
-  renewed by cleanup retry. Startup hook phases seal before k3d preflight.
-- Typed exact-ID delete targets permit terminal target-absence reconciliation;
-  missing completion remains an explicit unknown-exit resolution. Unknown creates
-  and nonterminal requests cannot use that proof.
-- One removal leaf consumes immutable container/network IDs. Anonymous mounts
-  disappear only with their exact parent; volume names grant no deletion
-  authority. Named caches and ambiguous/orphaned data require independent owners.
-- Down ignores Tiltfile and rejects teardown hooks. It allows native SQLite
-  rollback recovery without creating a missing allocation. Read-only status can
-  refuse a hot journal until a writable lifecycle command recovers it.
+  Janitor groups and durable completion facts retain ownership after uncertainty.
+- At 1024 launch records, terminal reconciled launch/completion history compacts
+  transactionally. Unresolved facts and resource/mount history remain. Capacity
+  filled entirely by unresolved effects still refuses; retries are bounded.
+- All finite create/hook/workload callers use one producer runner. It captures
+  known completed outputs or absence with existing provenance, seals recording,
+  then reports failure. Down uses the same boundary after completion import.
+- One deletion leaf accepts full immutable container/network IDs. Anonymous data
+  disappears only with its exact parent. Volume names grant no product deletion
+  authority; named caches and ambiguous/orphaned data require independent owners.
+- JSON receipts have deleted true/false for recorded tombstone/active state,
+  not a fresh presence query. Qualified restart has down between runs; in-place
+  Compose recreate and transient parents before capture remain unqualified.
 
 ## Rollout
 
-**Keep draft.** The major changeset targets 1.0.0; versions remain 0.9.0.
-The human's addendum-6 decision ratifies recorded-ID cleanup; addendum 7 directs
-these lifecycle repairs. Matching specialist round 6, then native Mac and final
-artifact qualification, remain required. Round 5 required changes at 3d94c7fa.
+**Keep draft.** Versions remain 0.9.0; the existing major changeset targets 1.0.0.
+Human addendum 6 ratifies recorded-ID cleanup; addendum 8 directs these author
+conditions. Round 6 approved with conditions at 6c942863. Matching specialist
+round 7, then native Mac and final artifacts, remain required for this revision.
 
-Owners must announce cutover, drain/retire old clients and every old operation,
-and recreate their projects before new allocations. Unreleased store format 2
-refuses format 1 before application mutation; no schema migration/reset exists.
-SQLite may first recover an interrupted transaction. Do not mix allocators or
-replace ownership state with an empty store. Feature pushes are proposals;
-main's Changesets workflow can publish npm. This lane grants no merge, cutover,
-release or S1 adoption. The coordinator handoff seals the actual proposal push.
+Owners announce cutover, drain legacy clients/every old operation and format-1
+proposal stores using their matching old build, then recreate their projects.
+Even removing a drained real store is data-bearing deletion requiring explicit
+owner authority. Format 2 is unchanged here; no schema migration/reset exists.
+SQLite can perform native rollback before application schema validation. Do not
+mix allocators or replace ownership state with empty state. Feature pushes are
+proposals; main's Changesets workflow can publish npm. This lane grants no merge,
+cutover, release or S1 adoption; the coordinator handoff seals actual transport.
 
 ## Risk
 
-High risk: durable state, breaking CLI contract and shared-host cleanup can affect
-peer data/reservations. The model trusts local users, installed tools and config;
-it defends against accidental concurrency, replacements, crashes and squatters.
-It does not sandbox hostile same-account writers or arbitrary shell code.
-Unknown creates and delayed external effects can retain claims indefinitely.
+High risk: durable state, breaking public contract and shared-host cleanup can
+affect peer reservations/data. The model trusts local users, installed tools and
+config and defends against accidental concurrency, replacements, crashes and
+squatters. It does not sandbox malicious same-account writers or arbitrary shell.
+Unknown create completions and delayed external effects can retain claims. The
+pending-capture provenance window and read-only executor-validation hot-journal
+window are unchanged; no generic request cancellation is promised.
 
 ## Verify after deploy
 
-After owner-led cutover, inspect `status --json`, drive Tilt/service endpoints,
+After separately authorized cutover, inspect status --json, drive Tilt/services,
 then ordinary and explicit cluster cleanup. Verify same-generation restart,
-failed/live producer cleanup, retained ready Kubernetes, and replacement/foreign
-data preservation. Follow `macos-rehearsal.md`; never prune or remove peer state.
+known failed create recovery, cleanup with accumulated history, retained ready
+Kubernetes and replacement/foreign data preservation. Use macos-rehearsal.md;
+never prune or remove peer state to clear errors.
 
 ## Rollback
 
-Prefer a forward fix. Old clients cannot manage the SQLite domain. A downgrade
-requires owner reconciliation and coordinated clients; no downgrade is authorized.
+Prefer a forward fix. Old clients cannot manage the SQLite domain; downgrade
+requires owner reconciliation and coordinated clients. No downgrade is authorized.
 
 ## Evidence
 
-Qualified source `a94bfd50723cb1d61c52006c5e10acb651d8da1f`;
-CLI SHA-256 `4c50596b5171ecda81912351d98c28f28f1b791aeee1a7aac31422648f8befc5`.
+Qualified source `3f87992621a06888ec32c55afe46ec9b71211005`;
+CLI SHA-256 `2e4f0501ccc6423900d902a70623a629917153cc7c0a772b6eef3cb779741ec6`.
 Record-only descendants preserve executable inputs. The author drove the built
 CLI on onyx Linux with real Docker/Tilt/k3d/Janitor in disposable account views.
-[Scenario record and raw evidence](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/lifecycle-reconciliation/README.md).
-The URL is the proposal publication target; hosted reachability was not queried.
+[Scenario record and raw evidence](https://github.com/alleneubank/silo/blob/feat/atomic-allocation/evidence/atomic-allocation/producer-recovery/README.md).
+This URL is the publication target; hosted reachability/state was not queried.
 
 | Check / scenario | Observation |
 | --- | --- |
-| Required checks | 146 tests / 393 assertions, typecheck, lint, knip, zero duplicate blocks and build pass; normal commit and actual local-bare pre-push hooks pass. |
-| Requested red controls | At 3d94c7fa/b14266a4, all five requested checks fail: Compose/k3d restart, failed CI, stopped live up, failed delete followed by external exact-ID absence. |
-| Author native CLI | The final all-suite covers restart, failed/live producer cleanup, sealed partial-cleanup replacement/retry, exact-absence and lost-delete completion, plus existing legacy/peer/crash/file/k3d/volume checks. Logs and counts are in the scenario record. |
-| SQLite recovery | A real killed writer leaves a hot rollback journal. Earlier schema preflight refuses supported recovery; final public down rolls back, removes snapshots and releases claims. |
-| Copied full example | CI and web/API health pass; ordinary down preserves two ready Kubernetes deployments. Exact cleanup removes anonymous mounts but preserves named cache/claims; independent fixture-owner cache resolution permits retirement. |
-| Guest | Fresh CLI/docs-only guest and follow-up at the final bundle exercise the public flows. An earlier guest that read author rehearsal material is retained with that limitation. |
-| Closeout | Time-bound recorded-ID/PID audit and baseline uncertainty are in the scenario record; later hook/push groups and scratch teardown are sealed in the coordinator handoff. |
+| Required gates | 147 tests / 397 assertions, typecheck including the harness, lint, knip, zero duplicate blocks and build pass. Normal source commit and actual local-bare pre-push hooks pass. |
+| Red controls / repaired flows | Baseline 4c50596b fails cleanup at 1023 records and recovery of known failed k3d/network/volume creates. Corrected public CLI records outputs/absence and retires after exact cleanup and any separate cache-owner resolution. Actual baseline states recover in the same format-2 store. |
+| Full author suite | 517 recorded commands, including expected refusals/fault probes. All 39 final commands, including 33 public cleanup calls, exit 0. Existing safety/lifecycle cases and new producers suite pass. |
+| Copied example | CI and web/API health pass; ordinary down retains two ready Kubernetes deployments. Exact cleanup removes anonymous mounts but retains cache/claims; independent fixture-owner cache resolution permits retirement. |
+| Fresh guest | Four requested rows and live down/SIGINT retry pass at initial repair 73114d2 / CLI 4601b51c. Targeted registry-enabled failed-create follow-up passes at final 3f87992 / CLI 2e4f0501; earlier rows were not rerun. Unchanged paths reuse evidence. CLI/docs learning only. |
+| Scoped closeout | At 06:18:01Z, author 103 / guest 5 projects had zero active generations/claims/resources/operations; 476 recorded Docker handles and 2694 PID/group numbers were absent. Later hook/push and scratch closeout are sealed in handoff. |
 
-Noticed: a supported hot-journal recovery gap and startup-hook/k3d ordering issue
-were reproduced and repaired during qualification. The first clean guest's
-secondary Docker event log was copied at closeout while canonical recording was
-immediate. Its follow-up tees container events immediately but appended omitted
-Compose network event identities later from status/inspect; the k3d row used
-an additional immediate name/type observer. Duplicate env/lock progress and
-missing completion summary remain guest feedback outside this repair.
+Noticed: the registry-enabled red at initial repair exposed a remaining
+success-only provenance fallback. The final typed finished-producer boundary
+accepts known zero/nonzero exits with identical existing provenance. Public down
+recovered the retained red registry by its original ID in the same store. The
+red helper's missing setting and shortened-name cleanup omission are retained.
 
-Not checked: matching round-6 specialist approval; native Mac/APFS/account/process/
-fsync modes and final Intel/Apple Silicon 1.0.0 artifacts; hosted CI, actual
-cutover/mixed old clients, arbitrary transient containers before capture, delayed
-producer effects, unknown create completion loss, external Kubernetes,
-alternate/remote engines/drivers and every daemon interruption boundary.
-No new waiver. Historical unattributed Mac volumes are preserved. Review scope:
-`specialist-request-r6.md`; native qualification: `macos-request.md`.
+The initial repair's first full run timed out at registry advertisement. Exact
+cleanup reconciled five known 143 exit facts and retained cache; an owned API/CI
+diagnostic and later full run passed at unchanged initial inputs. The first
+final-source full attempt failed its second same-generation k3d startup with a
+restarting load balancer. A fresh-allocation diagnostic passed but did not repeat
+that exact restart. The final full run used a transparent failure-only observer
+and passed, followed by the final example. Both earlier failures remain
+unattributed. Guest port timelines exclude overlap with the initial API window.
+Guest clean safely held claims during TIME-WAIT. The initial guest lacked a
+historical transient-tools ID; the follow-up captured it, but first learned the
+registry ID from its receipt before independent inspection, rather than from a
+create-time event. Neither record proves complete transient history.
+
+The initial client-version probe outside the view emitted the host k3s wrapper's
+default-config permission warning; it was corrected inside the disposable view.
+Rehearsal API calls used owned kubeconfigs; no credential/system config changed.
+Expired synthetic k3d token values are redacted with a file/count/hash manifest.
+
+Not checked: matching round-7 specialist approval; native Mac/APFS/account/process/
+fsync and final Intel/Apple Silicon artifacts; hosted CI, real cutover/mixed
+clients, unknown create facts, pending-capture/validation windows, delayed or
+transient effects, in-place Compose recreate, external Kubernetes,
+alternate/remote engines and every interruption boundary. No new waiver.
+Historical unattributed Mac volumes remain untouched. Requests:
+specialist-request-r7.md and macos-request.md.

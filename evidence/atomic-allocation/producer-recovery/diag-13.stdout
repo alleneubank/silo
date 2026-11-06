@@ -1,0 +1,157 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "kind": "Node",
+            "metadata": {
+                "annotations": {
+                    "alpha.kubernetes.io/provided-node-ip": "172.27.0.2",
+                    "k3s.io/hostname": "k3d-localnet-backend-trp2-server-0",
+                    "k3s.io/internal-ip": "172.27.0.2",
+                    "k3s.io/node-args": "[\"server\",\"--tls-san\",\"127.0.0.1\",\"--tls-san\",\"k3d-localnet-backend-trp2-serverlb\"]",
+                    "k3s.io/node-config-hash": "NTDNWCNMAZ3KGK6LTANK7TGFZTUGLVR66YBAPH3A3YT2VHR3RT7A====",
+                    "k3s.io/node-env": "{\"K3S_KUBECONFIG_OUTPUT\":\"/output/kubeconfig.yaml\",\"K3S_TOKEN\":\"********\"}",
+                    "node.alpha.kubernetes.io/ttl": "0",
+                    "volumes.kubernetes.io/controller-managed-attach-detach": "true"
+                },
+                "creationTimestamp": "2026-11-06T05:11:17Z",
+                "finalizers": [
+                    "wrangler.cattle.io/node"
+                ],
+                "labels": {
+                    "beta.kubernetes.io/arch": "amd64",
+                    "beta.kubernetes.io/instance-type": "k3s",
+                    "beta.kubernetes.io/os": "linux",
+                    "kubernetes.io/arch": "amd64",
+                    "kubernetes.io/hostname": "k3d-localnet-backend-trp2-server-0",
+                    "kubernetes.io/os": "linux",
+                    "node-role.kubernetes.io/control-plane": "true",
+                    "node.kubernetes.io/instance-type": "k3s"
+                },
+                "name": "k3d-localnet-backend-trp2-server-0",
+                "resourceVersion": "339",
+                "uid": "b15bd19e-f8f5-4e48-8e6c-ab52c037b37e"
+            },
+            "spec": {
+                "podCIDR": "10.42.0.0/24",
+                "podCIDRs": [
+                    "10.42.0.0/24"
+                ],
+                "providerID": "k3s://k3d-localnet-backend-trp2-server-0"
+            },
+            "status": {
+                "addresses": [
+                    {
+                        "address": "172.27.0.2",
+                        "type": "InternalIP"
+                    },
+                    {
+                        "address": "k3d-localnet-backend-trp2-server-0",
+                        "type": "Hostname"
+                    }
+                ],
+                "allocatable": {
+                    "cpu": "32",
+                    "ephemeral-storage": "3584647938104",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "195394048Ki",
+                    "pods": "110"
+                },
+                "capacity": {
+                    "cpu": "32",
+                    "ephemeral-storage": "3684876584Ki",
+                    "hugepages-1Gi": "0",
+                    "hugepages-2Mi": "0",
+                    "memory": "195394048Ki",
+                    "pods": "110"
+                },
+                "conditions": [
+                    {
+                        "lastHeartbeatTime": "2026-11-06T05:11:17Z",
+                        "lastTransitionTime": "2026-11-06T05:11:17Z",
+                        "message": "kubelet has sufficient memory available",
+                        "reason": "KubeletHasSufficientMemory",
+                        "status": "False",
+                        "type": "MemoryPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2026-11-06T05:11:17Z",
+                        "lastTransitionTime": "2026-11-06T05:11:17Z",
+                        "message": "kubelet has no disk pressure",
+                        "reason": "KubeletHasNoDiskPressure",
+                        "status": "False",
+                        "type": "DiskPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2026-11-06T05:11:17Z",
+                        "lastTransitionTime": "2026-11-06T05:11:17Z",
+                        "message": "kubelet has sufficient PID available",
+                        "reason": "KubeletHasSufficientPID",
+                        "status": "False",
+                        "type": "PIDPressure"
+                    },
+                    {
+                        "lastHeartbeatTime": "2026-11-06T05:11:17Z",
+                        "lastTransitionTime": "2026-11-06T05:11:17Z",
+                        "message": "kubelet is posting ready status",
+                        "reason": "KubeletReady",
+                        "status": "True",
+                        "type": "Ready"
+                    }
+                ],
+                "daemonEndpoints": {
+                    "kubeletEndpoint": {
+                        "Port": 10250
+                    }
+                },
+                "features": {
+                    "supplementalGroupsPolicy": true
+                },
+                "nodeInfo": {
+                    "architecture": "amd64",
+                    "bootID": "3acfa306-5c01-4650-a812-8e97179137bf",
+                    "containerRuntimeVersion": "containerd://2.2.3-k3s1",
+                    "kernelVersion": "6.8.0-147-generic",
+                    "kubeProxyVersion": "",
+                    "kubeletVersion": "v1.35.5+k3s1",
+                    "machineID": "",
+                    "operatingSystem": "linux",
+                    "osImage": "K3s v1.35.5+k3s1",
+                    "swap": {
+                        "capacity": 4294963200
+                    },
+                    "systemUUID": "66d9bd34-bfde-11d3-01a6-9c6b00681b56"
+                },
+                "runtimeHandlers": [
+                    {
+                        "features": {
+                            "recursiveReadOnlyMounts": true,
+                            "userNamespaces": true
+                        },
+                        "name": ""
+                    },
+                    {
+                        "features": {
+                            "recursiveReadOnlyMounts": true,
+                            "userNamespaces": true
+                        },
+                        "name": "runc"
+                    },
+                    {
+                        "features": {
+                            "recursiveReadOnlyMounts": false,
+                            "userNamespaces": false
+                        },
+                        "name": "runhcs-wcow-process"
+                    }
+                ]
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

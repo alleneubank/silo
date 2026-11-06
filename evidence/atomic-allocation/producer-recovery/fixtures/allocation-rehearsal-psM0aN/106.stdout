@@ -1,0 +1,13 @@
+[
+    {
+        "CreatedAt": "2026-11-06T05:00:42Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.rehearsal": "allocation-rehearsal-psM0aN"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-proof-psm0an-backend-images/_data",
+        "Name": "k3d-localnet-proof-psm0an-backend-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

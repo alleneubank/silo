@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+project=$1
+compose=$2
+cluster=$3
+ledger=$4
+docker events --since "$5" --format '{{json .}}' | while IFS= read -r event; do
+  if printf '%s\n' "$event" | jq -e --arg p "$project" --arg c "$compose" --arg k "$cluster" '(.Actor.Attributes["io.silo.project"] == $p) or ((.Actor.Attributes.name // "") | startswith($c+"-") or startswith($c+"_")) or (($k|length)>0 and (((.Actor.Attributes.name // .Actor.ID // "") | startswith("k3d-"+$k)) or .Actor.Attributes["k3d.cluster"]==$k))' >/dev/null; then
+    printf '%s\n' "$event" | jq -c 'if .Actor.Attributes["k3d.cluster.token"] then .Actor.Attributes["k3d.cluster.token"]="[REDACTED_EPHEMERAL_FIXTURE_TOKEN]" else . end' | tee -a "$ledger" /mnt/resources >/dev/null
+    if [ "$(printf '%s\n' "$event" | jq -r .Type)" = container ] && [ "$(printf '%s\n' "$event" | jq -r .Action)" = create ]; then
+      id=$(printf '%s\n' "$event" | jq -r .Actor.ID)
+      docker container inspect --format '{"kind":"container","id":{{json .Id}},"name":{{json .Name}},"created":{{json .Created}},"labels":{"io.silo.project":{{json (index .Config.Labels "io.silo.project")}},"io.silo.generation":{{json (index .Config.Labels "io.silo.generation")}},"k3d.cluster":{{json (index .Config.Labels "k3d.cluster")}},"k3d.role":{{json (index .Config.Labels "k3d.role")}}},"mounts":{{json .Mounts}}}' "$id" | tee -a "$ledger" /mnt/resources >/dev/null || true
+    fi
+  fi
+done

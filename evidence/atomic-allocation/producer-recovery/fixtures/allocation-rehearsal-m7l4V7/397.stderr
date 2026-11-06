@@ -1,0 +1,9 @@
+silo warn: Port APP_PORT in use (48127), allocated 49156
+silo warn: Port TILT_PORT in use (48128), allocated 49157
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-m7l4V7/live-compose-replacement/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49156
+silo info:   TILT_PORT: 49157
+silo info: Project a72d8265-eda6-44bf-a77b-24382a79e06a, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-m7l4V7/live-compose-replacement/.localnet.env; set +a

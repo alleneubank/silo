@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+if [ "${1-}" = container ] && [ "${2-}" = rm ]; then
+  for arg in "$@"; do
+    if [ "$arg" = "$COMPOSE_PROBE_PARENT" ]; then
+      "$COMPOSE_PROBE_DOCKER" "$@"
+      printf paused > "$COMPOSE_PROBE_PAUSED"
+      count=0
+      while [ ! -f "$COMPOSE_PROBE_RELEASE" ]; do
+        count=$((count + 1))
+        [ "$count" -lt 2000 ] || exit 78
+        sleep 0.02
+      done
+      exit 0
+    fi
+  done
+fi
+exec "$COMPOSE_PROBE_DOCKER" "$@"

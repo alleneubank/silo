@@ -1,0 +1,51 @@
+3f87992621a06888ec32c55afe46ec9b71211005
+2e4f0501ccc6423900d902a70623a629917153cc7c0a772b6eef3cb779741ec6  dist/cli.js
+
+Baseline positive controls:
+6c9428636509c4a1cae2549aaeef472d67c4c115:src/backends/k3d.ts:5:import { runOwnedCommand } from "../core/owned_command";
+6c9428636509c4a1cae2549aaeef472d67c4c115:src/backends/k3d.ts:6:import { assertEngine, assertNamesAvailable, captureOwnedResources, deleteOwnedContainers, deleteOwnedNetworks, verifyResource } from "./ownership";
+6c9428636509c4a1cae2549aaeef472d67c4c115:src/backends/k3d.ts:39:  const result = await runOwnedCommand(owner, command, { kind, effect: "create", timeoutMs: K3D_CREATE_TIMEOUT_MS });
+6c9428636509c4a1cae2549aaeef472d67c4c115:src/backends/k3d.ts:40:  await captureOwnedResources(owner, "k3d", result.launch);
+6c9428636509c4a1cae2549aaeef472d67c4c115:src/core/lease_store.ts:19:const MAX_LAUNCHES = 1024;
+6c9428636509c4a1cae2549aaeef472d67c4c115:src/core/lease_store.ts:550:      if (this.launches().length >= MAX_LAUNCHES) throw new SiloError("Too many launch records; clean this generation", "STORE_FULL");
+
+Current delegated teardown search (exit1 means no match):
+rg_exit=1
+
+Current producer, registry, cap, status and exact-deletion authority sites:
+src/core/owned_command.ts:37:  deletionTarget?: DockerDeletionTarget;
+src/core/owned_command.ts:85:    ...(options.deletionTarget === undefined ? {} : { deletionTarget: options.deletionTarget }) });
+src/core/owned_command.ts:136:export const runOwnedCommand = async (owner: ProjectOperation, command: string[], options: CommandOptions & { effect: "none" | "delete" }): Promise<OwnedCommandResult> => {
+src/core/lease_store.ts:301:          resources: db.query<JsonRow & { deleted: number }, typeof params>("SELECT receipt, deleted FROM resources WHERE project_id = ? AND generation = ?").all(...params)
+src/core/lease_store.ts:392:        JSON.stringify(previous.deletionTarget) === JSON.stringify(completed.deletionTarget)) {
+src/core/lease_store.ts:547:  planLaunch(input: Pick<Launch, "kind" | "command" | "effect" | "deletionTarget">): Extract<Launch, { phase: "planned" }> {
+src/core/lease_store.ts:548:    assert(input.deletionTarget === undefined || input.effect === "delete", "Only a deletion may carry a deletion target");
+src/core/lease_store.ts:554:        for (const old of this.launches().filter(l => l.terminal && l.reconciled)) {
+src/core/lease_store.ts:555:          this.db.query("DELETE FROM completions WHERE project_id = ? AND generation = ? AND launch_id = ?").run(this.projectId, this.generation, old.id);
+src/core/lease_store.ts:576:      assert.deepEqual([launch.kind, launch.effect, launch.command, launch.deletionTarget], [old.kind, old.effect, old.command, old.deletionTarget], "Launch identity is immutable");
+src/core/lease_store.ts:641:          if (!launch.terminal || launch.effect !== "delete" || launch.deletionTarget?.kind !== resource.kind || launch.deletionTarget.id !== resource.id) continue;
+src/core/lease_store.ts:643:          else if (launch.phase === "granted") this.checkpointLaunch({ ...launch, phase: "resolved", effect: "delete", deletionTarget: launch.deletionTarget,
+src/hooks/runner.ts:2:import { runProducerCommand } from "../backends/ownership";
+src/hooks/runner.ts:16:    await runProducerCommand(owner, ["/bin/sh", "-c", hook], {
+src/backends/k3d.ts:5:import { assertEngine, assertNamesAvailable, runProducerCommand, deleteOwnedContainers, deleteOwnedNetworks, verifyResource } from "./ownership";
+src/backends/k3d.ts:38:  await runProducerCommand(owner, command, { kind, effect: "create", timeoutMs: K3D_CREATE_TIMEOUT_MS });
+src/backends/tilt.ts:3:import { runProducerCommand } from "./ownership";
+src/backends/tilt.ts:27:  return runProducerCommand(owner, buildTiltCiArgv(options), { kind: "tilt-ci", effect: "workload", env, timeoutMs: TILT_CI_TIMEOUT_MS });
+src/backends/registry.ts:5:import { runProducerCommand } from "./ownership";
+src/backends/registry.ts:71:        runProducerCommand(owner, ["kubectl", "apply", "-f", manifestPath], {
+src/backends/ownership.ts:8:import { commandFailure, runOwnedCommand, startOwnedCommand, type CommandOptions } from "../core/owned_command";
+src/backends/ownership.ts:30:type FinishedProducer = Extract<Launch, { phase: "exited" }> & {
+src/backends/ownership.ts:181:const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation: FinishedProducer): Promise<BackendReceipt[]> => {
+src/backends/ownership.ts:228:    const registryFromFinishedProducer = source === "k3d" &&
+src/backends/ownership.ts:235:    if (!projectLabel && !registryFromFinishedProducer && !composeFromOwnedLaunch) conflict(entry);
+src/backends/ownership.ts:244:export const captureFinishedProducers = async (owner: ProjectOperation): Promise<void> => {
+src/backends/ownership.ts:245:  const pending = owner.launches().filter((launch): launch is FinishedProducer =>
+src/backends/ownership.ts:259:export const runProducerCommand = async (owner: ProjectOperation, command: string[], options: CommandOptions & { effect: "create" | "workload" | "hook" }): Promise<void> => {
+src/backends/ownership.ts:264:  await captureFinishedProducers(owner);
+src/backends/ownership.ts:316:      const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force", "--volumes"] : []), receipt.id], {
+src/backends/ownership.ts:318:        deletionTarget: { kind, id: receipt.id },
+src/commands/down.ts:4:import { assertEngine, assertNamesAvailable, captureFinishedProducers, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
+src/commands/down.ts:26:      const target = launch.deletionTarget;
+src/commands/down.ts:33:    await captureFinishedProducers(owner);
+src/commands/up.ts:5:import { captureFinishedProducers } from "../backends/ownership";
+src/commands/up.ts:58:    await captureFinishedProducers(owner);

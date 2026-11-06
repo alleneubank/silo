@@ -1,0 +1,14 @@
+process	env	2119473	bun /opt/dist/cli.js env r7guest-regfail --json
+listener	2136887	49154
+observer	owned-container	2136899
+observer	cluster-network	2136905
+observer	cache	2136908
+observer	tools	2136910
+observer	registry	2136913
+process	ci-port-failure	2136916	bun /opt/dist/cli.js ci --timeout 60s --json
+listener-child	2136889
+observer	registry-exact	2168878
+process	down-delete	2168991	bun /opt/dist/cli.js down --delete-cluster --json
+process	clean-retained-cache	2176927	bun /opt/dist/cli.js down --clean --json
+process	clean-final	2196469	bun /opt/dist/cli.js down --clean --json
+process	clean-repeat	2197418	bun /opt/dist/cli.js down --clean --json

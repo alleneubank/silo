@@ -1,0 +1,1 @@
+import {writeFileSync} from 'node:fs'; Bun.serve({hostname:'127.0.0.1',port:Number(process.env.APP_PORT),fetch:()=>new Response(process.env.WORKSPACE_NAME)});writeFileSync(Bun.argv[2],String(process.pid),{flag:'wx'});setTimeout(()=>process.exit(0),180000);

@@ -1,0 +1,2 @@
+{"Type":"network","Action":"create","Actor":{"ID":"f944291b8bda8b297f341e14ea3733315c5a0749c921066ffd23f48990262ddb","Attributes":{"name":"k3d-localnet-proof-l-4927d34a-failed","type":"bridge"}},"scope":"local","time":1793942308,"timeNano":1793942308966886869}
+{"Type":"network","Action":"destroy","Actor":{"ID":"f944291b8bda8b297f341e14ea3733315c5a0749c921066ffd23f48990262ddb","Attributes":{"name":"k3d-localnet-proof-l-4927d34a-failed","type":"bridge"}},"scope":"local","time":1793942311,"timeNano":1793942311218397685}

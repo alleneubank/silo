@@ -14,7 +14,7 @@ for a same-store public recovery check, not replaced with an empty store.
    Unresolved facts and resource/mount history remain. This preserves the bound
    while removing completed history as a cause of cleanup failure. Native
    --suite producers drives two live receipts with 1023 prior records. The unit
-   test preserves a genuinely started, uncaptured failed create through compaction
+   test preserves a started, uncaptured failed create through compaction
    and still requires retirement refusal. Exhaustion entirely by unresolved facts
    remains a safe STORE_FULL boundary, not an unlimited retry guarantee.
 2. Supported: failed finished producers had inconsistent capture boundaries.
@@ -47,3 +47,32 @@ repository's tsconfig includes the harness and its normal typecheck is authorita
 
 Matching specialist round 7, native Mac/final artifacts, owner-authorized cutover
 and draft status remain coordinator gates. No new waiver or release authority.
+
+Qualification retained the initial full-suite registry-advertise timeout. Its
+known exit143 facts reconciled during exact cleanup, with the named cache kept.
+The subsequent owned-API diagnostic/CI and initial repair serial all-suite
+passed at unchanged 73114d2 inputs; the initial timeout remains unattributed.
+The guest's first live 49153 run started after that API window, so its timeline
+is not evidence of a collision. The version-only host probe's default-config
+warning and its correction inside the view are disclosed in the new record.
+
+A final registry-enabled partial-create probe exposed one success-only provenance
+fallback left in the first repair. At 73114d2 / 4601b51c, k3d's registry had its
+cluster/name labels but no io.silo labels; known exit1 was rejected where exit0
+was accepted. The capture capability now requires a started producer with a
+known exit by type, and both outcomes use the same registry provenance. The
+permanent producer scenario enables the registry and requires its receipt.
+The exact still-live red registry recovered through corrected public down with
+its original ID, then cache-owner resolution and retirement; no manual registry
+deletion or store reset. The first probe missed a registry-port setting, and its
+fixture observer initially omitted the shortened registry name; these setup
+errors and the retained red instance are explicitly preserved. Capture storage
+now masks synthetic k3d token fields while in-memory verifier values remain
+unchanged, preserving the full snapshot assertions.
+
+The first final-source full run failed a second same-generation k3d startup
+with a restarting load balancer. A fresh-allocation diagnostic passed, without
+reproducing that exact restart. The final full run with a failure-only observer
+and copied example passed at 3f87992 / 2e4f0501. The earlier failure remains
+unattributed. The guest follow-up qualifies only the affected registry case at
+these final inputs; its earlier four rows retain their own initial-repair scope.

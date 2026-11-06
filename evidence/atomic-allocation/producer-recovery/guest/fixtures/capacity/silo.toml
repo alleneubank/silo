@@ -1,0 +1,9 @@
+version=1
+[ports]
+APP_PORT=61231
+TILT_PORT=61232
+[hosts]
+APP_HOST="${name}.localhost"
+TILT_HOST="127.0.0.1"
+[tilt]
+webMode="prod"

@@ -1,0 +1,37 @@
+{
+  "before": {
+    "id": "k3d-localnet-r7guest-regfail-images",
+    "name": "k3d-localnet-r7guest-regfail-images",
+    "createdAt": "2026-11-06T05:52:02Z",
+    "labels": {
+      "io.silo.project": "d9c48644-1497-48e9-9a75-aca663a3fb03",
+      "io.silo.generation": "1",
+      "k3d.cluster": "localnet-r7guest-regfail"
+    },
+    "mounts": []
+  },
+  "current": {
+    "name": "k3d-localnet-r7guest-regfail-images",
+    "createdAt": "2026-11-06T05:52:02Z",
+    "labels": {
+      "io.silo.project": "d9c48644-1497-48e9-9a75-aca663a3fb03",
+      "io.silo.generation": "1",
+      "k3d.cluster": "localnet-r7guest-regfail"
+    }
+  },
+  "receipt": {
+    "source": "k3d",
+    "name": "k3d-localnet-r7guest-regfail-images",
+    "id": "k3d-localnet-r7guest-regfail-images",
+    "createdAt": "2026-11-06T05:52:02Z",
+    "labels": {
+      "io.silo.generation": "1",
+      "io.silo.project": "d9c48644-1497-48e9-9a75-aca663a3fb03",
+      "k3d.cluster": "localnet-r7guest-regfail"
+    },
+    "kind": "volume",
+    "deleted": false
+  },
+  "users": [],
+  "verifiedAt": "2026-11-06T05:53:13.551Z"
+}

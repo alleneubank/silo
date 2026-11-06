@@ -1,0 +1,18 @@
+35 | for(const file of readdirSync(lane+'-tmp/pids').filter(f=>f.startsWith('r7-')&&f.endsWith('.pid')))pids.add(Number(readFileSync(lane+'-tmp/pids/'+file,'utf8')));
+36 | const auditor=Number(readFileSync(lane+'-tmp/pids/r7-resource-audit.pid','utf8'));pids.delete(auditor);pids.delete(process.pid);
+37 | function docker(args:string[]){const r=Bun.spawnSync(['/usr/bin/docker',...args],{stdout:'pipe',stderr:'pipe',timeout:10000,env:{...process.env,DOCKER_HOST:'unix:///var/run/docker.sock',DOCKER_CONTEXT:''}});assert.equal(r.exitCode,0,r.stderr.toString());return r.stdout.toString().trim();}
+38 | const engine=docker(['info','--format','{{.ID}}']);assert.equal(engine,'114f4194-e27d-4d0b-82fc-201ecd0e9997');const present=new Set<string>();let bridge=false;for(const kind of['container','network','volume'])for(const line of docker([kind,'ls',...(kind==='container'?['-a']:[]),...(kind==='volume'?[]:['--no-trunc']),'--format','{{json .}}']).split('\n').filter(Boolean)){const r=JSON.parse(line);const id=kind==='volume'?r.Name:r.ID;assert.equal(typeof id,'string');present.add(kind+'/'+id);if(kind==='network'&&r.Name==='bridge'){assert.equal(docker(['network','inspect',id,'--format','{{.Name}}']),'bridge');bridge=true;}}assert(bridge);
+39 | const remaining=[...handles.values()].filter(h=>present.has(h.kind+'/'+h.id));assert.deepEqual(remaining,[]);
+40 | const recycled=[];for(const pid of pids){assert(Number.isSafeInteger(pid)&&pid>1);function exists(n:number){try{process.kill(n,0);return true;}catch(e){const code=(e as NodeJS.ErrnoException).code;if(code==='EPERM')return true;assert.equal(code,'ESRCH');return false;}}const processPresent=exists(pid),groupPresent=exists(-pid);if(!processPresent&&!groupPresent)continue;const status=readFileSync('/proc/'+pid+'/status','utf8');const uid=Number(status.match(/^Uid:\s+(\d+)/m)![1]);assert.notEqual(uid,process.geteuid!(),'A live same-UID numeric handle needs separate identity attribution; never signal from census');assert.equal(groupPresent,false);recycled.push({pid,currentUid:uid,currentTgid:Number(status.match(/^Tgid:\s+(\d+)/m)![1]),currentName:status.match(/^Name:\s+(.+)$/m)![1],groupAbsent:true,attribution:'Returned commands originally ran as ae without privilege changes; current unrelated UID and absent old group prove numeric reuse. No signal.'});}
+
+AssertionError: false == true
+ generatedMessage: true,
+     actual: false,
+   expected: true,
+   operator: "==",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r7/audit.ts:40:42
+
+Bun v1.4.4 (Linux x64)

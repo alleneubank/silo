@@ -1,17 +1,15 @@
-# Proposal operations — addendum 7
+# Proposal operations — addendum 8
 
-The lane prepares a normal-hook proposal push of refs/heads/feat/atomic-allocation
-with an exact lease against 3d94c7fa6d38eb95f7fc08c7aa55f8f37cad7867, as authorized
-by addendum 7. The coordinator handoff pr-ops.md seals the actual outcome and
-final ref after the command; this committed packet does not predict success.
+The lane prepares a normal-hook push of refs/heads/feat/atomic-allocation with
+an exact lease against 6c9428636509c4a1cae2549aaeef472d67c4c115, as authorized
+by addendum 8. Handoff pr-ops.md seals actual acceptance/failure and final ref
+only after transport; this committed packet does not predict success.
 
-Qualified source a94bfd50723cb1d61c52006c5e10acb651d8da1f;
-CLI SHA-256 4c50596b5171ecda81912351d98c28f28f1b791aeee1a7aac31422648f8befc5.
-Record-only descendants preserve these executable inputs.
-
-Coordinator: update draft PR58 using pr-body.md, run specialist round 6 with a
-read-only shell per specialist-request-r6.md over fd710d9d..the final sealed head,
-then native Mac per macos-request.md after approval. The lane performs no PR edit,
-merge, release, cutover or S1 adoption. Preserve historical unattributed Mac data.
-Inspected deployment map: CI/example/release track main and PR events; feature
-pushes are proposals. No credential or authentication configuration is changed.
+Qualified source 3f87992621a06888ec32c55afe46ec9b71211005; CLI SHA256
+2e4f0501ccc6423900d902a70623a629917153cc7c0a772b6eef3cb779741ec6.
+Record-only descendants preserve executable inputs. Coordinator: update draft
+PR58 using pr-body.md, run specialist round 7 with read-only shell per
+specialist-request-r7.md over fd710d9d..final sealed head, then native Mac after
+matching approval. Owner cutover/store deletion/final artifacts remain separate.
+The lane performs no PR edit, merge, release or S1 adoption. Inspected main/PR
+CI and main release workflows make feature pushes proposals. No auth changes.

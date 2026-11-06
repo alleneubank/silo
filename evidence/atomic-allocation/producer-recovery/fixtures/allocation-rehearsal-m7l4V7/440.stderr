@@ -1,0 +1,10 @@
+silo warn: Port APP_PORT in use (48127), allocated 49158
+silo warn: Port TILT_PORT in use (48128), allocated 49159
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-m7l4V7/failed-k3d-create/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49158
+silo info:   TILT_PORT: 49159
+silo info:   K3D_API_PORT: 49160
+silo info: Project cc537a8b-117b-4a6f-9afe-d72b1c0091a8, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-m7l4V7/failed-k3d-create/.localnet.env; set +a

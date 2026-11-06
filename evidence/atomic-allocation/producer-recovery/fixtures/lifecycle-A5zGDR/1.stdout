@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"INVALID_CONFIG","message":"K3D_REGISTRY_PORT must be defined in ports when registry is enabled"}

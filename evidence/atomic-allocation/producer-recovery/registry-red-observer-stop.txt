@@ -1,0 +1,1 @@
+30033 1413496 timeout 600s sh /tmp/watch.sh ff6d782b-7283-4c87-b12b-ec40cab27380 localnet-proof-lifecycle-qzu64h-k3d-failed-registry localnet-proof-l-bb85166b-gistry /tmp/fixtures/lifecycle-QzU64h/docker-events.jsonl 1793943511

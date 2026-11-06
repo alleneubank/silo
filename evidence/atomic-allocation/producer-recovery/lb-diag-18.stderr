@@ -1,0 +1,80 @@
+2026/11/06 05:59:23 [notice] 65#65: exit
+2026/11/06 05:59:23 [notice] 63#63: exit
+2026/11/06 05:59:23 [notice] 64#64: exit
+2026/11/06 05:59:23 [notice] 68#68: gracefully shutting down
+2026/11/06 05:59:23 [notice] 69#69: gracefully shutting down
+2026/11/06 05:59:23 [notice] 70#70: gracefully shutting down
+2026/11/06 05:59:23 [notice] 68#68: exiting
+2026/11/06 05:59:23 [notice] 71#71: gracefully shutting down
+2026/11/06 05:59:23 [notice] 67#67: gracefully shutting down
+2026/11/06 05:59:23 [notice] 70#70: exiting
+2026/11/06 05:59:23 [notice] 69#69: exiting
+2026/11/06 05:59:23 [notice] 71#71: exiting
+2026/11/06 05:59:23 [notice] 67#67: exiting
+2026/11/06 05:59:23 [notice] 68#68: exit
+2026/11/06 05:59:23 [notice] 70#70: exit
+2026/11/06 05:59:23 [notice] 71#71: exit
+2026/11/06 05:59:23 [notice] 69#69: exit
+2026/11/06 05:59:23 [notice] 67#67: exit
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 42
+2026/11/06 05:59:23 [notice] 32#32: worker process 42 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 58 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 43
+2026/11/06 05:59:23 [notice] 32#32: worker process 43 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 45
+2026/11/06 05:59:23 [notice] 32#32: worker process 45 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 40
+2026/11/06 05:59:23 [notice] 32#32: worker process 40 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 55
+2026/11/06 05:59:23 [notice] 32#32: worker process 55 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 44 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 49 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 49
+2026/11/06 05:59:23 [notice] 32#32: worker process 37 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 41 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 47 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 52 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 65 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 67 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 46
+2026/11/06 05:59:23 [notice] 32#32: worker process 46 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 63
+2026/11/06 05:59:23 [notice] 32#32: worker process 63 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 48
+2026/11/06 05:59:23 [notice] 32#32: worker process 48 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 68
+2026/11/06 05:59:23 [notice] 32#32: worker process 53 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 62 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 66 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 68 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 71 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 59
+2026/11/06 05:59:23 [notice] 32#32: worker process 39 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 54 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 59 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 69 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 61
+2026/11/06 05:59:23 [notice] 32#32: worker process 61 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 70
+2026/11/06 05:59:23 [notice] 32#32: worker process 70 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 60
+2026/11/06 05:59:23 [notice] 32#32: worker process 38 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 56 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: worker process 60 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received
+2026/11/06 05:59:23 [notice] 32#32: signal 17 (SIGCHLD) received from 64
+2026/11/06 05:59:23 [notice] 32#32: worker process 64 exited with code 0
+2026/11/06 05:59:23 [notice] 32#32: signal 29 (SIGIO) received

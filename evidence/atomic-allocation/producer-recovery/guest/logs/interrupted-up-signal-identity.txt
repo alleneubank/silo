@@ -1,0 +1,1 @@
+30033 3941782 timeout --signal=TERM --kill-after=10s 180s bun /opt/dist/cli.js up r7guest-restart --json

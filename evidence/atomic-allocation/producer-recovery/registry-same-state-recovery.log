@@ -1,0 +1,16 @@
+{"command":1,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":2,"argv":["docker","container","inspect","9b68ba1e747c909ce482216ca70d079982e1ec6e530d017a6caea6a51e2fc0a1","--format","{{.Id}} {{.Name}} {{.Created}} {{json .Mounts}}"],"code":0}
+{"command":3,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--json"],"code":0}
+{"command":4,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":5,"argv":["docker","container","inspect","9b68ba1e747c909ce482216ca70d079982e1ec6e530d017a6caea6a51e2fc0a1"],"code":1}
+{"command":6,"argv":["docker","volume","inspect","8b62a5b71f1c3e5cee3ba2bba8aac6d044c6f5f540c55040aee112868777ffcd"],"code":1}
+{"command":7,"argv":["docker","volume","inspect","k3d-localnet-proof-l-bb85166b-gistry-images"],"code":0}
+{"command":8,"argv":["docker","container","create","--label","io.silo.rehearsal=r7-cache-query-control","--mount","type=volume,src=k3d-localnet-proof-l-bb85166b-gistry-images,dst=/data","redis:7-alpine"],"code":0}
+{"command":9,"argv":["docker","container","ls","-a","--no-trunc","--filter","volume=k3d-localnet-proof-l-bb85166b-gistry-images","--format","{{.ID}}"],"code":0}
+{"command":10,"argv":["docker","container","rm","--volumes","2168ed8bdead658905d57ac9c0b3a79da4c5c2bfabe8a9f5a4a8273898d1026b"],"code":0}
+{"command":11,"argv":["docker","container","ls","-a","--no-trunc","--filter","volume=k3d-localnet-proof-l-bb85166b-gistry-images","--format","{{.ID}}"],"code":0}
+{"command":12,"argv":["docker","volume","inspect","k3d-localnet-proof-l-bb85166b-gistry-images"],"code":0}
+{"command":13,"argv":["docker","volume","rm","k3d-localnet-proof-l-bb85166b-gistry-images"],"code":0}
+{"command":14,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":15,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"result":"pass","sameFailedRegistryId":"9b68ba1e747c909ce482216ca70d079982e1ec6e530d017a6caea6a51e2fc0a1","final":{"schemaVersion":1,"projectId":"ff6d782b-7283-4c87-b12b-ec40cab27380","root":"/tmp/fixtures/lifecycle-QzU64h/k3d-failed-registry","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
