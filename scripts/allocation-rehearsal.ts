@@ -463,7 +463,7 @@ async function anonymousVolumes() {
   log({ scenario: "replacement anonymous name is reported as a leak without deletion or claim release; owner-resolved absence allows retirement", original: originalVolume, replacement, pass: true });
 }
 
-async function seededAnonymousParent(label: string) {
+async function seededAnonymousParent(label: string, replaceInSecond = false) {
   const p = project(label);
   const allocated = await silo(p, ["env", name(p)]); assert(allocated.project?.allocation);
   const projectId = allocated.project.projectId;
@@ -484,19 +484,25 @@ async function seededAnonymousParent(label: string) {
     // Seed the real creation-result boundary from Docker's returned identities;
     // the race then runs the public CLI. Avoid a full CLI capture in the narrow
     // timestamp window, which otherwise tests process startup speed.
-    owner.recordResources([parent]);
-    const made = ProjectOperation.inspect(p); assert(made?.allocation);
     recordResource(`anonymous volume ${volume.name} under ${id}; fixture-only teardown exact inspect then docker volume rm, if parent no longer exists\n`);
     await docker(["container", "rm", id]);
-    return { p, parent, volume, made };
+    let replacement: Awaited<ReturnType<typeof fixtureSnapshot>> | undefined;
+    if (replaceInSecond) {
+      await docker(["volume", "rm", volume.name]);
+      await docker(["volume", "create", "--label", "com.docker.volume.anonymous=", volume.name]);
+      replacement = await fixtureSnapshot("volume", volume.name);
+    }
+    // Persist the original creation result after the timing-sensitive fixture
+    // setup; SQLite durability is not part of Docker's timestamp precondition.
+    owner.recordResources([parent]);
+    const made = ProjectOperation.inspect(p); assert(made?.allocation);
+    return { p, parent, volume, made, replacement };
   } finally { owner.finish(); }
 }
 
 async function sameSecondReplacement() {
-  const { p, volume, made } = await seededAnonymousParent("same-second-replacement");
-  await docker(["volume", "rm", volume.name]);
-  await docker(["volume", "create", "--label", "com.docker.volume.anonymous=", volume.name]);
-  const replacement = await fixtureSnapshot("volume", volume.name);
+  const { p, volume, made, replacement } = await seededAnonymousParent("same-second-replacement", true);
+  assert(replacement);
   cleanupObjects.push({ kind: "volume", id: volume.name, name: volume.name, created: replacement });
   const created = z.array(z.object({ CreatedAt: z.string() })).length(1).parse(replacement)[0]!;
   assert.equal(created.CreatedAt, volume.createdAt, "The regression must replace the volume in the original timestamp second");
@@ -765,7 +771,7 @@ async function unreceiptedCompose() {
   recordResource(`unreceipted Compose fixture container ${id}, network ${network}; fixture-owner cleanup exact container ID --force --volumes then network ID\n`);
   try {
     const before = await fixtureSnapshot("container", id);
-    await silo(p, ["down", "--clean"], "NAME_CONFLICT");
+    await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
     assert.deepEqual(await fixtureSnapshot("container", id), before);
     const after = await state(p);
     assert.deepEqual(after.claims, allocated.claims);
