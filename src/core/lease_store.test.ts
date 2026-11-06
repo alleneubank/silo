@@ -65,6 +65,17 @@ const claims = (name: string, port: number): Claim[] => [
 ];
 
 describe("atomic account leases", () => {
+  test("existing-only acquisition never creates a missing store or project", async () => {
+    const known = project("known"); const unknown = project("unknown");
+    expect(await ProjectOperation.openExisting(known, { storePath, legacyInputs })).toBe(null);
+    expect(existsSync(storePath)).toBe(false);
+    const owner = await open(known); const projectId = owner.projectId; owner.finish();
+    expect(await ProjectOperation.openExisting(unknown, { storePath, legacyInputs })).toBe(null);
+    expect(ProjectOperation.inspect(unknown, storePath)).toBe(null);
+    const recovered = await ProjectOperation.openExisting(known, { storePath, legacyInputs, recover: true });
+    expect(recovered?.projectId).toBe(projectId); recovered?.finish();
+  });
+
   test("an unsupported proposal store is refused without changing its bytes", async () => {
     const root = project("old-format");
     const op = await open(root); op.finish();

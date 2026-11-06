@@ -21,8 +21,10 @@ there is no empty-store fallback. Runtime CLI/env store overrides do not exist.
 Tests inject a private constructor store or run in a disposable OS account.
 
 The unreleased proposal store format is 2. Format-1 proposal stores are refused
-through a read-only header probe before any writable connection; no migration,
-reset or automatic hot-journal recovery of an unsupported store occurs. Owners
+before application mutation; no migration or reset occurs. SQLite may recover
+an interrupted transaction before schema validation. Writable lifecycle commands,
+including down, allow this native rollback recovery; read-only status can refuse
+while recovery is required. Owners
 must drain the matching old proposal before recreating its disposable store.
 Config version 1, snapshot version 2 and JSON response version 1 are separate.
 
@@ -246,9 +248,10 @@ cover durable successful retry reconciliation. Named-volume behavior follows
   absence, preserving an unknown exit when completion is lost; unknown creates
   stay unresolved. Check: `--suite absent-delete`, `lost-delete` and lease-store
   exact-target absence tests.
-- REQ-STORE-001: unsupported proposal stores refuse before writable open.
-  Check: lease-store unsupported-format byte-preservation test and the native
-  format-1 refusal record; the store header is parsed at its database boundary.
+- REQ-STORE-001: unsupported proposal stores refuse before application mutation;
+  supported stores remain recoverable after interrupted SQLite transactions.
+  Check: clean unsupported-format byte-preservation test and native hot-journal
+  recovery probe. No automatic schema migration or reset is performed.
 
 Trusted hooks/Tiltfiles must consume generated identities and ports. In
 particular Tilt requires explicit `docker_compose(project_name=...)`; its

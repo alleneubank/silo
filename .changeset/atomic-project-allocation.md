@@ -47,7 +47,8 @@ stop/restart can record fresh same-name IDs in the same generation. Terminal
 exact-ID delete requests reconcile when that target is verified absent, including
 an explicit target-absent resolution with unknown exit if completion was lost.
 No success is invented and unknown creates remain unresolved. Unreleased proposal
-store format 1 is refused read-only by format 2; owners drain the matching old
+store format 1 is refused without schema migration by format 2; SQLite's native
+rollback recovery remains available to writable lifecycle commands. Owners drain the matching old
 proposal before recreating. There is no automatic store migration or reset.
 
 Pin Bun 1.4.4 and Janitor 0.3.1. Release remains gated on matching specialist

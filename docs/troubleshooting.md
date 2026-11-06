@@ -12,7 +12,9 @@ Retry down on its recorded engine. A lost completion may show a `resolved` /
 successful tool exit. Unknown creates remain unresolved.
 
 Unreleased proposal SQLite format 1 is incompatible with format 2 and refuses
-with `LEASE_STORE_UNAVAILABLE` before writable open. Use the matching old
+with `LEASE_STORE_UNAVAILABLE` before application mutation. SQLite may first
+recover an interrupted transaction. Read-only status cannot perform that recovery;
+use `down` to recover a supported store. Use the matching old
 proposal to drain its projects; any real store recreation belongs to a separately
 authorized host cutover. Do not delete an unrecognized store to clear the error.
 

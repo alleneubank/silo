@@ -13,8 +13,8 @@ const terminalGroups = (owner: ProjectOperation): void => {
 
 export const down = async (options: { config: string; "delete-cluster": boolean; clean: boolean; executorEntrypoint?: string }): Promise<boolean> => {
   const root = commandRoot(options.config);
-  if (ProjectOperation.inspect(root) === null) { logger.info("No allocated instance. Nothing to stop."); return false; }
-  const owner = await ProjectOperation.open(root, { recover: true, ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }) });
+  const owner = await ProjectOperation.openExisting(root, { recover: true, ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }) });
+  if (!owner) { logger.info("No allocated instance. Nothing to stop."); return false; }
   try {
     const initial = owner.current();
     if (!initial) { logger.info("No allocated instance. Nothing to stop."); return false; }

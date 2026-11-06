@@ -15,7 +15,11 @@ interior repairs; there is no merge/release/cutover grant or migration:
    retained and a unique live name per generation. Volume audit handles include
    creation identity because they have no immutable Engine ID. Prior absence is
    recorded before a fresh same-name ID can become live. The unreleased proposal
-   store format changes to2; format1 refuses without modification. Real owners
+   store format changes to2; format1 refuses before application mutation. SQLite
+   may first perform native rollback recovery. A disposable real hot-journal
+   probe found the read-only schema preflight blocked even supported recovery;
+   that preflight was removed, and down now acquires an existing store directly
+   without creating a missing store/project. Real owners
    must drain the matching old proposal before recreating; no auto migration/reset.
 2. Finished, terminal Compose producers (Tilt workloads and startup hooks) are
    captured with the existing namespace/label/root provenance, and their capture

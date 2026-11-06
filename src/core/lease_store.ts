@@ -159,16 +159,9 @@ const databaseVersion = (db: Database, create: boolean): number => {
 const openDatabase = (storePath: string, readonly: boolean, create = !readonly): Database => {
   let connection: Database | undefined;
   try {
-    if (!readonly && create) {
-      mkdirSync(path.dirname(storePath), { recursive: true });
+    if (!readonly) {
+      if (create) mkdirSync(path.dirname(storePath), { recursive: true });
       if (existsSync(storePath)) fileIdentity(storePath);
-    }
-    if (!readonly && existsSync(storePath)) {
-      // An unsupported store must not be opened for writes, including SQLite's
-      // automatic hot-journal recovery before the first ordinary query.
-      const probe = new Database(storePath, { readonly: true, create: false, strict: true });
-      try { probe.exec("PRAGMA busy_timeout = 5000;"); databaseVersion(probe, create); }
-      finally { probe.close(); }
     }
     const db = new Database(storePath, { readonly, create, strict: true });
     connection = db;
@@ -213,6 +206,14 @@ export type ProjectInspection = {
   completions: ExecutorCompletion[];
 };
 
+type OperationOptions = {
+  storePath?: string;
+  legacyInputs?: Parameters<typeof findLegacyState>[1];
+  recover?: boolean;
+  executorEntrypoint?: string;
+  portProbe?: PortCheckFn;
+};
+
 /** The sole mutation capability: every effect is fenced by this root, generation and operation. */
 export class ProjectOperation {
   private closed = false;
@@ -229,25 +230,31 @@ export class ProjectOperation {
     private readonly protectedDirectories: readonly string[],
   ) {}
 
-  static async open(root: string, options: {
-    storePath?: string;
-    legacyInputs?: Parameters<typeof findLegacyState>[1];
-    recover?: boolean;
-    executorEntrypoint?: string;
-    portProbe?: PortCheckFn;
-  } = {}): Promise<ProjectOperation> {
+  static async open(root: string, options: OperationOptions = {}): Promise<ProjectOperation> {
+    const owner = await ProjectOperation.acquire(root, options, false);
+    assert(owner !== null, "A creating acquisition must return an operation");
+    return owner;
+  }
+
+  static openExisting(root: string, options: OperationOptions = {}): Promise<ProjectOperation | null> {
+    return ProjectOperation.acquire(root, options, true);
+  }
+
+  private static async acquire(root: string, options: OperationOptions, existingOnly: boolean): Promise<ProjectOperation | null> {
     await assertNoLegacyState(root, options.legacyInputs);
     const identity = rootIdentity(root);
     const storePath = options.storePath ?? accountStorePath();
-    const db = openDatabase(storePath, false);
+    if (existingOnly && !existsSync(storePath)) return null;
+    const db = openDatabase(storePath, false, !existingOnly);
     const token = randomUUID();
     try {
-      const project = db.transaction((): ProjectRow => {
+      const project = db.transaction((): ProjectRow | null => {
         const retiredRoot = db.query<ProjectRow, [string]>("SELECT * FROM projects WHERE digest = ? AND retired = 0 AND generation = 0 AND operation_token IS NULL").get(identity.hash);
         if (retiredRoot?.root === identity.canonical && retiredRoot.physical_root !== identity.physical) {
           db.query("UPDATE projects SET retired = 1 WHERE id = ? AND generation = 0 AND operation_token IS NULL").run(retiredRoot.id);
         }
         let row = lookupProject(db, identity);
+        if (!row && existingOnly) return null;
         if (!row) {
           const count = db.query<{ count: number }, []>("SELECT count(*) AS count FROM projects").get()!.count;
           if (count >= MAX_PROJECTS) throw new SiloError("Lease store project limit reached", "STORE_FULL");
@@ -262,6 +269,7 @@ export class ProjectOperation {
         db.query("UPDATE projects SET operation_token = ?, operation_pid = ?, operation_started = ? WHERE id = ?").run(token, process.pid, new Date().toISOString(), row.id);
         return { ...row, operation_token: token, operation_pid: process.pid };
       }).immediate();
+      if (!project) { db.close(); return null; }
       return new ProjectOperation(db, storePath, project, token,
         options.executorEntrypoint ?? new URL("../cli.ts", import.meta.url).pathname,
         options.storePath === undefined ? "account" : "parent",
