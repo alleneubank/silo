@@ -26,8 +26,6 @@ const HooksSchema = z
   .object({
     "pre-up": z.array(z.string()).optional(),
     "post-up": z.array(z.string()).optional(),
-    "pre-down": z.array(z.string()).optional(),
-    "post-down": z.array(z.string()).optional(),
   })
   .strict();
 

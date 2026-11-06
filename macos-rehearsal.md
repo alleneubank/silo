@@ -124,7 +124,7 @@ later cleanup failure, and exits zero. Keep the entire log and fixture evidence.
 The suites may be selected independently with `--suite legacy`, `live`,
 `backend` or `volumes` when a source change justifies rerunning only affected
 scenarios. `volumes` includes the focused `same-second`, `paused-delete`,
-`parent-volumes`, `inherited-volumes` and `retry-crash` cases. These focused
+`parent-volumes`, `inherited-volumes`, `retry-crash` and `compose-replacement` cases. These focused
 names are also valid suite selectors. The replacement tests seed a real
 creation-result receipt from Docker's returned parent/mount identities, then
 drive the built public CLI; they do not mock the engine or edit its database.
@@ -152,7 +152,8 @@ drive the built public CLI; they do not mock the engine or edit its database.
 | Replaced child name | Remove the exact synthetic parent externally without volumes, then replace its recorded volume name. Clean reports CLEANUP_REQUIRED and preserves both replacement and claims regardless of timestamp/labels. Forced replacement also refuses. After fixture-owner resolution, absent-name cleanup succeeds. |
 | Same-second replacement | The original and replacement have identical Docker CreatedAt seconds; the public CLI preserves the replacement and claims. An unmatched timestamp is a failed test precondition, not a passing safety result. |
 | Paused unsafe deletion | A transparent Docker CLI wrapper can pause a name-based volume deletion after inspection. The baseline reaches it and deletes a fixture replacement; this candidate never reaches that deletion. Its public clean reports the leaked/replaced name and preserves the replacement and claims. All other wrapper commands reach real Docker unchanged. |
-| Parent-scoped cleanup before failure | Make the fixture Tiltfile fail during teardown. Public down reports COMMAND_FAILED, but the exact recorded Compose parent and its anonymous mount are already absent; restoring the Tiltfile permits ordinary recovery. |
+| Cleanup independent of Tiltfile | Replace the fixture Tiltfile with a failure. Public down succeeds, removes the recorded Compose parent and anonymous mount, and releases claims without evaluating Tiltfile. |
+| Real Compose replacement during cleanup | Pause after exact parent P removal, recreate the service through real Compose under the same project, then resume. Replacement Q, its new anonymous volume W, data and all claims survive. Cleanup refuses until the fixture owner removes Q by its exact ID; retry then retires. No delegated Tilt/Compose teardown is permitted. |
 | Inherited volumes-from | Silo refuses before removing the inherited borrower and leaves donor/borrower/volumes/claims unchanged. The separate owned Docker fixture proves `rm --volumes` preserves a live donor's references and named mounts, but removes inherited anonymous data when the last user is removed after its donor is gone. |
 | Durable successful retry / CLI crash | A real network deletion first fails on a fixture endpoint. Remove that exact fixture endpoint, pause the retry, SIGSTOP the recorded CLI, release real deletion, and observe the exact successful executor completion durably while the CLI still has a granted receipt. SIGKILL that CLI. Public recovery reconciles the earlier failed request and releases claims without another deletion of the absent network. |
 

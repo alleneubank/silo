@@ -9,7 +9,7 @@ Use `silo help [command]` for options and `silo doc --list` for references.
 | `env [name]` | Reserve all identities/files/ports atomically; export env and version-2 snapshot. Start no stack. |
 | `up [name]` | Export, run hooks, prepare owned k3d if enabled, supervise Tilt in the foreground. Matching live up reuses it. |
 | `ci [name] [-- <tilt args>]` | Same preparation with supervised `tilt ci`; set `CI=true`. Retain owned resources after exit. |
-| `down` | Reconcile journaled groups and requests, run down hooks/Tilt teardown; retain clusters and claims. |
+| `down` | Stop verified recorded Tilt groups; remove receipted Compose containers/networks by exact ID. Retain clusters, their Kubernetes workloads and claims. No Tiltfile evaluation or teardown hooks. |
 | `down --delete-cluster` | Also delete exact owned cluster objects. No name-wide adoption or deletion. |
 | `down --clean` | Retire only after all requests/groups/resources/listeners are proved absent; delete receipted snapshots and release own claims. |
 | `status [--json]` | Read authoritative ownership without repair. Supervisor liveness is not Tilt resource health. |

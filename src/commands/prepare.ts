@@ -16,7 +16,7 @@ import { REGISTRY_ADVERTISE_RETRY_BASE_DELAY_MS, REGISTRY_ADVERTISE_RETRY_COUNT,
 
 export const commandRoot = (config: string): string => path.dirname(path.resolve(config));
 
-export const processEnvironment = (owner: ProjectOperation): Record<string, string> => {
+const processEnvironment = (owner: ProjectOperation): Record<string, string> => {
   const allocation = owner.current()!.allocation;
   return {
     ...buildEnvVars(allocation.state, allocation.urls),

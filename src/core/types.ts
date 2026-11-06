@@ -41,8 +41,6 @@ export interface K3dConfig {
 export interface LifecycleHooks {
   "pre-up"?: string[];
   "post-up"?: string[];
-  "pre-down"?: string[];
-  "post-down"?: string[];
 }
 
 export interface ProfileAppendConfig {

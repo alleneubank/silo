@@ -33,6 +33,13 @@ and force with retained claims until their owner resolves them independently.
 k3d's named image cache is retained for its owner to resolve. A durable successful exact
 deletion retry is reconciled on recovery even if the caller crashed first.
 
+BREAKING: down stops verified recorded processes and deletes recorded immutable
+container/network IDs only; it never runs tilt down, compose down or arbitrary
+teardown hooks. Pre-down/post-down config keys are rejected, including profiles.
+Kubernetes workloads remain with a retained cluster. Unreceipted objects left by
+an interrupted producer require independent owner resolution; cleanup never
+adopts objects by matching names or labels.
+
 Pin Bun 1.4.4 and Janitor 0.3.1. Release remains gated on matching specialist
 review and native Linux/macOS rehearsal; this changeset does not authorize
 publication or the stop/recreate of any existing host project.

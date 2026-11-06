@@ -72,9 +72,12 @@ launch paths with `CI=true` and supervised Tilt CI. All errors keep the owned
 state needed for reconciliation. `--force` reconfigures only a stopped,
 reconciled generation; it refuses live, retained and cleanup-required state.
 
-`down` stops only journaled owned groups, reconciles completion facts, runs
-owned teardown and retains cluster resources by default. Failed Tilt teardown
-propagates. Explicit `--delete-cluster` deletes exact receipted backend objects.
+`down` stops only journaled owned groups after verifying their owner and command,
+reconciles completion facts, and deletes receipted Compose containers and
+networks by immutable Docker ID. It never evaluates a Tiltfile, runs lifecycle
+hooks, or delegates teardown to Tilt, Compose, k3d or a name/label selector.
+Cluster resources and Kubernetes workloads remain by default. Explicit
+`--delete-cluster` deletes exact receipted backend objects.
 `--clean` first proves all command groups terminal, requests resolved, backend
 resources absent and declared host ports free. It seals new effects during
 that proof and its consumption, then removes matching owned snapshots and
@@ -143,7 +146,7 @@ other objects require ownership labels. Backend publications must be claimed.
 Container creation-result receipts include anonymous mount names, creation
 times and destinations for audit only. They never grant volume deletion
 authority. `down` removes exact receipted Compose container IDs with
-`docker container rm --force --volumes` before Tilt teardown. Explicit cluster
+`docker container rm --force --volumes`, then its receipted network IDs. Explicit cluster
 deletion removes exact receipted k3d container IDs the same way, then removes
 its network by immutable ID. Docker removes attached anonymous volumes;
 explicitly named mounts and volumes still referenced by another container
@@ -163,6 +166,21 @@ but cannot grant name-based cleanup authority. `status --json` exposes
 `anonymousVolumes`, including deleted parents until the generation retires.
 Tools that delete/recreate containers before capture can destroy attribution;
 arbitrary external tool lifecycles are outside the cooperating-tool contract.
+
+Cleanup consumes existing durable receipts; discovery during cleanup never
+grants deletion authority. An interrupted producer can therefore leave
+unreceipted objects that require independent owner resolution. Matching names,
+labels and project paths do not permit adoption at teardown. Container/network
+receipts parse only Docker's full 64-character immutable IDs, with no name
+fallback. Anonymous volumes are removed only as an effect of exact-parent
+deletion; named volumes remain audit-only because Docker gives them no immutable
+object ID. Pre-down/post-down hooks are rejected in base and profile config.
+
+Decision (ratified 2026-11-05, human via silo-redesign addendum 6): stop only
+recorded owned processes and delete only recorded Docker IDs; no delegated
+project teardown. REQ-CLEANUP-004: if real Compose recreates a service after its
+recorded parent is removed, resumed cleanup preserves the new container, its
+anonymous volume and data, and all ownership claims until owner resolution.
 
 Decision (ratified 2026-11-05, human via silo-redesign addendum 1): anonymous
 volumes are removed with their recorded container, never by name.

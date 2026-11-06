@@ -74,9 +74,10 @@ const BackendIdentitySchema = z.object({
   name: z.string(), id: z.string(),
   createdAt: z.string(), labels: z.record(z.string()),
 });
+const DockerObjectIdSchema = z.string().regex(/^[a-f0-9]{64}$/).brand<"DockerObjectId">();
 export const BackendReceiptSchema = z.discriminatedUnion("kind", [
-  BackendIdentitySchema.extend({ kind: z.literal("container"), anonymousVolumes: z.array(AnonymousVolumeSchema).max(256) }),
-  BackendIdentitySchema.extend({ kind: z.literal("network") }),
+  BackendIdentitySchema.extend({ kind: z.literal("container"), id: DockerObjectIdSchema, anonymousVolumes: z.array(AnonymousVolumeSchema).max(256) }),
+  BackendIdentitySchema.extend({ kind: z.literal("network"), id: DockerObjectIdSchema }),
   BackendIdentitySchema.extend({ kind: z.literal("volume") }),
 ]);
 export type BackendReceipt = z.infer<typeof BackendReceiptSchema>;

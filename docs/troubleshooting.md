@@ -63,14 +63,15 @@ Retained resources, uncertain requests, missing executor completion facts or
 live/unknown groups prevent claim release. `status --json` lists the recorded
 launches, exact objects and problem. `down --clean` keeps snapshots and claims
 when proof is incomplete. `down --delete-cluster --clean` deletes only exact
-owned objects; failed Tilt teardown propagates. An uncertain request cannot
+owned Docker IDs. Cleanup never evaluates the Tiltfile, runs teardown hooks or
+delegates a project-wide deletion. An uncertain request cannot
 be cancelled by process death or an empty listing. Escalate with those facts
 rather than deleting the ownership store.
 
 Container receipts include `anonymousVolumes` with each mount's name, creation
 time and destination for audit, never deletion authority. `down` removes exact
-receipted Compose container IDs with their anonymous volumes before Tilt
-teardown. Explicit cluster deletion does the same for k3d containers. Named
+receipted Compose container IDs with their anonymous volumes, then exact network
+IDs. Explicit cluster deletion does the same for k3d containers. Named
 mounts and anonymous volumes another container still references remain intact.
 The named k3d image cache also survives cluster deletion. k3d 5.9.0 needs that
 cache for its tools node; its owner must resolve it independently before clean

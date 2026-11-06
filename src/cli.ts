@@ -117,6 +117,9 @@ The Tilt API is gone after down. The k3d cluster stays unless
 Recorded Compose containers are removed with their anonymous volumes. Silo
 never deletes a volume by name. Leaked names keep claims until their owner
 resolves them independently; inherited volumes-from provenance refuses.
+Cleanup stops only recorded owned process groups and deletes recorded Docker
+IDs. It does not evaluate the Tiltfile or run teardown hooks. Kubernetes
+workloads remain with a retained cluster; use --delete-cluster to remove it.
 
 Options:
   --delete-cluster   Delete k3d cluster (default: keep for faster iteration)

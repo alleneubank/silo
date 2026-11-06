@@ -19,6 +19,11 @@ changing its configuration or repairing an environment. Discover topics with
   `tilt get uiresources --port "$TILT_PORT"`. Keep lifecycle changes in silo.
 - Stop with `silo down`. k3d resources and all reservations remain owned.
   Receipted Compose containers are removed with their anonymous volumes.
+  Cleanup stops only verified recorded process groups and removes recorded
+  container/network IDs. It never evaluates Tiltfile or runs teardown hooks.
+  Kubernetes workloads remain in a retained cluster. Objects not captured
+  before an interrupted producer stopped require independent owner resolution;
+  cleanup never adopts matching names or labels.
   `silo down --delete-cluster --clean` explicitly deletes the owned cluster,
   removing each exact receipted container ID with its anonymous volumes, then
   snapshots and claims once absence is proved. Silo never deletes a volume by

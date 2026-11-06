@@ -4,6 +4,7 @@ import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import type { ProjectOperation } from "../core/lease_store";
 import type { Allocation, AnonymousVolume, BackendReceipt, Claim, Launch } from "../core/lease_types";
+import { BackendReceiptSchema } from "../core/lease_types";
 import { runOwnedCommand } from "../core/owned_command";
 import { K3D_DELETE_TIMEOUT_MS } from "../core/constants";
 
@@ -108,12 +109,12 @@ const inspectObject = async (entry: NamespaceEntry, source: BackendReceipt["sour
   const createdAt = value.Created ?? value.CreatedAt;
   if (!createdAt) throw new SiloError(`ENGINE_UNAVAILABLE: missing resource creation identity: ${entry.name}`, "ENGINE_UNAVAILABLE");
   const identity = {
-    source, name: value.Name.replace(/^\//, ""), id: value.Id ?? value.Name,
+    source, name: value.Name.replace(/^\//, ""), id: entry.kind === "volume" ? value.Name : value.Id,
     createdAt, labels: safeLabels,
   };
-  const receipt: BackendReceipt = entry.kind === "container"
+  const receipt = BackendReceiptSchema.parse(entry.kind === "container"
     ? { ...identity, kind: "container", anonymousVolumes: await captureAnonymousVolumes(value, cwd) }
-    : { ...identity, kind: entry.kind };
+    : { ...identity, kind: entry.kind });
   const bindings = Object.fromEntries(Object.entries(value.NetworkSettings?.Ports ?? {}).map(([target, bindings]) => [target, (bindings ?? []).map(binding => Number(binding.HostPort))]));
   const publishedPorts = Object.values(bindings).flat();
   if (publishedPorts.some(p => !Number.isSafeInteger(p) || p < 1 || p > 65535)) throw new SiloError("ENGINE_UNAVAILABLE: invalid Docker publication", "ENGINE_UNAVAILABLE");
@@ -270,7 +271,8 @@ export const proveBackendAbsent = async (owner: ProjectOperation): Promise<void>
 
 /** The deletion target is an immutable container/network ID, never a volume name. */
 const deleteResources = async (owner: ProjectOperation, source: BackendReceipt["source"], kind: "container" | "network"): Promise<void> => {
-  for (const receipt of owner.resources().filter(r => r.source === source && r.kind === kind)) {
+  const deletable = owner.resources().filter((r): r is Extract<BackendReceipt, { kind: "container" | "network" }> => r.kind !== "volume");
+  for (const receipt of deletable.filter(r => r.source === source && r.kind === kind)) {
     if (await verifyResource(owner, receipt)) {
       const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force", "--volumes"] : []), receipt.id], {
         kind: `owned-${kind}-delete`, effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,

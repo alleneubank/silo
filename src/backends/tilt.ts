@@ -1,4 +1,4 @@
-import { TILT_CI_TIMEOUT_MS, TILT_DOWN_TIMEOUT_MS } from "../core/constants";
+import { TILT_CI_TIMEOUT_MS } from "../core/constants";
 import { runOwnedCommand, startOwnedCommand } from "../core/owned_command";
 import type { ProjectOperation } from "../core/lease_store";
 import type { TiltConfig } from "../core/types";
@@ -21,9 +21,6 @@ export const startTilt = (owner: ProjectOperation, env: Record<string, string>, 
   startOwnedCommand(owner, ["tilt", "up", ...(webMode === undefined ? [] : [`--web-mode=${webMode}`])], {
     kind: "tilt-up", effect: "workload", env, timeoutMs: null, capture: false,
   });
-
-export const tiltDown = (owner: ProjectOperation, env: Record<string, string>) =>
-  runOwnedCommand(owner, ["tilt", "down"], { kind: "tilt-down", effect: "delete", env, timeoutMs: TILT_DOWN_TIMEOUT_MS });
 
 export const tiltCi = (owner: ProjectOperation, env: Record<string, string>, options: TiltCiOptions) =>
   runOwnedCommand(owner, buildTiltCiArgv(options), { kind: "tilt-ci", effect: "workload", env, timeoutMs: TILT_CI_TIMEOUT_MS });

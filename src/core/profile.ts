@@ -16,7 +16,7 @@ interface ProfileResolution {
   source: ProfileSource;
 }
 
-const HOOK_KEYS = ["pre-up", "post-up", "pre-down", "post-down"] as const;
+const HOOK_KEYS = ["pre-up", "post-up"] as const;
 
 const normalizeProfileName = (value?: string): string | undefined => {
   if (value === undefined) {

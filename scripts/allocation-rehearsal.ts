@@ -169,10 +169,11 @@ async function live() {
   await silo(teardown, ["ci", name(teardown), "--timeout=30s"]);
   const beforeTeardown = await state(teardown);
   const tiltfile = readFileSync(path.join(teardown, "Tiltfile"), "utf8"); writeFileSync(path.join(teardown, "Tiltfile"), "fail('intentional fixture teardown failure')\n");
-  await silo(teardown, ["down", "--clean"], "COMMAND_FAILED");
-  assert.deepEqual((await state(teardown)).claims, beforeTeardown.claims); assert(existsSync(path.join(teardown, ".silo.lock")));
-  writeFileSync(path.join(teardown, "Tiltfile"), tiltfile); await silo(teardown, ["down", "--clean"]);
-  log({ scenario: "native Tilt teardown failure propagates and retains claims/snapshots", pass: true });
+  await silo(teardown, ["down", "--clean"]);
+  assert.deepEqual((await silo(teardown, ["status"])).project?.claims, []);
+  assert(!existsSync(path.join(teardown, ".silo.lock")));
+  writeFileSync(path.join(teardown, "Tiltfile"), tiltfile);
+  log({ scenario: "cleanup consumes receipts without evaluating a failing Tiltfile", originalClaims: beforeTeardown.claims, pass: true });
   const files = project("files", 'output="nested/Shared.env"');
   const nested = project("files/nested", 'output="shared.env"');
   await silo(files, ["env", name(files)]);
@@ -559,10 +560,10 @@ async function parentVolumes() {
   const tiltfile = path.join(p, "Tiltfile"); const source = readFileSync(tiltfile, "utf8");
   writeFileSync(tiltfile, "fail('intentional teardown failure after exact parent removal')\n");
   try {
-    await silo(p, ["down", "--clean"], "COMMAND_FAILED");
-    assert.notEqual((await command(root, ["docker", "container", "inspect", redis.id])).code, 0, "The recorded parent must already be removed before Tilt teardown");
-    assert(!(await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(data.Name), "Anonymous data must be removed with its recorded parent, even when later Tilt teardown fails");
-    log({ scenario: "exact parent removal removes its anonymous volume before a later teardown failure", parent: redis, data, pass: true });
+    await silo(p, ["down", "--clean"]);
+    assert.notEqual((await command(root, ["docker", "container", "inspect", redis.id])).code, 0, "The recorded parent must be removed without evaluating Tiltfile");
+    assert(!(await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(data.Name), "Anonymous data must be removed with its recorded parent without evaluating the Tiltfile");
+    log({ scenario: "exact parent removal removes its anonymous volume without delegated Tilt teardown", parent: redis, data, pass: true });
   } finally { writeFileSync(tiltfile, source); }
 }
 
@@ -625,7 +626,7 @@ async function retryCrash() {
   const created = z.array(z.object({ Id: z.string(), Name: z.string(), Created: z.string(), Labels: z.record(z.string()) })).length(1).parse(JSON.parse(await docker(["network", "inspect", id])))[0]!;
   recordResource(`network ${id} name=${networkName}; teardown exact recorded docker network rm ID\n`);
   const owner = await ProjectOperation.open(p);
-  try { owner.recordResources([{ kind: "network", source: "k3d", id, name: created.Name, createdAt: created.Created, labels: created.Labels }]); }
+  try { owner.recordResources([BackendReceiptSchema.parse({ kind: "network", source: "k3d", id, name: created.Name, createdAt: created.Created, labels: created.Labels })]); }
   finally { owner.finish(); }
   const blocker = await docker(["container", "create", "--network", networkName, "redis:7-alpine"]);
   recordResource(`network blocker ${blocker}; teardown exact returned container ID with --force --volumes\n`);
@@ -683,6 +684,99 @@ async function retryCrash() {
   }
 }
 
+async function composeReplacement() {
+  const p = composeProject("compose-replacement");
+  await silo(p, ["ci", name(p), "--timeout", "60s"]);
+  const { made, redis: parent, data: originalData } = await redisMount(p);
+  const bin = path.join(p, "bin"); mkdirSync(bin);
+  const paused = path.join(p, "parent-removed"), release = path.join(p, "resume-cleanup");
+  const realDocker = Bun.which("docker"); assert(realDocker);
+  writeFileSync(path.join(bin, "docker"), `#!/bin/sh\nset -eu\nif [ "\u0024{1-}" = container ] && [ "\u0024{2-}" = rm ]; then\n  for arg in "\u0024@"; do\n    if [ "\u0024arg" = "\u0024COMPOSE_PROBE_PARENT" ]; then\n      "\u0024COMPOSE_PROBE_DOCKER" "\u0024@"\n      printf paused > "\u0024COMPOSE_PROBE_PAUSED"\n      count=0\n      while [ ! -f "\u0024COMPOSE_PROBE_RELEASE" ]; do\n        count=\u0024((count + 1))\n        [ "\u0024count" -lt 2000 ] || exit 78\n        sleep 0.02\n      done\n      exit 0\n    fi\n  done\nfi\nexec "\u0024COMPOSE_PROBE_DOCKER" "\u0024@"\n`);
+  chmodSync(path.join(bin, "docker"), 0o755);
+  const pending = command(p, [process.execPath, cli, "down", "--clean", "--json"], {
+    ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, COMPOSE_PROBE_PARENT: parent.id,
+    COMPOSE_PROBE_PAUSED: paused, COMPOSE_PROBE_RELEASE: release, COMPOSE_PROBE_DOCKER: realDocker,
+  });
+  let replacementId: string | undefined;
+  let volume: string | undefined;
+  let replacementVolume: Awaited<ReturnType<typeof fixtureSnapshot>> | undefined;
+  try {
+    await until("exact parent removed before remaining teardown", async () => existsSync(paused));
+    assert(!(await docker(["container", "ls", "-a", "--no-trunc", "--format", "{{.ID}}"])).split("\n").includes(parent.id));
+    assert(!(await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(originalData.Name));
+    const recreated = await command(p, ["docker", "compose", "--project-name", made.allocation!.state.identity.composeName, "-f", "compose.yaml", "up", "-d"], {
+      ...safeEnv, SILO_PROJECT_ID: made.projectId, SILO_GENERATION: String(made.generation),
+    });
+    assert.equal(recreated.code, 0, recreated.stdout + recreated.stderr);
+    replacementId = (await docker(["container", "inspect", parent.name, "--format", "{{.Id}}"])).trim();
+    assert.notEqual(replacementId, parent.id);
+    recordResource(`replacement Q container ${replacementId} created by real Compose under project ${made.allocation!.state.identity.composeName}; fixture-owner teardown exact ID --force --volumes\n`);
+    const mounts = MountsSchema.parse(JSON.parse(await docker(["container", "inspect", replacementId, "--format", "{{json .Mounts}}"] )));
+    const data = mounts.find(m => m.Type === "volume" && m.Destination === "/data"); assert(data?.Name);
+    volume = data.Name; assert.notEqual(volume, originalData.Name);
+    replacementVolume = await fixtureSnapshot("volume", volume);
+    recordResource(`replacement Q anonymous volume W ${volume}; teardown with Q; if baseline removes Q without volumes, fixture owner verifies exact snapshot before independent removal\n`);
+    await docker(["container", "exec", replacementId, "sh", "-c", "printf replacement-data > /data/identity"]);
+    const replacement = await fixtureSnapshot("container", replacementId);
+    writeFileSync(release, "resume\n");
+    const result = await pending;
+    const containers = (await docker(["container", "ls", "-a", "--no-trunc", "--format", "{{.ID}}"])).split("\n");
+    const volumes = (await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n");
+    const after = await silo(p, ["status"]);
+    log({ scenario: "real Compose replacement after exact parent removal", oldParent: parent.id, oldData: originalData.Name,
+      replacementId, volume, pauseReached: true, resumedCode: result.code, resumed: JSON.parse(result.stdout),
+      replacementPreserved: containers.includes(replacementId), volumePreserved: volumes.includes(volume),
+      claimsBefore: made.claims, claimsAfter: after.project?.claims });
+    assert(containers.includes(replacementId), "cleanup deleted the unreceipted real Compose replacement Q");
+    assert(volumes.includes(volume), "cleanup deleted replacement Q's anonymous volume W");
+    assert.deepEqual(await fixtureSnapshot("container", replacementId), replacement);
+    assert.deepEqual(await fixtureSnapshot("volume", volume), replacementVolume);
+    assert.equal(await docker(["container", "exec", replacementId, "cat", "/data/identity"]), "replacement-data");
+    assert.deepEqual(after.project?.claims, made.claims, "replacement Q/W must keep all original claims");
+    assert.notEqual(result.code, 0, "cleanup must refuse while an unreceipted replacement remains");
+    log({ scenario: "recorded-ID teardown preserves recreated Compose container/data and claims", replacementId, volume, pass: true });
+  } finally {
+    writeFileSync(release, "resume\n");
+    await pending;
+    if (replacementId && (await docker(["container", "ls", "-a", "--no-trunc", "--format", "{{.ID}}"])).split("\n").includes(replacementId)) {
+      await docker(["container", "rm", "--force", "--volumes", replacementId]);
+    }
+    if (volume && (await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(volume)) {
+      assert.deepEqual(await fixtureSnapshot("volume", volume), replacementVolume);
+      await docker(["volume", "rm", volume]);
+    }
+  }
+}
+
+async function unreceiptedCompose() {
+  const p = composeProject("unreceipted-compose");
+  await silo(p, ["env", name(p)]);
+  const allocated = await state(p);
+  const composeName = allocated.allocation!.state.identity.composeName;
+  const env = { ...safeEnv, SILO_PROJECT_ID: allocated.projectId, SILO_GENERATION: String(allocated.generation) };
+  const created = await command(p, ["docker", "compose", "--project-name", composeName, "-f", "compose.yaml", "up", "-d"], env);
+  assert.equal(created.code, 0, created.stderr);
+  const found = await command(p, ["docker", "compose", "--project-name", composeName, "-f", "compose.yaml", "ps", "-q"], env);
+  assert.equal(found.code, 0, found.stderr);
+  const id = found.stdout.trim(); assert.match(id, /^[a-f0-9]{64}$/);
+  const networks = z.record(z.object({ NetworkID: z.string() })).parse(JSON.parse(await docker(["container", "inspect", id, "--format", "{{json .NetworkSettings.Networks}}"] )));
+  const network = Object.values(networks)[0]!.NetworkID; assert.match(network, /^[a-f0-9]{64}$/);
+  recordResource(`unreceipted Compose fixture container ${id}, network ${network}; fixture-owner cleanup exact container ID --force --volumes then network ID\n`);
+  try {
+    const before = await fixtureSnapshot("container", id);
+    await silo(p, ["down", "--clean"], "NAME_CONFLICT");
+    assert.deepEqual(await fixtureSnapshot("container", id), before);
+    const after = await state(p);
+    assert.deepEqual(after.claims, allocated.claims);
+    assert.deepEqual(after.resources, []);
+    log({ scenario: "cleanup cannot adopt an unreceipted matching Compose object", id, network, claims: after.claims, pass: true });
+  } finally {
+    await docker(["container", "rm", "--force", "--volumes", id]);
+    await docker(["network", "rm", network]);
+  }
+  await silo(p, ["down", "--clean"]);
+}
+
 log({ environment: { platform: process.platform, arch: process.arch, bun: Bun.version, root, accountHome, artifact: cli, sha256: digest(cli) } });
 let failure: unknown;
 try {
@@ -695,6 +789,8 @@ try {
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "parent-volumes") await parentVolumes();
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "inherited-volumes") await inheritedVolumes();
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "retry-crash") await retryCrash();
+  if (values.suite === "all" || values.suite === "volumes" || values.suite === "compose-replacement") await composeReplacement();
+  if (values.suite === "all" || values.suite === "volumes" || values.suite === "compose-replacement") await unreceiptedCompose();
   log({ result: "pass", suite: values.suite });
 } catch (error) { failure = error; log({ result: "fail", error: String(error), stack: error instanceof Error ? error.stack : null }); }
 finally {

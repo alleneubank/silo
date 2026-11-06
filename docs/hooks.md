@@ -13,8 +13,6 @@ silo doc hooks
 [hooks]
 pre-up = ["./scripts/check-deps.sh"]
 post-up = ["./scripts/seed-db.sh"]
-pre-down = ["./scripts/backup-state.sh"]
-post-down = []
 ```
 
 ## Execution
@@ -31,5 +29,9 @@ post-down = []
 
 - `pre-up` failure: aborts before k3d is created or Tilt starts.
 - `post-up` failure: aborts before Tilt starts.
-- `pre-down` failure: aborts teardown.
-- `post-down` failure: propagates; claims remain for reconciliation.
+
+Only startup hooks are supported. `pre-down` and `post-down` are rejected in
+base and profile configuration. Cleanup has no arbitrary shell callbacks: it
+stops recorded owned process groups and deletes receipted Docker IDs only.
+Run any owner-managed backup or other application workflow separately before
+cleanup; Silo does not delegate project-wide teardown to it.

@@ -97,7 +97,7 @@ policy; inspect actual listeners when validating a private deployment.
 
 ## Shutdown
 
-`silo down` stops verified recorded groups and runs owned `tilt down` with a
+`silo down` stops verified recorded groups and deletes recorded Docker IDs with a
 timeout. Teardown errors propagate. It never scans for arbitrary Tilt PIDs.
 Keep lifecycle commands inside Silo. A matching live `up` reuses it;
 `--force` cannot start another stack in that root. Parallel stacks need

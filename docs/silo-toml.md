@@ -74,8 +74,6 @@ webMode = "prod" # Optional; use Tilt's embedded production assets
 [hooks]
 pre-up = ["./scripts/check-deps.sh"]
 post-up = ["./scripts/seed-db.sh", "./scripts/generate-certs.sh"]
-pre-down = ["./scripts/backup-state.sh"]
-post-down = []
 ```
 
 ## Top-Level Fields
@@ -210,8 +208,6 @@ Hooks run shell commands at lifecycle points:
 [hooks]
 pre-up = ["./scripts/check-deps.sh"]
 post-up = ["./scripts/seed-db.sh"]
-pre-down = ["./scripts/backup-state.sh"]
-post-down = []
 ```
 
 Hooks inherit all generated env vars (ports, hosts, URLs, etc).
