@@ -143,6 +143,13 @@ port squatter causing a real partial k3d create, and a real Docker network-creat
 failure from overlapping fixture IPAM. The latter wrapper forwards to Docker
 with the fixture's occupied subnet; it does not stub a daemon response. The
 partial cluster uses exact cleanup and separate owner cache resolution.
+`producers` also runs `registry-provenance` (selectable alone). A pre-up hook
+starts a lone same-name container with the cluster's `k3d.cluster` label that
+publishes the assigned registry port. `ci` must refuse `NAME_CONFLICT` and so
+must `down --delete-cluster`, with the container's inspect output unchanged.
+Its `registry-hook-timeout` half (also selectable alone) waits for the real
+300 s hook timeout, then requires the same refusal at `down`. Only the cluster
+create that requested the registry can vouch for it.
 
 | Scenario driven by that command | Required observation |
 | --- | --- |

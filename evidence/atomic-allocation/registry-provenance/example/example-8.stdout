@@ -1,0 +1,1 @@
+ae       1794792 timeout 60s kubectl --kubeconfig /home/ae/.kube/localnet-redesign-98e9b46c port-forward service/web 3000:3000

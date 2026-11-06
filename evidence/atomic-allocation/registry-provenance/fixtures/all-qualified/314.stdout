@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"COMMAND_FAILED","message":"COMMAND_FAILED: owned-network-delete exited 1; owned claims retained. \nError response from daemon: error while removing network: network k3d-localnet-proof-m-65069b50-bsence has active endpoints (name:\"hardcore_mayer\" id:\"a0cc44ff1469\")\nexit status 1\n","launchId":"da6388d3-de0c-458f-86c0-0bf339b878b7","generation":1}

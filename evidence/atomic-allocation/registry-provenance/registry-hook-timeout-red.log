@@ -1,0 +1,34 @@
+{"environment":{"platform":"linux","arch":"x64","bun":"1.4.4","root":"/tmp/rehearsal/allocation-rehearsal-qX7yfk","accountHome":"/home/ae","artifact":"/tmp/baseline/cli.js","sha256":"2e4f0501ccc6423900d902a70623a629917153cc7c0a772b6eef3cb779741ec6"}}
+{"command":1,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","env","proof-qx7yfk-registry-hook-timeout","--json"],"code":0}
+{"command":2,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","ci","--timeout","30s","--json"],"code":1}
+{"command":3,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk","argv":["docker","container","inspect","c1cd1c61825f3e0973b3d0b981a8f16f66c5dd36796aee4d484c0ec331bb7270"],"code":0}
+{"command":4,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","status","--json"],"code":0}
+{"observation":"pre-up hook timeout","exit":1,"code":"TIMEOUT","squatterReceipted":false}
+{"command":5,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","down","--delete-cluster","--json"],"code":0}
+{"command":6,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","status","--json"],"code":0}
+{"observation":"down --delete-cluster with timed-out hook pending","exit":0,"code":null,"squatterReceipted":false}
+{"result":"fail","error":"AssertionError [ERR_ASSERTION]: Expected \"actual\" to be strictly unequal to: 0","stack":"AssertionError [ERR_ASSERTION]: Expected \"actual\" to be strictly unequal to: 0\n    at registryProvenance (/mnt/scripts/allocation-rehearsal.ts:1048:10)"}
+{"command":7,"cwd":"/tmp/rehearsal/allocation-rehearsal-qX7yfk","argv":["docker","container","inspect","c1cd1c61825f3e0973b3d0b981a8f16f66c5dd36796aee4d484c0ec331bb7270"],"code":1}
+251 |   const ignored = await command(brokenDown, [process.execPath, path.resolve(values.legacy09), "down", "--clean"], oldEnv);
+252 |   assert.equal(ignored.code, 0); assert(!existsSync(path.join(brokenDown, ".silo.lock")));
+253 |   log({ scenario: "0.9.0 red control: failed Tilt teardown still reports success and removes snapshots", observed: true });
+254 |   log({ scenario: "paused old operation drained before cutover; reverse lock-only reservation refused until owner down", pass: true });
+255 | }
+256 | async function docker(argv: string[]) { const r = await command(root, ["docker", ...argv]); assert.equal(r.code, 0, r.stderr); return r.stdout.trim(); }
+                                                                                                         ^
+AssertionError: Error response from daemon: No such container: c1cd1c61825f3e0973b3d0b981a8f16f66c5dd36796aee4d484c0ec331bb7270
+
+
+1 !== 0
+
+ generatedMessage: false,
+     actual: 1,
+   expected: 0,
+   operator: "strictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at docker (/mnt/scripts/allocation-rehearsal.ts:256:100)
+      at fixtureSnapshot (/mnt/scripts/allocation-rehearsal.ts:258:55)
+
+Bun v1.4.4 (Linux x64)

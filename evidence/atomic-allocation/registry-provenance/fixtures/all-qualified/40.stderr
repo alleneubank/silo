@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/rehearsal/allocation-rehearsal-MD2HNi/legacy-peer/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info: Project 61c4a6bc-68d8-4c9b-83d9-ad9fd873dc73, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/rehearsal/allocation-rehearsal-MD2HNi/legacy-peer/.localnet.env; set +a
