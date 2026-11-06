@@ -17,7 +17,7 @@ import { checkPortFree, type PortCheckFn } from "./ports";
 const MAX_PROJECTS = 10_000;
 const MAX_CLAIMS = 4096;
 const MAX_LAUNCHES = 1024;
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const APPLICATION_ID = 0x53494c4f;
 
 const SCHEMA = `
@@ -72,11 +72,15 @@ CREATE TABLE resources (
   generation INTEGER NOT NULL,
   kind TEXT NOT NULL,
   name TEXT NOT NULL,
+  id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
   receipt TEXT NOT NULL,
   deleted INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (project_id, generation, kind, name),
+  PRIMARY KEY (project_id, generation, kind, id, created_at),
   FOREIGN KEY (project_id, generation) REFERENCES allocations(project_id, generation)
 );
+CREATE UNIQUE INDEX resource_object_id ON resources(project_id, generation, kind, id) WHERE kind != 'volume';
+CREATE UNIQUE INDEX resource_live_name ON resources(project_id, generation, kind, name) WHERE deleted = 0;
 CREATE TABLE completions (
   project_id TEXT NOT NULL,
   generation INTEGER NOT NULL,
@@ -93,7 +97,7 @@ CREATE TABLE sinks (
   PRIMARY KEY (project_id, generation, target_key),
   FOREIGN KEY (project_id, generation) REFERENCES allocations(project_id, generation)
 );
-PRAGMA user_version = 1;
+PRAGMA user_version = ${SCHEMA_VERSION};
 PRAGMA application_id = ${APPLICATION_ID};
 `;
 
@@ -144,6 +148,14 @@ const rootIdentity = (root: string): { canonical: string; physical: string; hash
   return { canonical, physical: `${stat.dev}/${stat.ino}`, hash: digest(canonical) };
 };
 
+const databaseVersion = (db: Database, create: boolean): number => {
+  const version = db.query<{ user_version: number }, []>("PRAGMA user_version").get()!.user_version;
+  const application = db.query<{ application_id: number }, []>("PRAGMA application_id").get()!.application_id;
+  if (version !== 0 && (version !== SCHEMA_VERSION || application !== APPLICATION_ID)) throw new Error("Unrecognized lease-store schema or application");
+  if (version === 0 && (!create || application !== 0 || db.query<{ count: number }, []>("SELECT count(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").get()!.count !== 0)) throw new Error("Unrecognized database at lease-store path");
+  return version;
+};
+
 const openDatabase = (storePath: string, readonly: boolean, create = !readonly): Database => {
   let connection: Database | undefined;
   try {
@@ -151,31 +163,23 @@ const openDatabase = (storePath: string, readonly: boolean, create = !readonly):
       mkdirSync(path.dirname(storePath), { recursive: true });
       if (existsSync(storePath)) fileIdentity(storePath);
     }
+    if (!readonly && existsSync(storePath)) {
+      // An unsupported store must not be opened for writes, including SQLite's
+      // automatic hot-journal recovery before the first ordinary query.
+      const probe = new Database(storePath, { readonly: true, create: false, strict: true });
+      try { probe.exec("PRAGMA busy_timeout = 5000;"); databaseVersion(probe, create); }
+      finally { probe.close(); }
+    }
     const db = new Database(storePath, { readonly, create, strict: true });
     connection = db;
     db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
-    const knownVersion = db.query<{ user_version: number }, []>("PRAGMA user_version").get()!.user_version;
-    const knownApplication = db.query<{ application_id: number }, []>("PRAGMA application_id").get()!.application_id;
-    if (knownVersion !== 0 && (knownVersion !== SCHEMA_VERSION || knownApplication !== APPLICATION_ID)) throw new Error("Unrecognized lease-store schema or application");
-    if (knownVersion === 0 && (!create || knownApplication !== 0 || db.query<{ count: number }, []>("SELECT count(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").get()!.count !== 0)) throw new Error("Unrecognized database at lease-store path");
+    databaseVersion(db, create);
     if (!readonly) {
       db.exec("PRAGMA journal_mode = DELETE; PRAGMA synchronous = FULL;");
       db.transaction(() => {
-        const version = db.query<{ user_version: number }, []>("PRAGMA user_version").get()!.user_version;
-        if (version === 0) {
-          const tables = db.query<{ count: number }, []>("SELECT count(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").get()!.count;
-          if (tables !== 0) throw new Error("Unrecognized database at lease-store path");
-          db.exec(SCHEMA);
-        }
-        else if (version !== SCHEMA_VERSION) throw new Error(`Unsupported lease schema: ${version}`);
-        const application = db.query<{ application_id: number }, []>("PRAGMA application_id").get()!.application_id;
-        if (application !== APPLICATION_ID) throw new Error("Unrecognized lease-store application marker");
+        if (databaseVersion(db, create) === 0) db.exec(SCHEMA);
+        databaseVersion(db, false);
       }).immediate();
-    } else {
-      const version = db.query<{ user_version: number }, []>("PRAGMA user_version").get()!.user_version;
-      if (version !== SCHEMA_VERSION) throw new Error(`Unsupported lease schema: ${version}`);
-      const application = db.query<{ application_id: number }, []>("PRAGMA application_id").get()!.application_id;
-      if (application !== APPLICATION_ID) throw new Error("Unrecognized lease-store application marker");
     }
     return db;
   } catch (cause) {
@@ -375,7 +379,8 @@ export class ProjectOperation {
       const previous = LaunchSchema.parse(JSON.parse(row.receipt));
       if (previous.phase === "exited" && previous.exitCode !== null && previous.effect === "delete" &&
         (previous.terminal || previous.id === completed.id) && previous.kind === completed.kind &&
-        JSON.stringify(previous.command) === JSON.stringify(completed.command)) {
+        JSON.stringify(previous.command) === JSON.stringify(completed.command) &&
+        JSON.stringify(previous.deletionTarget) === JSON.stringify(completed.deletionTarget)) {
         this.checkpointLaunch({ ...previous, reconciled: true });
       }
     }
@@ -438,8 +443,7 @@ export class ProjectOperation {
     if (claims.length + targets.length > MAX_CLAIMS) throw new SiloError("Allocation exceeds claim limit", "INVALID_CONFIG");
     const previous = this.current();
     if (previous) {
-      if (this.resources().length > 0 || this.launches().some(l =>
-        !l.terminal || (l.phase !== "cancelled" && (l.phase !== "exited" || !l.reconciled)))) {
+      if (this.resources().length > 0 || this.launches().some(l => !l.terminal || !l.reconciled)) {
         throw new SiloError("CLEANUP_REQUIRED: stop and reconcile retained resources before changing this generation", "CLEANUP_REQUIRED");
       }
     }
@@ -531,7 +535,8 @@ export class ProjectOperation {
     return this.db.query<Claim, [string, number]>("SELECT domain, resource, is_prefix AS prefix FROM claims WHERE project_id = ? AND generation = ?").all(this.projectId, this.generation).map(c => ({ domain: c.domain, resource: c.resource, ...(c.prefix ? { prefix: true } : {}) }));
   }
 
-  planLaunch(input: Pick<Launch, "kind" | "command" | "effect">): Extract<Launch, { phase: "planned" }> {
+  planLaunch(input: Pick<Launch, "kind" | "command" | "effect" | "deletionTarget">): Extract<Launch, { phase: "planned" }> {
+    assert(input.deletionTarget === undefined || input.effect === "delete", "Only a deletion may carry a deletion target");
     const launch: Extract<Launch, { phase: "planned" }> = { ...input, id: randomUUID(), phase: "planned", reconciled: false, terminal: false, supervisorPid: null, leaderPid: null, groupId: null, supervisorIdentity: null, exitCode: null };
     this.transaction(() => {
       if (this.launches().length >= MAX_LAUNCHES) throw new SiloError("Too many launch records; clean this generation", "STORE_FULL");
@@ -549,9 +554,9 @@ export class ProjectOperation {
     this.transaction(() => {
       const old = this.launches().find(l => l.id === launch.id);
       if (!old) throw new SiloError("Launch intent no longer belongs to this operation", "STALE_OPERATION");
-      const transitions = { planned: ["planned", "granted", "cancelled"], granted: ["granted", "exited"], exited: ["exited"], cancelled: ["cancelled"] };
+      const transitions = { planned: ["planned", "granted", "cancelled"], granted: ["granted", "exited", "resolved"], exited: ["exited"], cancelled: ["cancelled"], resolved: ["resolved"] };
       assert(transitions[old.phase].includes(launch.phase), `Invalid launch transition: ${old.phase} -> ${launch.phase}`);
-      assert.deepEqual([launch.kind, launch.effect, launch.command], [old.kind, old.effect, old.command], "Launch identity is immutable");
+      assert.deepEqual([launch.kind, launch.effect, launch.command, launch.deletionTarget], [old.kind, old.effect, old.command, old.deletionTarget], "Launch identity is immutable");
       if (old.phase !== "planned") assert.deepEqual(
         [launch.supervisorPid, launch.leaderPid, launch.groupId, launch.supervisorIdentity],
         [old.supervisorPid, old.leaderPid, old.groupId, old.supervisorIdentity], "Executor identity is immutable",
@@ -597,16 +602,33 @@ export class ProjectOperation {
       for (const resource of resources) {
         const claimed = this.resourceClaims().some(c => c.domain === resource.kind && (c.resource === resource.name || (c.prefix && resource.name.startsWith(c.resource))));
         if (!claimed) throw new SiloError(`NAME_CONFLICT: resource lies outside this allocation's claims: ${resource.name}`, "NAME_CONFLICT");
-        const old = this.resources(true).find(r => r.kind === resource.kind && r.name === resource.name);
-        if (old && (old.id !== resource.id || old.createdAt !== resource.createdAt)) throw new SiloError(`NAME_CONFLICT: resource identity changed: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
-        if (!old) this.db.query("INSERT INTO resources (project_id, generation, kind, name, receipt) VALUES (?, ?, ?, ?, ?)").run(this.projectId, this.generation, resource.kind, resource.name, JSON.stringify(BackendReceiptSchema.parse(resource)));
+        const active = this.resources();
+        const sameName = active.find(r => r.kind === resource.kind && r.name === resource.name);
+        if (sameName && (sameName.id !== resource.id || sameName.createdAt !== resource.createdAt)) throw new SiloError(`NAME_CONFLICT: live resource identity changed: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
+        const old = this.resources(true).find(r => r.kind === resource.kind && r.id === resource.id && (r.kind !== "volume" || r.createdAt === resource.createdAt));
+        if (old && (old.name !== resource.name || old.createdAt !== resource.createdAt || !active.some(r => r.kind === old.kind && r.id === old.id && r.createdAt === old.createdAt))) {
+          throw new SiloError(`NAME_CONFLICT: resource identity changed or reappeared: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
+        }
+        if (!old) this.db.query("INSERT INTO resources (project_id, generation, kind, name, id, created_at, receipt) VALUES (?, ?, ?, ?, ?, ?, ?)").run(this.projectId, this.generation, resource.kind, resource.name, resource.id, resource.createdAt, JSON.stringify(BackendReceiptSchema.parse(resource)));
       }
     });
   }
 
-  forgetResource(resource: BackendReceipt): void {
+  /** The backend must first prove this exact identity absent on the allocation's engine. */
+  recordResourceAbsence(resource: BackendReceipt): void {
     this.transaction(() => {
-      this.db.query("UPDATE resources SET deleted = 1 WHERE project_id = ? AND generation = ? AND kind = ? AND name = ? AND receipt = ?").run(this.projectId, this.generation, resource.kind, resource.name, JSON.stringify(resource));
+      const stored = this.resources(true).find(r => r.kind === resource.kind && r.id === resource.id && r.createdAt === resource.createdAt);
+      assert.deepEqual(stored, resource, "Absence must consume this generation's exact receipt");
+      if (resource.kind !== "volume") {
+        for (const launch of this.launches()) {
+          if (!launch.terminal || launch.effect !== "delete" || launch.deletionTarget?.kind !== resource.kind || launch.deletionTarget.id !== resource.id) continue;
+          if (launch.phase === "exited") this.checkpointLaunch({ ...launch, reconciled: true });
+          else if (launch.phase === "granted") this.checkpointLaunch({ ...launch, phase: "resolved", effect: "delete", deletionTarget: launch.deletionTarget,
+            resolution: "target-absent", terminal: true, reconciled: true });
+        }
+      }
+      const updated = this.db.query("UPDATE resources SET deleted = 1 WHERE project_id = ? AND generation = ? AND kind = ? AND id = ? AND created_at = ?").run(this.projectId, this.generation, resource.kind, resource.id, resource.createdAt);
+      assert.equal(updated.changes, 1, "Absence must tombstone one exact receipt");
     });
   }
 

@@ -122,12 +122,21 @@ cat "$TMPDIR/rehearsal.log"
 A successful run contains `{"result":"pass","suite":"all"}` **and** no
 later cleanup failure, and exits zero. Keep the entire log and fixture evidence.
 The suites may be selected independently with `--suite legacy`, `live`,
-`backend` or `volumes` when a source change justifies rerunning only affected
+`backend`, `volumes` or `lifecycle` when a source change justifies rerunning only affected
 scenarios. `volumes` includes the focused `same-second`, `paused-delete`,
 `parent-volumes`, `inherited-volumes`, `retry-crash` and `compose-replacement` cases. These focused
 names are also valid suite selectors. The replacement tests seed a real
 creation-result receipt from Docker's returned parent/mount identities, then
 drive the built public CLI; they do not mock the engine or edit its database.
+
+`lifecycle` adds same-generation Compose and k3d restart, failed Compose CI,
+down-stopped live Compose up with replacement/retry preservation, externally
+absent failed deletion and lost exact-delete completion. `absent-delete`,
+`lost-delete` and `live-compose-replacement` can also run independently.
+The lost-completion case kills only the exact recorded executor group after
+verifying its UID, group and launch UUID; it does not select a process from a
+process-table search. A missing fact is closed as target-absent with null exit,
+never as an invented successful execution. Unknown creates must still refuse.
 
 | Scenario driven by that command | Required observation |
 | --- | --- |
@@ -156,6 +165,10 @@ drive the built public CLI; they do not mock the engine or edit its database.
 | Real Compose replacement during cleanup | Pause after exact parent P removal, recreate the service through real Compose under the same project, then resume. Replacement Q, its new anonymous volume W, data and all claims survive. Cleanup refuses until the fixture owner removes Q by its exact ID; retry then retires. No delegated Tilt/Compose teardown is permitted. |
 | Inherited volumes-from | Silo refuses before removing the inherited borrower and leaves donor/borrower/volumes/claims unchanged. The separate owned Docker fixture proves `rm --volumes` preserves a live donor's references and named mounts, but removes inherited anonymous data when the last user is removed after its donor is gone. |
 | Durable successful retry / CLI crash | A real network deletion first fails on a fixture endpoint. Remove that exact fixture endpoint, pause the retry, SIGSTOP the recorded CLI, release real deletion, and observe the exact successful executor completion durably while the CLI still has a granted receipt. SIGKILL that CLI. Public recovery reconciles the earlier failed request and releases claims without another deletion of the absent network. |
+| Same-generation restart | Compose ci/down/ci/clean records fresh same-name IDs while retaining old mount audit receipts. k3d ci/delete-cluster/ci records fresh node/network IDs and retains its named cache until independent owner resolution before final clean. |
+| Finished failed/stopped producer | CI creates Redis then a dependent resource fails; clean records/removes its exact IDs. Live up creates Redis; down stops its recorded group and records/removes its exact IDs. A partial-cleanup retry preserves recreated Q/W/data/claims without recording Q. |
+| Failed delete, target externally absent | Real network deletion fails on an endpoint. Fixture owner removes only its recorded endpoint and network IDs; public cleanup reconciles the failed request and retires. |
+| Delete completion lost | After real network deletion succeeds, pause before completion and kill only the verified recorded executor group. The request remains granted with no fact. Recovery reports resolved/target-absent with null exit, reconciles prior matching failure, then clean retires. |
 
 Repeat the same command on **both case-insensitive and case-sensitive native
 filesystems**, using locations supplied by the Mac account owner (no disk or

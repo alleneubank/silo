@@ -1,5 +1,21 @@
 # Troubleshooting
 
+After a failed `ci` or while a Compose `up` is live, use `down --clean` to stop
+the recorded group and capture its finished owned producers before exact-ID
+cleanup. The producer's recording is sealed before deletion, so a retry cannot
+adopt a same-name replacement. Missing non-delete completion facts, inherited
+mount ambiguity and unsupported provenance still retain claims.
+
+A failed exact-ID delete can recover after the target disappears independently.
+Retry down on its recorded engine. A lost completion may show a `resolved` /
+`target-absent` launch with null exit code; this is an absence proof, not a
+successful tool exit. Unknown creates remain unresolved.
+
+Unreleased proposal SQLite format 1 is incompatible with format 2 and refuses
+with `LEASE_STORE_UNAVAILABLE` before writable open. Use the matching old
+proposal to drain its projects; any real store recreation belongs to a separately
+authorized host cutover. Do not delete an unrecognized store to clear the error.
+
 Use `silo status --json` and the error's code before changing anything.
 Errors preserve ownership when absence or attribution cannot be proved.
 

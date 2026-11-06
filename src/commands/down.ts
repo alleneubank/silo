@@ -1,7 +1,7 @@
 import { ProjectOperation } from "../core/lease_store";
 import { writeEnvAndLockfile } from "../core/env";
 import { deleteCluster } from "../backends/k3d";
-import { assertEngine, assertNamesAvailable, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
+import { assertEngine, assertNamesAvailable, captureFinishedComposeProducers, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
 import { stopOwnedCommand } from "../core/owned_command";
 import { logger } from "../utils/logger";
 import { SiloError } from "../utils/errors";
@@ -22,18 +22,25 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     for (const launch of owner.launches()) await stopOwnedCommand(launch);
     terminalGroups(owner);
     owner.applyCompletions();
+    for (const launch of owner.launches()) {
+      const target = launch.deletionTarget;
+      if (!launch.terminal || launch.reconciled || launch.effect !== "delete" || !target) continue;
+      const receipt = owner.resources(true).find(r => r.kind === target.kind && r.id === target.id);
+      if (receipt && !(await verifyResource(owner, receipt))) owner.recordResourceAbsence(receipt);
+    }
     const missing = owner.launches().find(l => l.phase === "granted");
     if (missing) throw new SiloError(`CLEANUP_REQUIRED: ${missing.kind}/${missing.id} has no completion fact; process death cannot resolve an outstanding request`, "CLEANUP_REQUIRED");
+    await captureFinishedComposeProducers(owner);
     const effects = owner.launches().filter(l => l.phase === "exited" && !l.reconciled && l.effect !== "none");
     if (effects.length > 0 || owner.resources().length > 0) {
       await assertEngine(owner);
-      await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources(true));
+      await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
     }
-    // Cleanup consumes durable creation receipts. Discovering a matching name
-    // or label here must never grant new deletion authority.
+    // Finished producers are sealed above. No capture can run after deletion
+    // starts or renew authority on a later cleanup retry.
     await deleteOwnedContainers(owner, "compose");
     await deleteOwnedNetworks(owner, "compose");
-    for (const receipt of owner.resources()) if (!(await verifyResource(owner, receipt))) owner.forgetResource(receipt);
+    for (const receipt of owner.resources()) if (!(await verifyResource(owner, receipt))) owner.recordResourceAbsence(receipt);
     if (options["delete-cluster"] && owner.resources().some(r => r.source === "k3d")) await deleteCluster(owner);
     terminalGroups(owner);
     const leaks = await findAnonymousLeaks(owner);

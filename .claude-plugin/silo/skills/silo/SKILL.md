@@ -21,9 +21,11 @@ changing its configuration or repairing an environment. Discover topics with
   Receipted Compose containers are removed with their anonymous volumes.
   Cleanup stops only verified recorded process groups and removes recorded
   container/network IDs. It never evaluates Tiltfile or runs teardown hooks.
-  Kubernetes workloads remain in a retained cluster. Objects not captured
-  before an interrupted producer stopped require independent owner resolution;
-  cleanup never adopts matching names or labels.
+  Kubernetes workloads remain in a retained cluster. Finished owned Tilt/hook
+  producers are recorded before deletion, including failed CI and stopped live
+  up; recording is sealed before any deletion and cannot renew on retry. Missing
+  non-delete facts or unsupported provenance require independent owner resolution.
+  Matching names/labels without a pending owned producer never grant authority.
   `silo down --delete-cluster --clean` explicitly deletes the owned cluster,
   removing each exact receipted container ID with its anonymous volumes, then
   snapshots and claims once absence is proved. Silo never deletes a volume by
@@ -33,6 +35,11 @@ changing its configuration or repairing an environment. Discover topics with
   resolves them independently; Silo cannot clean a volume whose parent is gone.
   Inherited `volumes-from` provenance refuses before container removal.
   k3d's named image cache also remains for its owner to resolve before clean.
+  Same-config ci/down/ci reuses its generation with new ID receipts and keeps
+  old mount history. A terminal exact-ID delete can resolve through verified
+  target absence; `resolved`/`target-absent` with null exit does not claim success.
+  Unreleased store format 1 requires matching-old-proposal drain and owner-led
+  recreation before format 2; no migration/reset is automatic.
   Failed or uncertain teardown retains ownership. Inspect `status` and
   `silo doc troubleshooting`; never delete the store, lock or peer reservation
   to make allocation succeed. Never adopt or delete a conflicting object.

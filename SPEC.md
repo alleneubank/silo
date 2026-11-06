@@ -20,6 +20,12 @@ Unknown schemas, corruption, missing expected state and failed queries refuse;
 there is no empty-store fallback. Runtime CLI/env store overrides do not exist.
 Tests inject a private constructor store or run in a disposable OS account.
 
+The unreleased proposal store format is 2. Format-1 proposal stores are refused
+through a read-only header probe before any writable connection; no migration,
+reset or automatic hot-journal recovery of an unsupported store occurs. Owners
+must drain the matching old proposal before recreating its disposable store.
+Config version 1, snapshot version 2 and JSON response version 1 are separate.
+
 A single constructor commits each generation's declared ports, final rendered
 identities, namespace prefixes and file targets in `BEGIN IMMEDIATE`.
 Claims have non-null unique `(domain, resource)` keys and foreign-key owners
@@ -73,7 +79,7 @@ state needed for reconciliation. `--force` reconfigures only a stopped,
 reconciled generation; it refuses live, retained and cleanup-required state.
 
 `down` stops only journaled owned groups after verifying their owner and command,
-reconciles completion facts, and deletes receipted Compose containers and
+reconciles completion facts, records finished owned Compose producers, and deletes receipted Compose containers and
 networks by immutable Docker ID. It never evaluates a Tiltfile, runs lifecycle
 hooks, or delegates teardown to Tilt, Compose, k3d or a name/label selector.
 Cluster resources and Kubernetes workloads remain by default. Explicit
@@ -167,14 +173,40 @@ but cannot grant name-based cleanup authority. `status --json` exposes
 Tools that delete/recreate containers before capture can destroy attribution;
 arbitrary external tool lifecycles are outside the cooperating-tool contract.
 
-Cleanup consumes existing durable receipts; discovery during cleanup never
-grants deletion authority. An interrupted producer can therefore leave
-unreceipted objects that require independent owner resolution. Matching names,
-labels and project paths do not permit adoption at teardown. Container/network
+Resource history keys container/network identities by immutable ID. One live
+receipt per kind/name is permitted; an earlier receipt is tombstoned only after
+exact absence is verified. A fresh same-name ID from an owned creation result
+can then be recorded in the same generation. Tombstones retain anonymous-mount
+audit data, and status includes historical receipts rather than asserting their
+physical liveness. Volume audit identity includes name and creation time; it
+never grants deletion authority.
+
+Before deletion, finished started Tilt workloads and startup hooks with durable
+completion facts are recorded using the success path's claimed namespace,
+labels and physical-root provenance. Nonzero CI and down-stopped live up use the
+same boundary. Recording is durably reconciled before any deletion starts; a
+cleanup retry cannot renew that producer's capture or adopt a replacement Q.
+Pre-up hook results are recorded before k3d's namespace preflight, so the next
+stage recognizes the generation's own newly created objects.
+Matching labels/names without such a pending owned producer do not grant recording
+authority. Unknown producers, missing non-delete completion facts and unsupported
+creation provenance retain claims for independent owner resolution. Container/network
 receipts parse only Docker's full 64-character immutable IDs, with no name
 fallback. Anonymous volumes are removed only as an effect of exact-parent
 deletion; named volumes remain audit-only because Docker gives them no immutable
 object ID. Pre-down/post-down hooks are rejected in base and profile config.
+
+Exact Docker deletion intents carry typed kind/immutable-ID targets. When their
+groups are terminal and the exact target is proven absent on the recorded engine,
+request reconciliation and its resource tombstone commit together. A missing
+completion uses phase `resolved`, resolution `target-absent`, terminal/reconciled
+true and exitCode null; it does not claim execution or invent a successful exit.
+This proof cannot resolve an unknown create or an untargeted generic command.
+
+Decision (provisional 2026-11-06, coordinator via addendum 7): record the
+generation's finished producers before deletion, including failed CI and
+down-stopped live up. Deletion remains recorded IDs only. The human may reverse
+this interior recording choice; no migration or project-wide teardown is added.
 
 Decision (ratified 2026-11-05, human via silo-redesign addendum 6): stop only
 recorded owned processes and delete only recorded Docker IDs; no delegated
@@ -203,6 +235,20 @@ cover durable successful retry reconciliation. Named-volume behavior follows
 - REQ-CLEANUP-003: recovery folds durable successful exact deletion retries
   through the common reconciliation rule, never an earlier success over a
   later failure. Check: `--suite retry-crash` and lease-store deletion tests.
+- REQ-CLEANUP-005: Compose ci/down/ci and k3d ci/delete-cluster/ci keep the
+  generation and record fresh same-name IDs without discarding prior mount
+  history. Check: `--suite lifecycle` and lease-store receipt-cycle tests.
+- REQ-CLEANUP-006: finished owned producers are captured once before deletion;
+  failed CI and stopped live up clean their exact IDs, while partial-cleanup
+  retries preserve Q/W and claims. Check: `--suite lifecycle`,
+  `live-compose-replacement` and `compose-replacement`.
+- REQ-CLEANUP-007: terminal exact-ID delete requests reconcile on proven target
+  absence, preserving an unknown exit when completion is lost; unknown creates
+  stay unresolved. Check: `--suite absent-delete`, `lost-delete` and lease-store
+  exact-target absence tests.
+- REQ-STORE-001: unsupported proposal stores refuse before writable open.
+  Check: lease-store unsupported-format byte-preservation test and the native
+  format-1 refusal record; the store header is parsed at its database boundary.
 
 Trusted hooks/Tiltfiles must consume generated identities and ports. In
 particular Tilt requires explicit `docker_compose(project_name=...)`; its

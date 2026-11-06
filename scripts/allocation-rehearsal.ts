@@ -598,8 +598,7 @@ async function inheritedVolumes() {
   const borrowerBefore = await fixtureSnapshot("container", borrower);
   cleanupObjects.push({ kind: "container", id: borrower, name: borrowerName, created: borrowerBefore });
   const before = await state(p);
-  // Failed creation capture granted no receipt; cleanup cannot adopt it.
-  await silo(p, ["down", "--clean"], "NAME_CONFLICT");
+  await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
   assert.deepEqual((await state(p)).claims, before.claims);
   assert.deepEqual(await fixtureSnapshot("container", borrower), borrowerBefore);
   assert.deepEqual(await fixtureSnapshot("container", donor), donorBefore);
@@ -623,8 +622,8 @@ async function inheritedVolumes() {
   log({ scenario: "inherited provenance refuses without deletion; Docker preserves shared live references and named data, but removes last-user inherited anonymous data", donor, borrower, lastUser, anonymous: anonymous.Name, named, pass: true });
 }
 
-async function retryCrash() {
-  const p = project("retry-crash", '[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n');
+async function retryCrash(mode: "retry-crash" | "external-absence" | "lost-completion" = "retry-crash") {
+  const p = project(mode, '[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n');
   const allocated = await silo(p, ["env", name(p)]); assert(allocated.project?.allocation);
   const projectId = allocated.project.projectId, generation = allocated.project.generation;
   const networkName = `k3d-${allocated.project.allocation.state.identity.k3dClusterName}`;
@@ -646,13 +645,23 @@ async function retryCrash() {
   assert.deepEqual(await fixtureSnapshot("container", blocker), blockerBefore);
   await docker(["container", "rm", "--force", "--volumes", blocker]); cleanupObjects.pop();
 
+  if (mode === "external-absence") {
+    assert(first.deletionTarget?.id === id);
+    await docker(["network", "rm", id]);
+    await silo(p, ["down", "--delete-cluster", "--clean"]);
+    const recovered = (await silo(p, ["status"])).project;
+    assert.equal(recovered?.generation, 0); assert.deepEqual(recovered?.claims, []);
+    log({ scenario: "failed exact-ID deletion reconciles after externally proven target absence", network: id, failedLaunch: first.id, pass: true });
+    return;
+  }
+
   const bin = path.join(p, "bin"); mkdirSync(bin);
   const paused = path.join(p, "paused"), release = path.join(p, "release");
   const realDocker = Bun.which("docker"); assert(realDocker);
-  writeFileSync(path.join(bin, "docker"), `#!/bin/sh\nset -eu\nif [ "\u0024{1-}" = network ] && [ "\u0024{2-}" = rm ] && [ "\u0024{3-}" = "\u0024RETRY_PROBE_TARGET" ]; then\n  printf paused > "\u0024RETRY_PROBE_PAUSED"\n  count=0\n  while [ ! -f "\u0024RETRY_PROBE_RELEASE" ]; do\n    count=\u0024((count + 1))\n    [ "\u0024count" -lt 1500 ] || exit 78\n    sleep 0.02\n  done\nfi\nexec "\u0024RETRY_PROBE_DOCKER" "\u0024@"\n`);
+  writeFileSync(path.join(bin, "docker"), `#!/bin/sh\nset -eu\nif [ "\u0024{1-}" = network ] && [ "\u0024{2-}" = rm ] && [ "\u0024{3-}" = "\u0024RETRY_PROBE_TARGET" ]; then\n  if [ "\u0024{RETRY_PROBE_LOSE_FACT-0}" = 1 ]; then "\u0024RETRY_PROBE_DOCKER" "\u0024@"; fi\n  printf paused > "\u0024RETRY_PROBE_PAUSED"\n  count=0\n  while [ ! -f "\u0024RETRY_PROBE_RELEASE" ]; do\n    count=\u0024((count + 1))\n    [ "\u0024count" -lt 1500 ] || exit 78\n    sleep 0.02\n  done\n  if [ "\u0024{RETRY_PROBE_LOSE_FACT-0}" = 1 ]; then exit 0; fi\nfi\nexec "\u0024RETRY_PROBE_DOCKER" "\u0024@"\n`);
   chmodSync(path.join(bin, "docker"), 0o755);
   const proc = Bun.spawn([process.execPath, cli, "down", "--delete-cluster", "--clean", "--json"], {
-    cwd: p, detached: true, env: { ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, RETRY_PROBE_TARGET: id, RETRY_PROBE_PAUSED: paused, RETRY_PROBE_RELEASE: release, RETRY_PROBE_DOCKER: realDocker },
+    cwd: p, detached: true, env: { ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, RETRY_PROBE_TARGET: id, RETRY_PROBE_PAUSED: paused, RETRY_PROBE_RELEASE: release, RETRY_PROBE_DOCKER: realDocker, RETRY_PROBE_LOSE_FACT: mode === "lost-completion" ? "1" : "0" },
     stdin: "ignore", stdout: Bun.file(path.join(p, "interrupted.stdout")), stderr: Bun.file(path.join(p, "interrupted.stderr")),
   });
   processes.add(proc);
@@ -662,6 +671,29 @@ async function retryCrash() {
   try {
     await until("retry paused before the real Docker deletion", async () => existsSync(paused));
     const granted = (await state(p)).launches.find(l => l.kind === "owned-network-delete" && l.phase === "granted"); assert(granted?.phase === "granted");
+    if (mode === "lost-completion") {
+      assert(granted.deletionTarget?.id === id && granted.groupId === granted.leaderPid);
+      assert(!(await docker(["network", "ls", "--no-trunc", "--format", "{{.ID}}"])).split("\n").includes(id));
+      const executor = await command(root, ["ps", "-o", "uid=,pgid=,command=", "-p", String(granted.groupId)]);
+      assert.equal(executor.code, 0);
+      const fields = executor.stdout.trim().split(/\s+/);
+      assert.equal(Number(fields[0]), process.geteuid?.()); assert.equal(Number(fields[1]), granted.groupId);
+      assert(executor.stdout.includes(granted.id));
+      recordResource(`crash exact recorded executor group ${granted.groupId} launch=${granted.id}, after real target deletion before completion fact; verified UID/group/command before SIGKILL\n`);
+      process.kill(-granted.groupId, "SIGKILL");
+      await proc.exited; processes.delete(proc);
+      const lost = await state(p);
+      assert(lost.launches.some(l => l.id === granted.id && l.phase === "granted"));
+      assert(!lost.completions.some(c => c.launchId === granted.id));
+      await silo(p, ["down", "--delete-cluster"]);
+      const resolved = await state(p);
+      const proof = resolved.launches.find(l => l.id === granted.id);
+      assert(proof?.phase === "resolved" && proof.resolution === "target-absent" && proof.exitCode === null);
+      assert(resolved.launches.some(l => l.id === first.id && l.reconciled));
+      await silo(p, ["down", "--clean"]);
+      log({ scenario: "lost exact-delete completion resolves through target absence without inventing exit success", network: id, lost, proof, pass: true });
+      return;
+    }
     const identity = await command(root, ["ps", "-o", "user=,pgid=,command=", "-p", String(proc.pid)]);
     assert.equal(identity.code, 0); assert.equal(Number(identity.stdout.trim().split(/\s+/)[1]), proc.pid);
     proc.kill("SIGSTOP");
@@ -691,10 +723,29 @@ async function retryCrash() {
   }
 }
 
-async function composeReplacement() {
-  const p = composeProject("compose-replacement");
-  await silo(p, ["ci", name(p), "--timeout", "60s"]);
-  const { made, redis: parent, data: originalData } = await redisMount(p);
+async function composeReplacement(live = false) {
+  const p = composeProject(live ? "live-compose-replacement" : "compose-replacement");
+  let producer: Bun.Subprocess | undefined;
+  let made: Awaited<ReturnType<typeof state>>;
+  let parent: { id: string; name: string };
+  let originalData: { Name: string };
+  if (live) {
+    await silo(p, ["env", name(p)]);
+    producer = start(p);
+    made = await state(p);
+    const parentName = `${made.allocation!.state.identity.composeName}-redis-1`;
+    await until("live Tilt created the Compose parent", async () => (await docker(["container", "ls", "--format", "{{.Names}}"])).split("\n").includes(parentName));
+    const id = await docker(["container", "inspect", parentName, "--format", "{{.Id}}"]);
+    parent = { id, name: parentName };
+    const mounts = MountsSchema.parse(JSON.parse(await docker(["container", "inspect", id, "--format", "{{json .Mounts}}"] )));
+    const data = mounts.find(m => m.Type === "volume" && m.Destination === "/data"); assert(data?.Name);
+    originalData = { Name: data.Name };
+    recordResource(`live Compose fixture parent ${id} anonymous ${data.Name}; teardown only exact parent --volumes\n`);
+  } else {
+    await silo(p, ["ci", name(p), "--timeout", "60s"]);
+    const observed = await redisMount(p);
+    made = observed.made; parent = observed.redis; originalData = observed.data;
+  }
   const bin = path.join(p, "bin"); mkdirSync(bin);
   const paused = path.join(p, "parent-removed"), release = path.join(p, "resume-cleanup");
   const realDocker = Bun.which("docker"); assert(realDocker);
@@ -709,6 +760,8 @@ async function composeReplacement() {
   let replacementVolume: Awaited<ReturnType<typeof fixtureSnapshot>> | undefined;
   try {
     await until("exact parent removed before remaining teardown", async () => existsSync(paused));
+    const sealed = await state(p);
+    log({ scenario: "producer state at parent-removal barrier", liveProducer: live, launches: sealed.launches.filter(l => l.effect === "workload" || l.effect === "hook") });
     assert(!(await docker(["container", "ls", "-a", "--no-trunc", "--format", "{{.ID}}"])).split("\n").includes(parent.id));
     assert(!(await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n").includes(originalData.Name));
     const recreated = await command(p, ["docker", "compose", "--project-name", made.allocation!.state.identity.composeName, "-f", "compose.yaml", "up", "-d"], {
@@ -741,7 +794,14 @@ async function composeReplacement() {
     assert.equal(await docker(["container", "exec", replacementId, "cat", "/data/identity"]), "replacement-data");
     assert.deepEqual(after.project?.claims, made.claims, "replacement Q/W must keep all original claims");
     assert.notEqual(result.code, 0, "cleanup must refuse while an unreceipted replacement remains");
-    log({ scenario: "recorded-ID teardown preserves recreated Compose container/data and claims", replacementId, volume, pass: true });
+    const retry = await command(p, [process.execPath, cli, "down", "--clean", "--json"]);
+    assert.notEqual(retry.code, 0, "retry cannot capture replacement Q from the already-sealed launch");
+    const retried = await state(p);
+    assert(!retried.resources.some(r => r.id === replacementId));
+    assert.deepEqual(retried.claims, made.claims);
+    assert.deepEqual(await fixtureSnapshot("container", replacementId), replacement);
+    assert.deepEqual(await fixtureSnapshot("volume", volume), replacementVolume);
+    log({ scenario: "recorded-ID teardown and retry preserve recreated Compose container/data and claims", liveProducer: live, replacementId, volume, pass: true });
   } finally {
     writeFileSync(release, "resume\n");
     await pending;
@@ -752,7 +812,64 @@ async function composeReplacement() {
       assert.deepEqual(await fixtureSnapshot("volume", volume), replacementVolume);
       await docker(["volume", "rm", volume]);
     }
+    if (producer) {
+      if (producer.exitCode === null) producer.kill("SIGTERM");
+      await producer.exited; processes.delete(producer);
+    }
   }
+}
+
+async function lifecycle() {
+  const compose = composeProject("compose-restart");
+  await silo(compose, ["ci", name(compose), "--timeout", "60s"]);
+  const first = await state(compose);
+  await silo(compose, ["down"]);
+  await silo(compose, ["ci", "--timeout", "60s"]);
+  const second = await state(compose);
+  assert.equal(second.generation, first.generation);
+  assert.deepEqual(second.claims, first.claims);
+  for (const receipt of first.resources.filter(r => r.kind !== "volume")) {
+    assert(second.resources.some(r => r.kind === receipt.kind && r.id === receipt.id), "prior receipts remain audit history");
+    assert(second.resources.some(r => r.kind === receipt.kind && r.name === receipt.name && r.id !== receipt.id), "same-generation restart records a new immutable ID");
+  }
+  await silo(compose, ["down", "--clean"]);
+  assert.deepEqual((await silo(compose, ["status"])).project?.claims, []);
+  log({ scenario: "Compose ci/down/ci/clean reuses generation and preserves old/new receipt IDs", pass: true });
+
+  const cluster = composeProject("cluster-restart");
+  appendFileSync(path.join(cluster, "silo.toml"), '\n[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n[k3d.registry]\nenabled=false\n[hooks]\npre-up=["sh create-compose.sh"]\n');
+  writeFileSync(path.join(cluster, "create-compose.sh"), '#!/bin/sh\nset -eu\ndocker compose --project-name "$COMPOSE_PROJECT_NAME" -f compose.yaml up -d\n');
+  await silo(cluster, ["ci", name(cluster), "--timeout", "60s"]);
+  const clusterFirst = await state(cluster);
+  await silo(cluster, ["down", "--delete-cluster"]);
+  await silo(cluster, ["ci", "--timeout", "60s"]);
+  const clusterSecond = await state(cluster);
+  assert.equal(clusterSecond.generation, clusterFirst.generation);
+  assert.deepEqual(clusterSecond.claims, clusterFirst.claims);
+  for (const receipt of clusterFirst.resources.filter(r => r.kind !== "volume")) {
+    assert(clusterSecond.resources.some(r => r.kind === receipt.kind && r.name === receipt.name && r.id !== receipt.id));
+  }
+  await silo(cluster, ["down", "--delete-cluster", "--clean"], "CLEANUP_REQUIRED");
+  for (const cache of clusterFirst.resources.filter(r => r.kind === "volume")) {
+    const current = z.array(z.object({ Name: z.string(), CreatedAt: z.string() })).length(1).parse(JSON.parse(await docker(["volume", "inspect", cache.name])))[0]!;
+    assert.equal(current.Name, cache.name); assert.equal(current.CreatedAt, cache.createdAt);
+    recordResource(`retained restart fixture cache ${cache.name}; independent owner cleanup after exact creation check\n`);
+    await docker(["volume", "rm", cache.name]);
+  }
+  await silo(cluster, ["down", "--clean"]);
+  log({ scenario: "k3d ci/delete-cluster/ci records pre-up creations before backend preflight, fresh IDs and retained named cache", pass: true });
+
+  const failed = composeProject("failed-compose-ci");
+  appendFileSync(path.join(failed, "Tiltfile"), "local_resource('fails-after-redis',cmd='exit 17',resource_deps=['redis'])\n");
+  await silo(failed, ["ci", name(failed), "--timeout", "60s"], "COMMAND_FAILED");
+  const failedState = await state(failed);
+  assert(failedState.resources.some(r => r.kind === "container" && r.source === "compose"));
+  assert(failedState.launches.some(l => l.effect === "workload" && l.phase === "exited" && l.exitCode !== 0 && l.reconciled));
+  await silo(failed, ["down", "--clean"]);
+  assert.deepEqual((await silo(failed, ["status"])).project?.claims, []);
+  log({ scenario: "failed Tilt CI records its completed producer and cleans exact Compose IDs", pass: true });
+
+  await composeReplacement(true);
 }
 
 async function unreceiptedCompose() {
@@ -796,8 +913,12 @@ try {
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "parent-volumes") await parentVolumes();
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "inherited-volumes") await inheritedVolumes();
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "retry-crash") await retryCrash();
+  if (values.suite === "all" || values.suite === "lifecycle" || values.suite === "absent-delete") await retryCrash("external-absence");
+  if (values.suite === "all" || values.suite === "lifecycle" || values.suite === "lost-delete") await retryCrash("lost-completion");
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "compose-replacement") await composeReplacement();
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "compose-replacement") await unreceiptedCompose();
+  if (values.suite === "all" || values.suite === "lifecycle") await lifecycle();
+  if (values.suite === "live-compose-replacement") await composeReplacement(true);
   log({ result: "pass", suite: values.suite });
 } catch (error) { failure = error; log({ result: "fail", error: String(error), stack: error instanceof Error ? error.stack : null }); }
 finally {

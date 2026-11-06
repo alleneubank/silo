@@ -1,5 +1,5 @@
 import { ProjectOperation, processAbsent } from "./lease_store";
-import type { Launch } from "./lease_types";
+import type { DockerDeletionTarget, Launch } from "./lease_types";
 import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import { withTimeout } from "../utils/timeout";
@@ -34,6 +34,7 @@ type CommandOptions = {
   env?: Record<string, string>;
   timeoutMs: number | null;
   capture?: boolean;
+  deletionTarget?: DockerDeletionTarget;
 };
 export type OwnedCommandResult = { exitCode: number; stdout: string; stderr: string; launch: Extract<Launch, { phase: "exited" }> };
 export type RunningCommand = {
@@ -80,7 +81,8 @@ export const startOwnedCommand = async (
   owner: ProjectOperation, command: string[], options: CommandOptions,
 ): Promise<RunningCommand> => {
   if (options.timeoutMs === null && options.kind !== "tilt-up") throw new Error("Only the interactive Tilt session may have an until-stop lifetime");
-  const intent = owner.planLaunch({ kind: options.kind, command, effect: options.effect });
+  const intent = owner.planLaunch({ kind: options.kind, command, effect: options.effect,
+    ...(options.deletionTarget === undefined ? {} : { deletionTarget: options.deletionTarget }) });
   const proc = Bun.spawn([
     TILT_SUPERVISOR_BIN, "--pgroup-only", "--watch-pid", String(process.pid), "--grace-ms", String(TILT_DRAIN_GRACE_MS),
     "--", process.execPath, owner.executorEntrypoint, "__silo_execute", intent.id, owner.root,

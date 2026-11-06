@@ -8,8 +8,8 @@ Use `silo help [command]` for options and `silo doc --list` for references.
 | `init` | Create starter config exclusively; refuse an existing file. |
 | `env [name]` | Reserve all identities/files/ports atomically; export env and version-2 snapshot. Start no stack. |
 | `up [name]` | Export, run hooks, prepare owned k3d if enabled, supervise Tilt in the foreground. Matching live up reuses it. |
-| `ci [name] [-- <tilt args>]` | Same preparation with supervised `tilt ci`; set `CI=true`. Retain owned resources after exit. |
-| `down` | Stop verified recorded Tilt groups; remove receipted Compose containers/networks by exact ID. Retain clusters, their Kubernetes workloads and claims. No Tiltfile evaluation or teardown hooks. |
+| `ci [name] [-- <tilt args>]` | Same preparation with supervised `tilt ci`; set `CI=true`. Record finished owned producers even on failure and retain their resources for down. |
+| `down` | Stop verified recorded Tilt groups; record finished owned producers before deletion, including stopped live up; remove receipted Compose containers/networks by exact ID. Retain clusters, Kubernetes workloads and claims. No Tiltfile evaluation or teardown hooks. |
 | `down --delete-cluster` | Also delete exact owned cluster objects. No name-wide adoption or deletion. |
 | `down --clean` | Retire only after all requests/groups/resources/listeners are proved absent; delete receipted snapshots and release own claims. |
 | `status [--json]` | Read authoritative ownership without repair. Supervisor liveness is not Tilt resource health. |
@@ -22,6 +22,23 @@ flag, `SILO_PROFILE`, stored profile, then base. `--force` reconfigures only a
 stopped, reconciled generation; live, retained or uncertain state refuses.
 Use separate roots and names for parallel stacks. Omitted names reuse the
 stored name or generate a bounded unique candidate for a new root.
+
+The same configuration can restart within its generation: `ci`, `down`, `ci`,
+then `down --clean`. Old immutable-ID receipts remain audit history while the
+new creation result records fresh IDs under the same names. k3d supports the
+corresponding `ci`, `down --delete-cluster`, `ci` loop; its owned named cache
+remains until independent owner resolution before final clean.
+
+Finished producer recording is sealed before the first deletion. A cleanup retry
+cannot adopt a same-name replacement from that old launch. Missing producer facts
+or unsupported provenance still refuse. A terminal exact-ID delete can instead
+resolve through verified target absence; status reports `phase: resolved`,
+`resolution: target-absent`, `exitCode: null` when its completion fact was lost.
+Unknown creates and untargeted commands cannot use that proof. Resources in status
+include historical receipts; use their immutable IDs to inspect physical presence.
+
+The unreleased SQLite proposal format is 2. Format-1 stores refuse without
+migration/reset; drain the matching old proposal before owner-led recreation.
 
 `ci --timeout 300s` forwards the timeout. Passthrough cannot override managed
 listener ports/hosts or an explicit web mode. `env`/`ci --export-ci` require

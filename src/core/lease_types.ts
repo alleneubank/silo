@@ -38,9 +38,14 @@ export const FileReceiptSchema = z.object({
 });
 export type FileReceipt = z.infer<typeof FileReceiptSchema>;
 
+const DockerObjectIdSchema = z.string().regex(/^[a-f0-9]{64}$/).brand<"DockerObjectId">();
+const DockerDeletionTargetSchema = z.object({ kind: z.enum(["container", "network"]), id: DockerObjectIdSchema });
+export type DockerDeletionTarget = z.infer<typeof DockerDeletionTargetSchema>;
+
 const LaunchBaseSchema = z.object({
   id: z.string(), kind: z.string(), command: z.array(z.string()).max(1024),
   effect: z.enum(["none", "workload", "create", "delete", "hook"]),
+  deletionTarget: DockerDeletionTargetSchema.optional(),
 });
 const UnlaunchedSchema = LaunchBaseSchema.extend({
   supervisorPid: z.null(), leaderPid: z.null(), groupId: z.null(), supervisorIdentity: z.null(), exitCode: z.null(),
@@ -54,6 +59,8 @@ export const LaunchSchema = z.discriminatedUnion("phase", [
   UnlaunchedSchema.extend({ phase: z.literal("cancelled"), reconciled: z.literal(true), terminal: z.literal(true) }),
   ExecutorSchema.extend({ phase: z.literal("granted"), exitCode: z.null(), reconciled: z.literal(false), terminal: z.boolean() }),
   ExecutorSchema.extend({ phase: z.literal("exited"), started: z.boolean(), exitCode: z.number().int().nullable(), reconciled: z.boolean(), terminal: z.boolean() }),
+  ExecutorSchema.extend({ phase: z.literal("resolved"), effect: z.literal("delete"), deletionTarget: DockerDeletionTargetSchema,
+    resolution: z.literal("target-absent"), exitCode: z.null(), reconciled: z.literal(true), terminal: z.literal(true) }),
 ]);
 export type Launch = z.infer<typeof LaunchSchema>;
 
@@ -74,7 +81,6 @@ const BackendIdentitySchema = z.object({
   name: z.string(), id: z.string(),
   createdAt: z.string(), labels: z.record(z.string()),
 });
-const DockerObjectIdSchema = z.string().regex(/^[a-f0-9]{64}$/).brand<"DockerObjectId">();
 export const BackendReceiptSchema = z.discriminatedUnion("kind", [
   BackendIdentitySchema.extend({ kind: z.literal("container"), id: DockerObjectIdSchema, anonymousVolumes: z.array(AnonymousVolumeSchema).max(256) }),
   BackendIdentitySchema.extend({ kind: z.literal("network"), id: DockerObjectIdSchema }),

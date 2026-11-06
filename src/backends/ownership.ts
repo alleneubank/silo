@@ -175,7 +175,7 @@ export const assertNamesAvailable = async (claims: Claim[], cwd: string, owned: 
 };
 
 /** Records only this generation's creation results, with its declared namespace and provenance. */
-export const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation?: Launch): Promise<BackendReceipt[]> => {
+export const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], creation: Extract<Launch, { phase: "exited" }>): Promise<BackendReceipt[]> => {
   await assertEngine(owner);
   const allocation = owner.current()!.allocation;
   const cluster = allocation.state.identity.k3dClusterName;
@@ -202,7 +202,14 @@ export const captureOwnedResources = async (owner: ProjectOperation, source: Bac
   const namespace = await enumerate(owner.root);
   await assertLabelledScope(owner, namespace);
   const entries = namespace.filter(e => selected(e, owner.resourceClaims()) && isK3d(e) === (source === "k3d"));
-  const prior = owner.resources(true);
+  // An absent immutable object remains in audit history, but cannot reserve a
+  // name against the next creation result. No deletion occurs during capture.
+  for (const receipt of owner.resources().filter(r => r.source === source)) {
+    if (!namespace.some(e => e.kind === receipt.kind && (receipt.kind === "volume" ? e.name === receipt.name : e.id === receipt.id))) {
+      owner.recordResourceAbsence(receipt);
+    }
+  }
+  const prior = owner.resources();
   const captured: BackendReceipt[] = [];
   for (const entry of entries) {
     const existing = prior.find(r => r.kind === entry.kind && r.name === entry.name);
@@ -215,19 +222,29 @@ export const captureOwnedResources = async (owner: ProjectOperation, source: Bac
     }
     const labels = current.receipt.labels;
     const projectLabel = labels["io.silo.project"] === owner.projectId && labels["io.silo.generation"] === String(owner.generation);
-    const registryFromCompletedCreate = source === "k3d" && creation?.phase === "exited" && creation.exitCode === 0 &&
+    const registryFromCompletedCreate = source === "k3d" && creation.exitCode === 0 &&
       entry.kind === "container" && entry.name === registry &&
       labels["k3d.cluster"] === allocation.state.identity.k3dClusterName;
     const composeRoot = labels["com.docker.compose.project.working_dir"];
     const composeFromOwnedLaunch = source === "compose" && entry.kind === "container" &&
       labels["com.docker.compose.project"] === allocation.state.identity.composeName && composeRoot !== undefined &&
-      realpathSync(composeRoot) === owner.root && owner.launches().some(l => l.effect === "workload" && (l.phase === "granted" || (l.phase === "exited" && l.started)));
+      realpathSync(composeRoot) === owner.root && creation.started && (creation.effect === "workload" || creation.effect === "hook");
     if (!projectLabel && !registryFromCompletedCreate && !composeFromOwnedLaunch) conflict(entry);
     validatePublications(current);
     captured.push(current.receipt);
   }
   owner.recordResources(captured);
   return captured;
+};
+
+/** Seals finished producers' recording before any cleanup effect can begin. */
+export const captureFinishedComposeProducers = async (owner: ProjectOperation): Promise<void> => {
+  const pending = owner.launches().filter((launch): launch is Extract<Launch, { phase: "exited" }> =>
+    launch.phase === "exited" && launch.started && !launch.reconciled && (launch.effect === "workload" || launch.effect === "hook"));
+  if (pending.length === 0) return;
+  for (const launch of pending) owner.markLaunchTerminal(launch.id);
+  await captureOwnedResources(owner, "compose", pending[0]!);
+  for (const launch of pending) owner.checkpointLaunch({ ...launch, terminal: true, reconciled: true });
 };
 
 /** Revalidates exact IDs and creation identities before any deletion capability is used. */
@@ -276,11 +293,12 @@ const deleteResources = async (owner: ProjectOperation, source: BackendReceipt["
     if (await verifyResource(owner, receipt)) {
       const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force", "--volumes"] : []), receipt.id], {
         kind: `owned-${kind}-delete`, effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
+        deletionTarget: { kind, id: receipt.id },
       });
       if (await verifyResource(owner, receipt)) throw new SiloError(`CLEANUP_REQUIRED: deletion left ${kind}/${receipt.name}`, "CLEANUP_REQUIRED");
       owner.checkpointLaunch({ ...result.launch, reconciled: true });
     }
-    owner.forgetResource(receipt);
+    owner.recordResourceAbsence(receipt);
   }
 };
 

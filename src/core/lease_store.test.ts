@@ -1,4 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import { Database } from "bun:sqlite";
 import { chmodSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
@@ -9,6 +10,7 @@ import { fileIdentity, prepareFileTarget } from "./file_target";
 import { appendGithubEnv, writeEnvAndLockfile } from "./env";
 import { runOwnedCommand, startOwnedCommand } from "./owned_command";
 import type { Allocation, Claim, FileReceipt } from "./lease_types";
+import { BackendReceiptSchema } from "./lease_types";
 
 let base: string;
 let storePath: string;
@@ -63,6 +65,76 @@ const claims = (name: string, port: number): Claim[] => [
 ];
 
 describe("atomic account leases", () => {
+  test("an unsupported proposal store is refused without changing its bytes", async () => {
+    const root = project("old-format");
+    const op = await open(root); op.finish();
+    const db = new Database(storePath);
+    db.exec("PRAGMA user_version = 1"); db.close();
+    const before = readFileSync(storePath);
+    await expect(open(root)).rejects.toThrow("LEASE_STORE_UNAVAILABLE");
+    expect(() => ProjectOperation.inspect(root, storePath)).toThrow("LEASE_STORE_UNAVAILABLE");
+    expect(readFileSync(storePath)).toEqual(before);
+  });
+
+  test.each(["container", "network"])("a fresh %s ID can reuse a proven-absent name while history remains", async kind => {
+    const root = project("receipt-cycle"); const op = await open(root);
+    const name = "localnet-reusable";
+    const first = BackendReceiptSchema.parse({ kind, source: "compose", name, id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {}, anonymousVolumes: [{ name: "audit-only-mount", createdAt: "2026-11-06T00:00:00Z", destination: "/data" }] });
+    const second = BackendReceiptSchema.parse({ ...first, id: "b".repeat(64), createdAt: "2026-11-06T00:01:00Z" });
+    try {
+      await op.allocate(allocation(root, "receipt-cycle"), [...claims("receipt-cycle", 3000), { domain: kind, resource: name }], targets(root));
+      op.recordResources([first]);
+      expect(() => op.recordResources([second])).toThrow("NAME_CONFLICT");
+      expect(op.resources()).toEqual([first]);
+      op.recordResourceAbsence(first);
+      op.recordResources([second]);
+      expect(op.resources()).toEqual([second]);
+      expect(op.resources(true)).toHaveLength(2);
+      expect(op.resources(true)).toEqual(expect.arrayContaining([first, second]));
+      expect(ProjectOperation.inspect(root, storePath)?.resources).toEqual(expect.arrayContaining([first, second]));
+      expect(() => op.recordResources([first])).toThrow("NAME_CONFLICT");
+    } finally { op.finish(); }
+  });
+
+  test("terminal exact-target absence reconciles only that ID's completed deletion", async () => {
+    const root = project("absent-delete"); const op = await open(root);
+    const first = BackendReceiptSchema.parse({ kind: "network", source: "compose", name: "network-a", id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {} });
+    const other = BackendReceiptSchema.parse({ ...first, name: "network-b", id: "b".repeat(64) });
+    assert(first.kind === "network"); assert(other.kind === "network");
+    try {
+      await op.allocate(allocation(root, "absent-delete"), [...claims("absent-delete", 3000), { domain: "network", resource: "network-", prefix: true }], targets(root));
+      op.recordResources([first, other]);
+      await expect(runOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "exact-delete", effect: "delete", deletionTarget: { kind: first.kind, id: first.id }, timeoutMs: 5000 })).rejects.toThrow("COMMAND_FAILED");
+      const failed = op.launches()[0]!;
+      op.recordResourceAbsence(first);
+      expect(op.launches()[0]?.reconciled).toBe(false);
+      op.markLaunchTerminal(failed.id);
+      op.recordResourceAbsence(other);
+      expect(op.launches()[0]?.reconciled).toBe(false);
+      op.recordResourceAbsence(first);
+      expect(op.launches()[0]?.reconciled).toBe(true);
+      expect(op.resources()).toEqual([]);
+    } finally { op.finish(); }
+  });
+
+  test("exact-target absence closes a terminal delete with a lost completion without inventing an exit", async () => {
+    const root = project("lost-delete-fact"); const op = await open(root);
+    const receipt = BackendReceiptSchema.parse({ kind: "network", source: "compose", name: "network-a", id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {} });
+    assert(receipt.kind === "network");
+    try {
+      await op.allocate(allocation(root, "lost-delete-fact"), [...claims("lost-delete-fact", 3000), { domain: "network", resource: receipt.name }], targets(root));
+      op.recordResources([receipt]);
+      const deletion = await startOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "exact-delete", effect: "delete", deletionTarget: { kind: receipt.kind, id: receipt.id }, timeoutMs: 5000 });
+      await deletion.exited;
+      const creation = await startOwnedCommand(op, ["/bin/sh", "-c", "exit 0"], { kind: "unknown-create", effect: "create", timeoutMs: 5000 });
+      await creation.exited;
+      for (const launch of op.launches()) op.markLaunchTerminal(launch.id);
+      op.recordResourceAbsence(receipt);
+      expect(op.launches().find(l => l.id === deletion.launch.id)).toMatchObject({ phase: "resolved", resolution: "target-absent", reconciled: true, terminal: true, exitCode: null });
+      expect(op.launches().find(l => l.id === creation.launch.id)).toMatchObject({ phase: "granted", reconciled: false, terminal: true, exitCode: null });
+      await expect(retire(op)).rejects.toThrow("CLEANUP_REQUIRED");
+    } finally { op.finish(); }
+  });
   test("export parent preparation never creates or enters a legacy registry tree", async () => {
     const root = project("a"); const registryDir = path.join(root, "registry");
     const op = await ProjectOperation.open(root, { storePath, legacyInputs: { ...legacyInputs, registryDir } });

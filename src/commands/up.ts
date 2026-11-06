@@ -2,7 +2,7 @@ import { ProjectOperation } from "../core/lease_store";
 import { storedConfig } from "../core/allocation";
 import { writeEnvAndLockfile } from "../core/env";
 import { startTilt } from "../backends/tilt";
-import { captureOwnedResources } from "../backends/ownership";
+import { captureFinishedComposeProducers } from "../backends/ownership";
 import { logger, logKeyValues } from "../utils/logger";
 import { runningStackHintLines } from "../utils/breadcrumbs";
 import { SiloError } from "../utils/errors";
@@ -55,10 +55,10 @@ export const up = async (name: string | undefined, options: {
     if (observed.phase !== "running" || observed.allocation.state.tiltPid !== result.launch.supervisorPid || journal?.phase !== "granted") return true;
     const recorded = owner.recordCommandResult(result.launch);
     result = { ...result, launch: recorded, exitCode: recorded.exitCode ?? result.exitCode };
-    await captureOwnedResources(owner, "compose");
+    await captureFinishedComposeProducers(owner);
     const current = owner.current()!;
     const { tiltPid: _pid, tiltStartedAt: _at, ...state } = current.allocation.state;
-    const phase = result.exitCode === 0 ? "stopped" : "cleanup-required";
+    const phase = result.exitCode === 0 ? (owner.resources().length > 0 ? "retained" : "stopped") : "cleanup-required";
     owner.update({ ...current.allocation, state }, phase, result.exitCode === 0 ? null : `Tilt exited ${result.exitCode}; down must reconcile before reuse`);
     writeEnvAndLockfile(owner);
   } catch (error) {
