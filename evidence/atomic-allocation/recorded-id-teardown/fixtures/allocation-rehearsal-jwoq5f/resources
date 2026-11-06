@@ -1,0 +1,304 @@
+process 143636 pgid=143636: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-jwoq5f-old"]; teardown via returned subprocess handle or verified recorded group
+process 143651 pgid=143651: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143677 pgid=143677: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143700 pgid=143700: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143746 pgid=143746: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143771 pgid=143771: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143786 pgid=143786: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143814 pgid=143814: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143834 pgid=143834: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143855 pgid=143855: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143869 pgid=143869: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143883 pgid=143883: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"]; teardown via returned subprocess handle or verified recorded group
+process 143923 pgid=143923: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-jwoq5f-old"]; teardown via returned subprocess handle or verified recorded group
+process 143938 pgid=143938: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143953 pgid=143953: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--json"]; teardown via returned subprocess handle or verified recorded group
+process 143995 pgid=143995: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144035 pgid=144035: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144049 pgid=144049: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144063 pgid=144063: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144077 pgid=144077: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144091 pgid=144091: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144115 pgid=144115: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144143 pgid=144143: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144157 pgid=144157: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"]; teardown via returned subprocess handle or verified recorded group
+process 144194 pgid=144194: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-jwoq5f-old"]; teardown via returned subprocess handle or verified recorded group
+process 144209 pgid=144209: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144235 pgid=144235: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144284 pgid=144284: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144299 pgid=144299: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144313 pgid=144313: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144327 pgid=144327: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144341 pgid=144341: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144355 pgid=144355: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144369 pgid=144369: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144383 pgid=144383: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144397 pgid=144397: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"]; teardown via returned subprocess handle or verified recorded group
+process 144434 pgid=144434: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--json"]; teardown via returned subprocess handle or verified recorded group
+paused old env pid/pgid 144448; release /tmp/fixtures/allocation-rehearsal-jwoq5f/old-release, await exit then own old down
+process 144511 pgid=144511: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144526 pgid=144526: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"]; teardown via returned subprocess handle or verified recorded group
+process 144564 pgid=144564: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-legacy-peer","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144788 pgid=144788: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144805 pgid=144805: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-jwoq5f-late-09"]; teardown via returned subprocess handle or verified recorded group
+process 144821 pgid=144821: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144835 pgid=144835: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"]; teardown via returned subprocess handle or verified recorded group
+process 144893 pgid=144893: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144911 pgid=144911: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.5.9/package/dist/cli.js","env","proof-jwoq5f-late-05"]; teardown via returned subprocess handle or verified recorded group
+process 144943 pgid=144943: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 144959 pgid=144959: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.5.9/package/dist/cli.js","down","--clean"]; teardown via returned subprocess handle or verified recorded group
+process 145045 pgid=145045: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 145062 pgid=145062: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 145377 pgid=145377: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-jwoq5f-old-failed-teardown"]; teardown via returned subprocess handle or verified recorded group
+process 145437 pgid=145437: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"]; teardown via returned subprocess handle or verified recorded group
+process 145476 pgid=145476: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-a","--json"]; teardown via returned subprocess handle or verified recorded group
+process 145477 pgid=145477: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-b","--json"]; teardown via returned subprocess handle or verified recorded group
+process 145863 pgid=145863: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 145881 pgid=145881: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 146099 pgid=146099: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 146142 pgid=146142: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-a","--json"]; teardown via returned subprocess handle or verified recorded group
+process 146341 pgid=146341: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 146359 pgid=146359: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--timeout=10s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 146977 pgid=146977: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 147444 pgid=147444: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 147462 pgid=147462: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 147670 pgid=147670: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 147714 pgid=147714: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","--preload","/tmp/fixtures/allocation-rehearsal-jwoq5f/crash-export.ts","/mnt/dist/cli.js","env","proof-jwoq5f-a"]; teardown via returned subprocess handle or verified recorded group
+process 147874 pgid=147874: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 147892 pgid=147892: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 148170 pgid=148170: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","--preload","/tmp/fixtures/allocation-rehearsal-jwoq5f/crash-grant.ts","/mnt/dist/cli.js","up","proof-jwoq5f-gate-crash"]; teardown via returned subprocess handle or verified recorded group
+ungranted launch supervisor=148504 group=148505; Janitor owns drain after recorded CLI death; tool gate never granted
+process 148524 pgid=148524: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 148755 pgid=148755: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-a","--json"]; teardown via returned subprocess handle or verified recorded group
+silo up pid/pgid 148892 root /tmp/fixtures/allocation-rehearsal-jwoq5f/a; teardown via returned handle then silo down --clean
+silo up pid/pgid 148893 root /tmp/fixtures/allocation-rehearsal-jwoq5f/b; teardown via returned handle then silo down --clean
+process 149971 pgid=149971: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 149989 pgid=149989: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150050 pgid=150050: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150155 pgid=150155: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","up","--force","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150230 pgid=150230: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--profile","alternative","--force","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150303 pgid=150303: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150370 pgid=150370: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150447 pgid=150447: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150498 pgid=150498: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150557 pgid=150557: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 150575 pgid=150575: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 151133 pgid=151133: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 151526 pgid=151526: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-a","--json"]; teardown via returned subprocess handle or verified recorded group
+process 151714 pgid=151714: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--profile","alternative","--force","--json"]; teardown via returned subprocess handle or verified recorded group
+process 152242 pgid=152242: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 152260 pgid=152260: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 152521 pgid=152521: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","proof-jwoq5f-failed-teardown","--timeout=30s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 153641 pgid=153641: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 153697 pgid=153697: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 154189 pgid=154189: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 154223 pgid=154223: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-files","--json"]; teardown via returned subprocess handle or verified recorded group
+process 154425 pgid=154425: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-nested","--json"]; teardown via returned subprocess handle or verified recorded group
+process 154565 pgid=154565: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 154831 pgid=154831: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","alias-allocation-rehearsal-jwoq5f-12","--json"]; teardown via returned subprocess handle or verified recorded group
+process 154975 pgid=154975: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 155410 pgid=155410: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","alias-allocation-rehearsal-jwoq5f-13","--json"]; teardown via returned subprocess handle or verified recorded group
+process 155812 pgid=155812: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 156080 pgid=156080: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 156363 pgid=156363: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 156804 pgid=156804: ["docker","network","create","--label","io.silo.rehearsal=allocation-rehearsal-jwoq5f","k3d-localnet-proof-jwoq5f-backend"]; teardown via returned subprocess handle or verified recorded group
+process 156841 pgid=156841: ["docker","network","inspect","4d9f9b5ae6c8ad89b90d63419390fef28a0d44cf1c8451504ac8adbefd67702e"]; teardown via returned subprocess handle or verified recorded group
+network 4d9f9b5ae6c8ad89b90d63419390fef28a0d44cf1c8451504ac8adbefd67702e name=k3d-localnet-proof-jwoq5f-backend; teardown docker network rm 4d9f9b5ae6c8ad89b90d63419390fef28a0d44cf1c8451504ac8adbefd67702e after exact inspect identity comparison
+process 156855 pgid=156855: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 157094 pgid=157094: ["docker","network","inspect","4d9f9b5ae6c8ad89b90d63419390fef28a0d44cf1c8451504ac8adbefd67702e"]; teardown via returned subprocess handle or verified recorded group
+process 157134 pgid=157134: ["docker","network","rm","4d9f9b5ae6c8ad89b90d63419390fef28a0d44cf1c8451504ac8adbefd67702e"]; teardown via returned subprocess handle or verified recorded group
+process 157410 pgid=157410: ["docker","volume","create","--label","io.silo.rehearsal=allocation-rehearsal-jwoq5f","k3d-localnet-proof-jwoq5f-backend-images"]; teardown via returned subprocess handle or verified recorded group
+process 157454 pgid=157454: ["docker","volume","inspect","k3d-localnet-proof-jwoq5f-backend-images"]; teardown via returned subprocess handle or verified recorded group
+volume k3d-localnet-proof-jwoq5f-backend-images name=k3d-localnet-proof-jwoq5f-backend-images; teardown docker volume rm k3d-localnet-proof-jwoq5f-backend-images after exact inspect identity comparison
+process 157468 pgid=157468: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 157723 pgid=157723: ["docker","volume","inspect","k3d-localnet-proof-jwoq5f-backend-images"]; teardown via returned subprocess handle or verified recorded group
+process 157760 pgid=157760: ["docker","volume","rm","k3d-localnet-proof-jwoq5f-backend-images"]; teardown via returned subprocess handle or verified recorded group
+process 157783 pgid=157783: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 158028 pgid=158028: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 158292 pgid=158292: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 158474 pgid=158474: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--timeout=120s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 168393 pgid=168393: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 168412 pgid=168412: ["docker","container","inspect","648d5c32f9e5db0a4bee1b0966153c2e64eb09d5ac6f4f1cea6cc4fff6168591","--format","{{.Config.Image}}"]; teardown via returned subprocess handle or verified recorded group
+process 168428 pgid=168428: ["docker","container","inspect","648d5c32f9e5db0a4bee1b0966153c2e64eb09d5ac6f4f1cea6cc4fff6168591","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 168444 pgid=168444: ["docker","container","inspect","ded275848fa260b78547a7caede4e943a8a944d723e58f7a22f145c958ff0994","--format","{{.Config.Image}}"]; teardown via returned subprocess handle or verified recorded group
+process 168460 pgid=168460: ["docker","container","inspect","ded275848fa260b78547a7caede4e943a8a944d723e58f7a22f145c958ff0994","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 168477 pgid=168477: ["docker","container","inspect","f436fabd4f5aaae020298586be919486490c1f6af10cfde6d0d1798cc6501fe7","--format","{{.Config.Image}}"]; teardown via returned subprocess handle or verified recorded group
+process 168493 pgid=168493: ["docker","container","inspect","f436fabd4f5aaae020298586be919486490c1f6af10cfde6d0d1798cc6501fe7","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 168528 pgid=168528: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 170217 pgid=170217: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--json"]; teardown via returned subprocess handle or verified recorded group
+process 180428 pgid=180428: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 180482 pgid=180482: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 181479 pgid=181479: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 181548 pgid=181548: ["docker","volume","inspect","k3d-localnet-proof-jwoq5f-backend-images"]; teardown via returned subprocess handle or verified recorded group
+named k3d cache k3d-localnet-proof-jwoq5f-backend-images retained by Silo; author fixture-only teardown exact recorded creation identity then docker volume rm
+process 181569 pgid=181569: ["docker","volume","rm","k3d-localnet-proof-jwoq5f-backend-images"]; teardown via returned subprocess handle or verified recorded group
+process 181599 pgid=181599: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--json"]; teardown via returned subprocess handle or verified recorded group
+process 183238 pgid=183238: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 183266 pgid=183266: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--force","--json"]; teardown via returned subprocess handle or verified recorded group
+process 184492 pgid=184492: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 184574 pgid=184574: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 185569 pgid=185569: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 185642 pgid=185642: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--force","--json"]; teardown via returned subprocess handle or verified recorded group
+process 185986 pgid=185986: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 186054 pgid=186054: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 186660 pgid=186660: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 186810 pgid=186810: ["docker","container","inspect","648d5c32f9e5db0a4bee1b0966153c2e64eb09d5ac6f4f1cea6cc4fff6168591"]; teardown via returned subprocess handle or verified recorded group
+process 186889 pgid=186889: ["docker","container","inspect","ded275848fa260b78547a7caede4e943a8a944d723e58f7a22f145c958ff0994"]; teardown via returned subprocess handle or verified recorded group
+process 186913 pgid=186913: ["docker","container","inspect","f436fabd4f5aaae020298586be919486490c1f6af10cfde6d0d1798cc6501fe7"]; teardown via returned subprocess handle or verified recorded group
+process 186932 pgid=186932: ["docker","network","inspect","8e2036ac9124cc72c6e703a19354d4e8bfcf5b851b30b5b93e3b43c61b29f23d"]; teardown via returned subprocess handle or verified recorded group
+process 186951 pgid=186951: ["docker","volume","inspect","k3d-localnet-proof-jwoq5f-backend-images"]; teardown via returned subprocess handle or verified recorded group
+process 186979 pgid=186979: ["docker","volume","inspect","k3d-localnet-proof-jwoq5f-backend-images"]; teardown via returned subprocess handle or verified recorded group
+process 187079 pgid=187079: ["docker","volume","inspect","2757a58837b3afe25d6021de2c20f12ec3375c4af955e3c1028dcdfa4d54c48c"]; teardown via returned subprocess handle or verified recorded group
+process 187112 pgid=187112: ["docker","volume","inspect","db53b1e7e1d41d0c55bbbf2a02738c7eea70a25bedaa76a876eaebeca27219ca"]; teardown via returned subprocess handle or verified recorded group
+process 187205 pgid=187205: ["docker","volume","inspect","f772736aa52ef533386de2ac0a8dcfa82e6780d40f3854bc8baa5e7386b8d7f8"]; teardown via returned subprocess handle or verified recorded group
+process 187249 pgid=187249: ["docker","volume","inspect","fc3384552b75bebe70462caabd9378c5b96a6368687b76b6bcfd0ce9e4b2cdee"]; teardown via returned subprocess handle or verified recorded group
+process 187294 pgid=187294: ["docker","volume","inspect","58d0f4b25eed660b3289cebe6ff315eda6e8183c33e6e9814baa2e92c10a2364"]; teardown via returned subprocess handle or verified recorded group
+process 187338 pgid=187338: ["docker","container","create","--name","k3d-localnet-proof-jwoq5f-backend-server-0","--label","io.silo.rehearsal=allocation-rehearsal-jwoq5f","--label","app=k3d","--label","k3d.cluster=localnet-proof-jwoq5f-backend","--label","k3d.role=server","docker.io/rancher/k3s:v1.35.5-k3s1"]; teardown via returned subprocess handle or verified recorded group
+process 187493 pgid=187493: ["docker","container","inspect","a5c445f4122a8238c22b28c6879f5fa7b6a05a8cbe8eda93f1fe8d6db0345ae6"]; teardown via returned subprocess handle or verified recorded group
+synthetic stopped k3d server container a5c445f4122a8238c22b28c6879f5fa7b6a05a8cbe8eda93f1fe8d6db0345ae6 name=k3d-localnet-proof-jwoq5f-backend-server-0; teardown docker container rm a5c445f4122a8238c22b28c6879f5fa7b6a05a8cbe8eda93f1fe8d6db0345ae6 after exact inspect comparison
+process 187531 pgid=187531: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 188028 pgid=188028: ["docker","container","inspect","a5c445f4122a8238c22b28c6879f5fa7b6a05a8cbe8eda93f1fe8d6db0345ae6"]; teardown via returned subprocess handle or verified recorded group
+process 188172 pgid=188172: ["docker","container","rm","--volumes","a5c445f4122a8238c22b28c6879f5fa7b6a05a8cbe8eda93f1fe8d6db0345ae6"]; teardown via returned subprocess handle or verified recorded group
+process 188373 pgid=188373: ["docker","container","create","--name","localnet-proof-jwoq5f-backend-registry.localhost","--label","io.silo.rehearsal=allocation-rehearsal-jwoq5f","--label","app=k3d","--label","k3d.cluster=localnet-proof-jwoq5f-backend","--label","k3d.role=registry","docker.io/library/registry:2"]; teardown via returned subprocess handle or verified recorded group
+process 188454 pgid=188454: ["docker","container","inspect","92b8a832ed2477c82a2b1fa8bd96b39483be41fe3dd1e49df77d38ed7a34f995"]; teardown via returned subprocess handle or verified recorded group
+synthetic stopped k3d registry container 92b8a832ed2477c82a2b1fa8bd96b39483be41fe3dd1e49df77d38ed7a34f995 name=localnet-proof-jwoq5f-backend-registry.localhost; teardown docker container rm 92b8a832ed2477c82a2b1fa8bd96b39483be41fe3dd1e49df77d38ed7a34f995 after exact inspect comparison
+process 188556 pgid=188556: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 189005 pgid=189005: ["docker","container","inspect","92b8a832ed2477c82a2b1fa8bd96b39483be41fe3dd1e49df77d38ed7a34f995"]; teardown via returned subprocess handle or verified recorded group
+process 189121 pgid=189121: ["docker","container","rm","--volumes","92b8a832ed2477c82a2b1fa8bd96b39483be41fe3dd1e49df77d38ed7a34f995"]; teardown via returned subprocess handle or verified recorded group
+process 189325 pgid=189325: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 191212 pgid=191212: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 191827 pgid=191827: ["docker","container","create","--name","unclaimed-allocation-rehearsal-jwoq5f","--label","io.silo.project=1f48e16f-b146-490b-a87b-e7444b4c7d7a","--label","io.silo.generation=4","docker.io/rancher/k3s:v1.35.5-k3s1"]; teardown via returned subprocess handle or verified recorded group
+process 191962 pgid=191962: ["docker","container","inspect","d6dcdf3ff8311b4837c96758fdfa56cd461fd6c8e0c8e17548f86fb353186434"]; teardown via returned subprocess handle or verified recorded group
+outside-claim synthetic container d6dcdf3ff8311b4837c96758fdfa56cd461fd6c8e0c8e17548f86fb353186434; teardown exact ID after inspection
+process 191997 pgid=191997: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 192542 pgid=192542: ["docker","container","inspect","d6dcdf3ff8311b4837c96758fdfa56cd461fd6c8e0c8e17548f86fb353186434"]; teardown via returned subprocess handle or verified recorded group
+process 192570 pgid=192570: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 192784 pgid=192784: ["docker","container","rm","--volumes","d6dcdf3ff8311b4837c96758fdfa56cd461fd6c8e0c8e17548f86fb353186434"]; teardown via returned subprocess handle or verified recorded group
+process 193143 pgid=193143: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 194763 pgid=194763: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-backend","--json"]; teardown via returned subprocess handle or verified recorded group
+process 195240 pgid=195240: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","proof-jwoq5f-anonymous-volumes","--timeout","60s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 202004 pgid=202004: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 202062 pgid=202062: ["docker","container","inspect","16fa99913edcf732ffb8f2c295596ec35b5e9a5a055e6d07ca50105b0a6b9acf","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 202118 pgid=202118: ["docker","volume","inspect","4a5cee2f7f4fa01b6b42ec626d398a47e63c26ed1025a073192d9daa31971a98"]; teardown via returned subprocess handle or verified recorded group
+volume 4a5cee2f7f4fa01b6b42ec626d398a47e63c26ed1025a073192d9daa31971a98 from container 16fa99913edcf732ffb8f2c295596ec35b5e9a5a055e6d07ca50105b0a6b9acf; teardown public down --clean or exact snapshot-verified docker volume rm
+process 202166 pgid=202166: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 207901 pgid=207901: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 208385 pgid=208385: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 208620 pgid=208620: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 208798 pgid=208798: ["docker","container","create","redis:7-alpine"]; teardown via returned subprocess handle or verified recorded group
+donor container 5b512f88386065e847cabce50a70a33d6c8f878793a7a0c5be4555c3c938bb25; teardown snapshot-verified docker container rm --volumes 5b512f88386065e847cabce50a70a33d6c8f878793a7a0c5be4555c3c938bb25
+process 210304 pgid=210304: ["docker","container","inspect","5b512f88386065e847cabce50a70a33d6c8f878793a7a0c5be4555c3c938bb25"]; teardown via returned subprocess handle or verified recorded group
+process 210393 pgid=210393: ["docker","container","inspect","5b512f88386065e847cabce50a70a33d6c8f878793a7a0c5be4555c3c938bb25","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 210461 pgid=210461: ["docker","volume","create","silo-sentinel-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+named sentinel volume silo-sentinel-allocation-rehearsal-jwoq5f; teardown snapshot-verified docker volume rm silo-sentinel-allocation-rehearsal-jwoq5f
+process 210523 pgid=210523: ["docker","volume","inspect","silo-sentinel-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+process 210541 pgid=210541: ["docker","volume","inspect","4c6c43b85824bfcfa53a9abaaff65789d47bf6a37d879127979671a06d621919"]; teardown via returned subprocess handle or verified recorded group
+process 210553 pgid=210553: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","proof-jwoq5f-anonymous-retry","--timeout","60s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 216524 pgid=216524: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 216551 pgid=216551: ["docker","container","inspect","22cea1443f64859835fd47c429e0d1cda44770370a673d5b4be305b7dcff045a","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 216628 pgid=216628: ["docker","volume","inspect","7771e026eab7ab4942472fe6d583794b98e6a076f1d929c1c9d4211fa8809486"]; teardown via returned subprocess handle or verified recorded group
+process 216780 pgid=216780: ["docker","container","create","--volume","7771e026eab7ab4942472fe6d583794b98e6a076f1d929c1c9d4211fa8809486:/borrowed","redis:7-alpine"]; teardown via returned subprocess handle or verified recorded group
+borrower container ed19f0a2d14bef52881800cad94b973f29d61d7c746110ede4a005b5cf3b79af; teardown snapshot-verified docker container rm --volumes ed19f0a2d14bef52881800cad94b973f29d61d7c746110ede4a005b5cf3b79af
+process 217006 pgid=217006: ["docker","container","inspect","ed19f0a2d14bef52881800cad94b973f29d61d7c746110ede4a005b5cf3b79af"]; teardown via returned subprocess handle or verified recorded group
+process 217064 pgid=217064: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--json"]; teardown via returned subprocess handle or verified recorded group
+process 218883 pgid=218883: ["docker","volume","inspect","4c6c43b85824bfcfa53a9abaaff65789d47bf6a37d879127979671a06d621919"]; teardown via returned subprocess handle or verified recorded group
+process 218902 pgid=218902: ["docker","volume","inspect","silo-sentinel-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+process 218922 pgid=218922: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 219022 pgid=219022: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--force","--profile","alternative","--json"]; teardown via returned subprocess handle or verified recorded group
+process 220029 pgid=220029: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 220080 pgid=220080: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 221174 pgid=221174: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 221233 pgid=221233: ["docker","container","inspect","ed19f0a2d14bef52881800cad94b973f29d61d7c746110ede4a005b5cf3b79af"]; teardown via returned subprocess handle or verified recorded group
+process 221255 pgid=221255: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 221301 pgid=221301: ["docker","container","rm","--volumes","ed19f0a2d14bef52881800cad94b973f29d61d7c746110ede4a005b5cf3b79af"]; teardown via returned subprocess handle or verified recorded group
+process 221536 pgid=221536: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 222325 pgid=222325: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 222381 pgid=222381: ["docker","volume","inspect","7771e026eab7ab4942472fe6d583794b98e6a076f1d929c1c9d4211fa8809486"]; teardown via returned subprocess handle or verified recorded group
+leaked fixture volume 7771e026eab7ab4942472fe6d583794b98e6a076f1d929c1c9d4211fa8809486; author teardown exact snapshot-verified docker volume rm; never product cleanup
+process 222397 pgid=222397: ["docker","volume","rm","7771e026eab7ab4942472fe6d583794b98e6a076f1d929c1c9d4211fa8809486"]; teardown via returned subprocess handle or verified recorded group
+process 222429 pgid=222429: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 224464 pgid=224464: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 224565 pgid=224565: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 224772 pgid=224772: ["docker","volume","inspect","4c6c43b85824bfcfa53a9abaaff65789d47bf6a37d879127979671a06d621919"]; teardown via returned subprocess handle or verified recorded group
+process 224849 pgid=224849: ["docker","volume","inspect","silo-sentinel-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+process 224920 pgid=224920: ["docker","container","inspect","5b512f88386065e847cabce50a70a33d6c8f878793a7a0c5be4555c3c938bb25"]; teardown via returned subprocess handle or verified recorded group
+process 225032 pgid=225032: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","proof-jwoq5f-anonymous-identity","--timeout","60s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 229199 pgid=229199: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 229223 pgid=229223: ["docker","container","inspect","925f07d8524ac42b47859fef80ed44a3cf6984aa9eeebac6b0b2e4e1b1e9c62f","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 229249 pgid=229249: ["docker","container","rm","--force","925f07d8524ac42b47859fef80ed44a3cf6984aa9eeebac6b0b2e4e1b1e9c62f"]; teardown via returned subprocess handle or verified recorded group
+process 229515 pgid=229515: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 229579 pgid=229579: ["docker","volume","rm","b18c8161658148766187791aac47434d483fbdf8a0ad0814b5bcccee327fb0f5"]; teardown via returned subprocess handle or verified recorded group
+process 229611 pgid=229611: ["docker","volume","create","--label","com.docker.volume.anonymous=","b18c8161658148766187791aac47434d483fbdf8a0ad0814b5bcccee327fb0f5"]; teardown via returned subprocess handle or verified recorded group
+process 229634 pgid=229634: ["docker","volume","inspect","b18c8161658148766187791aac47434d483fbdf8a0ad0814b5bcccee327fb0f5"]; teardown via returned subprocess handle or verified recorded group
+replacement fixture volume b18c8161658148766187791aac47434d483fbdf8a0ad0814b5bcccee327fb0f5; teardown snapshot-verified docker volume rm b18c8161658148766187791aac47434d483fbdf8a0ad0814b5bcccee327fb0f5
+process 229666 pgid=229666: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 232712 pgid=232712: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 232769 pgid=232769: ["docker","volume","inspect","b18c8161658148766187791aac47434d483fbdf8a0ad0814b5bcccee327fb0f5"]; teardown via returned subprocess handle or verified recorded group
+process 232838 pgid=232838: ["docker","volume","rm","b18c8161658148766187791aac47434d483fbdf8a0ad0814b5bcccee327fb0f5"]; teardown via returned subprocess handle or verified recorded group
+process 232858 pgid=232858: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 233915 pgid=233915: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 233992 pgid=233992: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-same-second-replacement","--json"]; teardown via returned subprocess handle or verified recorded group
+container intent localnet-proof-jwoq5f-same-second-replacement-audit; teardown exact returned ID with --volumes
+process 234983 pgid=234983: ["docker","container","create","--name","localnet-proof-jwoq5f-same-second-replacement-audit","--label","io.silo.project=0262f9d3-7218-4fa4-996f-ca0be54a7927","--label","io.silo.generation=1","redis:7-alpine"]; teardown via returned subprocess handle or verified recorded group
+container a1b026738339096b53408992ba47bfb85ce00ef7c5979bab7b7cc9d453fbd4f2; teardown exact recorded ID with --volumes
+process 235907 pgid=235907: ["docker","container","inspect","a1b026738339096b53408992ba47bfb85ce00ef7c5979bab7b7cc9d453fbd4f2"]; teardown via returned subprocess handle or verified recorded group
+process 235928 pgid=235928: ["docker","volume","inspect","ae5bb598d993aa41d128275f16bb01a8bf1302017de25900b6def74f79892966"]; teardown via returned subprocess handle or verified recorded group
+anonymous volume ae5bb598d993aa41d128275f16bb01a8bf1302017de25900b6def74f79892966 under a1b026738339096b53408992ba47bfb85ce00ef7c5979bab7b7cc9d453fbd4f2; fixture-only teardown exact inspect then docker volume rm, if parent no longer exists
+process 235949 pgid=235949: ["docker","container","rm","a1b026738339096b53408992ba47bfb85ce00ef7c5979bab7b7cc9d453fbd4f2"]; teardown via returned subprocess handle or verified recorded group
+process 236080 pgid=236080: ["docker","volume","rm","ae5bb598d993aa41d128275f16bb01a8bf1302017de25900b6def74f79892966"]; teardown via returned subprocess handle or verified recorded group
+process 236113 pgid=236113: ["docker","volume","create","--label","com.docker.volume.anonymous=","ae5bb598d993aa41d128275f16bb01a8bf1302017de25900b6def74f79892966"]; teardown via returned subprocess handle or verified recorded group
+process 236130 pgid=236130: ["docker","volume","inspect","ae5bb598d993aa41d128275f16bb01a8bf1302017de25900b6def74f79892966"]; teardown via returned subprocess handle or verified recorded group
+process 236152 pgid=236152: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 236989 pgid=236989: ["docker","volume","inspect","ae5bb598d993aa41d128275f16bb01a8bf1302017de25900b6def74f79892966"]; teardown via returned subprocess handle or verified recorded group
+process 237038 pgid=237038: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 237076 pgid=237076: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","--force","--profile","alternative","--json"]; teardown via returned subprocess handle or verified recorded group
+process 237164 pgid=237164: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 237207 pgid=237207: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 237227 pgid=237227: ["docker","volume","inspect","ae5bb598d993aa41d128275f16bb01a8bf1302017de25900b6def74f79892966"]; teardown via returned subprocess handle or verified recorded group
+process 237277 pgid=237277: ["docker","volume","rm","ae5bb598d993aa41d128275f16bb01a8bf1302017de25900b6def74f79892966"]; teardown via returned subprocess handle or verified recorded group
+process 237324 pgid=237324: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-paused-replacement","--json"]; teardown via returned subprocess handle or verified recorded group
+container intent localnet-proof-jwoq5f-paused-replacement-audit; teardown exact returned ID with --volumes
+process 238096 pgid=238096: ["docker","container","create","--name","localnet-proof-jwoq5f-paused-replacement-audit","--label","io.silo.project=2ff674e8-ff5b-4967-b7ee-eb5ecab163e6","--label","io.silo.generation=1","redis:7-alpine"]; teardown via returned subprocess handle or verified recorded group
+container fbd0c88429dc7a3821a748bda6d50caa89c1b4a54224ae1ed48d45b40d04b0cc; teardown exact recorded ID with --volumes
+process 238128 pgid=238128: ["docker","container","inspect","fbd0c88429dc7a3821a748bda6d50caa89c1b4a54224ae1ed48d45b40d04b0cc"]; teardown via returned subprocess handle or verified recorded group
+process 238145 pgid=238145: ["docker","volume","inspect","2561112dcb64511a78bbf787ff0b472a49a7a38ac60d7d560c9995c756c6a04a"]; teardown via returned subprocess handle or verified recorded group
+anonymous volume 2561112dcb64511a78bbf787ff0b472a49a7a38ac60d7d560c9995c756c6a04a under fbd0c88429dc7a3821a748bda6d50caa89c1b4a54224ae1ed48d45b40d04b0cc; fixture-only teardown exact inspect then docker volume rm, if parent no longer exists
+process 238165 pgid=238165: ["docker","container","rm","fbd0c88429dc7a3821a748bda6d50caa89c1b4a54224ae1ed48d45b40d04b0cc"]; teardown via returned subprocess handle or verified recorded group
+process 238306 pgid=238306: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 239087 pgid=239087: ["docker","volume","rm","2561112dcb64511a78bbf787ff0b472a49a7a38ac60d7d560c9995c756c6a04a"]; teardown via returned subprocess handle or verified recorded group
+process 239111 pgid=239111: ["docker","volume","create","--label","com.docker.volume.anonymous=","2561112dcb64511a78bbf787ff0b472a49a7a38ac60d7d560c9995c756c6a04a"]; teardown via returned subprocess handle or verified recorded group
+process 239128 pgid=239128: ["docker","volume","inspect","2561112dcb64511a78bbf787ff0b472a49a7a38ac60d7d560c9995c756c6a04a"]; teardown via returned subprocess handle or verified recorded group
+process 239144 pgid=239144: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 239532 pgid=239532: ["docker","volume","inspect","2561112dcb64511a78bbf787ff0b472a49a7a38ac60d7d560c9995c756c6a04a"]; teardown via returned subprocess handle or verified recorded group
+process 239569 pgid=239569: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 239602 pgid=239602: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 239617 pgid=239617: ["docker","volume","inspect","2561112dcb64511a78bbf787ff0b472a49a7a38ac60d7d560c9995c756c6a04a"]; teardown via returned subprocess handle or verified recorded group
+process 239647 pgid=239647: ["docker","volume","rm","2561112dcb64511a78bbf787ff0b472a49a7a38ac60d7d560c9995c756c6a04a"]; teardown via returned subprocess handle or verified recorded group
+process 239669 pgid=239669: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","proof-jwoq5f-parent-volume-cleanup","--timeout","60s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 241392 pgid=241392: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 241410 pgid=241410: ["docker","container","inspect","a07e98710c2f714bef78343785c47d558bc0c2414feabcac0c3207890cdc0a61","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 241425 pgid=241425: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 243434 pgid=243434: ["docker","container","inspect","a07e98710c2f714bef78343785c47d558bc0c2414feabcac0c3207890cdc0a61"]; teardown via returned subprocess handle or verified recorded group
+process 243469 pgid=243469: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 243489 pgid=243489: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-jwoq5f-inherited-volumes","--json"]; teardown via returned subprocess handle or verified recorded group
+named volume intent silo-inherited-allocation-rehearsal-jwoq5f; teardown exact snapshot-verified author docker volume rm
+process 243649 pgid=243649: ["docker","volume","create","silo-inherited-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+process 243679 pgid=243679: ["docker","volume","inspect","silo-inherited-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+process 243698 pgid=243698: ["docker","container","create","--volume","silo-inherited-allocation-rehearsal-jwoq5f:/named","redis:7-alpine"]; teardown via returned subprocess handle or verified recorded group
+inherited donor container 6decedd86cb07117546775f7dc3a1dd40871d0f89082258a0444cbb0df1310cd; teardown exact recorded ID with --volumes
+process 243770 pgid=243770: ["docker","container","inspect","6decedd86cb07117546775f7dc3a1dd40871d0f89082258a0444cbb0df1310cd"]; teardown via returned subprocess handle or verified recorded group
+process 243786 pgid=243786: ["docker","container","inspect","6decedd86cb07117546775f7dc3a1dd40871d0f89082258a0444cbb0df1310cd","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+inherited anonymous volume 8eb80e3dfeab88ae034f97c985eb88f0bbbca30c1e7b5fbcd6e4223c3867cd16 from donor 6decedd86cb07117546775f7dc3a1dd40871d0f89082258a0444cbb0df1310cd; cleanup only with last exact recorded fixture parent
+process 243802 pgid=243802: ["docker","volume","inspect","8eb80e3dfeab88ae034f97c985eb88f0bbbca30c1e7b5fbcd6e4223c3867cd16"]; teardown via returned subprocess handle or verified recorded group
+inherited borrower intent localnet-proof-jwoq5f-inherited-volumes-inherited; teardown exact returned ID with --volumes only while donor exists
+process 243835 pgid=243835: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--timeout","60s","--json"]; teardown via returned subprocess handle or verified recorded group
+inherited borrower cb88834cdf6dac2aaf09d95333c43d54bdcbd5d1f2d8de9031bb49e1c40c09f5; teardown exact recorded ID with --volumes while donor exists
+process 244366 pgid=244366: ["docker","container","inspect","cb88834cdf6dac2aaf09d95333c43d54bdcbd5d1f2d8de9031bb49e1c40c09f5"]; teardown via returned subprocess handle or verified recorded group
+process 244384 pgid=244384: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 244402 pgid=244402: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 244618 pgid=244618: ["docker","container","inspect","5b512f88386065e847cabce50a70a33d6c8f878793a7a0c5be4555c3c938bb25"]; teardown via returned subprocess handle or verified recorded group
+process 244635 pgid=244635: ["docker","container","rm","--volumes","5b512f88386065e847cabce50a70a33d6c8f878793a7a0c5be4555c3c938bb25"]; teardown via returned subprocess handle or verified recorded group
+process 244652 pgid=244652: ["docker","volume","inspect","silo-sentinel-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+process 244667 pgid=244667: ["docker","volume","rm","silo-sentinel-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+process 244690 pgid=244690: ["docker","volume","inspect","silo-inherited-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group
+process 244717 pgid=244717: ["docker","volume","rm","silo-inherited-allocation-rehearsal-jwoq5f"]; teardown via returned subprocess handle or verified recorded group

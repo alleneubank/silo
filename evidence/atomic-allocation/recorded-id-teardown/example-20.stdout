@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-06T01:25:56Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "2",
+            "io.silo.project": "86625f1e-1b34-4fda-886d-1774f58bad47",
+            "k3d.cluster": "localnet-redesign-e120d56a"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-redesign-e120d56a-images/_data",
+        "Name": "k3d-localnet-redesign-e120d56a-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

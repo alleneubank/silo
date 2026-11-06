@@ -1,0 +1,1720 @@
+{
+  "sourceHead": "77e3d68f9b8dffff2aec9c31bc2833349c36c3f3",
+  "environment": {
+    "platform": "linux",
+    "arch": "x64",
+    "bun": "1.4.4",
+    "root": "/tmp/fixtures/allocation-rehearsal-VMowsW",
+    "accountHome": "/home/ae",
+    "artifact": "/mnt/dist/cli.js",
+    "sha256": "b14266a4564fa89dd7440d5cce5de08f51dd587173a9b3ee475b49b2743c2e53"
+  },
+  "commands": 371,
+  "result": {
+    "result": "pass",
+    "suite": "all"
+  },
+  "scenarios": [
+    {
+      "scenario": "legacy lock-only refuses all five commands in old and unrelated roots without writes",
+      "registry": "/home/ae/.silo/instances",
+      "pass": true
+    },
+    {
+      "scenario": "legacy lock-only refuses all five commands in old and unrelated roots without writes",
+      "registry": "/tmp/fixtures/allocation-rehearsal-VMowsW/invoking-home/.silo/instances",
+      "pass": true
+    },
+    {
+      "scenario": "legacy lock-only refuses all five commands in old and unrelated roots without writes",
+      "registry": "/tmp/fixtures/allocation-rehearsal-VMowsW/old-registry",
+      "pass": true
+    },
+    {
+      "scenario": "unsupported old client after cutover",
+      "artifact": "/tmp/legacy/0.9.0/package/dist/cli.js",
+      "digest": "651730914fee9cdb165f1d0397c82b5160c6e5c42d55e21d193efae227780849",
+      "code": 0,
+      "oldPorts": {
+        "APP_PORT": 48127,
+        "TILT_PORT": 48128
+      },
+      "newClaimPorts": {
+        "APP_PORT": 48127,
+        "TILT_PORT": 48128
+      },
+      "storeUnchanged": true
+    },
+    {
+      "scenario": "unsupported old client after cutover",
+      "artifact": "/tmp/legacy/0.5.9/package/dist/cli.js",
+      "digest": "d003a3a3bcff0e9abc60846e289a97133b69a87112be240bddb60d07a7410810",
+      "code": 0,
+      "oldPorts": {
+        "APP_PORT": 48127,
+        "TILT_PORT": 48128
+      },
+      "newClaimPorts": {
+        "APP_PORT": 48127,
+        "TILT_PORT": 48128
+      },
+      "storeUnchanged": true
+    },
+    {
+      "scenario": "0.9.0 red control: failed Tilt teardown still reports success and removes snapshots",
+      "observed": true
+    },
+    {
+      "scenario": "paused old operation drained before cutover; reverse lock-only reservation refused until owner down",
+      "pass": true
+    },
+    {
+      "scenario": "squatter preserved; no renumbering or release",
+      "pass": true
+    },
+    {
+      "scenario": "native crash after rename before receipt checkpoint recovers own inode; B untouched",
+      "pass": true
+    },
+    {
+      "scenario": "native owner SIGKILL before durable grant executes no hook and drains actual child group",
+      "pass": true
+    },
+    {
+      "scenario": "owner-crash durable completion observed",
+      "launchId": "81d6d1fe-92d5-424e-8ca9-a6ee18cd1ed0",
+      "completion": {
+        "projectId": "a09069fe-c899-4dfb-a7e9-a5c2a8e0a158",
+        "generation": 4,
+        "launchId": "81d6d1fe-92d5-424e-8ca9-a6ee18cd1ed0",
+        "leaderPid": 1037637,
+        "groupId": 1037637,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-06T01:27:22.910Z"
+      },
+      "pass": true
+    },
+    {
+      "scenario": "live force refusal, owner crash, completion recovery, B untouched",
+      "pass": true,
+      "b": "3915e2d7-c6d8-4445-9192-b7ec00180bbd"
+    },
+    {
+      "scenario": "cleanup consumes receipts without evaluating a failing Tiltfile",
+      "originalClaims": [
+        {
+          "domain": "compose-name",
+          "resource": "localnet-proof-vmowsw-failed-teardown"
+        },
+        {
+          "domain": "container",
+          "resource": "localnet-proof-vmowsw-failed-teardown-",
+          "prefix": true
+        },
+        {
+          "domain": "container",
+          "resource": "localnet-proof-vmowsw-failed-teardown_",
+          "prefix": true
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/61351050/.localnet.env"
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/61351050/.silo.lock"
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/61351050/silo.toml"
+        },
+        {
+          "domain": "host-port",
+          "resource": "48127"
+        },
+        {
+          "domain": "host-port",
+          "resource": "48128"
+        },
+        {
+          "domain": "hostname",
+          "resource": "proof-vmowsw-failed-teardown.localhost"
+        },
+        {
+          "domain": "instance-name",
+          "resource": "proof-vmowsw-failed-teardown"
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-failed-teardown"
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-failed-teardown-",
+          "prefix": true
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-failed-teardown_",
+          "prefix": true
+        },
+        {
+          "domain": "volume",
+          "resource": "localnet-proof-vmowsw-failed-teardown-",
+          "prefix": true
+        },
+        {
+          "domain": "volume",
+          "resource": "localnet-proof-vmowsw-failed-teardown_",
+          "prefix": true
+        }
+      ],
+      "pass": true
+    },
+    {
+      "scenario": "native filesystem keeps these spellings distinct",
+      "original": "/tmp/fixtures/allocation-rehearsal-VMowsW/CaseRoot",
+      "alternate": "/tmp/fixtures/allocation-rehearsal-VMowsW/caseroot"
+    },
+    {
+      "scenario": "native filesystem keeps these spellings distinct",
+      "original": "/tmp/fixtures/allocation-rehearsal-VMowsW/Café",
+      "alternate": "/tmp/fixtures/allocation-rehearsal-VMowsW/Café"
+    },
+    {
+      "scenario": "owned container volume handles before deletion",
+      "names": [
+        "k3d-localnet-proof-vmowsw-backend-images",
+        "72bc89fbd5c8d1bac29cf53f02d80b61a4de6fce4f65c5582526d1795c280d54",
+        "d99530b9d0951a234f8b98e90c69f87cdf2794410749919e8dddea282cef1755",
+        "661864c42c9fd90e4efa3e50c29c3aa91de3880ed40af2649a2b942a1da82bb4",
+        "b8ffdefedbfa762220c3ac951260fdd2ea4904a8446552f11a5c53e08823b314",
+        "f683faae6a0ab9b897e3f80ef88f6a72c8b59eac3ec0bbd7ac204ec3cfdcb638"
+      ]
+    },
+    {
+      "scenario": "real k3d cluster/registry/network/volume and kubeconfig receipts",
+      "resources": [
+        {
+          "source": "k3d",
+          "name": "k3d-localnet-proof-vmowsw-backend-server-0",
+          "id": "ac78307c2e1336c5ceabc265cc13355200cc9dc2fa149e92ceb534bb894b7da9",
+          "createdAt": "2026-11-06T01:27:37.892275824Z",
+          "labels": {
+            "app": "k3d",
+            "io.silo.generation": "2",
+            "io.silo.project": "a5e69626-5478-47be-851e-e133c1729aa1",
+            "k3d.cluster": "localnet-proof-vmowsw-backend",
+            "k3d.role": "server"
+          },
+          "kind": "container",
+          "anonymousVolumes": [
+            {
+              "name": "d99530b9d0951a234f8b98e90c69f87cdf2794410749919e8dddea282cef1755",
+              "createdAt": "2026-11-06T01:27:37Z",
+              "destination": "/var/lib/cni"
+            },
+            {
+              "name": "661864c42c9fd90e4efa3e50c29c3aa91de3880ed40af2649a2b942a1da82bb4",
+              "createdAt": "2026-11-06T01:27:37Z",
+              "destination": "/var/lib/kubelet"
+            },
+            {
+              "name": "b8ffdefedbfa762220c3ac951260fdd2ea4904a8446552f11a5c53e08823b314",
+              "createdAt": "2026-11-06T01:27:37Z",
+              "destination": "/var/lib/rancher/k3s"
+            },
+            {
+              "name": "72bc89fbd5c8d1bac29cf53f02d80b61a4de6fce4f65c5582526d1795c280d54",
+              "createdAt": "2026-11-06T01:27:37Z",
+              "destination": "/var/log"
+            }
+          ]
+        },
+        {
+          "source": "k3d",
+          "name": "k3d-localnet-proof-vmowsw-backend-serverlb",
+          "id": "0149e21898ff071726d7da3aa34565bd58893ca6b195fc417db8254601479a96",
+          "createdAt": "2026-11-06T01:27:37.976402285Z",
+          "labels": {
+            "app": "k3d",
+            "io.silo.generation": "2",
+            "io.silo.project": "a5e69626-5478-47be-851e-e133c1729aa1",
+            "k3d.cluster": "localnet-proof-vmowsw-backend",
+            "k3d.role": "loadbalancer"
+          },
+          "kind": "container",
+          "anonymousVolumes": []
+        },
+        {
+          "source": "k3d",
+          "name": "localnet-proof-vmowsw-backend-registry.localhost",
+          "id": "d2591d54d76aa83f6e4def07203bbd597c94465197e45d364a398e1532ca180e",
+          "createdAt": "2026-11-06T01:27:33.249024308Z",
+          "labels": {
+            "app": "k3d",
+            "k3d.cluster": "localnet-proof-vmowsw-backend",
+            "k3d.role": "registry"
+          },
+          "kind": "container",
+          "anonymousVolumes": [
+            {
+              "name": "f683faae6a0ab9b897e3f80ef88f6a72c8b59eac3ec0bbd7ac204ec3cfdcb638",
+              "createdAt": "2026-11-06T01:27:36Z",
+              "destination": "/var/lib/registry"
+            }
+          ]
+        },
+        {
+          "source": "k3d",
+          "name": "k3d-localnet-proof-vmowsw-backend",
+          "id": "6ce1d6d575b55ad02c70052537c06935a3eaf03ec0eed72d5d25643c69a2a5c5",
+          "createdAt": "2026-11-06T01:27:32.619840518Z",
+          "labels": {
+            "io.silo.generation": "2",
+            "io.silo.project": "a5e69626-5478-47be-851e-e133c1729aa1",
+            "k3d.cluster": "localnet-proof-vmowsw-backend"
+          },
+          "kind": "network"
+        },
+        {
+          "source": "k3d",
+          "name": "k3d-localnet-proof-vmowsw-backend-images",
+          "id": "k3d-localnet-proof-vmowsw-backend-images",
+          "createdAt": "2026-11-06T01:27:32Z",
+          "labels": {
+            "io.silo.generation": "2",
+            "io.silo.project": "a5e69626-5478-47be-851e-e133c1729aa1",
+            "k3d.cluster": "localnet-proof-vmowsw-backend"
+          },
+          "kind": "volume"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "scenario": "k3d enabled-to-disabled refuses role removal until recorded kubeconfig cleanup",
+      "kubeconfig": "/tmp/fixtures/allocation-rehearsal-VMowsW/backend/.localnet/kubeconfig",
+      "snapshotSha256": "769eac692ce9bc9179a481f5f9ce7167685b73bb95134f914846bec98970ae09",
+      "generation": 2,
+      "refusedGeneration": 2,
+      "finalClaims": [],
+      "pass": true
+    },
+    {
+      "scenario": "leftovers refused unchanged, retention holds claims, explicit exact deletion, unreachable engine refuses",
+      "pass": true
+    },
+    {
+      "scenario": "image-declared anonymous mount before teardown",
+      "parent": {
+        "source": "compose",
+        "name": "localnet-proof-vmowsw-anonymous-volumes-redis-1",
+        "id": "02da8766dc63972cf3d338ec7e30161f8e0bb53a6d625f74b1707385228a42b0",
+        "createdAt": "2026-11-06T01:28:18.67646085Z",
+        "labels": {
+          "com.docker.compose.project": "localnet-proof-vmowsw-anonymous-volumes",
+          "com.docker.compose.project.working_dir": "/tmp/fixtures/allocation-rehearsal-VMowsW/anonymous-volumes",
+          "io.silo.generation": "1",
+          "io.silo.project": "2d19a6a8-ac3c-4918-ba0a-54bedbe59b85"
+        },
+        "kind": "container",
+        "anonymousVolumes": [
+          {
+            "name": "253afabfafe801840db69bb52f84aa4b848d57c86a9e20bf910475ff87723a6c",
+            "createdAt": "2026-11-06T01:28:18Z",
+            "destination": "/data"
+          }
+        ]
+      },
+      "mounts": [
+        {
+          "Type": "volume",
+          "Name": "253afabfafe801840db69bb52f84aa4b848d57c86a9e20bf910475ff87723a6c",
+          "Destination": "/data"
+        }
+      ],
+      "volume": [
+        {
+          "CreatedAt": "2026-11-06T01:28:18Z",
+          "Driver": "local",
+          "Labels": {
+            "com.docker.volume.anonymous": ""
+          },
+          "Mountpoint": "/var/lib/docker/volumes/253afabfafe801840db69bb52f84aa4b848d57c86a9e20bf910475ff87723a6c/_data",
+          "Name": "253afabfafe801840db69bb52f84aa4b848d57c86a9e20bf910475ff87723a6c",
+          "Options": null,
+          "Scope": "local"
+        }
+      ]
+    },
+    {
+      "scenario": "public clean removes the exact image-declared anonymous volume",
+      "parentId": "02da8766dc63972cf3d338ec7e30161f8e0bb53a6d625f74b1707385228a42b0",
+      "volume": "253afabfafe801840db69bb52f84aa4b848d57c86a9e20bf910475ff87723a6c",
+      "pass": true
+    },
+    {
+      "scenario": "shared anonymous mount is leaked, reported and never deleted by name; clean/force retain claims until the fixture owner resolves it; explicit named and borrowed mounts survive",
+      "parent": {
+        "source": "compose",
+        "name": "localnet-proof-vmowsw-anonymous-retry-redis-1",
+        "id": "b917321ee517879f1c107d33e642d4df1d777c3f07674d59d6a0b74cf23d294f",
+        "createdAt": "2026-11-06T01:28:23.457484633Z",
+        "labels": {
+          "com.docker.compose.project": "localnet-proof-vmowsw-anonymous-retry",
+          "com.docker.compose.project.working_dir": "/tmp/fixtures/allocation-rehearsal-VMowsW/anonymous-retry",
+          "io.silo.generation": "1",
+          "io.silo.project": "826678f6-9c12-49ac-8871-bfb608e78406"
+        },
+        "kind": "container",
+        "anonymousVolumes": [
+          {
+            "name": "957dabb85b193f401f686846707cec5cb76cff79e1fc080692ab0d35e9185c95",
+            "createdAt": "2026-11-06T01:28:24Z",
+            "destination": "/data"
+          }
+        ]
+      },
+      "borrowed": "3cd31cd566c8d597db26790698278a41bd115e99a934e6d15f78b1f2fe81f636",
+      "named": "silo-sentinel-allocation-rehearsal-vmowsw",
+      "pass": true
+    },
+    {
+      "scenario": "replacement anonymous name is reported as a leak without deletion or claim release; owner-resolved absence allows retirement",
+      "original": {
+        "name": "0498647e31a68bc53f4348c6541c8e791f5a0f3e23759fd0b6a4843cf84f4071",
+        "createdAt": "2026-11-06T01:28:29Z",
+        "destination": "/data"
+      },
+      "replacement": [
+        {
+          "CreatedAt": "2026-11-06T01:28:30Z",
+          "Driver": "local",
+          "Labels": {
+            "com.docker.volume.anonymous": ""
+          },
+          "Mountpoint": "/var/lib/docker/volumes/0498647e31a68bc53f4348c6541c8e791f5a0f3e23759fd0b6a4843cf84f4071/_data",
+          "Name": "0498647e31a68bc53f4348c6541c8e791f5a0f3e23759fd0b6a4843cf84f4071",
+          "Options": null,
+          "Scope": "local"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "scenario": "same-second replacement is preserved; clean and forced replacement keep claims",
+      "original": {
+        "name": "a3cfe16546a81563b58af1be4038cb7f3188131fb47ef16657eb3a8b05bd3493",
+        "createdAt": "2026-11-06T01:28:33Z",
+        "destination": "/data"
+      },
+      "replacement": [
+        {
+          "CreatedAt": "2026-11-06T01:28:33Z",
+          "Driver": "local",
+          "Labels": {
+            "com.docker.volume.anonymous": ""
+          },
+          "Mountpoint": "/var/lib/docker/volumes/a3cfe16546a81563b58af1be4038cb7f3188131fb47ef16657eb3a8b05bd3493/_data",
+          "Name": "a3cfe16546a81563b58af1be4038cb7f3188131fb47ef16657eb3a8b05bd3493",
+          "Options": null,
+          "Scope": "local"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "scenario": "replacement at the unsafe deletion boundary is preserved; no name-delete authority exists",
+      "unsafeDeleteReached": false,
+      "original": {
+        "name": "3ad8ef7f17b83c766bc8cfa2479665e6dba460bd22b4bcadd87900368001b4e2",
+        "createdAt": "2026-11-06T01:28:35Z",
+        "destination": "/data"
+      },
+      "replacement": [
+        {
+          "CreatedAt": "2026-11-06T01:28:35Z",
+          "Driver": "local",
+          "Labels": {
+            "com.docker.volume.anonymous": ""
+          },
+          "Mountpoint": "/var/lib/docker/volumes/3ad8ef7f17b83c766bc8cfa2479665e6dba460bd22b4bcadd87900368001b4e2/_data",
+          "Name": "3ad8ef7f17b83c766bc8cfa2479665e6dba460bd22b4bcadd87900368001b4e2",
+          "Options": null,
+          "Scope": "local"
+        }
+      ],
+      "pass": true
+    },
+    {
+      "scenario": "exact parent removal removes its anonymous volume without delegated Tilt teardown",
+      "parent": {
+        "source": "compose",
+        "name": "localnet-proof-vmowsw-parent-volume-cleanup-redis-1",
+        "id": "db9a8852a6d56e856fccafb0ffea34aa434bd91ecd9dc747bcf63d7885020297",
+        "createdAt": "2026-11-06T01:28:37.457227159Z",
+        "labels": {
+          "com.docker.compose.project": "localnet-proof-vmowsw-parent-volume-cleanup",
+          "com.docker.compose.project.working_dir": "/tmp/fixtures/allocation-rehearsal-VMowsW/parent-volume-cleanup",
+          "io.silo.generation": "1",
+          "io.silo.project": "bcdc900b-557f-443b-ad7b-17047fe38628"
+        },
+        "kind": "container",
+        "anonymousVolumes": [
+          {
+            "name": "6fa55314d1bb47b5a44ade90a63c18e98fa575754dc6ba7347eaf93c0f860b7a",
+            "createdAt": "2026-11-06T01:28:37Z",
+            "destination": "/data"
+          }
+        ]
+      },
+      "data": {
+        "Type": "volume",
+        "Name": "6fa55314d1bb47b5a44ade90a63c18e98fa575754dc6ba7347eaf93c0f860b7a",
+        "Destination": "/data"
+      },
+      "pass": true
+    },
+    {
+      "scenario": "inherited provenance refuses without deletion; Docker preserves shared live references and named data, but removes last-user inherited anonymous data",
+      "donor": "7f69540dc3eea13b939b3c2041e96fcabda2235e5be8968315564c82102d0c40",
+      "borrower": "c92b700f85ab4cd33d9a73de89670b50d96e5e54588ee45e5e620c3c86643206",
+      "lastUser": "54e32fe32432a79446e330b3bf2cdd37ac9c48070ce5b6a28d419f1a3ad9e5e4",
+      "anonymous": "19e5eadad0b4772a88034be207ca46071f7cb20cda08498493d89a1073396c5a",
+      "named": "silo-inherited-allocation-rehearsal-vmowsw",
+      "pass": true
+    },
+    {
+      "scenario": "real failed network delete, durable successful retry, CLI killed before completion import, public recovery retires",
+      "network": "04d24aa09db757f51ac544fe10ff19fad5416f9010eef4bc637e1f1a85960b57",
+      "failedLaunch": "730b86b9-ea03-44a1-a094-f6eea92c4d7b",
+      "successfulLaunch": "74669547-03c3-4e71-919b-7769feb81c43",
+      "interrupted": {
+        "projectId": "0b755c28-1c76-47f0-8b0d-166ac307b8de",
+        "generation": 1,
+        "phase": "cleanup-required",
+        "allocation": {
+          "state": {
+            "name": "proof-vmowsw-retry-crash",
+            "ports": {
+              "APP_PORT": 49154,
+              "TILT_PORT": 49155,
+              "K3D_API_PORT": 49156
+            },
+            "identity": {
+              "name": "proof-vmowsw-retry-crash",
+              "prefix": "localnet",
+              "composeName": "localnet-proof-vmowsw-retry-crash",
+              "dockerNetwork": "localnet-proof-vmowsw-retry-crash",
+              "volumePrefix": "localnet-proof-vmowsw-retry-crash",
+              "containerPrefix": "localnet-proof-vmowsw-retry-crash-",
+              "hosts": {
+                "APP_HOST": "proof-vmowsw-retry-crash.localhost",
+                "TILT_HOST": "127.0.0.1"
+              },
+              "k3dClusterName": "localnet-proof-vm-7a955eb6-crash",
+              "kubeconfigPath": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash/.localnet/kubeconfig"
+            },
+            "createdAt": "2026-11-06T01:28:43.568Z",
+            "k3dClusterCreated": false
+          },
+          "configPath": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash/silo.toml",
+          "configSource": "version=1\n[k3d]\nenabled=true\nkubeconfigPath=\".localnet/kubeconfig\"\n\n[ports]\nAPP_PORT=48127\nTILT_PORT=48128\n[hosts]\nAPP_HOST=\"${name}.localhost\"\nTILT_HOST=\"127.0.0.1\"\n[tilt]\nwebMode=\"prod\"\n[profiles.alternative.ports]\nAPP_PORT=48129\n",
+          "fingerprint": "c54978415353735c7ca07b35e3da291ecd398b5c21e08631003f952c1af494ad",
+          "urls": {},
+          "k3dArgs": [],
+          "hostOrder": [
+            "APP_HOST",
+            "TILT_HOST"
+          ],
+          "portOrder": [
+            "APP_PORT",
+            "TILT_PORT",
+            "K3D_API_PORT"
+          ],
+          "urlOrder": [],
+          "engine": {
+            "endpoint": "unix:///var/run/docker.sock",
+            "id": "114f4194-e27d-4d0b-82fc-201ecd0e9997"
+          }
+        },
+        "claims": [
+          {
+            "domain": "compose-name",
+            "resource": "localnet-proof-vmowsw-retry-crash"
+          },
+          {
+            "domain": "container",
+            "resource": "k3d-localnet-proof-vm-7a955eb6-crash-",
+            "prefix": true
+          },
+          {
+            "domain": "container",
+            "resource": "localnet-proof-vmowsw-retry-crash-",
+            "prefix": true
+          },
+          {
+            "domain": "container",
+            "resource": "localnet-proof-vmowsw-retry-crash_",
+            "prefix": true
+          },
+          {
+            "domain": "file-target",
+            "resource": "64513/61367144/.localnet.env"
+          },
+          {
+            "domain": "file-target",
+            "resource": "64513/61367144/.silo.lock"
+          },
+          {
+            "domain": "file-target",
+            "resource": "64513/61367144/silo.toml"
+          },
+          {
+            "domain": "file-target",
+            "resource": "64513/61367352/kubeconfig"
+          },
+          {
+            "domain": "host-port",
+            "resource": "49154"
+          },
+          {
+            "domain": "host-port",
+            "resource": "49155"
+          },
+          {
+            "domain": "host-port",
+            "resource": "49156"
+          },
+          {
+            "domain": "hostname",
+            "resource": "proof-vmowsw-retry-crash.localhost"
+          },
+          {
+            "domain": "instance-name",
+            "resource": "proof-vmowsw-retry-crash"
+          },
+          {
+            "domain": "k3d-cluster",
+            "resource": "localnet-proof-vm-7a955eb6-crash"
+          },
+          {
+            "domain": "network",
+            "resource": "k3d-localnet-proof-vm-7a955eb6-crash"
+          },
+          {
+            "domain": "network",
+            "resource": "localnet-proof-vmowsw-retry-crash"
+          },
+          {
+            "domain": "network",
+            "resource": "localnet-proof-vmowsw-retry-crash-",
+            "prefix": true
+          },
+          {
+            "domain": "network",
+            "resource": "localnet-proof-vmowsw-retry-crash_",
+            "prefix": true
+          },
+          {
+            "domain": "volume",
+            "resource": "k3d-localnet-proof-vm-7a955eb6-crash-images"
+          },
+          {
+            "domain": "volume",
+            "resource": "localnet-proof-vmowsw-retry-crash-",
+            "prefix": true
+          },
+          {
+            "domain": "volume",
+            "resource": "localnet-proof-vmowsw-retry-crash_",
+            "prefix": true
+          }
+        ],
+        "resources": [
+          {
+            "source": "k3d",
+            "name": "k3d-localnet-proof-vm-7a955eb6-crash",
+            "id": "04d24aa09db757f51ac544fe10ff19fad5416f9010eef4bc637e1f1a85960b57",
+            "createdAt": "2026-11-06T01:28:43.898001089Z",
+            "labels": {
+              "io.silo.generation": "1",
+              "io.silo.project": "0b755c28-1c76-47f0-8b0d-166ac307b8de"
+            },
+            "kind": "network"
+          }
+        ],
+        "launches": [
+          {
+            "id": "730b86b9-ea03-44a1-a094-f6eea92c4d7b",
+            "kind": "owned-network-delete",
+            "command": [
+              "docker",
+              "network",
+              "rm",
+              "04d24aa09db757f51ac544fe10ff19fad5416f9010eef4bc637e1f1a85960b57"
+            ],
+            "effect": "delete",
+            "supervisorPid": 1132445,
+            "leaderPid": 1132446,
+            "groupId": 1132446,
+            "supervisorIdentity": "30033 1132445 Fri Nov  6 01:28:44 2026 janitor --pgroup-only --watch-pid 1131658 --grace-ms 5000 -- /home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun /mnt/dist/cli.js __silo_execute 730b86b9-ea03-44a1-a094-f6eea92c4d7b /tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash 0b755c28-1c76-47f0-8b0d-166ac307b8de 1 account",
+            "phase": "exited",
+            "started": true,
+            "exitCode": 1,
+            "reconciled": false,
+            "terminal": true
+          },
+          {
+            "id": "74669547-03c3-4e71-919b-7769feb81c43",
+            "kind": "owned-network-delete",
+            "command": [
+              "docker",
+              "network",
+              "rm",
+              "04d24aa09db757f51ac544fe10ff19fad5416f9010eef4bc637e1f1a85960b57"
+            ],
+            "effect": "delete",
+            "supervisorPid": 1133737,
+            "leaderPid": 1133738,
+            "groupId": 1133738,
+            "supervisorIdentity": "30033 1133737 Fri Nov  6 01:28:45 2026 janitor --pgroup-only --watch-pid 1132939 --grace-ms 5000 -- /home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun /mnt/dist/cli.js __silo_execute 74669547-03c3-4e71-919b-7769feb81c43 /tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash 0b755c28-1c76-47f0-8b0d-166ac307b8de 1 account",
+            "phase": "granted",
+            "exitCode": null,
+            "reconciled": false,
+            "terminal": false
+          }
+        ],
+        "completions": [
+          {
+            "projectId": "0b755c28-1c76-47f0-8b0d-166ac307b8de",
+            "generation": 1,
+            "launchId": "730b86b9-ea03-44a1-a094-f6eea92c4d7b",
+            "leaderPid": 1132446,
+            "groupId": 1132446,
+            "started": true,
+            "exitCode": 1,
+            "completedAt": "2026-11-06T01:28:45.107Z"
+          },
+          {
+            "projectId": "0b755c28-1c76-47f0-8b0d-166ac307b8de",
+            "generation": 1,
+            "launchId": "74669547-03c3-4e71-919b-7769feb81c43",
+            "leaderPid": 1133738,
+            "groupId": 1133738,
+            "started": true,
+            "exitCode": 0,
+            "completedAt": "2026-11-06T01:28:46.886Z"
+          }
+        ],
+        "files": [
+          {
+            "role": "config",
+            "target": {
+              "path": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash/silo.toml",
+              "base": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+              "parent": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+              "parentDevice": "64513",
+              "parentInode": "61367144",
+              "key": "64513/61367144/silo.toml"
+            },
+            "published": {
+              "identity": "64513/61367145",
+              "hash": "eda50f387508355455df77b792329ecce55b122042635718944d146f86aab4fb",
+              "generation": 1
+            },
+            "pending": null
+          },
+          {
+            "role": "env",
+            "target": {
+              "path": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash/.localnet.env",
+              "base": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+              "parent": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+              "parentDevice": "64513",
+              "parentInode": "61367144",
+              "key": "64513/61367144/.localnet.env"
+            },
+            "published": {
+              "identity": "64513/61367359",
+              "hash": "14a0bc881e8a55f7b05606d353d88ca3f3362ad6d9aec084109b47defebe85d6",
+              "generation": 1
+            },
+            "pending": null
+          },
+          {
+            "role": "kubeconfig",
+            "target": {
+              "path": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash/.localnet/kubeconfig",
+              "base": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+              "parent": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash/.localnet",
+              "parentDevice": "64513",
+              "parentInode": "61367352",
+              "key": "64513/61367352/kubeconfig"
+            },
+            "published": null,
+            "pending": null
+          },
+          {
+            "role": "lock",
+            "target": {
+              "path": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash/.silo.lock",
+              "base": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+              "parent": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+              "parentDevice": "64513",
+              "parentInode": "61367144",
+              "key": "64513/61367144/.silo.lock"
+            },
+            "published": {
+              "identity": "64513/61367370",
+              "hash": "f3942210ddf2faf421638b91f74f085a302e9db168a11e57edfb8e16a685cd3b",
+              "generation": 1
+            },
+            "pending": null
+          }
+        ],
+        "schemaVersion": 1,
+        "root": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+        "problem": "COMMAND_FAILED: owned-network-delete exited 1; owned claims retained. \nError response from daemon: error while removing network: network k3d-localnet-proof-vm-7a955eb6-crash has active endpoints (name:\"flamboyant_shirley\" id:\"34580098c2d9\")\nexit status 1\n",
+        "operation": {
+          "token": "732643c4-95ab-46f2-a22b-84a155c37bbf",
+          "pid": 1132939,
+          "startedAt": "2026-11-06T01:28:46.021Z"
+        },
+        "sinks": []
+      },
+      "pass": true
+    },
+    {
+      "scenario": "real Compose replacement after exact parent removal",
+      "oldParent": "c815e70ef537ec3d494c1e3945d701fa5362798cc3f793f9505eca23f7e23e0d",
+      "oldData": "f6b1b192b4e60ad3eeff766b45ea54f8dc99dfce82f70b1c7ed1e44cb96a99c9",
+      "replacementId": "58d8ae1befa06bcd5e5bfca90c03385663a75bcae08430134484e3a4cb925e5a",
+      "volume": "02e9781a389654ab60afdcb52171b16abbf0914e72d3da2e323e08ce78ee274c",
+      "pauseReached": true,
+      "resumedCode": 1,
+      "resumed": {
+        "schemaVersion": 1,
+        "code": "COMMAND_FAILED",
+        "message": "COMMAND_FAILED: owned-network-delete exited 1; owned claims retained. \nError response from daemon: error while removing network: network localnet-proof-vmowsw-compose-replacement_default has active endpoints (name:\"localnet-proof-vmowsw-compose-replacement-redis-1\" id:\"2eb74455e22a\")\nexit status 1\n",
+        "launchId": "639f194e-2e23-44fc-932c-3a3d90fe1a98",
+        "generation": 1
+      },
+      "replacementPreserved": true,
+      "volumePreserved": true,
+      "claimsBefore": [
+        {
+          "domain": "compose-name",
+          "resource": "localnet-proof-vmowsw-compose-replacement"
+        },
+        {
+          "domain": "container",
+          "resource": "localnet-proof-vmowsw-compose-replacement-",
+          "prefix": true
+        },
+        {
+          "domain": "container",
+          "resource": "localnet-proof-vmowsw-compose-replacement_",
+          "prefix": true
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938636/.localnet.env"
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938636/.silo.lock"
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938636/silo.toml"
+        },
+        {
+          "domain": "host-port",
+          "resource": "49154"
+        },
+        {
+          "domain": "host-port",
+          "resource": "49155"
+        },
+        {
+          "domain": "hostname",
+          "resource": "proof-vmowsw-compose-replacement.localhost"
+        },
+        {
+          "domain": "instance-name",
+          "resource": "proof-vmowsw-compose-replacement"
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-compose-replacement"
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-compose-replacement-",
+          "prefix": true
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-compose-replacement_",
+          "prefix": true
+        },
+        {
+          "domain": "volume",
+          "resource": "localnet-proof-vmowsw-compose-replacement-",
+          "prefix": true
+        },
+        {
+          "domain": "volume",
+          "resource": "localnet-proof-vmowsw-compose-replacement_",
+          "prefix": true
+        }
+      ],
+      "claimsAfter": [
+        {
+          "domain": "compose-name",
+          "resource": "localnet-proof-vmowsw-compose-replacement"
+        },
+        {
+          "domain": "container",
+          "resource": "localnet-proof-vmowsw-compose-replacement-",
+          "prefix": true
+        },
+        {
+          "domain": "container",
+          "resource": "localnet-proof-vmowsw-compose-replacement_",
+          "prefix": true
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938636/.localnet.env"
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938636/.silo.lock"
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938636/silo.toml"
+        },
+        {
+          "domain": "host-port",
+          "resource": "49154"
+        },
+        {
+          "domain": "host-port",
+          "resource": "49155"
+        },
+        {
+          "domain": "hostname",
+          "resource": "proof-vmowsw-compose-replacement.localhost"
+        },
+        {
+          "domain": "instance-name",
+          "resource": "proof-vmowsw-compose-replacement"
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-compose-replacement"
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-compose-replacement-",
+          "prefix": true
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-compose-replacement_",
+          "prefix": true
+        },
+        {
+          "domain": "volume",
+          "resource": "localnet-proof-vmowsw-compose-replacement-",
+          "prefix": true
+        },
+        {
+          "domain": "volume",
+          "resource": "localnet-proof-vmowsw-compose-replacement_",
+          "prefix": true
+        }
+      ]
+    },
+    {
+      "scenario": "recorded-ID teardown preserves recreated Compose container/data and claims",
+      "replacementId": "58d8ae1befa06bcd5e5bfca90c03385663a75bcae08430134484e3a4cb925e5a",
+      "volume": "02e9781a389654ab60afdcb52171b16abbf0914e72d3da2e323e08ce78ee274c",
+      "pass": true
+    },
+    {
+      "scenario": "cleanup cannot adopt an unreceipted matching Compose object",
+      "id": "a3ca23e041cc05a2918855ae27a0d68bac3bf52370d3af56e14c8d48b1a08453",
+      "network": "2121bbec4ee6f49bc2827b852a17b058d7da468f41d0b0f6770a77e707794967",
+      "claims": [
+        {
+          "domain": "compose-name",
+          "resource": "localnet-proof-vmowsw-unreceipted-compose"
+        },
+        {
+          "domain": "container",
+          "resource": "localnet-proof-vmowsw-unreceipted-compose-",
+          "prefix": true
+        },
+        {
+          "domain": "container",
+          "resource": "localnet-proof-vmowsw-unreceipted-compose_",
+          "prefix": true
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938670/.localnet.env"
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938670/.silo.lock"
+        },
+        {
+          "domain": "file-target",
+          "resource": "64513/62938670/silo.toml"
+        },
+        {
+          "domain": "host-port",
+          "resource": "49156"
+        },
+        {
+          "domain": "host-port",
+          "resource": "49157"
+        },
+        {
+          "domain": "hostname",
+          "resource": "proof-vmowsw-unreceipted-compose.localhost"
+        },
+        {
+          "domain": "instance-name",
+          "resource": "proof-vmowsw-unreceipted-compose"
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-unreceipted-compose"
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-unreceipted-compose-",
+          "prefix": true
+        },
+        {
+          "domain": "network",
+          "resource": "localnet-proof-vmowsw-unreceipted-compose_",
+          "prefix": true
+        },
+        {
+          "domain": "volume",
+          "resource": "localnet-proof-vmowsw-unreceipted-compose-",
+          "prefix": true
+        },
+        {
+          "domain": "volume",
+          "resource": "localnet-proof-vmowsw-unreceipted-compose_",
+          "prefix": true
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "finalCleanup": [
+    {
+      "command": 348,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/old",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 349,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/legacy-peer",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 350,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/late-09",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 351,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/late-05",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 352,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/old-failed-teardown",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 353,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/a",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 354,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/b",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 355,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/gate-crash",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 356,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/failed-teardown",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 357,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/files",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 358,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/files/nested",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 359,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/CaseRoot",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 360,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/Café",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 361,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/backend",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 362,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/anonymous-volumes",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 363,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/anonymous-retry",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 364,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/anonymous-identity",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 365,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/same-second-replacement",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 366,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/paused-replacement",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 367,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/parent-volume-cleanup",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 368,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/inherited-volumes",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 369,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 370,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/compose-replacement",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 371,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/unreceipted-compose",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    }
+  ],
+  "finalCommands": [
+    {
+      "command": 342,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW",
+      "argv": [
+        "docker",
+        "volume",
+        "inspect",
+        "silo-inherited-allocation-rehearsal-vmowsw"
+      ],
+      "code": 0
+    },
+    {
+      "command": 343,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW",
+      "argv": [
+        "docker",
+        "volume",
+        "rm",
+        "silo-inherited-allocation-rehearsal-vmowsw"
+      ],
+      "code": 0
+    },
+    {
+      "command": 344,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW",
+      "argv": [
+        "docker",
+        "volume",
+        "inspect",
+        "silo-sentinel-allocation-rehearsal-vmowsw"
+      ],
+      "code": 0
+    },
+    {
+      "command": 345,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW",
+      "argv": [
+        "docker",
+        "volume",
+        "rm",
+        "silo-sentinel-allocation-rehearsal-vmowsw"
+      ],
+      "code": 0
+    },
+    {
+      "command": 346,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW",
+      "argv": [
+        "docker",
+        "container",
+        "inspect",
+        "669dc662fdd63c9b9fa1267e192e26ad5284dac5545f4448c4dd5e0631813174"
+      ],
+      "code": 0
+    },
+    {
+      "command": 347,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW",
+      "argv": [
+        "docker",
+        "container",
+        "rm",
+        "--volumes",
+        "669dc662fdd63c9b9fa1267e192e26ad5284dac5545f4448c4dd5e0631813174"
+      ],
+      "code": 0
+    },
+    {
+      "command": 348,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/old",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 349,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/legacy-peer",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 350,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/late-09",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 351,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/late-05",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 352,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/old-failed-teardown",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 353,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/a",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 354,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/b",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 355,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/gate-crash",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 356,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/failed-teardown",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 357,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/files",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 358,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/files/nested",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 359,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/CaseRoot",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 360,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/Café",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 361,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/backend",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 362,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/anonymous-volumes",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 363,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/anonymous-retry",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 364,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/anonymous-identity",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 365,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/same-second-replacement",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 366,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/paused-replacement",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 367,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/parent-volume-cleanup",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 368,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/inherited-volumes",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 369,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/retry-crash",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 370,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/compose-replacement",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    },
+    {
+      "command": 371,
+      "cwd": "/tmp/fixtures/allocation-rehearsal-VMowsW/unreceipted-compose",
+      "argv": [
+        "/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun",
+        "/mnt/dist/cli.js",
+        "down",
+        "--delete-cluster",
+        "--clean",
+        "--json"
+      ],
+      "code": 0
+    }
+  ]
+}

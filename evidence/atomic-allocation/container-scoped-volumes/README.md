@@ -1,5 +1,14 @@
 # Container-scoped anonymous-volume cleanup
 
+Historical round-4 record, superseded by the recorded-ID teardown record in
+`../recorded-id-teardown/`. The round-4 specialist rejected delegated Tilt
+teardown; this document describes the behavior and observations at 20997dc,
+not approval of that behavior. Raw `.log` files cited here were present in the
+lane but excluded from a7359a45 by a host-global ignore. They are now included
+unchanged in this evidence set, with a repository exception for qualification
+logs. The earlier
+claims verdict checked local files; it did not establish their Git membership.
+
 Verified local proposal; this lane performed no merge. Live GitHub state was
 not queried. Source is
 `20997dc740bd1df00c351cb4db6b4ba20734e47b`, built CLI SHA-256

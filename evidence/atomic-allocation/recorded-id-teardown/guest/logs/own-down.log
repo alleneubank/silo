@@ -1,0 +1,10 @@
+silo info: Removed owned snapshots and released this generation's claims.
+{"schemaVersion":1,"legacy":false,"changed":true,"project":{"schemaVersion":1,"projectId":"ebfcbe9f-3803-432a-be5e-2836315d5165","root":"/tmp/own","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+EXIT=0
+peer
+Tilt HTTP 200
+curl: (7) Failed to connect to 127.0.0.1 port 49153 after 0 ms: Couldn't connect to server
+OWN_LISTENER_CURL_EXIT=7
+curl: (7) Failed to connect to 127.0.0.1 port 49152 after 0 ms: Couldn't connect to server
+OWN_TILT_CURL_EXIT=7
+PEER_STATUS_IDENTICAL=0

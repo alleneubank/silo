@@ -1,0 +1,34 @@
+{"environment":{"platform":"linux","arch":"x64","bun":"1.4.4","root":"/tmp/fixtures/allocation-rehearsal-O45BpI","accountHome":"/home/ae","artifact":"/mnt/dist/cli.js","sha256":"7019b9b14ae10aade422865eb00e1ee2122c0d47455eddd8513d2ecb16fcbb40"}}
+{"command":1,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI/inherited-volumes","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-o45bpi-inherited-volumes","--json"],"code":0}
+{"command":2,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","create","silo-inherited-allocation-rehearsal-o45bpi"],"code":0}
+{"command":3,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","inspect","silo-inherited-allocation-rehearsal-o45bpi"],"code":0}
+{"command":4,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","create","--volume","silo-inherited-allocation-rehearsal-o45bpi:/named","redis:7-alpine"],"code":0}
+{"command":5,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","inspect","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454"],"code":0}
+{"command":6,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","inspect","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454","--format","{{json .Mounts}}"],"code":0}
+{"command":7,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","inspect","fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9"],"code":0}
+{"command":8,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI/inherited-volumes","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--timeout","60s","--json"],"code":1}
+{"command":9,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","inspect","8f6f72bf78ac2066b699a49ef8c01701bf42d90bd73ae3407b7e16aaf2fee044"],"code":0}
+{"command":10,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI/inherited-volumes","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":11,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI/inherited-volumes","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"command":12,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI/inherited-volumes","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":13,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","inspect","8f6f72bf78ac2066b699a49ef8c01701bf42d90bd73ae3407b7e16aaf2fee044"],"code":0}
+{"command":14,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","inspect","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454"],"code":0}
+{"command":15,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","inspect","fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9"],"code":0}
+{"command":16,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","inspect","silo-inherited-allocation-rehearsal-o45bpi"],"code":0}
+{"command":17,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","rm","--volumes","8f6f72bf78ac2066b699a49ef8c01701bf42d90bd73ae3407b7e16aaf2fee044"],"code":0}
+{"command":18,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","inspect","fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9"],"code":0}
+{"command":19,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","create","--volumes-from","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454","redis:7-alpine"],"code":0}
+{"command":20,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","inspect","7d278ff6d69ef3a13d84262d8151e2d906238ec6a9f28277d86b8f1d8467c07d"],"code":0}
+{"command":21,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","inspect","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454"],"code":0}
+{"command":22,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","rm","7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454"],"code":0}
+{"command":23,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","inspect","fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9"],"code":0}
+{"command":24,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","container","rm","--volumes","7d278ff6d69ef3a13d84262d8151e2d906238ec6a9f28277d86b8f1d8467c07d"],"code":0}
+{"command":25,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","ls","--format","{{.Name}}"],"code":0}
+{"command":26,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","inspect","silo-inherited-allocation-rehearsal-o45bpi"],"code":0}
+{"command":27,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI/inherited-volumes","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"scenario":"inherited provenance refuses without deletion; Docker preserves shared live references and named data, but removes last-user inherited anonymous data","donor":"7a9cc661fcedfc3e187d8dffa122e0108098027467aad54fa951a0a71fbc2454","borrower":"8f6f72bf78ac2066b699a49ef8c01701bf42d90bd73ae3407b7e16aaf2fee044","lastUser":"7d278ff6d69ef3a13d84262d8151e2d906238ec6a9f28277d86b8f1d8467c07d","anonymous":"fc7d3b9ae1066b625d30dd4ca6059593045bd042b168069c8b501087605853f9","named":"silo-inherited-allocation-rehearsal-o45bpi","pass":true}
+{"result":"pass","suite":"inherited-volumes"}
+{"command":28,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","inspect","silo-inherited-allocation-rehearsal-o45bpi"],"code":0}
+{"command":29,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI","argv":["docker","volume","rm","silo-inherited-allocation-rehearsal-o45bpi"],"code":0}
+{"command":30,"cwd":"/tmp/fixtures/allocation-rehearsal-O45BpI/inherited-volumes","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"resources":"/tmp/fixtures/allocation-rehearsal-O45BpI/resources","evidence":"/tmp/fixtures/allocation-rehearsal-O45BpI","retainedEvidence":true}

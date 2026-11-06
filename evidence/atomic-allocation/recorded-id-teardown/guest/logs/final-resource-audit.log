@@ -1,0 +1,29 @@
+Fri Nov  6 01:22:46 UTC 2026
+ENGINE=114f4194-e27d-4d0b-82fc-201ecd0e9997
+[]
+error: no such object: d505d40003e086332fdda9a6c04e4c593f070d18b6f27626f098f77434c47f36
+CONTAINER_INSPECT_EXIT=1
+[]
+error: no such object: bac4a25de3fb7b9cfda9c369c72f740aa78ff0453dc9427a394eebf204069c3f
+CONTAINER_INSPECT_EXIT=1
+[]
+Error response from daemon: network 7f0e7b3adabb7b9afa52ca8880416b1161a874ef84ef309d72120f889af497da not found
+NETWORK_INSPECT_EXIT=1
+[]
+Error response from daemon: network 8479c389cdc7b4e3df66e3ad331374c97dfd000b9b4f695dfa1119b69345390c not found
+NETWORK_INSPECT_EXIT=1
+[]
+Error response from daemon: get 8e750977ea926df023ceeb4a589d0b0949095176cc435d50a1569cf19ef5123f: no such volume
+VOLUME_INSPECT_EXIT=1
+[]
+Error response from daemon: get 411c8c8be7c8c4a8257b44ab9cc8dc620b62683077759a43be678d84b54b9b2f: no such volume
+VOLUME_INSPECT_EXIT=1
+PROJECT=redis
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"e44aca85-f1d0-4ceb-9138-2ec55a84976a","root":"/tmp/redis","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+PROJECT=own
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"ebfcbe9f-3803-432a-be5e-2836315d5165","root":"/tmp/own","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+PROJECT=peer
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"e9bf5aba-fc90-4915-8a1d-a17763fcc821","root":"/tmp/peer","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+PROJECT=foreign
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"ee3df172-b5f1-4b6f-8441-09a7e12b48b3","root":"/tmp/foreign","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+    PID    PPID    PGID STAT COMMAND

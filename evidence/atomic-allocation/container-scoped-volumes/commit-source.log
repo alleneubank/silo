@@ -1,0 +1,20 @@
+[38;2;56;56;56m╭──────────────────────────────────────╮[m
+[38;2;56;56;56m│[m lefthook  v2.2.2   hook:  [1mpre-commit[m [38;2;56;56;56m│[m
+[38;2;56;56;56m╰──────────────────────────────────────╯[m
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 24ms on 7 files with 90 rules using 32 threads.
+
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 26ms on 7 files with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 1.10 seconds)
+✓ lint (0.05 seconds)
+✓ format (0.05 seconds)
+✓ typecheck (1.10 seconds)
+[feat/atomic-allocation 20997dc] fix(cleanup): remove anonymous volumes with owned containers
+ 12 files changed, 505 insertions(+), 117 deletions(-)

@@ -27,3 +27,6 @@ dist/
 Thumbs.db
 .hunk/
 .rl/
+
+# Qualification logs are versioned evidence, including on hosts ignoring *.log.
+!evidence/**/*.log

@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-05T02:57:25Z",
+        "Driver": "local",
+        "Labels": {
+            "guest-fixture": "replacement"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/cff13966f0412ddd3164baa0d930858be408aba8c1d4aad84297ae62a83f22a9/_data",
+        "Name": "cff13966f0412ddd3164baa0d930858be408aba8c1d4aad84297ae62a83f22a9",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+
+EXIT=0

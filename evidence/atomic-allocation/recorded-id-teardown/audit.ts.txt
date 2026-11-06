@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {Database} from 'bun:sqlite';
+import {readFileSync,readdirSync,existsSync,writeFileSync} from 'node:fs';
+import {BackendReceiptSchema,LaunchSchema} from '/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign/src/core/lease_types';
+const lane='/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign';
+const scratch=`${lane}-tmp/r5`;
+const handles=new Map<string,{kind:string,id:string}>();const pids=new Set<number>();
+const add=(kind:string,id:string)=>{assert(id.length>0);handles.set(`${kind}/${id}`,{kind,id});};
+function receipt(input:unknown){const r=BackendReceiptSchema.parse(input);add(r.kind,r.kind==='volume'?r.name:r.id);if(r.kind==='container') for(const v of r.anonymousVolumes)add('volume',v.name);}
+const stores=[];
+for(const [name,file] of [['author',`${scratch}/account/.silo/leases.sqlite`],['guest',`${scratch}/guest/account/.silo/leases.sqlite`]]){
+const db=new Database(file!,{readonly:true});const count=(sql:string)=>db.query<{count:number},[]> (sql).get()!.count;
+const s={name,projects:count('SELECT count(*) AS count FROM projects'),activeGenerations:count('SELECT count(*) AS count FROM projects WHERE generation>0'),claims:count('SELECT count(*) AS count FROM claims'),activeResources:count('SELECT count(*) AS count FROM resources WHERE deleted=0'),operations:count('SELECT count(*) AS count FROM projects WHERE operation_token IS NOT NULL')};
+assert.equal(s.activeGenerations,0);assert.equal(s.claims,0);assert.equal(s.activeResources,0);assert.equal(s.operations,0);stores.push(s);
+for(const row of db.query<{receipt:string},[]>('SELECT receipt FROM resources').all())receipt(JSON.parse(row.receipt));
+for(const row of db.query<{receipt:string},[]>('SELECT receipt FROM launches').all()){const l=LaunchSchema.parse(JSON.parse(row.receipt));for(const n of [l.supervisorPid,l.leaderPid,l.groupId])if(n!==null)pids.add(n);}
+db.close();}
+for(const name of readdirSync(`${scratch}/fixtures`)){
+const root=`${scratch}/fixtures/${name}`;const f=`${root}/events.jsonl`;if(!existsSync(f))continue;
+for(const line of readFileSync(f,'utf8').trim().split('\n')){const e=JSON.parse(line);
+if(e.code===0&&e.argv?.[0]==='docker'&&e.argv[2]==='create'){const kind=e.argv[1];if(['container','network','volume'].includes(kind)){const id=readFileSync(`${root}/${e.command}.stdout`,'utf8').trim();assert(!/\s/.test(id));add(kind,id);}}
+if(e.replacementId)add('container',e.replacementId);if(typeof e.volume==='string')add('volume',e.volume);if(e.scenario==='cleanup cannot adopt an unreceipted matching Compose object'){add('container',e.id);add('network',e.network);}
+}}
+for(const f of ['example-status-before.json'])receiptList(JSON.parse(readFileSync(`${scratch}/evidence/${f}`,'utf8')).resources);
+function receiptList(rs:unknown[]){for(const r of rs)receipt(r);}
+for(const f of readdirSync(`${scratch}/guest/logs`).filter(f=>f.endsWith('.json'))){let data;try{data=JSON.parse(readFileSync(`${scratch}/guest/logs/${f}`,'utf8'));}catch{continue;}
+if(data.project?.resources)receiptList(data.project.resources);
+if(Array.isArray(data))for(const r of data){if(r.Id){add(r.Config?'container':'network',r.Id);for(const m of r.Mounts??[])if(m.Type==='volume')add('volume',m.Name);}else if(r.Name&&r.Driver)add('volume',r.Name);}
+}
+const base=Bun.spawnSync(['git','-C',lane,'show','a7359a4548ef5ce3f715a05c705c3c9a39876461:resources'],{stdout:'pipe',stderr:'pipe'});assert.equal(base.exitCode,0);
+const all=readFileSync(`${lane}/resources`,'utf8');assert(all.startsWith(base.stdout.toString()));const recent=all.slice(base.stdout.length)+readFileSync(`${lane}-tmp/resources`,'utf8');
+for(const match of recent.matchAll(/(?:process pid\/pgid=|process |pid=|pid\/pgid |port-forward pid\/pgid=)(\d+)/g))pids.add(Number(match[1]));
+for(const f of readdirSync(`${lane}-tmp/pids`).filter(f=>f.startsWith('r5-')&&f.endsWith('.pid')))pids.add(Number(readFileSync(`${lane}-tmp/pids/${f}`,'utf8')));
+const auditPid=Number(readFileSync(`${lane}-tmp/pids/r5-resource-audit.pid`,'utf8'));pids.delete(auditPid);pids.delete(process.pid);
+function docker(args:string[]){const r=Bun.spawnSync(['/usr/bin/docker',...args],{stdout:'pipe',stderr:'pipe',timeout:10000,env:{...process.env,DOCKER_HOST:'unix:///var/run/docker.sock',DOCKER_CONTEXT:''}});assert.equal(r.exitCode,0,r.stderr.toString());return r.stdout.toString().trim();}
+assert.equal(docker(['info','--format','{{.ID}}']),'114f4194-e27d-4d0b-82fc-201ecd0e9997');const present=new Set<string>();let control=false;
+for(const kind of ['container','network','volume'])for(const line of docker([kind,'ls',...(kind==='container'?['-a']:[]),...(kind==='volume'?[]:['--no-trunc']),'--format','{{json .}}']).split('\n').filter(Boolean)){const r=JSON.parse(line);assert.equal(typeof(kind==='volume'?r.Name:r.ID),'string');present.add(`${kind}/${kind==='volume'?r.Name:r.ID}`);if(kind==='network'&&r.Name==='bridge'){assert.equal(docker(['network','inspect',r.ID,'--format','{{.Name}}']),'bridge');control=true;}}
+assert(control);const remaining=[...handles.values()].filter(h=>present.has(`${h.kind}/${h.id}`));assert.deepEqual(remaining,[]);
+const live=[];for(const pid of pids){assert(Number.isSafeInteger(pid)&&pid>1);let processPresent=false,groupPresent=false;for(const n of [pid,-pid]){try{process.kill(n,0);if(n>0)processPresent=true;else groupPresent=true;}catch(e){assert.equal((e as NodeJS.ErrnoException).code,'ESRCH');}}if(processPresent||groupPresent)live.push({pid,processPresent,groupPresent});}
+assert.deepEqual(live,[],'Recorded numeric handles may be reused: inspect exact identities; never signal by census');
+const result={timestamp:new Date().toISOString(),sourceHead:'77e3d68f9b8dffff2aec9c31bc2833349c36c3f3',stores,recordedDockerHandles:[...handles.values()],allRecordedDockerHandlesAbsent:true,recordedPidsAndGroups:[...pids].sort((a,b)=>a-b),allRecordedNumericHandlesAbsent:true,excludedAuditorGroup:auditPid,remaining,scope:'Current r5 disposable stores, fixture creation results, status snapshots and appended resource ledgers only. No host-wide cleanup; every unrecorded object and shared image/build cache preserved.'};
+writeFileSync(`${scratch}/evidence/audit.json`,JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({stores,handles:handles.size,pids:pids.size,remaining,excludedAuditorGroup:auditPid}));

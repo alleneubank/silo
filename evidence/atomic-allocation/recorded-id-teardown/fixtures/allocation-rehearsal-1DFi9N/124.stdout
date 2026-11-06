@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"CLEANUP_REQUIRED","message":"CLEANUP_REQUIRED: retained resources (volume/k3d-localnet-proof-1dfi9n-backend-images); ownership snapshots and claims kept. Explicit cluster deletion removes owned containers/networks. Silo never deletes volumes by name; resolve retained named volumes with their owner."}

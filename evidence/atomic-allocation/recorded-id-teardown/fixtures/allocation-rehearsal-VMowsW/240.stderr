@@ -1,0 +1,9 @@
+silo warn: Port APP_PORT in use (48127), allocated 49152
+silo warn: Port TILT_PORT in use (48128), allocated 49153
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-VMowsW/paused-replacement/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49152
+silo info:   TILT_PORT: 49153
+silo info: Project e354da1c-2d9a-4b75-a794-de11b4d7c1e4, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-VMowsW/paused-replacement/.localnet.env; set +a

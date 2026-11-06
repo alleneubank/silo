@@ -1,0 +1,23 @@
+silo info: Generated env file at /tmp/foreign/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   TILT_PORT: 49152
+silo info:   REDIS_PORT: 49153
+silo info: Project ee3df172-b5f1-4b6f-8441-09a7e12b48b3, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/foreign/.localnet.env; set +a
+ENV_EXIT=0
+ Network guestr5-r5foreign_default Creating 
+ Network guestr5-r5foreign_default Creating 
+ Network guestr5-r5foreign_default Created 
+ Network guestr5-r5foreign_default Created 
+ Container guestr5-r5foreign-redis-1 Creating 
+ Container guestr5-r5foreign-redis-1 Created 
+COMPOSE_EXIT=0
+{"schemaVersion":1,"code":"CLEANUP_REQUIRED","message":"CLEANUP_REQUIRED: residual container/guestr5-r5foreign-redis-1 (bac4a25de3fb7b9cfda9c369c72f740aa78ff0453dc9427a394eebf204069c3f); claims retained"}
+FIRST_DOWN_EXIT=1
+{"schemaVersion":1,"code":"CLEANUP_REQUIRED","message":"CLEANUP_REQUIRED: residual container/guestr5-r5foreign-redis-1 (bac4a25de3fb7b9cfda9c369c72f740aa78ff0453dc9427a394eebf204069c3f); claims retained"}
+SECOND_DOWN_EXIT=1
+CLAIMS_UNCHANGED=0
+[]
+CONTAINER_UNCHANGED=0
+NETWORK_UNCHANGED=0

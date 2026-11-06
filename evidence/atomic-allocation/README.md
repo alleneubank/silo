@@ -1,3 +1,10 @@
+# Current qualification
+
+The recorded-ID-only teardown proposal and its current Linux observations are
+indexed in [recorded-id-teardown](recorded-id-teardown/README.md). Earlier
+records below retain their original source identities and superseded behavior;
+they are not matching specialist approval of the current candidate.
+
 # Atomic allocation evidence
 
 Current proposed cleanup source: `20997dc740bd1df00c351cb4db6b4ba20734e47b`,

@@ -1,0 +1,20 @@
+[38;2;56;56;56m╭──────────────────────────────────────╮[m
+[38;2;56;56;56m│[m lefthook  v2.2.2   hook:  [1mpre-commit[m [38;2;56;56;56m│[m
+[38;2;56;56;56m╰──────────────────────────────────────╯[m
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 35ms on 1 file with 90 rules using 32 threads.
+
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 21ms on 1 file with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 4.40 seconds)
+✓ lint (0.16 seconds)
+✓ format (0.16 seconds)
+✓ typecheck (4.40 seconds)
+[feat/atomic-allocation 77e3d68] test(rehearsal): keep durability work outside timestamp fixture
+ 1 file changed, 15 insertions(+), 9 deletions(-)
