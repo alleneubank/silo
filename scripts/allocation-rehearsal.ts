@@ -933,19 +933,27 @@ async function producers() {
   await silo(cluster, ["env", name(cluster)]);
   const reserved = await state(cluster); assert(reserved.allocation);
   const port = reserved.allocation.state.ports.K3D_API_PORT!;
-  const squatter = Bun.serve({ hostname: "127.0.0.1", port, fetch: () => new Response("owned-k3d-squatter") });
-  recordResource(`in-process k3d API squatter port=${port}; teardown through returned Bun server.stop handle\n`);
-  let partial: Awaited<ReturnType<typeof state>>;
-  try {
-    const failed = await command(cluster, [process.execPath, cli, "ci", "--timeout", "30s", "--json"]);
-    assert.notEqual(failed.code, 0);
-    partial = await state(cluster);
-    assert(partial.resources.some(r => r.kind === "container" && r.source === "k3d" && !r.deleted));
-    assert(partial.resources.some(r => r.kind === "container" && r.labels["k3d.role"] === "registry" && !r.deleted));
-    assert(partial.launches.some(l => l.kind === "k3d-cluster-create" && l.phase === "exited" && l.exitCode !== null && l.exitCode !== 0 && l.reconciled));
-    assert.deepEqual(partial.claims, reserved.claims);
-    assert.equal(await body(port), "owned-k3d-squatter");
-  } finally { await squatter.stop(true); }
+  // A host listener does not stop OrbStack, which publishes from its VM, from publishing the API port for k3d's load
+  // balancer. The engine's own port allocator refuses a second publication however ports reach the host.
+  const squatterId = await docker(["run", "-d", "--label", `io.silo.rehearsal=${path.basename(root)}`, "--publish", `127.0.0.1:${port}:6379`, "redis:7-alpine"]);
+  const squatter = await fixtureSnapshot("container", squatterId);
+  cleanupObjects.push({ kind: "container", id: squatterId, name: "k3d API port squatter", created: squatter });
+  recordResource(`k3d API port squatter container ${squatterId} port=${port}; fixture-only teardown exact recorded ID after identity check\n`);
+  const PublishedSchema = z.array(z.object({ NetworkSettings: z.object({ Ports: z.record(z.array(z.object({ HostIp: z.string(), HostPort: z.string() })).nullable()) }) })).length(1);
+  assert.deepEqual(PublishedSchema.parse(squatter)[0]!.NetworkSettings.Ports["6379/tcp"], [{ HostIp: "127.0.0.1", HostPort: String(port) }],
+    "Fixture precondition not established: the engine does not hold the k3d API port");
+  const clusterCi = await command(cluster, [process.execPath, cli, "ci", "--timeout", "30s", "--json"]);
+  const partial = await state(cluster);
+  const creates = partial.launches.filter(l => l.kind === "k3d-cluster-create");
+  assert(creates.some(l => l.phase === "exited" && l.exitCode !== null && l.exitCode !== 0),
+    `Fixture precondition not established: the API-port squatter did not make k3d-cluster-create fail: ${JSON.stringify(creates)}`);
+  assert(creates.every(l => l.reconciled));
+  assert.notEqual(clusterCi.code, 0);
+  assert(partial.resources.some(r => r.kind === "container" && r.source === "k3d" && !r.deleted));
+  assert(partial.resources.some(r => r.kind === "container" && r.labels["k3d.role"] === "registry" && !r.deleted));
+  assert.deepEqual(partial.claims, reserved.claims);
+  assert.deepEqual(await fixtureSnapshot("container", squatterId), squatter);
+  await docker(["container", "rm", "--force", "--volumes", squatterId]); cleanupObjects.pop();
   await silo(cluster, ["down", "--delete-cluster"]);
   for (const receipt of partial.resources.filter(r => r.kind === "container")) {
     assert.notEqual((await command(cluster, ["docker", "container", "inspect", receipt.id])).code, 0);

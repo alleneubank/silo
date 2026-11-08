@@ -140,8 +140,15 @@ never as an invented successful execution. Unknown creates must still refuse.
 
 `producers` exercises cleanup with 1023 launch records and live receipts, an API
 port squatter causing a real partial k3d create, and a real Docker network-create
-failure from overlapping fixture IPAM. The latter wrapper forwards to Docker
-with the fixture's occupied subnet; it does not stub a daemon response. The
+failure from overlapping fixture IPAM. The API-port squatter is a container that
+publishes the port through the same engine, so the engine's port allocator
+refuses k3d's load balancer whatever forwards published ports to the host. A
+host listener on that port did not make OrbStack refuse the publication
+(observed on pixelproton: the container started and the listener kept
+answering). The scenario fails as a fixture precondition, before any downstream
+assertion, if the engine does not hold the port or the cluster create does not
+exit nonzero. The IPAM wrapper forwards to Docker with the fixture's occupied
+subnet; it does not stub a daemon response. The
 partial cluster uses exact cleanup and separate owner cache resolution.
 `producers` also runs `registry-provenance` (selectable alone). A pre-up hook
 starts a lone same-name container with the cluster's `k3d.cluster` label that
