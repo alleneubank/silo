@@ -5,7 +5,7 @@ import { Database } from "bun:sqlite";
 import { chmodSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ProjectOperation, digest } from "./lease_store";
+import { ProjectOperation, digest, processAbsent } from "./lease_store";
 import { fileIdentity, prepareFileTarget } from "./file_target";
 import { appendGithubEnv, writeEnvAndLockfile } from "./env";
 import { runOwnedCommand, startOwnedCommand } from "./owned_command";
@@ -290,6 +290,39 @@ describe("atomic account leases", () => {
       expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: "3000" });
     } finally { op.finish(); }
   });
+
+  test("a journaled completion ends the command when its supervisor outlives the executor", async () => {
+    const root = project("a"); const op = await open(root);
+    const bin = path.join(base, "bin"); mkdirSync(bin);
+    // Reproduces Janitor 0.3.1 on macOS: it can consume its one-shot child-exit
+    // event before the exit is observable, then wait until its owner dies.
+    writeFileSync(path.join(bin, "janitor"), [
+      "#!/usr/bin/perl",
+      'shift @ARGV while @ARGV && $ARGV[0] ne "--"; shift @ARGV;',
+      "my $child = fork(); if ($child == 0) { setpgrp(0, 0); exec @ARGV; exit 127; }",
+      "waitpid($child, 0); my $status = $? >> 8;",
+      "$SIG{TERM} = sub { exit $status };",
+      "sleep 120; exit 70;",
+    ].join("\n"));
+    chmodSync(path.join(bin, "janitor"), 0o755);
+    const ran = path.join(root, "ran");
+    let running: Awaited<ReturnType<typeof startOwnedCommand>> | undefined;
+    try {
+      await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+      running = await startOwnedCommand(op, ["/bin/sh", "-c", `touch '${ran}'`], { kind: "parked-supervisor", effect: "none", timeoutMs: 120_000, env: { PATH: `${bin}:${process.env.PATH}` } });
+      const deadline = Date.now() + 10_000;
+      while (!existsSync(ran)) { assert(Date.now() < deadline, "tool did not run"); await Bun.sleep(20); }
+      // This store uses the parent journal, so the test writes the executor's fact.
+      const db = new Database(storePath);
+      try {
+        db.query("INSERT INTO completions (project_id, generation, launch_id, receipt) VALUES (?, ?, ?, ?)").run(op.projectId, op.generation, running.launch.id,
+          JSON.stringify({ projectId: op.projectId, generation: op.generation, launchId: running.launch.id, leaderPid: running.launch.leaderPid, groupId: running.launch.groupId, started: true, exitCode: 0, completedAt: new Date().toISOString() }));
+      } finally { db.close(); }
+      const result = await running.exited;
+      expect(result.exitCode).toBe(0);
+      expect(processAbsent(running.launch.supervisorPid)).toBe(true);
+    } finally { running?.stop(); op.finish(); }
+  }, 30_000);
 
   test("a successful exact deletion retry reconciles terminal completed deletions", async () => {
     const root = project("a"); const op = await open(root);

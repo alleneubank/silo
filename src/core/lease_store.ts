@@ -349,12 +349,17 @@ export class ProjectOperation {
     } finally { db.close(); }
   }
 
+  /** The executor's immutable fact for one of this generation's launches, once it is durable. */
+  executorCompletion(launchId: string): ExecutorCompletion | null {
+    const row = this.db.query<JsonRow, [string, number, string]>("SELECT receipt FROM completions WHERE project_id = ? AND generation = ? AND launch_id = ?").get(this.projectId, this.generation, launchId);
+    return row ? ExecutorCompletionSchema.parse(JSON.parse(row.receipt)) : null;
+  }
+
   applyCompletions(): void {
     for (const launch of this.launches()) {
       if (launch.phase !== "granted") continue;
-      const row = this.db.query<JsonRow, [string, number, string]>("SELECT receipt FROM completions WHERE project_id = ? AND generation = ? AND launch_id = ?").get(this.projectId, this.generation, launch.id);
-      if (!row) continue;
-      const completion = ExecutorCompletionSchema.parse(JSON.parse(row.receipt));
+      const completion = this.executorCompletion(launch.id);
+      if (!completion) continue;
       assert.deepEqual([completion.projectId, completion.generation, completion.leaderPid, completion.groupId], [this.projectId, this.generation, launch.leaderPid, launch.groupId], "Completion provenance differs from the grant");
       this.checkpointLaunch({ ...launch, phase: "exited", started: completion.started, exitCode: completion.exitCode, reconciled: !completion.started || launch.effect === "none" });
     }

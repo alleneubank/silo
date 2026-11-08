@@ -1,5 +1,5 @@
 import { ProjectOperation, processAbsent } from "./lease_store";
-import type { DockerDeletionTarget, Launch } from "./lease_types";
+import type { DockerDeletionTarget, ExecutorCompletion, Launch } from "./lease_types";
 import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import { withTimeout } from "../utils/timeout";
@@ -9,6 +9,8 @@ import { TILT_DRAIN_GRACE_MS, TILT_SUPERVISOR_BIN } from "./constants";
 const MAX_OUTPUT_BYTES = 1024 * 1024;
 const HANDSHAKE_TIMEOUT_MS = 10_000;
 const STOP_TIMEOUT_MS = TILT_DRAIN_GRACE_MS + 5000;
+const JOURNAL_POLL_MS_MIN = 50;
+const JOURNAL_POLL_MS_MAX = 1000;
 
 const supervisorIdentity = async (pid: number): Promise<string | null> => {
   const result = await runCommand(["ps", "-ww", "-p", String(pid), "-o", "uid=,pgid=,lstart=,command="], {
@@ -77,6 +79,42 @@ const drain = async (reader: ReadableStreamDefaultReader<Uint8Array>, capture: b
   }
 };
 
+type CompletionWatch = { completion: Promise<ExecutorCompletion>; stop: () => void };
+
+const storeLocked = (error: unknown): boolean => error instanceof Error && "code" in error && error.code === "SQLITE_BUSY";
+
+/**
+ * The store offers no change event, so the executor's fact is polled with
+ * bounded backoff until stopped. A peer's write lock only delays the next poll.
+ */
+const watchCompletion = (owner: ProjectOperation, launchId: string): CompletionWatch => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let stopped = false;
+  const completion = new Promise<ExecutorCompletion>((resolve, reject) => {
+    const poll = (delayMs: number) => {
+      timer = setTimeout(() => {
+        if (stopped) return;
+        let fact: ExecutorCompletion | null = null;
+        try { fact = owner.executorCompletion(launchId); }
+        catch (error) {
+          if (!storeLocked(error)) { reject(error); return; }
+        }
+        if (fact) resolve(fact);
+        else poll(Math.min(delayMs * 2, JOURNAL_POLL_MS_MAX));
+      }, delayMs);
+    };
+    poll(JOURNAL_POLL_MS_MIN);
+  });
+  return { completion, stop: () => { stopped = true; clearTimeout(timer); } };
+};
+
+const settlesWithin = async (promise: Promise<unknown>, timeoutMs: number): Promise<boolean> => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<false>(resolve => { timer = setTimeout(() => resolve(false), timeoutMs); });
+  try { return await Promise.race([promise.then(() => true as const), expired]); }
+  finally { clearTimeout(timer); }
+};
+
 export const startOwnedCommand = async (
   owner: ProjectOperation, command: string[], options: CommandOptions,
 ): Promise<RunningCommand> => {
@@ -91,8 +129,10 @@ export const startOwnedCommand = async (
     cwd: owner.root, env: { ...process.env, ...options.env }, detached: true,
     stdin: "pipe", stdout: "pipe", stderr: "pipe",
   });
+  const capture = options.capture ?? true;
   const stdoutReader = proc.stdout.getReader();
-  const stderr = drain(proc.stderr.getReader(), options.capture ?? true, process.stderr);
+  const stderrReader = proc.stderr.getReader();
+  const stderr = drain(stderrReader, capture, process.stderr);
   try {
     const handshake = await withTimeout(firstLine(stdoutReader), HANDSHAKE_TIMEOUT_MS, "launch gate");
     const parts = /^SILO_GATE (\S+) (\d+) (\d+)$/.exec(handshake);
@@ -107,13 +147,28 @@ export const startOwnedCommand = async (
     owner.checkpointLaunch(launch);
     proc.stdin.write(`${JSON.stringify(launch)}\n`);
     proc.stdin.end();
-    const completed = Promise.all([
-      proc.exited, drain(stdoutReader, options.capture ?? true, process.stderr), stderr,
-    ]).then(([exitCode, stdout, stderrText]): OwnedCommandResult => ({
-      exitCode, stdout, stderr: stderrText, launch: { ...launch, phase: "exited", started: true, exitCode, reconciled: options.effect === "none" },
-    }));
+    const finished = Promise.all([proc.exited, drain(stdoutReader, capture, process.stderr), stderr]);
+    const journal = watchCompletion(owner, launch.id);
+    // The result is known once the supervisor exits or the executor's fact is
+    // journaled. Neither a supervisor that misses its child's exit nor an
+    // escaped descendant holding the inherited pipes may then hold the command
+    // open: both get one stop window, after which only this launch's own
+    // supervisor handle is signalled and the pipes are abandoned.
+    const complete = async (): Promise<OwnedCommandResult> => {
+      const journaled = await Promise.race([proc.exited.then(() => null), finished.then(() => null), journal.completion]);
+      if (!(await settlesWithin(finished, STOP_TIMEOUT_MS))) {
+        proc.kill("SIGTERM");
+        await withTimeout(proc.exited, STOP_TIMEOUT_MS, "supervisor drain");
+        await Promise.all([stdoutReader.cancel(), stderrReader.cancel()]);
+      }
+      const [supervisorExitCode, stdout, stderrText] = await finished;
+      const exitCode = journaled?.exitCode ?? supervisorExitCode;
+      return { exitCode, stdout, stderr: stderrText, launch: { ...launch, phase: "exited", started: true, exitCode, reconciled: options.effect === "none" } };
+    };
+    const completed = complete().finally(journal.stop);
     const waited = options.timeoutMs === null ? completed : withTimeout(completed, options.timeoutMs, options.kind);
     const exited = waited.catch(async error => {
+      journal.stop();
       proc.kill("SIGTERM");
       await withTimeout(proc.exited, STOP_TIMEOUT_MS, "supervisor drain");
       throw error;
