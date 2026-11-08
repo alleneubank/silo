@@ -8,6 +8,7 @@ import { z } from "zod";
 import { AllocationSchema, BackendReceiptSchema, ExecutorCompletionSchema, FileReceiptSchema, LaunchSchema } from "../src/core/lease_types";
 import { accountHome as nativeAccountHome } from "../src/core/allocation_domain";
 import { ProjectOperation } from "../src/core/lease_store";
+import { HOOK_TIMEOUT_MS, K3D_CREATE_TIMEOUT_MS, K3D_DELETE_TIMEOUT_MS } from "../src/core/constants";
 
 const { values } = parseArgs({ args: Bun.argv.slice(2), options: {
   root: { type: "string" }, silo: { type: "string" }, suite: { type: "string", default: "all" },
@@ -47,12 +48,15 @@ const ResultSchema = z.object({
     resources: z.array(BackendReceiptSchema.and(z.object({ deleted: z.boolean() }))), launches: z.array(LaunchSchema), completions: z.array(ExecutorCompletionSchema), files: z.array(FileReceiptSchema),
   }).passthrough().nullable().optional(),
 });
-async function command(cwd: string, argv: string[], env = safeEnv, timeout = 180_000) {
+// Outlasts every finite bound the CLI puts on one owned command, so a CLI-side
+// timeout reports its own error before the harness stops the CLI.
+const COMMAND_TIMEOUT_MS = Math.max(HOOK_TIMEOUT_MS, K3D_CREATE_TIMEOUT_MS, K3D_DELETE_TIMEOUT_MS) + 120_000;
+async function command(cwd: string, argv: string[], env = safeEnv) {
   const id = ++commandNumber;
   const proc = Bun.spawn(argv, { cwd, env, detached: true, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
   processes.add(proc);
   recordResource(`process ${proc.pid} pgid=${proc.pid}: ${JSON.stringify(argv)}; teardown via returned subprocess handle or verified recorded group\n`);
-  const timer = setTimeout(() => { proc.kill("SIGTERM"); }, timeout);
+  const timer = setTimeout(() => { proc.kill("SIGTERM"); }, COMMAND_TIMEOUT_MS);
   const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
   clearTimeout(timer); processes.delete(proc);
   writeFileSync(path.join(root, `${id}.stdout`), redactCapture(stdout)); writeFileSync(path.join(root, `${id}.stderr`), redactCapture(stderr));
@@ -1046,7 +1050,7 @@ async function registryProvenance(variants: readonly ("ci" | "timeout")[]) {
 
   const timed = registryProject("registry-hook-timeout", "exec sleep 900\n");
   await silo(timed, ["env", name(timed)]);
-  const timedOut = await command(timed, [process.execPath, cli, "ci", "--timeout", "30s", "--json"], safeEnv, 420_000);
+  const timedOut = await command(timed, [process.execPath, cli, "ci", "--timeout", "30s", "--json"]);
   const pending = await adoptSquatter(timed);
   const afterTimeout = await observe(timed, "pre-up hook timeout", pending.id, timedOut);
   assert.notEqual(timedOut.code, 0);
