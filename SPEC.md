@@ -74,6 +74,16 @@ A lost completion remains uncertain. Terminal facts are monotonic and cannot
 be invalidated by later OS PID reuse. Janitor already signals the whole group;
 the executor does not forward a second signal to Tilt.
 
+The owner treats a command as finished once its supervisor exits or the
+executor's completion fact is in the store, whichever comes first. Supervisor
+exit and EOF on the inherited pipes then get one stop window (Janitor grace plus
+5 s). After it, the owner signals only that launch's own supervisor handle and
+abandons the pipes, keeping the output read so far. Janitor 0.3.1 on macOS can
+miss its child's exit and then waits until its owner dies, and a descendant that
+leaves the group can hold the pipes open; neither holds a finished command to
+its timeout. Polls for the fact back off to 1 s, and a locked store only delays
+the next poll.
+
 `env` reserves and exports without starting tools. `up` supervises foreground
 Tilt; a matching live `up` is idempotent. `ci` uses the same allocation and
 launch paths with `CI=true` and supervised Tilt CI. All errors keep the owned
