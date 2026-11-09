@@ -13,6 +13,7 @@ import { appendGithubEnv, writeEnvAndLockfile } from "./env";
 import { runOwnedCommand, startOwnedCommand } from "./owned_command";
 import type { Allocation, Claim, FileReceipt } from "./lease_types";
 import { BackendReceiptSchema } from "./lease_types";
+import { createListenerProbe } from "./socket_listeners";
 
 let base: string;
 let storePath: string;
@@ -655,21 +656,22 @@ describe("atomic account leases", () => {
     } finally { op.finish(); }
   }, 15_000);
 
-  test("a declared listener blocks both retirement and reallocation before snapshots are removed", async () => {
+  const externalAddress = Object.values(os.networkInterfaces()).flat().find(address => address?.family === "IPv4" && !address.internal)?.address;
+  for (const hostname of ["127.0.0.1", ...(externalAddress ? [externalAddress] : [])]) test(`a declared listener on ${hostname} blocks retirement and reallocation before snapshots are removed`, async () => {
     const root = project("a");
-    const listener = Bun.listen({ hostname: "127.0.0.1", port: 0, socket: { data() {} } });
+    const listener = Bun.listen({ hostname, port: 0, socket: { data() {} } });
     const port = listener.port; listener.stop();
     const op = await ProjectOperation.open(root, { storePath, legacyInputs });
     try {
       await op.allocate(allocation(root, "a", port), claims("a", port), targets(root));
       op.file("env").publish("owned sentinel\n");
-      const squatter = Bun.serve({ hostname: "127.0.0.1", port, fetch: () => new Response("squatter") });
+      const squatter = Bun.serve({ hostname, port, fetch: () => new Response("squatter") });
       try {
         await expect(op.prepareRetirement()).rejects.toThrow("CLEANUP_REQUIRED");
         await expect(op.allocate(allocation(root, "a", port + 1), claims("a", port + 1), targets(root))).rejects.toThrow("CLEANUP_REQUIRED");
         expect(readFileSync(path.join(root, ".localnet.env"), "utf8")).toBe("owned sentinel\n");
         expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: String(port) });
-        expect(await (await fetch(`http://127.0.0.1:${port}`)).text()).toBe("squatter");
+        expect(await (await fetch(`http://${hostname}:${port}`)).text()).toBe("squatter");
       } finally { await squatter.stop(true); }
       const proof = await op.prepareRetirement();
       expect(() => op.planLaunch({ kind: "late-create", command: ["true"], effect: "create" })).toThrow("OPERATION_SEALED");
@@ -697,6 +699,56 @@ describe("atomic account leases", () => {
       } finally { op.finish(); }
     } finally { client.destroy(); server.close(); }
   });
+
+  for (const hostname of ["127.0.0.1", "::1"]) test(`connected UDP on ${hostname} permits retirement while its peerless peer refuses`, async () => {
+    const root = project("udp");
+    const peer = await Bun.udpSocket({ hostname, port: 0 });
+    const client = await Bun.udpSocket({ hostname, connect: { hostname, port: peer.port } });
+    const op = await ProjectOperation.open(root, { storePath, legacyInputs });
+    try {
+      await op.allocate(allocation(root, "udp", peer.port), claims("udp", peer.port), targets(root));
+      op.file("env").publish("UDP sentinel\n");
+      await expect(op.prepareRetirement()).rejects.toThrow("CLEANUP_REQUIRED");
+      expect(readFileSync(path.join(root, ".localnet.env"), "utf8")).toBe("UDP sentinel\n");
+      expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: String(peer.port) });
+      peer.close();
+      // A later connection can take an already reserved port; retirement must
+      // distinguish that socket from the peerless listener above.
+      await op.allocate(allocation(root, "udp", client.port), claims("udp", client.port), targets(root));
+      const proof = await op.prepareRetirement();
+      op.file("env").remove(); op.retire(proof);
+      expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
+      expect(existsSync(path.join(root, ".localnet.env"))).toBe(false);
+    } finally { op.finish(); client.close(); peer.close(); }
+  });
+
+  for (const failure of ["tcp6 missing", "udp6 missing", "both missing", "malformed row", "read error", "listing error", "incomplete listing"] as const) {
+    test(`${failure} retains claims and snapshots on retirement and replacement`, async () => {
+      const root = project("uncertain");
+      const listenerProbe = failure === "listing error" || failure === "incomplete listing"
+        ? createListenerProbe({ platform: "darwin", listSockets: async () => {
+          if (failure === "listing error") throw new Error("observation failed");
+          return { exitCode: 0, stdout: "p123\0\n", stderr: "" };
+        } })
+        : createListenerProbe({ platform: "linux", exists: async () => true, readText: async file => {
+          if (failure === "read error") throw new Error("observation failed");
+          if ((failure === "tcp6 missing" && file.endsWith("tcp6")) ||
+              (failure === "udp6 missing" && file.endsWith("udp6")) ||
+              (failure === "both missing" && file.endsWith("6"))) throw Object.assign(new Error("missing"), { code: "ENOENT" });
+          return "sl local_address rem_address st\n" + (failure === "malformed row" ? "0: 0100007F:C350 00000000:0000\n" : "");
+        } });
+      const op = await ProjectOperation.open(root, { storePath, legacyInputs, listenerProbe });
+      try {
+        await op.allocate(allocation(root, "uncertain", 50000), claims("uncertain", 50000), targets(root));
+        op.file("env").publish("owned sentinel\n");
+        const before = ProjectOperation.inspect(root, storePath);
+        await expect(op.prepareRetirement()).rejects.toThrow();
+        await expect(op.allocate(allocation(root, "uncertain", 50001), claims("uncertain", 50001), targets(root))).rejects.toThrow();
+        expect(ProjectOperation.inspect(root, storePath)).toEqual(before);
+        expect(readFileSync(path.join(root, ".localnet.env"), "utf8")).toBe("owned sentinel\n");
+      } finally { op.finish(); }
+    });
+  }
 
   test("a physically replaced parent cannot redirect owned cleanup", async () => {
     const root = project("a"); const op = await open(root);

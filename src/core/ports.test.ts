@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import net from "node:net";
 import { once } from "node:events";
+import { networkInterfaces } from "node:os";
 import { EPHEMERAL_PORT_END, EPHEMERAL_PORT_START } from "./constants";
 import { allocatePorts, checkPortFree, checkPortListenerAbsent, type PortAllocationEvent } from "./ports";
 
@@ -269,7 +270,8 @@ describe("checkPortFree (integration)", () => {
 
 describe("checkPortListenerAbsent (integration)", () => {
   test("a TCP listener on any address remains", async () => {
-    for (const hostname of ["127.0.0.1", "::1", "0.0.0.0"]) {
+    const nonLoopback = Object.values(networkInterfaces()).flat().find(address => address?.family === "IPv4" && !address.internal)?.address;
+    for (const hostname of ["127.0.0.1", "::1", "0.0.0.0", ...(nonLoopback ? [nonLoopback] : [])]) {
       const server = Bun.listen({ hostname, port: 0, socket: { data() {} } });
       try { expect(await checkPortListenerAbsent(server.port)).toBe(false); }
       finally { server.stop(); }
@@ -277,9 +279,11 @@ describe("checkPortListenerAbsent (integration)", () => {
   });
 
   test("a UDP socket without a peer remains", async () => {
-    const socket = await Bun.udpSocket({ hostname: "127.0.0.1", port: 0 });
-    try { expect(await checkPortListenerAbsent(socket.port)).toBe(false); }
-    finally { socket.close(); }
+    for (const hostname of ["127.0.0.1", "::1"]) {
+      const socket = await Bun.udpSocket({ hostname, port: 0 });
+      try { expect(await checkPortListenerAbsent(socket.port)).toBe(false); }
+      finally { socket.close(); }
+    }
   });
 
   test("an outgoing TCP connection's local port is not a listener", async () => {
@@ -293,9 +297,25 @@ describe("checkPortListenerAbsent (integration)", () => {
   });
 
   test("a connected UDP socket's local port is not a listener", async () => {
-    const peer = await Bun.udpSocket({ hostname: "127.0.0.1", port: 0 });
-    const client = await Bun.udpSocket({ hostname: "127.0.0.1", connect: { hostname: "127.0.0.1", port: peer.port } });
-    try { expect(await checkPortListenerAbsent(client.port)).toBe(true); }
-    finally { client.close(); peer.close(); }
+    for (const hostname of ["127.0.0.1", "::1"]) {
+      const peer = await Bun.udpSocket({ hostname, port: 0 });
+      const client = await Bun.udpSocket({ hostname, connect: { hostname, port: peer.port } });
+      try { expect(await checkPortListenerAbsent(client.port)).toBe(true); }
+      finally { client.close(); peer.close(); }
+    }
+  });
+
+  test("an orderly closed outgoing TCP port does not block on TIME-WAIT", async () => {
+    const server = net.createServer(socket => socket.resume());
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+    const client = net.connect((server.address() as net.AddressInfo).port, "127.0.0.1");
+    try {
+      await once(client, "connect");
+      const port = client.localPort!;
+      const closed = once(client, "close");
+      client.end();
+      await closed;
+      expect(await checkPortListenerAbsent(port)).toBe(true);
+    } finally { client.destroy(); server.close(); }
   });
 });

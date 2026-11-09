@@ -106,6 +106,29 @@ port; another process's outgoing connection is not a listener. It seals new
 effects during that proof and its consumption, then removes matching owned
 snapshots and releases only that generation's claims. Any uncertainty keeps ownership.
 
+REQ-CLEANUP-009: the listener proof supports Linux and macOS. Linux validates every nonempty
+row of all four `/proc/net/{tcp,udp,tcp6,udp6}` tables in silo's network
+namespace: TCP state `0A` (LISTEN) and UDP state `07` (no peer) block on any
+address, while connected and TIME-WAIT sockets do not. Missing IPv4 tables
+refuse. Missing IPv6 tables are accepted only when both are absent and the
+kernel IPv6 sysctl directory `/proc/sys/net/ipv6` is independently absent;
+interface disable flags alone do not establish protocol unavailability.
+Check: `src/core/socket_listeners.test.ts`, “Linux listener observation”.
+
+REQ-CLEANUP-010: macOS uses `/usr/sbin/lsof`'s numeric, NUL-delimited TCP/UDP fields, refusing
+TCP LISTEN and peerless UDP sockets visible to the invoking account, including
+IPv6 and non-loopback listeners. Separate accounts remain outside the allocation
+domain. Checks: `src/core/ports.test.ts`, “checkPortListenerAbsent (integration)”,
+and `src/core/lease_store.test.ts`, declared-listener and connected-UDP cases.
+
+REQ-CLEANUP-011: an observation error, malformed or incomplete record, unknown state,
+failed or warning-bearing command, empty macOS listing, more than 1 MiB per
+table/listing, or a two-second timeout refuses before claims or snapshots are
+released. Unsupported platforms refuse. This is an observation, not a socket
+reservation: the accepted later-bind race remains. Allocation keeps its native
+bind availability check. Checks: `src/core/socket_listeners.test.ts` and
+`src/core/lease_store.test.ts`, “retains claims and snapshots” cases.
+
 ## File authority
 
 Output and custom kubeconfig paths use literal ASCII project-relative

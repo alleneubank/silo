@@ -31,6 +31,30 @@ listener on a declared port are proved. Another process's outgoing connection
 that happens to use a declared port as its local port does not block it.
 Retained resources and uncertain outcomes keep claims.
 
+On Linux this proof reads `/proc/net/{tcp,udp,tcp6,udp6}` in silo's network
+namespace. TCP LISTEN and peerless UDP sockets on any address block cleanup;
+connected sockets and TIME-WAIT do not. Every nonempty row must have valid
+required fields, endpoints and state. Missing IPv4 tables always refuse.
+Missing IPv6 tables refuse unless both are missing and `/proc/sys/net/ipv6`
+is independently absent, establishing that the kernel exposes no IPv6 support.
+An existing sysctl directory, including configurations with IPv6 disabled on
+some interfaces, does not excuse a missing table.
+
+On macOS this proof reads the native `/usr/sbin/lsof` TCP/UDP listing, using
+numeric endpoints and NUL-delimited machine fields. TCP LISTEN and UDP sockets
+without a peer block cleanup on loopback, wildcard and non-loopback addresses,
+for both address families. Connected TCP/UDP sockets do not block it.
+The guarantee covers sockets visible to this OS account; other accounts are
+outside the allocation domain. A successful nonempty listing is required:
+execution failure, warnings, missing fields, unknown states, malformed or
+incomplete output, output over 1 MiB, and observations over two seconds all
+refuse cleanup and replacement before ownership is released. Linux observations
+use the same size and time bounds. Other platforms refuse this proof.
+
+Neither observation reserves the port or prevents a socket appearing after
+the observation. Candidate allocation still uses native TCP/UDP binds and
+therefore excludes connected sockets that would conflict with a service bind.
+
 `--force` reconfigures only a stopped, reconciled generation. It cannot disown
 a live stack. Parallel stacks require separate roots and names.
 

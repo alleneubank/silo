@@ -1,11 +1,9 @@
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import {
   EPHEMERAL_PORT_END,
   EPHEMERAL_PORT_START,
   PORT_CHECK_TIMEOUT_MS,
-  SOCKET_TABLE_TIMEOUT_MS,
 } from "./constants";
+import { checkListenerAbsent } from "./socket_listeners";
 import { withTimeout } from "../utils/timeout";
 import { SiloError } from "../utils/errors";
 import type { PortConfigValue } from "./types";
@@ -59,62 +57,11 @@ export const checkPortFree: PortCheckFn = async (port: number): Promise<boolean>
   return await withTimeout(attempt(), PORT_CHECK_TIMEOUT_MS, `port check ${port}`);
 };
 
-// On Linux a bind conflicts with every socket holding the port, including an
-// outgoing connection's kernel-chosen local port, so a failed bind cannot show
-// that a listener remains. The kernel's socket tables can: TCP state 0A is
-// LISTEN, and a UDP socket without a peer reports 07. The TCP tables list
-// listening and connected sockets; a socket that is only bound accepts nothing.
-// The IPv6 tables are absent when the kernel runs without IPv6.
-const LINUX_SOCKET_TABLES = [
-  { path: "/proc/net/tcp", acceptingState: "0A", required: true },
-  { path: "/proc/net/udp", acceptingState: "07", required: true },
-  { path: "/proc/net/tcp6", acceptingState: "0A", required: false },
-  { path: "/proc/net/udp6", acceptingState: "07", required: false },
-] as const;
-
-type SocketTable = (typeof LINUX_SOCKET_TABLES)[number];
-
-const readSocketTable = async (table: SocketTable): Promise<string | null> => {
-  try {
-    return await readFile(table.path, "utf8");
-  } catch (error) {
-    const absent = error instanceof Error && "code" in error && error.code === "ENOENT";
-    if (absent && !table.required) return null;
-    throw error;
-  }
-};
-
-// Rows: `sl local_address rem_address st ...`, addresses as `HEXADDR:HEXPORT`.
-const hasAcceptingSocket = (table: SocketTable, text: string, port: number): boolean => {
-  const [header = "", ...rows] = text.split("\n");
-  const columns = header.trim().split(/\s+/);
-  assert(columns[1] === "local_address" && columns[3] === "st", `${table.path} layout: ${header}`);
-  return rows.some(row => {
-    const [, local, , state] = row.trim().split(/\s+/);
-    if (local === undefined || state === undefined) return false;
-    return state === table.acceptingState && Number.parseInt(local.slice(local.lastIndexOf(":") + 1), 16) === port;
-  });
-};
-
-const linuxListenerAbsent = async (port: number): Promise<boolean> => {
-  const accepting = await Promise.all(LINUX_SOCKET_TABLES.map(async table => {
-    const text = await readSocketTable(table);
-    return text !== null && hasAcceptingSocket(table, text, port);
-  }));
-  return !accepting.includes(true);
-};
-
 /**
  * Retirement proof: true only when no TCP listener and no peerless UDP socket
  * remains on the port, on any address. Outgoing connections do not count.
  */
-export const checkPortListenerAbsent: PortCheckFn =
-  process.platform === "linux"
-    ? port => withTimeout(linuxListenerAbsent(port), SOCKET_TABLE_TIMEOUT_MS, `socket tables for port ${port}`)
-    // BSD-derived stacks (macOS) test a SO_REUSEADDR TCP bind, which Bun.listen
-    // sets, only against sockets without a peer, so there the bind probe
-    // already ignores outgoing TCP connections.
-    : checkPortFree;
+export const checkPortListenerAbsent: PortCheckFn = checkListenerAbsent;
 
 export type PortAllocationSource = "lockfile" | "default" | "ephemeral";
 
