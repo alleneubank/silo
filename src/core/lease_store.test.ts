@@ -14,6 +14,7 @@ import { runOwnedCommand, startOwnedCommand } from "./owned_command";
 import type { Allocation, Claim, FileReceipt } from "./lease_types";
 import { BackendReceiptSchema } from "./lease_types";
 import { createListenerProbe } from "./socket_listeners";
+import { connectedUdp } from "./fixtures/connected_udp";
 
 let base: string;
 let storePath: string;
@@ -700,10 +701,10 @@ describe("atomic account leases", () => {
     } finally { client.destroy(); server.close(); }
   }, 180_000);
 
-  for (const hostname of ["127.0.0.1", "::1"]) test(`connected UDP on ${hostname} permits retirement while its peerless peer refuses`, async () => {
+  for (const hostname of ["127.0.0.1", "::1"] as const) test(`connected UDP on ${hostname} permits retirement while its peerless peer refuses`, async () => {
     const root = project("udp");
-    const peer = await Bun.udpSocket({ hostname, port: 0 });
-    const client = await Bun.udpSocket({ hostname, connect: { hostname, port: peer.port } });
+    const sockets = await connectedUdp(hostname);
+    const { peer, client } = sockets;
     const op = await ProjectOperation.open(root, { storePath, legacyInputs });
     try {
       await op.allocate(allocation(root, "udp", peer.port), claims("udp", peer.port), targets(root));
@@ -715,11 +716,13 @@ describe("atomic account leases", () => {
       // A later connection can take an already reserved port; retirement must
       // distinguish that socket from the peerless listener above.
       await op.allocate(allocation(root, "udp", client.port), claims("udp", client.port), targets(root));
+      await expect(op.prepareRetirement()).rejects.toThrow("CLEANUP_REQUIRED");
+      await sockets.releaseListeners();
       const proof = await op.prepareRetirement();
       op.file("env").remove(); op.retire(proof);
       expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
       expect(existsSync(path.join(root, ".localnet.env"))).toBe(false);
-    } finally { op.finish(); client.close(); peer.close(); }
+    } finally { op.finish(); await sockets.close(); }
   }, 180_000);
 
   for (const failure of ["tcp6 missing", "udp6 missing", "both missing", "malformed row", "read error", "listing error", "incomplete listing"] as const) {

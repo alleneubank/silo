@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import net from "node:net";
 import { once } from "node:events";
 import { networkInterfaces } from "node:os";
+import { connectedUdp } from "./fixtures/connected_udp";
 import { EPHEMERAL_PORT_END, EPHEMERAL_PORT_START } from "./constants";
 import { allocatePorts, checkPortFree, checkPortListenerAbsent, type PortAllocationEvent } from "./ports";
 
@@ -297,11 +298,13 @@ describe("checkPortListenerAbsent (integration)", () => {
   }, 180_000);
 
   test("a connected UDP socket's local port is not a listener", async () => {
-    for (const hostname of ["127.0.0.1", "::1"]) {
-      const peer = await Bun.udpSocket({ hostname, port: 0 });
-      const client = await Bun.udpSocket({ hostname, connect: { hostname, port: peer.port } });
-      try { expect(await checkPortListenerAbsent(client.port)).toBe(true); }
-      finally { client.close(); peer.close(); }
+    for (const hostname of ["127.0.0.1", "::1"] as const) {
+      const sockets = await connectedUdp(hostname);
+      try {
+        expect(await checkPortListenerAbsent(sockets.client.port)).toBe(false);
+        await sockets.releaseListeners();
+        expect(await checkPortListenerAbsent(sockets.client.port)).toBe(true);
+      } finally { await sockets.close(); }
     }
   }, 180_000);
 
