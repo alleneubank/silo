@@ -13,6 +13,11 @@ const STOP_TIMEOUT_MS = TILT_DRAIN_GRACE_MS + 5000;
 const JOURNAL_POLL_MS_MIN = 50;
 const JOURNAL_POLL_MS_MAX = 1000;
 
+const executorCommand = (entrypoint: string): string[] =>
+  "isStandaloneExecutable" in Bun && Bun.isStandaloneExecutable === true
+    ? [process.execPath, "__silo_execute"]
+    : [process.execPath, entrypoint, "__silo_execute"];
+
 const supervisorIdentity = async (pid: number): Promise<string | null> => {
   const result = await runCommand(["ps", "-ww", "-p", String(pid), "-o", "uid=,pgid=,lstart=,command="], {
     env: { LC_ALL: "C", TZ: "UTC" }, timeoutMs: 2000, context: "inspect recorded supervisor", stdio: "pipe",
@@ -131,7 +136,7 @@ export const startOwnedCommand = async (
     ...(options.deletionTarget === undefined ? {} : { deletionTarget: options.deletionTarget }) });
   const proc = Bun.spawn([
     TILT_SUPERVISOR_BIN, "--pgroup-only", "--watch-pid", String(process.pid), "--grace-ms", String(TILT_DRAIN_GRACE_MS),
-    "--", process.execPath, owner.executorEntrypoint, "__silo_execute", intent.id, owner.root,
+    "--", ...executorCommand(owner.executorEntrypoint), intent.id, owner.root,
     owner.projectId, String(owner.generation), owner.completionJournal,
   ], {
     cwd: owner.root, env: { ...process.env, ...options.env }, detached: true,

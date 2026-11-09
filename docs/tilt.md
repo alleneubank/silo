@@ -55,8 +55,11 @@ that object. See the [Tilt API reference](https://docs.tilt.dev/api.html#api.doc
 `silo up` starts Tilt in the foreground under
 [janitor](https://github.com/alleneubank/janitor):
 
-```
+```sh
+# Source and bundled JavaScript
 janitor --pgroup-only --watch-pid <silo-pid> --grace-ms <ms> -- bun <silo-entrypoint> __silo_execute ...
+# Standalone executable
+janitor --pgroup-only --watch-pid <silo-pid> --grace-ms <ms> -- <silo-binary> __silo_execute ...
 ```
 
 janitor is a required tool. A missing supervisor fails the run rather than
