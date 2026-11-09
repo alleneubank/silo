@@ -123,8 +123,8 @@ and `src/core/lease_store.test.ts`, declared-listener and connected-UDP cases.
 
 REQ-CLEANUP-011: an observation error, malformed or incomplete record, unknown state,
 failed or warning-bearing command, empty macOS listing, more than 1 MiB per
-table/listing, or a two-second timeout refuses before claims or snapshots are
-released. Unsupported platforms refuse. This is an observation, not a socket
+table/listing, or a 30-second timeout per complete observation refuses before
+claims or snapshots are released. Unsupported platforms refuse. This is an observation, not a socket
 reservation: the accepted later-bind race remains. Allocation keeps its native
 bind availability check. Checks: `src/core/socket_listeners.test.ts` and
 `src/core/lease_store.test.ts`, “retains claims and snapshots” cases.

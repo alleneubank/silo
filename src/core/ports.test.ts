@@ -276,7 +276,7 @@ describe("checkPortListenerAbsent (integration)", () => {
       try { expect(await checkPortListenerAbsent(server.port)).toBe(false); }
       finally { server.stop(); }
     }
-  });
+  }, 180_000);
 
   test("a UDP socket without a peer remains", async () => {
     for (const hostname of ["127.0.0.1", "::1"]) {
@@ -284,7 +284,7 @@ describe("checkPortListenerAbsent (integration)", () => {
       try { expect(await checkPortListenerAbsent(socket.port)).toBe(false); }
       finally { socket.close(); }
     }
-  });
+  }, 180_000);
 
   test("an outgoing TCP connection's local port is not a listener", async () => {
     const server = net.createServer(() => {});
@@ -294,7 +294,7 @@ describe("checkPortListenerAbsent (integration)", () => {
       await once(client, "connect");
       expect(await checkPortListenerAbsent(client.localPort!)).toBe(true);
     } finally { client.destroy(); server.close(); }
-  });
+  }, 180_000);
 
   test("a connected UDP socket's local port is not a listener", async () => {
     for (const hostname of ["127.0.0.1", "::1"]) {
@@ -303,7 +303,7 @@ describe("checkPortListenerAbsent (integration)", () => {
       try { expect(await checkPortListenerAbsent(client.port)).toBe(true); }
       finally { client.close(); peer.close(); }
     }
-  });
+  }, 180_000);
 
   test("an orderly closed outgoing TCP port does not block on TIME-WAIT", async () => {
     const server = net.createServer(socket => socket.resume());
@@ -317,5 +317,5 @@ describe("checkPortListenerAbsent (integration)", () => {
       await closed;
       expect(await checkPortListenerAbsent(port)).toBe(true);
     } finally { client.destroy(); server.close(); }
-  });
+  }, 180_000);
 });

@@ -15,6 +15,25 @@ const linux = (overrides: Record<string, string | Error> = {}, ipv6Available = t
 });
 
 describe("Linux listener observation", () => {
+  test("a hung table read refuses at the observation deadline", async () => {
+    const probe = createListenerProbe({
+      platform: "linux", readText: () => new Promise(() => {}), exists: async () => true,
+    }, 25);
+    await expect(probe(50000)).rejects.toThrow("Timed out after 25ms");
+  }, 60_000);
+
+  for (const listening of [false, true]) test(`a slow complete observation preserves ${listening ? "presence" : "absence"}`, async () => {
+    const probe = createListenerProbe({
+      platform: "linux",
+      readText: async file => {
+        await Bun.sleep(2200);
+        return HEADER + (listening && file === "/proc/net/tcp" ? ROW : "");
+      },
+      exists: async () => true,
+    });
+    expect(await probe(50000)).toBe(!listening);
+  }, 60_000);
+
   test("complete empty tables prove absence", async () => {
     expect(await linux()(50000)).toBe(true);
   });
@@ -81,6 +100,17 @@ const lsof = (stdout: string, exitCode = 0, stderr = "") => createListenerProbe(
 });
 
 describe("macOS listener observation", () => {
+  for (const listening of [false, true]) test(`a slow complete observation preserves ${listening ? "presence" : "absence"}`, async () => {
+    const probe = createListenerProbe({
+      platform: "darwin",
+      listSockets: async () => {
+        await Bun.sleep(2200);
+        return { stdout: "p123\0\n" + FILE.replace("50000", listening ? "50000" : "50001"), exitCode: 0, stderr: "" };
+      },
+    });
+    expect(await probe(50000)).toBe(!listening);
+  }, 60_000);
+
   for (const endpoint of ["127.0.0.1:50000", "192.0.2.1:50000", "[::1]:50000", "*:50000"]) {
     test(`a TCP listener on ${endpoint} refuses`, async () => {
       expect(await lsof("p123\0\n" + FILE.replace("127.0.0.1:50000", endpoint))(50000)).toBe(false);
@@ -105,12 +135,16 @@ describe("macOS listener observation", () => {
     await expect(lsof(output)(50000)).rejects.toThrow("Cannot prove listener absence");
   });
 
-  test("nonzero exit, warnings, execution failure and timeout refuse", async () => {
+  test("nonzero exit, warnings and execution failure refuse", async () => {
     await expect(lsof("p123\0\n" + FILE, 1)(50000)).rejects.toThrow("failed or incomplete");
     await expect(lsof("p123\0\n" + FILE, 0, "incomplete access")(50000)).rejects.toThrow("failed or incomplete");
     await expect(createListenerProbe({ platform: "darwin", listSockets: async () => { throw new Error("exec failed"); } })(50000)).rejects.toThrow("exec failed");
-    await expect(createListenerProbe({ platform: "darwin", listSockets: () => new Promise(() => {}) })(50000)).rejects.toThrow("Timed out");
   });
+
+  test("a hung listing refuses at the observation deadline", async () => {
+    const probe = createListenerProbe({ platform: "darwin", listSockets: () => new Promise(() => {}) }, 25);
+    await expect(probe(50000)).rejects.toThrow("Timed out after 25ms");
+  }, 60_000);
 
   test("other platforms refuse rather than substitute a bind", async () => {
     await expect(createListenerProbe({ platform: "unsupported" })(50000)).rejects.toThrow("supported only on Linux and macOS");

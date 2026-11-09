@@ -473,7 +473,7 @@ async function anonymousVolumes() {
   log({ scenario: "replacement anonymous name is reported as a leak without deletion or claim release; owner-resolved absence allows retirement", original: originalVolume, replacement, pass: true });
 }
 
-async function seededAnonymousParent(label: string, replaceInSecond = false) {
+async function seededAnonymousParent(label: string, timestampCollision = false) {
   const p = project(label);
   const allocated = await silo(p, ["env", name(p)]); assert(allocated.project?.allocation);
   const projectId = allocated.project.projectId;
@@ -481,48 +481,48 @@ async function seededAnonymousParent(label: string, replaceInSecond = false) {
   const containerName = `${allocated.project.allocation.state.identity.composeName}-audit`;
   const owner = await ProjectOperation.open(p);
   try {
-    await until("start of Docker's timestamp second", async () => Date.now() % 1000 < 100);
     recordResource(`container intent ${containerName}; teardown exact returned ID with --volumes\n`);
     const id = await docker(["container", "create", "--name", containerName, "--label", `io.silo.project=${projectId}`, "--label", `io.silo.generation=${generation}`, "redis:7-alpine"]);
     recordResource(`container ${id}; teardown exact recorded ID with --volumes\n`);
     const created = z.array(z.object({ Id: z.string(), Name: z.string(), Created: z.string(), Config: z.object({ Labels: z.record(z.string()) }), Mounts: MountsSchema })).length(1).parse(JSON.parse(await docker(["container", "inspect", id])))[0]!;
     const mount = created.Mounts.find(m => m.Type === "volume" && m.Destination === "/data"); assert(mount?.Name);
     const data = z.array(z.object({ Name: z.string(), CreatedAt: z.string() })).length(1).parse(JSON.parse(await docker(["volume", "inspect", mount.Name])))[0]!;
-    const volume = { name: data.Name, createdAt: data.CreatedAt, destination: "/data" };
-    const parent = BackendReceiptSchema.parse({ kind: "container", source: "compose", name: created.Name.replace(/^\//, ""), id: created.Id, createdAt: created.Created, labels: created.Config.Labels, anonymousVolumes: [volume] });
-    assert(parent.kind === "container");
-    // Seed the real creation-result boundary from Docker's returned identities;
-    // the race then runs the public CLI. Avoid a full CLI capture in the narrow
-    // timestamp window, which otherwise tests process startup speed.
+    const originalVolume = { name: data.Name, createdAt: data.CreatedAt, destination: "/data" };
+    let volume = originalVolume;
     recordResource(`anonymous volume ${volume.name} under ${id}; fixture-only teardown exact inspect then docker volume rm, if parent no longer exists\n`);
     await docker(["container", "rm", id]);
     let replacement: Awaited<ReturnType<typeof fixtureSnapshot>> | undefined;
-    if (replaceInSecond) {
+    if (timestampCollision) {
       await docker(["volume", "rm", volume.name]);
       await docker(["volume", "create", "--label", "com.docker.volume.anonymous=", volume.name]);
       replacement = await fixtureSnapshot("volume", volume.name);
+      const collision = z.array(z.object({ CreatedAt: z.string() })).length(1).parse(replacement)[0]!;
+      volume = { ...originalVolume, createdAt: collision.CreatedAt };
     }
-    // Persist the original creation result after the timing-sensitive fixture
-    // setup; SQLite durability is not part of Docker's timestamp precondition.
+    // Construct a timestamp collision at the historical receipt boundary while
+    // retaining the genuine original parent identity and real replacement.
+    // The two actual volume creation times need not fall in one physical second.
+    const parent = BackendReceiptSchema.parse({ kind: "container", source: "compose", name: created.Name.replace(/^\//, ""), id: created.Id, createdAt: created.Created, labels: created.Config.Labels, anonymousVolumes: [volume] });
+    assert(parent.kind === "container");
     owner.recordResources([parent]);
     const made = ProjectOperation.inspect(p); assert(made?.allocation);
-    return { p, parent, volume, made, replacement };
+    return { p, parent, volume, originalVolume, made, replacement };
   } finally { owner.finish(); }
 }
 
 async function sameSecondReplacement() {
-  const { p, volume, made, replacement } = await seededAnonymousParent("same-second-replacement", true);
+  const { p, volume, originalVolume, made, replacement } = await seededAnonymousParent("same-second-replacement", true);
   assert(replacement);
   cleanupObjects.push({ kind: "volume", id: volume.name, name: volume.name, created: replacement });
   const created = z.array(z.object({ CreatedAt: z.string() })).length(1).parse(replacement)[0]!;
-  assert.equal(created.CreatedAt, volume.createdAt, "The regression must replace the volume in the original timestamp second");
+  assert.equal(created.CreatedAt, volume.createdAt, "The historical audit timestamp must collide with the replacement timestamp");
   try {
     await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
     assert.deepEqual(await fixtureSnapshot("volume", volume.name), replacement);
     assert.deepEqual((await state(p)).claims, made.claims);
     await silo(p, ["env", "--force", "--profile", "alternative"], "ALREADY_RUNNING");
     assert.deepEqual((await state(p)).claims, made.claims);
-    log({ scenario: "same-second replacement is preserved; clean and forced replacement keep claims", original: volume, replacement, pass: true });
+    log({ scenario: "same-second replacement is preserved; clean and forced replacement keep claims", original: originalVolume, historicalAudit: volume, replacement, pass: true });
   } finally {
     const remaining = (await docker(["volume", "ls", "--format", "{{.Name}}"])).split("\n");
     if (remaining.includes(volume.name)) {

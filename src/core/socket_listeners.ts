@@ -124,7 +124,7 @@ const darwinAbsent = async (port: number, source: Extract<Observation, { platfor
 };
 
 /** A failed observation rejects; callers retain ownership on rejection. */
-export const createListenerProbe = (source: Observation) => (port: number): Promise<boolean> => {
+export const createListenerProbe = (source: Observation, timeoutMs = SOCKET_TABLE_TIMEOUT_MS) => (port: number): Promise<boolean> => {
   const observe = async () => {
     switch (source.platform) {
       case "linux": return await linuxAbsent(port, source);
@@ -132,7 +132,7 @@ export const createListenerProbe = (source: Observation) => (port: number): Prom
       case "unsupported": return refuse("listener observation is supported only on Linux and macOS");
     }
   };
-  return withTimeout(observe(), SOCKET_TABLE_TIMEOUT_MS, `socket observation for port ${port}`);
+  return withTimeout(observe(), timeoutMs, `socket observation for port ${port}`);
 };
 
 const nativeObservation = (): Observation => {

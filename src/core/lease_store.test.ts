@@ -679,7 +679,7 @@ describe("atomic account leases", () => {
       op.file("env").remove(); op.retire(proof);
       expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
     } finally { op.finish(); }
-  });
+  }, 180_000);
 
   test("an outgoing connection's local port does not block retirement", async () => {
     const root = project("a");
@@ -698,7 +698,7 @@ describe("atomic account leases", () => {
         expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
       } finally { op.finish(); }
     } finally { client.destroy(); server.close(); }
-  });
+  }, 180_000);
 
   for (const hostname of ["127.0.0.1", "::1"]) test(`connected UDP on ${hostname} permits retirement while its peerless peer refuses`, async () => {
     const root = project("udp");
@@ -720,7 +720,7 @@ describe("atomic account leases", () => {
       expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
       expect(existsSync(path.join(root, ".localnet.env"))).toBe(false);
     } finally { op.finish(); client.close(); peer.close(); }
-  });
+  }, 180_000);
 
   for (const failure of ["tcp6 missing", "udp6 missing", "both missing", "malformed row", "read error", "listing error", "incomplete listing"] as const) {
     test(`${failure} retains claims and snapshots on retirement and replacement`, async () => {

@@ -10,8 +10,8 @@ export const EPHEMERAL_PORT_START = 49152;
 export const EPHEMERAL_PORT_END = 65535;
 
 export const PORT_CHECK_TIMEOUT_MS = 100;
-// Bounds one native socket observation, which grows with host load.
-export const SOCKET_TABLE_TIMEOUT_MS = 2000;
+// Maximum interactive wait for one complete native socket observation under load.
+export const SOCKET_TABLE_TIMEOUT_MS = 30_000;
 export const TOOL_CHECK_TIMEOUT_MS = 2000;
 
 // Bare `tilt up` outlives silo whenever silo dies without running its signal
