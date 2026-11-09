@@ -59,6 +59,36 @@ const waitFor = async (condition: () => boolean): Promise<void> => {
   }
 };
 
+test("large JSON results survive a reader that starts late", async () => {
+  const root = path.join(base, "large-output");
+  mkdirSync(root);
+  const source = 'version = 1\n[ports]\nTILT_PORT = "random"\n#' + "x".repeat(940_000) + "\n";
+  writeFileSync(path.join(root, "silo.toml"), source);
+  const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry") };
+  const command = [process.execPath, path.join(base, "cli.js")];
+  for (const args of [["env", "large-output", "--json"], ["status", "--json"]]) {
+    const proc = Bun.spawn([...command, ...args], { cwd: root, env, detached: true, stdout: "pipe", stderr: "pipe", timeout: 45_000 });
+    writeFileSync(path.join(root, `${args[0]}.pid`), String(proc.pid));
+    const errors = new Response(proc.stderr).text();
+    try {
+      await Bun.sleep(2000);
+      const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), errors]);
+      expect({ exitCode, stderr: exitCode === 0 ? "" : stderr }).toEqual({ exitCode: 0, stderr: "" });
+      const result = JSON.parse(stdout);
+      expect(result.schemaVersion).toBe(1);
+      expect(result.project.allocation.configSource).toBe(source);
+    } finally {
+      if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGTERM");
+      await proc.exited;
+      await errors;
+    }
+  }
+  const down = Bun.spawn([...command, "down", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
+  const [exitCode, stdout] = await Promise.all([down.exited, new Response(down.stdout).text()]);
+  expect(exitCode).toBe(0);
+  expect(JSON.parse(stdout).project.claims).toEqual([]);
+}, 120_000);
+
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   test(`ci --json emits one complete result on ${signal} and status observes its dead launch without mutating ownership`, async () => {
     const root = path.join(base, signal);

@@ -2,6 +2,7 @@
 import { parseArgs } from "util";
 import path from "node:path";
 import { writeFileSync } from "node:fs";
+import { withTimeout } from "./utils/timeout";
 import { SiloError } from "./utils/errors";
 import { setVerbose, setStructuredOutput } from "./utils/logger";
 import { assertNoLegacyState } from "./core/legacy_check";
@@ -272,12 +273,9 @@ Examples:
 let jsonOutput = Bun.argv.includes("--json");
 let jsonResultStarted = false;
 let removeInterruptHandlers = () => {};
-
-const writeJsonResult = (result: unknown): void => {
-  if (jsonResultStarted) return;
-  jsonResultStarted = true;
-  writeFileSync(1, JSON.stringify(result) + "\n");
-};
+const JSON_OUTPUT_TIMEOUT_MS = 30_000;
+type InterruptSignal = "SIGINT" | "SIGTERM";
+type JsonEmission = { kind: "result"; value: unknown } | { kind: "interrupt"; signal: InterruptSignal };
 
 const errorResult = (error: unknown) => ({
   schemaVersion: 1,
@@ -286,12 +284,36 @@ const errorResult = (error: unknown) => ({
   ...(error instanceof SiloError ? error.details : {}),
 });
 
+const ciInterruption = (signal: InterruptSignal) => new SiloError(
+  `ci interrupted by ${signal}; owned claims retained. Run silo status and silo down to reconcile.`,
+  "INTERRUPTED", { details: { signal } },
+);
+
+const writeJsonResult = (emission: JsonEmission): Promise<void> | void => {
+  if (jsonResultStarted) return;
+  const value = emission.kind === "interrupt" ? errorResult(ciInterruption(emission.signal)) : emission.value;
+  const payload = JSON.stringify(value) + "\n";
+  jsonResultStarted = true;
+  if (emission.kind === "interrupt") {
+    // This fixed-size first JSON value fits in an empty pipe. Cancellation
+    // must not let setup continue while waiting for an asynchronous flush.
+    writeFileSync(1, payload);
+    return;
+  }
+  const written = new Promise<void>((resolve, reject) => {
+    process.stdout.write(payload, error => error ? reject(error) : resolve());
+  });
+  return withTimeout(written, JSON_OUTPUT_TIMEOUT_MS, "JSON output").catch(error => {
+    process.stdout.destroy();
+    throw error;
+  });
+};
+
 const handleCiInterrupts = (): (() => void) => {
-  const interrupt = (signal: "SIGINT" | "SIGTERM", exitCode: number) => {
+  const interrupt = (signal: InterruptSignal, exitCode: number) => {
     if (jsonResultStarted) return;
-    const error = new SiloError(`ci interrupted by ${signal}; owned claims retained. Run silo status and silo down to reconcile.`, "INTERRUPTED", { details: { signal } });
-    if (jsonOutput) writeJsonResult(errorResult(error));
-    else writeFileSync(2, `silo error: ${error.message}\n`);
+    if (jsonOutput) writeJsonResult({ kind: "interrupt", signal });
+    else writeFileSync(2, `silo error: ${ciInterruption(signal).message}\n`);
     // Exiting leaves cleanup with Janitor's existing parent watcher. The
     // handler grants no new process signal or resource deletion authority.
     process.exit(exitCode);
@@ -306,7 +328,7 @@ const handleCiInterrupts = (): (() => void) => {
 const printJsonResult = async (config: string, enabled: boolean, changed: boolean): Promise<void> => {
   if (!enabled) return;
   const { readStatus } = await import("./commands/status");
-  writeJsonResult(readStatus(config, changed));
+  await writeJsonResult({ kind: "result", value: readStatus(config, changed) });
 };
 
 const main = async (): Promise<void> => {
@@ -407,7 +429,7 @@ const main = async (): Promise<void> => {
     }
     case "status": {
       const mod = await import("./commands/status");
-      if (values.json) writeJsonResult(mod.readStatus(values.config));
+      if (values.json) await writeJsonResult({ kind: "result", value: mod.readStatus(values.config) });
       else await mod.status({ config: values.config });
       return;
     }
@@ -466,10 +488,14 @@ const main = async (): Promise<void> => {
   }
 };
 
-main().catch((error: unknown) => {
+main().catch(async (error: unknown) => {
+  process.exitCode = 1;
   if (jsonOutput) {
-    writeJsonResult(errorResult(error));
-    process.exitCode = 1;
+    if (jsonResultStarted) console.error(`silo error: ${error instanceof Error ? error.message : "JSON output failed"}`);
+    else {
+      try { await writeJsonResult({ kind: "result", value: errorResult(error) }); }
+      catch (writeError) { console.error(`silo error: ${writeError instanceof Error ? writeError.message : "JSON output failed"}`); }
+    }
     return;
   }
   if (error instanceof SiloError) {
@@ -479,5 +505,4 @@ main().catch((error: unknown) => {
   } else {
     console.error("silo error: unknown error");
   }
-  process.exitCode = 1;
 }).finally(() => removeInterruptHandlers());

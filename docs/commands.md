@@ -63,6 +63,9 @@ error with a top-level `signal` field and exit 130 or 143. The supervisor
 drains its recorded group after the CLI exits. Run `status` and `down` to
 recover an abandoned operation and reconcile retained ownership.
 A signal after final JSON emission starts preserves that result and its exit status.
+Normal JSON output handles pipe backpressure for up to 30 seconds. During that
+flush, CI interrupts preserve the selected result. A reader stalled longer than
+30 seconds gets a nonzero exit; a failed output stream receives no second object.
 
 Status preserves stored fields under `project`. Separate `launchStatus` entries
 report `launchId`, observed `state`, `groupsAbsent` and a provenance-checked

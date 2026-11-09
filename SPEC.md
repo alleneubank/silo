@@ -112,6 +112,11 @@ results/errors use the same writer. A signal after final JSON emission starts
 does not overwrite that result or its exit status. Cancellation adds no signal or deletion
 authority: Janitor's existing parent watcher drains its group, and `down`
 recovers an abandoned operation. Check: `src/commands/ci.test.ts`.
+Normal JSON output awaits stream backpressure with a 30 s flush deadline;
+failure closes that output stream and exits nonzero, without a second object.
+After emission starts, CI signals preserve the selected result while it flushes.
+The interrupt case accepts only a signal and synchronously emits its fixed small
+first value before exit. Check: large-result pipe case in `src/commands/ci.test.ts`.
 
 `down` stops only journaled owned groups after verifying their owner and command,
 reconciles completion facts, records finished owned Compose producers, and deletes receipted Compose containers and
