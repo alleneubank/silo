@@ -93,11 +93,16 @@ abandons the pipes, keeping the output read so far, and only while Bun has not
 yet recorded the supervisor's exit. Janitor 0.3.1 on macOS can miss its child's
 exit and then waits until its owner dies, and a descendant that leaves the group
 can hold the pipes open; neither holds a finished command to its timeout. Polls
-for the fact back off to 1 s. Each poll reads through its own read-only
-connection keyed by project, generation and launch, so it outlives the operation
-that started the launch: interactive `up` releases that operation while Tilt
-runs. A poll never waits for a locked store, and a failed read only yields no
-fact for that poll; it never ends or signals the command.
+for the fact back off to 1 s and stay keyed by project, generation and launch.
+The watch outlives the operation that started the launch: interactive `up`
+releases that operation while Tilt runs. A poll uses an existing store
+connection only when it is the process's sole open connection to that store.
+With none open, it opens, selects through and closes one read-only connection
+synchronously. With two or more open, it opens nothing, changes no timeout and
+yields no fact. The poll does not wait on a lock. A failed or locked read yields
+no fact for that poll; the poll does not end or signal the command. The fact is
+never the sole evidence of the result; the operation owner imports it durably
+afterward.
 
 `env` reserves and exports without starting tools. `up` supervises foreground
 Tilt; a matching live `up` is idempotent. `ci` uses the same allocation and

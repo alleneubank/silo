@@ -109,6 +109,11 @@ type ProjectRow = {
 type AllocationRow = { snapshot: string; phase: LifecyclePhase; problem: string | null };
 type JsonRow = { receipt: string };
 
+// A failed nonblocking read on a peer connection can leave an existing
+// Bun/SQLite connection unusable on Darwin. Poll only through a sole connection.
+// Registration, polling and close are synchronous so polls see whole lifetimes.
+const operationConnections = new Map<string, Set<Database>>();
+
 /** The immutable identity of one launch's completion fact, which outlives any operation. */
 export type CompletionKey = { storePath: string; projectId: string; generation: number; launchId: string };
 
@@ -237,7 +242,11 @@ export class ProjectOperation {
     readonly completionJournal: "account" | "parent",
     private readonly listenerProbe: PortCheckFn,
     private readonly protectedDirectories: readonly string[],
-  ) {}
+  ) {
+    const connections = operationConnections.get(storePath) ?? new Set<Database>();
+    connections.add(db);
+    operationConnections.set(storePath, connections);
+  }
 
   static async open(root: string, options: OperationOptions = {}): Promise<ProjectOperation> {
     const owner = await ProjectOperation.acquire(root, options, false);
@@ -359,11 +368,20 @@ export class ProjectOperation {
   }
 
   /**
-   * Reads a launch's durable completion through its own read-only connection,
-   * so the read needs no operation and survives the one that started the
-   * launch. It never waits for a peer's lock: a locked store throws at once.
+   * Observes an immutable completion without waiting on a lock or requiring
+   * an operation. Uses only a sole connection; multiple operations yield no
+   * fact. A locked read throws, and the caller may try a later poll.
    */
   static readExecutorCompletion(key: CompletionKey): ExecutorCompletion | null {
+    const connections = operationConnections.get(key.storePath);
+    if (connections && connections.size > 1) return null;
+    const existing = connections?.values().next().value;
+    if (existing) {
+      try {
+        existing.exec("PRAGMA busy_timeout = 0;");
+        return selectCompletion(existing, key);
+      } finally { existing.exec(`PRAGMA busy_timeout = ${STORE_BUSY_TIMEOUT_MS};`); }
+    }
     const db = openDatabase(key.storePath, true, false, 0);
     try { return selectCompletion(db, key); }
     finally { db.close(); }
@@ -781,6 +799,9 @@ export class ProjectOperation {
       }, true);
     } finally {
       this.closed = true;
+      const connections = operationConnections.get(this.storePath);
+      connections?.delete(this.db);
+      if (connections?.size === 0) operationConnections.delete(this.storePath);
       this.db.close();
     }
   }
