@@ -149,7 +149,7 @@ answering). The scenario fails as a fixture precondition, before any downstream
 assertion, if the engine does not hold the port or the cluster create does not
 exit nonzero. The IPAM wrapper forwards to Docker with the fixture's occupied
 subnet; it does not stub a daemon response. The
-partial cluster uses exact cleanup and separate owner cache resolution.
+partial cluster uses exact cleanup and its own receipt-bound cache removal.
 `producers` also runs `registry-provenance` (selectable alone). A pre-up hook
 starts a lone same-name container with the cluster's `k3d.cluster` label that
 publishes the assigned registry port. `ci` must refuse `NAME_CONFLICT` and so
@@ -171,7 +171,7 @@ create that requested the registry can vouch for it.
 | Native root spelling aliases | Existing case/Unicode normalization aliases resolve to one project; distinct spellings on case-sensitive filesystems remain distinct. |
 | Same-name leftover network/volume/stopped k3d server/registry containers | NAME_CONFLICT; exact C object IDs, creation identities and bytes remain unchanged; C is removed only by the harness's exact fixture handle. Stopped server/registry containers are synthetic native Docker residues, not running C clusters. |
 | Unreceipted env/kubeconfig/version-2 lock | PATH_CONFLICT and sentinels unchanged; legacy version-1 locks use LEGACY_STATE. |
-| Native k3d creation/retention/deletion | Exact node/registry/network/named-cache receipts and anonymous mount audit records, owned kubeconfig; clean refuses retained resources; explicit deletion removes exact container IDs with their anonymous volumes, then network ID. The named images cache remains and clean still refuses with unchanged claims. The harness's separate fixture-owner cleanup verifies its recorded creation identity before removing that owned cache; only then can public clean retire. |
+| Native k3d creation/retention/deletion | Exact node/registry/network/named-cache receipts and anonymous mount audit records, owned kubeconfig; clean refuses retained resources; explicit deletion removes exact container IDs with their anonymous volumes, then network ID. The executor then removes the unused cache only after independently re-reading its active creation receipt and inspecting its exact token/identity/labels/engine. Public delete-cluster/clean retires without fixture-owner cache resolution. Ordinary down retains cluster/cache and clean refuses with claims. |
 | k3d enabled to disabled after exact cluster deletion | `env --force` refuses removal of the published kubeconfig role; its original path/bytes and all claims survive. `down --clean` removes that recorded snapshot despite the config edit; subsequent disabled allocation has no kubeconfig claim, and final cleanup leaves no claims. |
 | Owner-labelled object outside namespace | NAME_CONFLICT; cleanup cannot grant authority outside declared names; the harness removes its exact synthetic object. |
 | Docker unavailable | ENGINE_UNAVAILABLE, never an empty-namespace pass. |
@@ -185,7 +185,7 @@ create that requested the registry can vouch for it.
 | Real Compose replacement during cleanup | Pause after exact parent P removal, recreate the service through real Compose under the same project, then resume. Replacement Q, its new anonymous volume W, data and all claims survive. Cleanup refuses until the fixture owner removes Q by its exact ID; retry then retires. No delegated Tilt/Compose teardown is permitted. |
 | Inherited volumes-from | Silo refuses before removing the inherited borrower and leaves donor/borrower/volumes/claims unchanged. The separate owned Docker fixture proves `rm --volumes` preserves a live donor's references and named mounts, but removes inherited anonymous data when the last user is removed after its donor is gone. |
 | Durable successful retry / CLI crash | A real network deletion first fails on a fixture endpoint. Remove that exact fixture endpoint, pause the retry, SIGSTOP the recorded CLI, release real deletion, and observe the exact successful executor completion durably while the CLI still has a granted receipt. SIGKILL that CLI. Public recovery reconciles the earlier failed request and releases claims without another deletion of the absent network. |
-| Same-generation restart | Compose ci/down/ci/clean records fresh same-name IDs while retaining old mount audit receipts. k3d ci/delete-cluster/ci records fresh node/network IDs and retains its named cache until independent owner resolution before final clean. |
+| Same-generation restart | Compose ci/down/ci/clean records fresh same-name IDs while retaining old mount audit receipts. k3d ci/delete-cluster/ci records fresh node/network IDs and cache creation tokens, retains prior receipt history and retires via public delete-cluster/clean. |
 | Finished failed/stopped producer | CI creates Redis then a dependent resource fails; clean records/removes its exact IDs. Live up creates Redis; down stops its recorded group and records/removes its exact IDs. A partial-cleanup retry preserves recreated Q/W/data/claims without recording Q. |
 | Failed delete, target externally absent | Real network deletion fails on an endpoint. Fixture owner removes only its recorded endpoint and network IDs; public cleanup reconciles the failed request and retires. |
 | Delete completion lost | After real network deletion succeeds, pause before completion and kill only the verified recorded executor group. The request remains granted with no fact. Recovery reports resolved/target-absent with null exit, reconciles prior matching failure, then clean retires. |
@@ -322,18 +322,11 @@ while IFS= read -r container_id; do
   docker container inspect "$container_id" --format '{{json .Mounts}}' \
     > "$TMPDIR/example-mounts/$container_id.json"
 done < "$TMPDIR/example-container-ids"
-if bun "$silo_artifact" down --delete-cluster --clean --json > "$TMPDIR/example-teardown.json"; then
-  echo "Expected retained named-cache refusal" >&2
-  exit 1
-fi
-bun -e 'import assert from "node:assert/strict"; const r=await Bun.file(process.argv[1]).json(); assert.equal(r.code,"CLEANUP_REQUIRED")' "$TMPDIR/example-teardown.json"
+bun "$silo_artifact" down --delete-cluster --clean --json > "$TMPDIR/example-teardown.json"
+bun -e 'import assert from "node:assert/strict"; const r=await Bun.file(process.argv[1]).json(); assert.equal(r.project.generation,0); assert.deepEqual(r.project.claims,[])' "$TMPDIR/example-teardown.json"
 docker volume ls --format '{{.Name}}' > "$TMPDIR/example-volumes-after.txt"
-bun -e 'import assert from "node:assert/strict"; const s=await Bun.file(process.argv[1]).json(); const names=new Set((await Bun.file(process.argv[2]).text()).trim().split("\n")); for(const r of s.project.resources) if(r.kind==="container") for(const v of r.anonymousVolumes) assert(!names.has(v.name), `Leaked ${v.name} from ${r.id}`)' \
+bun -e 'import assert from "node:assert/strict"; const s=await Bun.file(process.argv[1]).json(); const names=new Set((await Bun.file(process.argv[2]).text()).trim().split("\n")); for(const r of s.project.resources) { if(r.kind==="container") for(const v of r.anonymousVolumes) assert(!names.has(v.name), `Leaked ${v.name} from ${r.id}`); if(r.kind==="volume" && r.authority==="owned-image-cache") assert(!names.has(r.name), `Retained cache ${r.name}`); }' \
   "$TMPDIR/example-status-before.json" "$TMPDIR/example-volumes-after.txt"
-bun "$silo_artifact" status --json > "$TMPDIR/example-status-retained.json"
-bun -e 'import assert from "node:assert/strict"; const before=await Bun.file(process.argv[1]).json(); const after=await Bun.file(process.argv[2]).json(); assert.deepEqual(after.project.claims,before.project.claims); for(const v of before.project.resources.filter(r=>r.kind==="volume")){ const r=Bun.spawnSync(["docker","volume","inspect",v.name],{stdout:"pipe",stderr:"pipe"}); assert.equal(r.exitCode,0); const current=JSON.parse(r.stdout.toString())[0]; assert.equal(current.Name,v.name); assert.equal(current.CreatedAt,v.createdAt); assert.equal(current.Labels["io.silo.project"],before.project.projectId); assert.equal(current.Labels["io.silo.generation"],String(before.project.generation)); console.log("fixture-owner named cache teardown",v.name); const removed=Bun.spawnSync(["docker","volume","rm",v.name],{stdout:"pipe",stderr:"pipe"}); assert.equal(removed.exitCode,0,removed.stderr.toString()); }' \
-  "$TMPDIR/example-status-before.json" "$TMPDIR/example-status-retained.json"
-bun "$silo_artifact" down --clean
 bun "$silo_artifact" status --json > "$TMPDIR/example-status-after.json"
 ```
 
@@ -344,15 +337,20 @@ any known-present fixture control used for that run. Preserve any unexpected
 volume; timestamps alone never establish its owner. The former Linux six-volume
 audit covered the k3d image volume and five k3d anonymous children, not Redis.
 The current runtime removes exact parent IDs with `--volumes` before Tilt can
-discard them. No Silo path deletes a volume by name. A missing parent or a
+discard them. Only the receipt-bound image-cache executor uses name-addressed
+volume removal; anonymous and other observed volumes never gain that authority. A missing parent or a
 shared volume can still leave reported data: retain the evidence and claims;
 never treat a recorded mount name as current deletion authority. The
-named k3d images cache is retained because k3d 5.9.0 needs it for its tools
-node. In the example, the six anonymous mounts should be absent after exact
-parent deletion; the seventh mounted volume is that named cache and must remain.
-Record clean's refusal and unchanged claims, then resolve only that cache under
-the fixture-owner grant after exact identity verification, and repeat public
-clean to retire. Compare actual snapshots and receipts; a count is not proof.
+named k3d images cache remains available for k3d 5.9.0's tools node during the
+cluster's lifetime. In the example, all six anonymous mounts and the receipted
+cache must be absent after explicit cluster deletion; clean exits zero and
+retires claims without fixture-owner resolution. Compare actual snapshots and
+receipts; a count is not proof. Exercise running and stopped cache borrowers,
+receipt/token mismatches, pre-final-inspect replacement preservation, crash
+recovery and same-name/same-CreatedAt/different-token history. Document Docker's
+residual replacement race after final inspection separately, never as atomic
+replacement protection. Re-run clean format-2/format-3 refusal in both client
+directions and supported hot-journal recovery on each native filesystem mode.
 No Docker/OrbStack-specific cause is established by the earlier Mac residue.
 
 Invite a fresh guest using the standard guest charter, the built CLI, packaged

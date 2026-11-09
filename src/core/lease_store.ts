@@ -6,8 +6,8 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { SiloError } from "../utils/errors";
-import { AllocationSchema, BackendReceiptSchema, ExecutorCompletionSchema, FileReceiptSchema, LaunchSchema } from "./lease_types";
-import type { Allocation, BackendReceipt, Claim, ExecutorCompletion, ExecutorContext, FileReceipt, Launch, LifecyclePhase } from "./lease_types";
+import { AllocationSchema, BackendReceiptSchema, ExecutorCompletionSchema, FileReceiptSchema, LaunchSchema, OwnedImageCacheSchema, isOwnedImageCache, matchesResource, resourceReceiptKey } from "./lease_types";
+import type { Allocation, BackendReceipt, Claim, DockerDeletionTarget, ExecutorCompletion, ExecutorContext, FileReceipt, Launch, LifecyclePhase, ObservedBackendReceipt, OwnedImageCache } from "./lease_types";
 import { fileIdentity, prepareFileTarget, type FileRole, type FileTarget } from "./file_target";
 import { OwnedFile, appendSink } from "./owned_file";
 import { assertNoLegacyState, legacyRegistryDirectories, type findLegacyState } from "./legacy_check";
@@ -18,7 +18,7 @@ import { STORE_BUSY_TIMEOUT_MS } from "./constants";
 const MAX_PROJECTS = 10_000;
 const MAX_CLAIMS = 4096;
 const MAX_LAUNCHES = 1024;
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const APPLICATION_ID = 0x53494c4f;
 
 const SCHEMA = `
@@ -75,9 +75,10 @@ CREATE TABLE resources (
   name TEXT NOT NULL,
   id TEXT NOT NULL,
   created_at TEXT NOT NULL,
+  receipt_key TEXT NOT NULL,
   receipt TEXT NOT NULL,
   deleted INTEGER NOT NULL DEFAULT 0,
-  PRIMARY KEY (project_id, generation, kind, id, created_at),
+  PRIMARY KEY (project_id, generation, receipt_key),
   FOREIGN KEY (project_id, generation) REFERENCES allocations(project_id, generation)
 );
 CREATE UNIQUE INDEX resource_object_id ON resources(project_id, generation, kind, id) WHERE kind != 'volume';
@@ -108,6 +109,29 @@ type ProjectRow = {
 };
 type AllocationRow = { snapshot: string; phase: LifecyclePhase; problem: string | null };
 type JsonRow = { receipt: string };
+
+const CACHE_AUTHORITY = Symbol("image-cache-deletion-authority");
+export interface CacheDeletionCapability { readonly [CACHE_AUTHORITY]: true }
+
+const cleanupRequired = (message: string): never => {
+  throw new SiloError(`CLEANUP_REQUIRED: ${message}; cache receipts and claims retained`, "CLEANUP_REQUIRED");
+};
+
+/** Store authority is an active persisted creation receipt, never a parsed target. */
+const activeImageCache = (db: Database, projectId: string, generation: number, key: string, allocation: Allocation): OwnedImageCache => {
+  const row = db.query<JsonRow, [string, number, string]>("SELECT receipt FROM resources WHERE project_id = ? AND generation = ? AND receipt_key = ? AND deleted = 0").get(projectId, generation, key);
+  if (!row) return cleanupRequired(`no active owned image-cache creation receipt for ${key}`);
+  const receipt = BackendReceiptSchema.parse(JSON.parse(row.receipt));
+  if (!isOwnedImageCache(receipt) || resourceReceiptKey(receipt) !== key) return cleanupRequired("image-cache receipt class or key differs");
+  if (receipt.projectId !== projectId || receipt.generation !== generation || receipt.cluster !== allocation.state.identity.k3dClusterName ||
+    receipt.name !== `k3d-${receipt.cluster}-images` || receipt.id !== receipt.name || !receipt.createdAt ||
+    receipt.engine.endpoint !== allocation.engine?.endpoint || receipt.engine.id !== allocation.engine.id ||
+    receipt.labels["io.silo.project"] !== projectId || receipt.labels["io.silo.generation"] !== String(generation) ||
+    receipt.labels["k3d.cluster"] !== receipt.cluster || receipt.labels["io.silo.creation"] !== receipt.creationToken) {
+    return cleanupRequired(`image-cache receipt ownership differs: ${receipt.name}`);
+  }
+  return receipt;
+};
 
 // A failed nonblocking read on a peer connection can leave an existing
 // Bun/SQLite connection unusable on Darwin. Poll only through a sole connection.
@@ -231,6 +255,8 @@ type OperationOptions = {
 /** The sole mutation capability: every effect is fenced by this root, generation and operation. */
 export class ProjectOperation {
   private closed = false;
+  private readonly cacheCapabilities = new WeakMap<CacheDeletionCapability, { key: string; generation: number; token: string }>();
+  private readonly cacheCreations = new Set<string>();
   private mutationState: "active" | "allocating" | "proving-retirement" | "retiring" = "active";
 
   private constructor(
@@ -348,6 +374,24 @@ export class ProjectOperation {
     finally { db.close(); }
   }
 
+  /** Read-only authority check repeated by the actual executor before its final inspect. */
+  static async executorImageCache(context: ExecutorContext, grant: Extract<Launch, { phase: "granted" }>): Promise<OwnedImageCache> {
+    await assertNoLegacyState(context.root);
+    const db = openDatabase(accountStorePath(), true);
+    try {
+      assert.deepEqual(this.executorGrant(db, context), grant, "Executor grant differs from its durable receipt");
+      const target = grant.deletionTarget;
+      if (grant.effect !== "delete" || target?.kind !== "image-cache") return cleanupRequired("executor lacks an image-cache target");
+      const row = db.query<AllocationRow, [string, number]>("SELECT snapshot, phase, problem FROM allocations WHERE project_id = ? AND generation = ?").get(context.projectId, context.generation);
+      if (!row) return cleanupRequired("executor allocation is absent");
+      const receipt = activeImageCache(db, context.projectId, context.generation, target.receiptKey, AllocationSchema.parse(JSON.parse(row.snapshot)));
+      if (resourceReceiptKey(target.receipt) !== target.receiptKey) return cleanupRequired("executor target key differs");
+      assert.deepEqual(receipt, target.receipt, "Executor target differs from its active creation receipt");
+      assert.deepEqual(grant.command, ["docker", "volume", "rm", receipt.name], "Executor cache command differs from receipt");
+      return receipt;
+    } finally { db.close(); }
+  }
+
   /** An executor may append its own immutable fact; it cannot change lifecycle or claims. */
   static async recordExecutorCompletion(context: ExecutorContext, result: Pick<ExecutorCompletion, "started" | "exitCode" | "completedAt">): Promise<void> {
     await assertNoLegacyState(context.root);
@@ -403,7 +447,7 @@ export class ProjectOperation {
     // Completion import must be sufficient after a crash; there may be no
     // remaining object on which to execute another successful retry.
     for (const launch of this.launches()) {
-      if (launch.phase === "exited" && launch.effect === "delete" && launch.exitCode === 0) this.reconcileDeletion(launch);
+      if (launch.phase === "exited" && launch.effect === "delete" && launch.exitCode === 0 && launch.deletionTarget?.kind !== "image-cache") this.reconcileDeletion(launch);
     }
   }
 
@@ -420,6 +464,7 @@ export class ProjectOperation {
     this.assertMutable();
     const completed = this.launches().find(launch => launch.id === result.id);
     assert(completed?.phase === "exited" && completed.exitCode === 0 && completed.effect === "delete", "Deletion reconciliation requires a successful durable result");
+    assert(completed.deletionTarget?.kind !== "image-cache", "Cache deletion reconciles only on exact receipt absence");
     // Launch rows are append-only. Only intents preceding this success can be
     // retries it resolves; a later failed request must retain its uncertainty.
     const earlier = this.db.query<JsonRow, [string, number, string, number, string]>(`SELECT receipt FROM launches
@@ -586,8 +631,45 @@ export class ProjectOperation {
     return this.db.query<Claim, [string, number]>("SELECT domain, resource, is_prefix AS prefix FROM claims WHERE project_id = ? AND generation = ?").all(this.projectId, this.generation).map(c => ({ domain: c.domain, resource: c.resource, ...(c.prefix ? { prefix: true } : {}) }));
   }
 
-  planLaunch(input: Pick<Launch, "kind" | "command" | "effect" | "deletionTarget">): Extract<Launch, { phase: "planned" }> {
+  planLaunch(input: Pick<Launch, "kind" | "command" | "effect"> & { deletionTarget?: DockerDeletionTarget }): Extract<Launch, { phase: "planned" }> {
     assert(input.deletionTarget === undefined || input.effect === "delete", "Only a deletion may carry a deletion target");
+    assert(!input.deletionTarget || input.deletionTarget.kind === "container" || input.deletionTarget.kind === "network", "Generic launch planning excludes cache targets");
+    const { kind, command, effect, deletionTarget } = input;
+    return this.insertLaunch({ kind, command, effect, ...(deletionTarget ? { deletionTarget } : {}) });
+  }
+
+  planImageCacheCreation(): Extract<Launch, { phase: "planned" }> {
+    const cluster = this.current()?.allocation.state.identity.k3dClusterName;
+    if (!cluster || !this.current()?.allocation.engine) return cleanupRequired("cache creation requires a recorded cluster and engine");
+    const creation = { token: randomUUID(), cluster, name: `k3d-${cluster}-images` };
+    const launch = this.insertLaunch({ kind: "k3d-image-cache-create", effect: "create", cacheCreation: creation,
+      command: ["docker", "volume", "create", "--label", `io.silo.project=${this.projectId}`,
+        "--label", `io.silo.generation=${this.generation}`, "--label", `k3d.cluster=${cluster}`,
+        "--label", `io.silo.creation=${creation.token}`, creation.name] });
+    this.cacheCreations.add(launch.id);
+    return launch;
+  }
+
+  authorizeImageCacheDeletion(receiptKey: string): CacheDeletionCapability {
+    return this.transaction(() => {
+      activeImageCache(this.db, this.projectId, this.generation, receiptKey, this.current()!.allocation);
+      const capability: CacheDeletionCapability = { [CACHE_AUTHORITY]: true };
+      this.cacheCapabilities.set(capability, { key: receiptKey, generation: this.generation, token: this.token });
+      return capability;
+    });
+  }
+
+  planImageCacheDeletion(capability: CacheDeletionCapability): Extract<Launch, { phase: "planned" }> {
+    return this.transaction(() => {
+      const binding = this.cacheCapabilities.get(capability);
+      if (!binding || binding.generation !== this.generation || binding.token !== this.token) return cleanupRequired("cache capability belongs to another operation");
+      const receipt = activeImageCache(this.db, this.projectId, this.generation, binding.key, this.current()!.allocation);
+      return this.insertLaunch({ kind: "owned-image-cache-delete", effect: "delete", command: ["docker", "volume", "rm", receipt.name],
+        deletionTarget: { kind: "image-cache", receiptKey: binding.key, receipt } });
+    });
+  }
+
+  private insertLaunch(input: Pick<Launch, "kind" | "command" | "effect" | "deletionTarget" | "cacheCreation">): Extract<Launch, { phase: "planned" }> {
     const launch: Extract<Launch, { phase: "planned" }> = { ...input, id: randomUUID(), phase: "planned", reconciled: false, terminal: false, supervisorPid: null, leaderPid: null, groupId: null, supervisorIdentity: null, exitCode: null };
     this.transaction(() => {
       if (this.launches().length >= MAX_LAUNCHES) {
@@ -615,7 +697,12 @@ export class ProjectOperation {
       if (!old) throw new SiloError("Launch intent no longer belongs to this operation", "STALE_OPERATION");
       const transitions = { planned: ["planned", "granted", "cancelled"], granted: ["granted", "exited", "resolved"], exited: ["exited"], cancelled: ["cancelled"], resolved: ["resolved"] };
       assert(transitions[old.phase].includes(launch.phase), `Invalid launch transition: ${old.phase} -> ${launch.phase}`);
-      assert.deepEqual([launch.kind, launch.effect, launch.command, launch.deletionTarget], [old.kind, old.effect, old.command, old.deletionTarget], "Launch identity is immutable");
+      assert.deepEqual([launch.kind, launch.effect, launch.command, launch.deletionTarget, launch.cacheCreation], [old.kind, old.effect, old.command, old.deletionTarget, old.cacheCreation], "Launch identity is immutable");
+      if (old.phase === "planned" && launch.phase === "granted" && launch.deletionTarget?.kind === "image-cache") {
+        const target = launch.deletionTarget;
+        const receipt = activeImageCache(this.db, this.projectId, this.generation, target.receiptKey, this.current()!.allocation);
+        assert.deepEqual(receipt, target.receipt, "Cache grant requires the unchanged active creation receipt");
+      }
       if (old.phase !== "planned") assert.deepEqual(
         [launch.supervisorPid, launch.leaderPid, launch.groupId, launch.supervisorIdentity],
         [old.supervisorPid, old.leaderPid, old.groupId, old.supervisorIdentity], "Executor identity is immutable",
@@ -655,38 +742,79 @@ export class ProjectOperation {
     return this.db.query<JsonRow, [string, number, number]>("SELECT receipt FROM resources WHERE project_id = ? AND generation = ? AND (? = 1 OR deleted = 0)").all(this.projectId, this.generation, includeDeleted ? 1 : 0).map(r => BackendReceiptSchema.parse(JSON.parse(r.receipt)));
   }
 
-  recordResources(resources: BackendReceipt[]): void {
+  recordResources(resources: ObservedBackendReceipt[]): void {
     if (resources.length > MAX_CLAIMS) throw new SiloError("Too many backend resources", "STORE_FULL");
     this.transaction(() => {
       for (const resource of resources) {
-        const claimed = this.resourceClaims().some(c => c.domain === resource.kind && (c.resource === resource.name || (c.prefix && resource.name.startsWith(c.resource))));
-        if (!claimed) throw new SiloError(`NAME_CONFLICT: resource lies outside this allocation's claims: ${resource.name}`, "NAME_CONFLICT");
-        const active = this.resources();
-        const sameName = active.find(r => r.kind === resource.kind && r.name === resource.name);
-        if (sameName && (sameName.id !== resource.id || sameName.createdAt !== resource.createdAt)) throw new SiloError(`NAME_CONFLICT: live resource identity changed: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
-        const old = this.resources(true).find(r => r.kind === resource.kind && r.id === resource.id && (r.kind !== "volume" || r.createdAt === resource.createdAt));
-        if (old && (old.name !== resource.name || old.createdAt !== resource.createdAt || !active.some(r => r.kind === old.kind && r.id === old.id && r.createdAt === old.createdAt))) {
-          throw new SiloError(`NAME_CONFLICT: resource identity changed or reappeared: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
+        assert(!isOwnedImageCache(resource), "Generic observations cannot confer cache creation authority");
+        const sameName = this.resources().find(r => r.kind === resource.kind && r.name === resource.name);
+        if (sameName && isOwnedImageCache(sameName)) {
+          if (!matchesResource(sameName, resource)) return cleanupRequired(`owned cache identity changed: ${resource.name}`);
+          continue;
         }
-        if (!old) this.db.query("INSERT INTO resources (project_id, generation, kind, name, id, created_at, receipt) VALUES (?, ?, ?, ?, ?, ?, ?)").run(this.projectId, this.generation, resource.kind, resource.name, resource.id, resource.createdAt, JSON.stringify(BackendReceiptSchema.parse(resource)));
+        this.insertResource(resource);
       }
     });
+  }
+
+  /** Only a successful direct creator with a durable fact can issue this receipt. */
+  recordImageCacheCreation(launchId: string, observed: ObservedBackendReceipt): OwnedImageCache {
+    return this.transaction(() => {
+      const launch = this.launches().find(l => l.id === launchId);
+      const fact = this.executorCompletion(launchId);
+      if (!this.cacheCreations.has(launchId) || launch?.phase !== "exited" || launch.reconciled || !launch.started || launch.exitCode !== 0 || launch.effect !== "create" ||
+        !launch.cacheCreation || !fact?.started || fact.exitCode !== 0) return cleanupRequired("cache creator has no successful durable completion");
+      const allocation = this.current()!.allocation;
+      const creation = launch.cacheCreation;
+      if (observed.kind !== "volume" || observed.authority !== "observed" || observed.source !== "k3d" ||
+        observed.name !== creation.name || observed.id !== creation.name || !observed.createdAt ||
+        creation.cluster !== allocation.state.identity.k3dClusterName || !allocation.engine ||
+        observed.labels["io.silo.project"] !== this.projectId || observed.labels["io.silo.generation"] !== String(this.generation) ||
+        observed.labels["k3d.cluster"] !== creation.cluster || observed.labels["io.silo.creation"] !== creation.token) {
+        return cleanupRequired(`direct cache creation result differs: ${observed.name}`);
+      }
+      const receipt = OwnedImageCacheSchema.parse({ ...observed, authority: "owned-image-cache", purpose: "k3d-image-cache",
+        creationToken: creation.token, projectId: this.projectId, generation: this.generation, cluster: creation.cluster, engine: allocation.engine });
+      this.insertResource(receipt);
+      this.cacheCreations.delete(launchId);
+      return receipt;
+    });
+  }
+
+  private insertResource(resource: BackendReceipt): void {
+    const claimed = this.resourceClaims().some(c => c.domain === resource.kind && (c.resource === resource.name || (c.prefix && resource.name.startsWith(c.resource))));
+    if (!claimed) throw new SiloError(`NAME_CONFLICT: resource lies outside this allocation's claims: ${resource.name}`, "NAME_CONFLICT");
+    const key = resourceReceiptKey(resource);
+    const sameName = this.resources().find(r => r.kind === resource.kind && r.name === resource.name);
+    if (sameName && resourceReceiptKey(sameName) !== key) {
+      if (isOwnedImageCache(sameName) || isOwnedImageCache(resource)) return cleanupRequired(`live cache identity changed: ${resource.name}`);
+      throw new SiloError(`NAME_CONFLICT: live resource identity changed: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
+    }
+    const old = this.resources(true).find(r => resourceReceiptKey(r) === key || (r.kind !== "volume" && r.kind === resource.kind && r.id === resource.id));
+    if (old && (old.name !== resource.name || old.createdAt !== resource.createdAt || !this.resources().some(r => resourceReceiptKey(r) === resourceReceiptKey(old)))) {
+      throw new SiloError(`NAME_CONFLICT: resource identity changed or reappeared: ${resource.kind}/${resource.name}`, "NAME_CONFLICT");
+    }
+    if (!old) this.db.query("INSERT INTO resources (project_id, generation, kind, name, id, created_at, receipt_key, receipt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(this.projectId, this.generation, resource.kind, resource.name, resource.id, resource.createdAt, key, JSON.stringify(BackendReceiptSchema.parse(resource)));
   }
 
   /** The backend must first prove this exact identity absent on the allocation's engine. */
   recordResourceAbsence(resource: BackendReceipt): void {
     this.transaction(() => {
-      const stored = this.resources(true).find(r => r.kind === resource.kind && r.id === resource.id && r.createdAt === resource.createdAt);
+      const key = resourceReceiptKey(resource);
+      const stored = this.resources(true).find(r => resourceReceiptKey(r) === key);
       assert.deepEqual(stored, resource, "Absence must consume this generation's exact receipt");
-      if (resource.kind !== "volume") {
+      if (resource.kind !== "volume" || isOwnedImageCache(resource)) {
         for (const launch of this.launches()) {
-          if (!launch.terminal || launch.effect !== "delete" || launch.deletionTarget?.kind !== resource.kind || launch.deletionTarget.id !== resource.id) continue;
+          const target = launch.deletionTarget;
+          const matches = target?.kind === "image-cache" ? target.receiptKey === key && resourceReceiptKey(target.receipt) === key :
+            target?.kind === resource.kind && target.id === resource.id;
+          if (!launch.terminal || launch.effect !== "delete" || !matches || !target) continue;
           if (launch.phase === "exited") this.checkpointLaunch({ ...launch, reconciled: true });
-          else if (launch.phase === "granted") this.checkpointLaunch({ ...launch, phase: "resolved", effect: "delete", deletionTarget: launch.deletionTarget,
+          else if (launch.phase === "granted") this.checkpointLaunch({ ...launch, phase: "resolved", effect: "delete", deletionTarget: target,
             resolution: "target-absent", terminal: true, reconciled: true });
         }
       }
-      const updated = this.db.query("UPDATE resources SET deleted = 1 WHERE project_id = ? AND generation = ? AND kind = ? AND id = ? AND created_at = ?").run(this.projectId, this.generation, resource.kind, resource.id, resource.createdAt);
+      const updated = this.db.query("UPDATE resources SET deleted = 1 WHERE project_id = ? AND generation = ? AND receipt_key = ?").run(this.projectId, this.generation, key);
       assert.equal(updated.changes, 1, "Absence must tombstone one exact receipt");
     });
   }

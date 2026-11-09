@@ -1,13 +1,17 @@
 /** Native public-CLI rehearsal. Run only in an explicitly disposable OS account. */
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { appendFileSync, chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { z } from "zod";
-import { AllocationSchema, BackendReceiptSchema, ExecutorCompletionSchema, FileReceiptSchema, LaunchSchema } from "../src/core/lease_types";
+import { AllocationSchema, BackendReceiptSchema, ObservedBackendReceiptSchema, ExecutorCompletionSchema, FileReceiptSchema, LaunchSchema } from "../src/core/lease_types";
 import { accountHome as nativeAccountHome } from "../src/core/allocation_domain";
 import { ProjectOperation } from "../src/core/lease_store";
+import { Database } from "bun:sqlite";
+import { startOwnedCommand } from "../src/core/owned_command";
+import { createImageCache } from "../src/backends/k3d";
+import { isOwnedImageCache, resourceReceiptKey } from "../src/core/lease_types";
 import { HOOK_TIMEOUT_MS, K3D_CREATE_TIMEOUT_MS, K3D_DELETE_TIMEOUT_MS } from "../src/core/constants";
 
 const { values } = parseArgs({ args: Bun.argv.slice(2), options: {
@@ -299,14 +303,10 @@ async function backend() {
   log({ scenario: "real k3d cluster/registry/network/volume and kubeconfig receipts", resources: made.resources, pass: true });
   await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED"); assert(existsSync(path.join(p, ".silo.lock")));
   await silo(p, ["down", "--delete-cluster"]);
-  const retainedCache = await state(p);
-  await silo(p, ["down", "--clean"], "CLEANUP_REQUIRED");
-  assert.deepEqual((await state(p)).claims, retainedCache.claims);
+  const deletedCache = await state(p);
+  assert(deletedCache.resources.filter(r => r.kind === "volume").every(r => r.deleted));
   for (const cache of made.resources.filter(r => r.kind === "volume")) {
-    const current = z.array(z.object({ Name: z.string(), CreatedAt: z.string() })).length(1).parse(JSON.parse(await docker(["volume", "inspect", cache.name])))[0]!;
-    assert.equal(current.Name, cache.name); assert.equal(current.CreatedAt, cache.createdAt);
-    recordResource(`named k3d cache ${cache.name} retained by Silo; author fixture-only teardown exact recorded creation identity then docker volume rm\n`);
-    await docker(["volume", "rm", cache.name]);
+    assert.notEqual((await command(p, ["docker", "volume", "inspect", cache.name])).code, 0);
   }
   await silo(p, ["down"]);
   const stopped = await state(p);
@@ -502,7 +502,7 @@ async function seededAnonymousParent(label: string, timestampCollision = false) 
     // Construct a timestamp collision at the historical receipt boundary while
     // retaining the genuine original parent identity and real replacement.
     // The two actual volume creation times need not fall in one physical second.
-    const parent = BackendReceiptSchema.parse({ kind: "container", source: "compose", name: created.Name.replace(/^\//, ""), id: created.Id, createdAt: created.Created, labels: created.Config.Labels, anonymousVolumes: [volume] });
+    const parent = ObservedBackendReceiptSchema.parse({ kind: "container", source: "compose", name: created.Name.replace(/^\//, ""), id: created.Id, createdAt: created.Created, labels: created.Config.Labels, anonymousVolumes: [volume] });
     assert(parent.kind === "container");
     owner.recordResources([parent]);
     const made = ProjectOperation.inspect(p); assert(made?.allocation);
@@ -642,7 +642,7 @@ async function retryCrash(mode: "retry-crash" | "external-absence" | "lost-compl
   const created = z.array(z.object({ Id: z.string(), Name: z.string(), Created: z.string(), Labels: z.record(z.string()) })).length(1).parse(JSON.parse(await docker(["network", "inspect", id])))[0]!;
   recordResource(`network ${id} name=${networkName}; teardown exact recorded docker network rm ID\n`);
   const owner = await ProjectOperation.open(p);
-  try { owner.recordResources([BackendReceiptSchema.parse({ kind: "network", source: "k3d", id, name: created.Name, createdAt: created.Created, labels: created.Labels })]); }
+  try { owner.recordResources([ObservedBackendReceiptSchema.parse({ kind: "network", source: "k3d", id, name: created.Name, createdAt: created.Created, labels: created.Labels })]); }
   finally { owner.finish(); }
   const blocker = await docker(["container", "create", "--network", networkName, "redis:7-alpine"]);
   recordResource(`network blocker ${blocker}; teardown exact returned container ID with --force --volumes\n`);
@@ -656,7 +656,7 @@ async function retryCrash(mode: "retry-crash" | "external-absence" | "lost-compl
   await docker(["container", "rm", "--force", "--volumes", blocker]); cleanupObjects.pop();
 
   if (mode === "external-absence") {
-    assert(first.deletionTarget?.id === id);
+    assert(first.deletionTarget?.kind === "network" && first.deletionTarget.id === id);
     await docker(["network", "rm", id]);
     await silo(p, ["down", "--delete-cluster", "--clean"]);
     const recovered = (await silo(p, ["status"])).project;
@@ -682,7 +682,7 @@ async function retryCrash(mode: "retry-crash" | "external-absence" | "lost-compl
     await until("retry paused before the real Docker deletion", async () => existsSync(paused));
     const granted = (await state(p)).launches.find(l => l.kind === "owned-network-delete" && l.phase === "granted"); assert(granted?.phase === "granted");
     if (mode === "lost-completion") {
-      assert(granted.deletionTarget?.id === id && granted.groupId === granted.leaderPid);
+      assert(granted.deletionTarget?.kind === "network" && granted.deletionTarget.id === id && granted.groupId === granted.leaderPid);
       assert(!(await docker(["network", "ls", "--no-trunc", "--format", "{{.ID}}"])).split("\n").includes(id));
       const executor = await command(root, ["ps", "-o", "uid=,pgid=,command=", "-p", String(granted.groupId)]);
       assert.equal(executor.code, 0);
@@ -862,15 +862,15 @@ async function lifecycle() {
   for (const receipt of clusterFirst.resources.filter(r => r.kind !== "volume")) {
     assert(clusterSecond.resources.some(r => r.kind === receipt.kind && r.name === receipt.name && r.id !== receipt.id));
   }
-  await silo(cluster, ["down", "--delete-cluster", "--clean"], "CLEANUP_REQUIRED");
-  for (const cache of clusterFirst.resources.filter(r => r.kind === "volume")) {
-    const current = z.array(z.object({ Name: z.string(), CreatedAt: z.string() })).length(1).parse(JSON.parse(await docker(["volume", "inspect", cache.name])))[0]!;
-    assert.equal(current.Name, cache.name); assert.equal(current.CreatedAt, cache.createdAt);
-    recordResource(`retained restart fixture cache ${cache.name}; independent owner cleanup after exact creation check\n`);
-    await docker(["volume", "rm", cache.name]);
-  }
-  await silo(cluster, ["down", "--clean"]);
-  log({ scenario: "k3d ci/delete-cluster/ci records pre-up creations before backend preflight, fresh IDs and retained named cache", pass: true });
+  const firstCache = clusterFirst.resources.find(r => r.kind === "volume");
+  const secondCache = clusterSecond.resources.find(r => r.kind === "volume" && !r.deleted);
+  assert(firstCache?.kind === "volume" && firstCache.authority === "owned-image-cache");
+  assert(secondCache?.kind === "volume" && secondCache.authority === "owned-image-cache");
+  assert.notEqual(firstCache.creationToken, secondCache.creationToken);
+  assert(clusterSecond.resources.some(r => r.kind === "volume" && r.deleted && r.createdAt === firstCache.createdAt));
+  await silo(cluster, ["down", "--delete-cluster", "--clean"]);
+  assert.deepEqual((await silo(cluster, ["status"])).project?.claims, []);
+  log({ scenario: "k3d ci/delete-cluster/ci records fresh cache tokens and immutable IDs, then clean retires without owner resolution", pass: true });
 
   const failed = composeProject("failed-compose-ci");
   appendFileSync(path.join(failed, "Tiltfile"), "local_resource('fails-after-redis',cmd='exit 17',resource_deps=['redis'])\n");
@@ -965,16 +965,12 @@ async function producers() {
     assert.notEqual((await command(cluster, ["docker", "container", "inspect", receipt.id])).code, 0);
     for (const mount of receipt.anonymousVolumes) assert.notEqual((await command(cluster, ["docker", "volume", "inspect", mount.name])).code, 0);
   }
-  await silo(cluster, ["down", "--clean"], "CLEANUP_REQUIRED");
   for (const cache of partial.resources.filter(r => r.kind === "volume")) {
-    const current = z.array(z.object({ Name: z.string(), CreatedAt: z.string(), Labels: z.record(z.string()) })).length(1).parse(JSON.parse(await docker(["volume", "inspect", cache.name])))[0]!;
-    assert.equal(current.Name, cache.name); assert.equal(current.CreatedAt, cache.createdAt);
-    assert.equal(current.Labels["io.silo.project"], partial.projectId); assert.equal(current.Labels["io.silo.generation"], String(partial.generation));
-    recordResource(`failed-create cache ${cache.name}; independent fixture-owner teardown after exact creation and labels check\n`);
-    await docker(["volume", "rm", cache.name]);
+    assert.notEqual((await command(cluster, ["docker", "volume", "inspect", cache.name])).code, 0);
   }
   await silo(cluster, ["down", "--clean"]);
-  log({ scenario: "port-squatter k3d failure captures labelled outputs, exact cleanup retains cache, owner resolution permits retirement", pass: true });
+  assert.deepEqual((await silo(cluster, ["status"])).project?.claims, []);
+  log({ scenario: "port-squatter k3d failure captures labelled outputs and removes its own receipted cache before retirement", pass: true });
 
   const network = project("failed-network-create");
   appendFileSync(path.join(network, "silo.toml"), clusterConfig);
@@ -1066,12 +1062,353 @@ async function registryProvenance(variants: readonly ("ci" | "timeout")[]) {
   log({ scenario: "timed-out pre-up hook pending at down cannot vouch for a same-name registry; squatter preserved", pass: true });
 }
 
+const cacheProject = async (label: string) => {
+  const p = project(label);
+  appendFileSync(path.join(p, "silo.toml"), '\n[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n[k3d.registry]\nenabled=false\n');
+  await silo(p, ["env", name(p)]);
+  const owner = await ProjectOperation.open(p, { executorEntrypoint: cli });
+  try { await createImageCache(owner); }
+  finally { owner.finish(); }
+  const made = await state(p);
+  const receipt = made.resources.find(r => !r.deleted && isOwnedImageCache(r));
+  assert(receipt && isOwnedImageCache(receipt));
+  recordResource(`directly created cache ${receipt.name} token=${receipt.creationToken}; teardown receipt-bound public down --delete-cluster --clean\n`);
+  return { p, made, receipt };
+};
+
+/** Real caches and public cleanup; faults are injected at external read boundaries. */
+async function imageCaches(mode: "all" | "authority" | "query" = "all") {
+  if (mode === "all") {
+  for (const running of [false, true]) {
+    const { p, made, receipt } = await cacheProject(`cache-borrower-${running}`);
+    const id = (await docker(["container", "create", "--mount", `type=volume,source=${receipt.name},target=/cache`, "redis:7-alpine", "sleep", "900"])).trim();
+    if (running) await docker(["container", "start", id]);
+    const borrower = await fixtureSnapshot("container", id);
+    cleanupObjects.push({ kind: "container", id, name: "image-cache borrower", created: borrower });
+    recordResource(`cache borrower ${id} running=${running}; fixture-owner teardown exact ID --force --volumes\n`);
+    const volume = await fixtureSnapshot("volume", receipt.name);
+    await silo(p, ["down", "--delete-cluster", "--clean"], "CLEANUP_REQUIRED");
+    assert.deepEqual(await fixtureSnapshot("container", id), borrower);
+    assert.deepEqual(await fixtureSnapshot("volume", receipt.name), volume);
+    assert.deepEqual((await state(p)).claims, made.claims);
+    await docker(["container", "rm", "--force", "--volumes", id]); cleanupObjects.pop();
+    await silo(p, ["down", "--delete-cluster", "--clean"]);
+    assert.notEqual((await command(p, ["docker", "volume", "inspect", receipt.name])).code, 0);
+    log({ scenario: "cache borrower blocks removal without being stopped or deleted; owner removal permits newly validated cleanup", running, pass: true });
+  }
+  const cycled = await cacheProject("cache-native-cycle");
+  await silo(cycled.p, ["down", "--delete-cluster"]);
+  const owner = await ProjectOperation.open(cycled.p, { executorEntrypoint: cli });
+  try { await createImageCache(owner); }
+  finally { owner.finish(); }
+  const afterCycle = await state(cycled.p);
+  const next = afterCycle.resources.find(r => !r.deleted && isOwnedImageCache(r)); assert(next && isOwnedImageCache(next));
+  assert.equal(next.name, cycled.receipt.name); assert.notEqual(next.creationToken, cycled.receipt.creationToken);
+  assert(afterCycle.resources.some(r => r.deleted && isOwnedImageCache(r) && r.creationToken === cycled.receipt.creationToken));
+  await silo(cycled.p, ["down", "--delete-cluster", "--clean"]);
+  log({ scenario: "native cache recreation preserves historical receipt and fresh creation token", firstCreatedAt: cycled.receipt.createdAt, nextCreatedAt: next.createdAt, sameCreatedAt: cycled.receipt.createdAt === next.createdAt, pass: true });
+  }
+  const realDocker = Bun.which("docker"); assert(realDocker);
+  const bin = path.join(root, "cache-inspection-bin"); mkdirSync(bin);
+  writeFileSync(path.join(bin, "docker"), `#!${process.execPath}
+import fs from 'node:fs';
+const args=process.argv.slice(2);
+fs.appendFileSync(process.env.CACHE_PROBE_CALLS,JSON.stringify(args)+'\\n');
+const parent=Bun.spawnSync(['ps','-ww','-p',String(process.ppid),'-o','command='],{stdout:'pipe',stderr:'pipe'}).stdout.toString();
+const r=Bun.spawnSync([process.env.CACHE_PROBE_DOCKER,...args],{stdout:'pipe',stderr:'pipe'});
+let out=r.stdout,code=r.exitCode;
+if(code===0&&parent.includes('__silo_execute')){
+ const fault=process.env.CACHE_PROBE_FAULT;
+ if(fault==='engine-id'&&args[0]==='info'){const data=JSON.parse(out.toString());data.ID='other-engine';out=Buffer.from(JSON.stringify(data));}
+ if(fault==='incomplete-enumeration'&&args[0]==='network'&&args[1]==='ls')out=Buffer.from(out.toString().split('\\n').filter(line=>line.trim()&&JSON.parse(line).Name!=='bridge').join('\\n'));
+ if(fault==='enumeration-failure'&&args[0]==='container'&&args[1]==='ls')code=17;
+ if(args[0]==='container'&&args[1]==='inspect'&&['missing-mounts','unknown-mount-type','missing-mount-name'].includes(fault)){
+  const data=JSON.parse(out.toString());
+  if(fault==='missing-mounts')delete data[0].Mounts;
+  else data[0].Mounts=[{Type:fault==='unknown-mount-type'?'unknown':'volume',Destination:'/data'}];
+  out=Buffer.from(JSON.stringify(data));
+ }
+}
+if(process.env.CACHE_PROBE_FAULT&&r.exitCode===0&&parent.includes('__silo_execute')&&args[0]==='volume'&&args[1]==='inspect'&&args[2]===process.env.CACHE_PROBE_TARGET){
+ const data=JSON.parse(out.toString()),v=data[0],fault=process.env.CACHE_PROBE_FAULT;
+ if(fault==='Name')v.Name+='-replacement';
+ else if(fault==='CreatedAt')v.CreatedAt+='-different';
+ else if(fault==='missing-labels')v.Labels={};
+ else v.Labels[fault]='different';
+ out=Buffer.from(JSON.stringify(data));
+ fs.appendFileSync(process.env.CACHE_PROBE_CALLS,JSON.stringify({finalInspectFault:fault})+'\\n');
+}
+process.stdout.write(out);process.stderr.write(r.stderr);process.exitCode=code;
+`); chmodSync(path.join(bin, "docker"), 0o755);
+  for (const fault of (mode === "all" ? ["Name", "CreatedAt", "io.silo.project", "io.silo.generation", "k3d.cluster", "io.silo.creation", "missing-labels"] : [])) {
+    const { p, made, receipt } = await cacheProject(`cache-mismatch-${fault.replaceAll(".", "-")}`);
+    const before = await fixtureSnapshot("volume", receipt.name);
+    const calls = path.join(p, "docker-calls.jsonl");
+    await silo(p, ["down", "--delete-cluster", "--clean"], "CLEANUP_REQUIRED", { ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, CACHE_PROBE_DOCKER: realDocker,
+      CACHE_PROBE_TARGET: receipt.name, CACHE_PROBE_FAULT: fault, CACHE_PROBE_CALLS: calls });
+    const audit: unknown[] = readFileSync(calls, "utf8").trim().split("\n").map(line => JSON.parse(line));
+    assert(audit.some(row => !Array.isArray(row) && row && typeof row === "object" && "finalInspectFault" in row));
+    assert(!audit.some(row => Array.isArray(row) && row[0] === "volume" && row[1] === "rm"));
+    assert.deepEqual(await fixtureSnapshot("volume", receipt.name), before);
+    assert.deepEqual((await state(p)).claims, made.claims);
+    await silo(p, ["down", "--delete-cluster", "--clean"]);
+    log({ scenario: "executor final-inspect mismatch refuses with no removal and preserves claims; fresh cleanup revalidates", fault, pass: true });
+  }
+  for (const fault of (mode !== "query" ? ["missing", "audit-only", "tombstoned", "projectId", "generation", "cluster", "engine", "creationToken"] : [])) {
+    const { p, made, receipt } = await cacheProject(`cache-authority-${fault.toLowerCase()}`);
+    const before = await fixtureSnapshot("volume", receipt.name);
+    const preload = path.join(p, "invalidate-receipt.ts");
+    const reached = path.join(p, "receipt-invalidated.json");
+    const calls = path.join(p, "docker-calls.jsonl");
+    writeFileSync(preload, `import fs from 'node:fs'; import {Database} from 'bun:sqlite';
+const query=Database.prototype.query;
+Database.prototype.query=function(...sql){const db=this,stmt=query.apply(db,sql),run=stmt.run;
+ if(String(sql[0]).startsWith('UPDATE launches SET receipt'))stmt.run=function(...args){
+  const result=run.apply(this,args),launch=JSON.parse(args[0]);
+  if(launch.phase==='granted'&&launch.deletionTarget?.kind==='image-cache'){
+   const key=launch.deletionTarget.receiptKey,where=' WHERE project_id = ? AND generation = ? AND receipt_key = ?',params=[args[1],args[2],key];
+   const fault=${JSON.stringify(fault)};
+   if(fault==='missing')db.query('DELETE FROM resources'+where).run(...params);
+   else if(fault==='tombstoned')db.query('UPDATE resources SET deleted = 1'+where).run(...params);
+   else {const changed={...launch.deletionTarget.receipt};
+    if(fault==='audit-only')changed.authority='observed';
+    else changed[fault]=fault==='generation'?999:fault==='engine'?{endpoint:'unix:///other.sock',id:'other'}:fault==='creationToken'?'00000000-0000-4000-8000-000000000001':'different';
+    db.query('UPDATE resources SET receipt = ?'+where).run(JSON.stringify(changed),...params);
+   }
+   fs.writeFileSync(${JSON.stringify(reached)},JSON.stringify({fault,launch}));
+  } return result;
+ }; return stmt;
+};`);
+    const env = { ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, CACHE_PROBE_DOCKER: realDocker, CACHE_PROBE_TARGET: receipt.name, CACHE_PROBE_CALLS: calls };
+    const refused = await command(p, [process.execPath, "--preload", preload, cli, "down", "--delete-cluster", "--clean", "--json"], env);
+    try {
+      assert(existsSync(reached), "receipt must be invalidated after its grant is durable, before execution");
+      assert.notEqual(refused.code, 0); assert.equal(JSON.parse(refused.stdout).code, "CLEANUP_REQUIRED");
+      const audit: unknown[] = readFileSync(calls, "utf8").trim().split("\n").map(line => JSON.parse(line));
+      assert(!audit.some(row => Array.isArray(row) && row[0] === "volume" && row[1] === "rm"));
+      assert.deepEqual(await fixtureSnapshot("volume", receipt.name), before);
+      assert.deepEqual((await state(p)).claims, made.claims);
+    } finally {
+      // Test-only restoration of this disposable row, never a product repair path.
+      const db = new Database(path.join(accountHome, ".silo/leases.sqlite"));
+      try {
+        db.query("DELETE FROM resources WHERE project_id = ? AND generation = ? AND receipt_key = ?").run(made.projectId, made.generation, resourceReceiptKey(receipt));
+        db.query("INSERT INTO resources (project_id,generation,kind,name,id,created_at,receipt_key,receipt) VALUES (?,?,?,?,?,?,?,?)").run(made.projectId, made.generation, receipt.kind, receipt.name, receipt.id, receipt.createdAt, resourceReceiptKey(receipt), JSON.stringify(receipt));
+      } finally { db.close(); }
+    }
+    await silo(p, ["down", "--delete-cluster", "--clean"]);
+    log({ scenario: "durable self-consistent cache grant lacks its active exact creation receipt at executor boundary; no removal, claims retained", fault, pass: true });
+  }
+  if (mode === "all" || mode === "query") {
+    const id = (await docker(["container", "create", "redis:7-alpine", "sleep", "900"])).trim();
+    const unrelated = await fixtureSnapshot("container", id);
+    cleanupObjects.push({ kind: "container", id, name: "cache-query peer", created: unrelated });
+    recordResource(`cache-query unrelated stopped peer ${id}; teardown exact returned ID --volumes\n`);
+    for (const fault of ["engine-id", "incomplete-enumeration", "enumeration-failure", "missing-mounts", "unknown-mount-type", "missing-mount-name"]) {
+      const { p, made, receipt } = await cacheProject(`cache-query-${fault}`);
+      const before = await fixtureSnapshot("volume", receipt.name), calls = path.join(p, "docker-calls.jsonl");
+      await silo(p, ["down", "--delete-cluster", "--clean"], "CLEANUP_REQUIRED", { ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, CACHE_PROBE_DOCKER: realDocker,
+        CACHE_PROBE_TARGET: receipt.name, CACHE_PROBE_FAULT: fault, CACHE_PROBE_CALLS: calls });
+      const audit: unknown[] = readFileSync(calls, "utf8").trim().split("\n").map(line => JSON.parse(line));
+      assert(!audit.some(row => Array.isArray(row) && row[0] === "volume" && row[1] === "rm"));
+      assert.deepEqual(await fixtureSnapshot("volume", receipt.name), before); assert.deepEqual(await fixtureSnapshot("container", id), unrelated);
+      assert.deepEqual((await state(p)).claims, made.claims);
+      await silo(p, ["down", "--delete-cluster", "--clean"]);
+      log({ scenario: "executor engine/enumeration/mount uncertainty refuses before removal; unrelated stopped peer and cache preserved", fault, pass: true });
+    }
+    await docker(["container", "rm", "--volumes", id]); cleanupObjects.pop();
+  }
+}
+
+/** The barrier passes every Docker request through unchanged after release. */
+async function cacheRaces() {
+  const realDocker = Bun.which("docker"); assert(realDocker);
+  for (const boundary of ["before-inspect", "after-inspect"]) {
+    const { p, made, receipt } = await cacheProject(`cache-race-${boundary}`);
+    const bin = path.join(p, "bin"); mkdirSync(bin);
+    const paused = path.join(p, "cache-paused"), release = path.join(p, "cache-release");
+    writeFileSync(path.join(bin, "docker"), `#!${process.execPath}
+import fs from 'node:fs';const args=process.argv.slice(2);
+const parent=Bun.spawnSync(['ps','-ww','-p',String(process.ppid),'-o','command='],{stdout:'pipe',stderr:'pipe'}).stdout.toString();
+if(parent.includes('__silo_execute')&&args[0]==='volume'&&args[1]===process.env.CACHE_BARRIER_COMMAND&&args[2]===process.env.CACHE_BARRIER_TARGET){
+ fs.writeFileSync(process.env.CACHE_BARRIER_PAUSED,'paused');const deadline=Date.now()+20000;
+ while(!fs.existsSync(process.env.CACHE_BARRIER_RELEASE)){if(Date.now()>=deadline)process.exit(78);await Bun.sleep(20);}
+}
+const proc=Bun.spawn([process.env.CACHE_BARRIER_DOCKER,...args],{stdin:'ignore',stdout:'inherit',stderr:'inherit'});process.exitCode=await proc.exited;
+`); chmodSync(path.join(bin, "docker"), 0o755);
+    const pending = command(p, [process.execPath, cli, "down", "--delete-cluster", "--clean", "--json"], {
+      ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, CACHE_BARRIER_DOCKER: realDocker, CACHE_BARRIER_TARGET: receipt.name,
+      CACHE_BARRIER_COMMAND: boundary === "before-inspect" ? "inspect" : "rm", CACHE_BARRIER_PAUSED: paused, CACHE_BARRIER_RELEASE: release,
+    });
+    let replacement: Awaited<ReturnType<typeof fixtureSnapshot>> | undefined;
+    try {
+      await until("cache executor at its final inspection/removal barrier", async () => existsSync(paused));
+      const current = await fixtureSnapshot("volume", receipt.name);
+      const row = current[0]!;
+      assert.equal(row.Name, receipt.name); assert.equal(row.CreatedAt, receipt.createdAt); assert.deepEqual(row.Labels, receipt.labels);
+      recordResource(`race fixture original cache ${receipt.name} token=${receipt.creationToken}, identity checked before external replacement; fixture-owner replacement only\n`);
+      await docker(["volume", "rm", receipt.name]);
+      const token = randomUUID();
+      await docker(["volume", "create", ...Object.entries({ ...receipt.labels, "io.silo.creation": token }).flatMap(([key, value]) => ["--label", `${key}=${value}`]), receipt.name]);
+      replacement = await fixtureSnapshot("volume", receipt.name);
+      cleanupObjects.push({ kind: "volume", id: receipt.name, name: receipt.name, created: replacement });
+      recordResource(`race fixture replacement cache ${receipt.name} token=${token}; fixture-owner exact-snapshot teardown if preserved\n`);
+    } finally { writeFileSync(release, "release"); }
+    const result = await pending;
+    assert(replacement);
+    if (boundary === "before-inspect") {
+      assert.notEqual(result.code, 0); assert.equal(JSON.parse(result.stdout).code, "CLEANUP_REQUIRED");
+      assert.deepEqual(await fixtureSnapshot("volume", receipt.name), replacement);
+      assert.deepEqual((await state(p)).claims, made.claims);
+      await docker(["volume", "rm", receipt.name]); cleanupObjects.pop();
+      await silo(p, ["down", "--delete-cluster", "--clean"]);
+      log({ scenario: "real same-name replacement before executor final inspect is preserved, with claims retained", boundary, sameCreatedAt: replacement[0]!.CreatedAt === receipt.createdAt, pass: true });
+    } else {
+      assert.equal(result.code, 0, result.stdout + result.stderr);
+      assert.notEqual((await command(p, ["docker", "volume", "inspect", receipt.name])).code, 0); cleanupObjects.pop();
+      assert.deepEqual(JSON.parse(result.stdout).project.claims, []);
+      log({ scenario: "external replacement after final inspect can be removed by Docker's name-addressed API", boundary,
+        replacementDeleted: true, atomicReplacementProtection: false, disposition: "permanent external-API atomicity limitation explicitly accepted by approved plan r2; not an isolation pass" });
+    }
+  }
+}
+
+async function cacheCrashes() {
+  for (const boundary of ["before-create", "before-receipt", "after-receipt", "before-absence"]) {
+    let p: string;
+    if (boundary === "before-absence") p = (await cacheProject(`cache-crash-${boundary}`)).p;
+    else {
+      p = project(`cache-crash-${boundary}`);
+      appendFileSync(path.join(p, "silo.toml"), '\n[k3d]\nenabled=true\nkubeconfigPath=".localnet/kubeconfig"\n[k3d.registry]\nenabled=false\n');
+      await silo(p, ["env", name(p)]);
+    }
+    const before = await state(p);
+    const preload = path.join(p, "crash-cache.ts"), reached = path.join(p, "crash-reached.json");
+    writeFileSync(preload, `import fs from 'node:fs';import{Database}from'bun:sqlite';
+const query=Database.prototype.query;Database.prototype.query=function(...sql){const stmt=query.apply(this,sql),run=stmt.run;
+stmt.run=function(...args){const text=String(sql[0]),boundary=${JSON.stringify(boundary)};let receipt;
+try{receipt=JSON.parse(text.startsWith('INSERT INTO launches')?args[3]:text.startsWith('INSERT INTO resources')?args.at(-1):args[0])}catch{}
+const crash=(boundary==='before-create'&&text.startsWith('INSERT INTO launches')&&receipt?.cacheCreation)||
+(boundary==='before-receipt'&&text.startsWith('INSERT INTO resources')&&receipt?.authority==='owned-image-cache')||
+(boundary==='after-receipt'&&text.startsWith('UPDATE launches SET receipt')&&receipt?.cacheCreation&&receipt.reconciled)||
+(boundary==='before-absence'&&text.startsWith('UPDATE resources SET deleted = 1'));
+if(crash){fs.writeFileSync(${JSON.stringify(reached)},JSON.stringify({boundary,receipt,args}));process.kill(process.pid,'SIGKILL')}
+return run.apply(this,args)};return stmt};`);
+    const args = boundary === "before-absence" ? ["down", "--delete-cluster"] : ["ci", "--timeout", "60s"];
+    const crashed = await command(p, [process.execPath, "--preload", preload, cli, ...args, "--json"]);
+    assert.notEqual(crashed.code, 0); assert(existsSync(reached), `did not reach ${boundary}`);
+    if (boundary === "before-receipt") {
+      await silo(p, ["down", "--delete-cluster", "--clean"], "CLEANUP_REQUIRED");
+      const leaked = await state(p); assert.deepEqual(leaked.claims, before.claims);
+      const cache = leaked.resources.find(r => r.kind === "volume" && !r.deleted);
+      assert(cache?.kind === "volume" && cache.authority === "observed", "recovery must never promote a labelled observation to creation authority");
+      const creation = leaked.launches.find(l => l.cacheCreation)?.cacheCreation; assert(creation);
+      const observed = await fixtureSnapshot("volume", cache.name);
+      assert.equal(observed[0]!.Name, creation.name); assert.equal(observed[0]!.CreatedAt, cache.createdAt);
+      assert.equal((observed[0]!.Labels as Record<string, string>)["io.silo.creation"], creation.token);
+      recordResource(`cache leaked before creation receipt ${cache.name} token=${creation.token}; fixture-owner resolution only after exact creation/owner/label snapshot proof\n`);
+      assert.deepEqual(await fixtureSnapshot("volume", cache.name), observed); await docker(["volume", "rm", cache.name]);
+      await silo(p, ["down", "--clean"]);
+      log({ scenario: "crash after successful create before durable receipt retains audit-only cache and claims; no promotion or automatic removal", boundary, pass: true });
+    } else {
+      if (boundary === "after-receipt") assert((await state(p)).resources.some(r => !r.deleted && isOwnedImageCache(r)));
+      await silo(p, ["down", "--delete-cluster"]);
+      const recovered = await state(p);
+      assert(recovered.resources.every(r => r.deleted));
+      assert(!recovered.launches.some(l => !l.terminal || !l.reconciled));
+      await silo(p, ["down", "--clean"]);
+      log({ scenario: "native cache crash recovery uses durable creation receipt or exact absence without inventing authority", boundary, pass: true });
+    }
+  }
+}
+
+async function cacheLostDelete() {
+  const realDocker = Bun.which("docker"); assert(realDocker);
+  for (const removed of [false, true]) {
+    const { p, made, receipt } = await cacheProject(`cache-lost-delete-${removed}`);
+    const snapshot = await fixtureSnapshot("volume", receipt.name);
+    const bin = path.join(p, "bin"); mkdirSync(bin);
+    const paused = path.join(p, "paused"), release = path.join(p, "release");
+    writeFileSync(path.join(bin, "docker"), `#!${process.execPath}
+import fs from 'node:fs';const args=process.argv.slice(2);
+if(args[0]==='volume'&&args[1]==='rm'&&args[2]===process.env.CACHE_LOST_TARGET){
+ if(process.env.CACHE_LOST_REMOVED==='1'){const r=Bun.spawnSync([process.env.CACHE_LOST_DOCKER,...args],{stdout:'inherit',stderr:'inherit'});if(r.exitCode!==0)process.exit(r.exitCode);}
+ fs.writeFileSync(process.env.CACHE_LOST_PAUSED,'paused');const deadline=Date.now()+20000;
+ while(!fs.existsSync(process.env.CACHE_LOST_RELEASE)){if(Date.now()>=deadline)process.exit(78);await Bun.sleep(20);}
+ process.exit(0);
+}
+const p=Bun.spawn([process.env.CACHE_LOST_DOCKER,...args],{stdin:'ignore',stdout:'inherit',stderr:'inherit'});process.exitCode=await p.exited;
+`); chmodSync(path.join(bin, "docker"), 0o755);
+    const pending = command(p, [process.execPath, cli, "down", "--delete-cluster", "--clean", "--json"], {
+      ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, CACHE_LOST_DOCKER: realDocker, CACHE_LOST_TARGET: receipt.name,
+      CACHE_LOST_REMOVED: removed ? "1" : "0", CACHE_LOST_PAUSED: paused, CACHE_LOST_RELEASE: release,
+    });
+    try {
+      await until("cache delete paused before executor completion", async () => existsSync(paused));
+      const live = await state(p);
+      const granted = live.launches.find(l => l.phase === "granted" && l.deletionTarget?.kind === "image-cache"); assert(granted?.phase === "granted");
+      await silo(p, ["down", "--delete-cluster", "--clean"], "BUSY");
+      assert.deepEqual((await state(p)).claims, made.claims);
+      const identity = await command(root, ["ps", "-o", "uid=,pgid=,command=", "-p", String(granted.groupId)]);
+      assert.equal(identity.code, 0); const fields = identity.stdout.trim().split(/\s+/);
+      assert.equal(Number(fields[0]), process.geteuid?.()); assert.equal(Number(fields[1]), granted.groupId); assert(identity.stdout.includes(granted.id));
+      recordResource(`cache crash exact recorded executor group ${granted.groupId} launch=${granted.id} removed=${removed}; verified UID/group/command before SIGKILL\n`);
+      process.kill(-granted.groupId, "SIGKILL");
+      const failed = await pending; assert.notEqual(failed.code, 0);
+      const lost = await state(p);
+      assert(lost.launches.some(l => l.id === granted.id && l.phase === "granted"));
+      assert(!lost.completions.some(c => c.launchId === granted.id));
+      if (!removed) {
+        await silo(p, ["down", "--delete-cluster", "--clean"], "CLEANUP_REQUIRED");
+        assert.deepEqual(await fixtureSnapshot("volume", receipt.name), snapshot); assert.deepEqual((await state(p)).claims, made.claims);
+        recordResource(`unresolved cache delete fixture ${receipt.name}; fixture owner verifies exact original snapshot before independent absence resolution\n`);
+        await docker(["volume", "rm", receipt.name]);
+      }
+      await silo(p, ["down", "--delete-cluster"]);
+      const recovered = await state(p); const proof = recovered.launches.find(l => l.id === granted.id);
+      assert(proof?.phase === "resolved" && proof.resolution === "target-absent" && proof.exitCode === null);
+      assert(recovered.resources.every(r => r.deleted));
+      await silo(p, ["down", "--clean"]);
+      log({ scenario: "unknown cache deletion retains a present target; terminal lost completion resolves only through exact receipt absence without invented exit", removed, proof, pass: true });
+    } finally { writeFileSync(release, "release"); }
+  }
+}
+
+async function cacheRecapture() {
+  const { p, made, receipt } = await cacheProject("cache-pending-recapture");
+  const owner = await ProjectOperation.open(p, { executorEntrypoint: cli });
+  try {
+    const result = await (await startOwnedCommand(owner, ["/bin/sh", "-c", "exit 0"], { kind: "hook-pre-up", effect: "hook", timeoutMs: 5000 })).exited;
+    owner.recordCommandResult(result.launch);
+  } finally { owner.finish(); }
+  const original = await fixtureSnapshot("volume", receipt.name), realDocker = Bun.which("docker"); assert(realDocker);
+  const bin = path.join(p, "bin"); mkdirSync(bin);
+  writeFileSync(path.join(bin, "docker"), `#!${process.execPath}
+const args=process.argv.slice(2),r=Bun.spawnSync([process.env.CACHE_RECAPTURE_DOCKER,...args],{stdout:'pipe',stderr:'pipe'});let out=r.stdout;
+if(r.exitCode===0&&args[0]==='volume'&&args[1]==='inspect'&&args[2]===process.env.CACHE_RECAPTURE_TARGET){const data=JSON.parse(out.toString());data[0].Labels['io.silo.creation']='different';out=Buffer.from(JSON.stringify(data));}
+process.stdout.write(out);process.stderr.write(r.stderr);process.exitCode=r.exitCode;
+`); chmodSync(path.join(bin, "docker"), 0o755);
+  await silo(p, ["down", "--delete-cluster", "--clean"], "CLEANUP_REQUIRED", { ...safeEnv, PATH: `${bin}:${safeEnv.PATH}`, CACHE_RECAPTURE_DOCKER: realDocker, CACHE_RECAPTURE_TARGET: receipt.name });
+  const retained = await state(p);
+  assert.deepEqual(retained.claims, made.claims); assert(retained.resources.some(r => !r.deleted && isOwnedImageCache(r) && r.creationToken === receipt.creationToken));
+  assert.deepEqual(await fixtureSnapshot("volume", receipt.name), original);
+  await silo(p, ["down", "--delete-cluster", "--clean"]);
+  log({ scenario: "pending producer recapture cannot adopt a changed cache token or mask CLEANUP_REQUIRED as NAME_CONFLICT", pass: true });
+}
+
 log({ environment: { platform: process.platform, arch: process.arch, bun: Bun.version, root, accountHome, artifact: cli, sha256: digest(cli) } });
 let failure: unknown;
 try {
   if (values.suite === "all" || values.suite === "legacy") await legacy();
   if (values.suite === "all" || values.suite === "live") await live();
   if (values.suite === "all" || values.suite === "backend") await backend();
+  if (values.suite === "all" || values.suite === "cache") await imageCaches();
+  if (values.suite === "all" || values.suite === "cache-race") await cacheRaces();
+  if (values.suite === "all" || values.suite === "cache-crash") await cacheCrashes();
+  if (values.suite === "all" || values.suite === "cache-lost-delete") await cacheLostDelete();
+  if (values.suite === "all" || values.suite === "cache-recapture") await cacheRecapture();
+  if (values.suite === "cache-query") await imageCaches("query");
+  if (values.suite === "cache-authority") await imageCaches("authority");
   if (values.suite === "all" || values.suite === "volumes") await anonymousVolumes();
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "same-second") await sameSecondReplacement();
   if (values.suite === "all" || values.suite === "volumes" || values.suite === "paused-delete") await pausedReplacement();

@@ -1,32 +1,14 @@
 import { realpathSync } from "node:fs";
 import { z } from "zod";
-import { runCommand } from "../utils/exec";
+import { MAX_OBJECTS, ListRowSchema, enumerate, inspectObject, query, captureEngine, type NamespaceEntry, type InspectedObject } from "./docker";
+export { captureEngine } from "./docker";
 import { SiloError } from "../utils/errors";
 import type { ProjectOperation } from "../core/lease_store";
-import type { Allocation, AnonymousVolume, BackendReceipt, Claim, Launch } from "../core/lease_types";
-import { BackendReceiptSchema } from "../core/lease_types";
-import { commandFailure, runOwnedCommand, startOwnedCommand, type CommandOptions } from "../core/owned_command";
+import type { Allocation, AnonymousVolume, BackendReceipt, Claim, Launch, ObservedBackendReceipt } from "../core/lease_types";
+import { isOwnedImageCache, matchesResource, resourceReceiptKey } from "../core/lease_types";
+import { commandFailure, runOwnedCommand, runImageCacheDeletion, startOwnedCommand, type CommandOptions } from "../core/owned_command";
 import { K3D_DELETE_TIMEOUT_MS } from "../core/constants";
 
-const MAX_OBJECTS = 10_000;
-const TOOL_TIMEOUT_MS = 5000;
-const EngineSchema = z.object({ ID: z.string().min(1), OSType: z.literal("linux") });
-const ListRowSchema = z.object({ ID: z.string().optional(), Name: z.string().optional(), Names: z.string().optional() });
-const LabelsSchema = z.record(z.string()).nullable().optional();
-const InspectSchema = z.object({
-  Id: z.string().optional(), Name: z.string(), Created: z.string().optional(), CreatedAt: z.string().optional(),
-  Labels: LabelsSchema, Config: z.object({ Labels: LabelsSchema }).optional(),
-  HostConfig: z.object({
-    Binds: z.array(z.string()).max(256).nullable().optional(),
-    Mounts: z.array(z.object({ Type: z.string(), Source: z.string().optional(), Target: z.string() })).max(256).optional(),
-    VolumesFrom: z.array(z.string()).max(256).nullable().optional(),
-  }).optional(),
-  Mounts: z.array(z.object({ Type: z.string(), Name: z.string().optional(), Destination: z.string() })).max(256).optional(),
-  State: z.object({ Running: z.boolean() }).optional(),
-  NetworkSettings: z.object({ Ports: z.record(z.array(z.object({ HostPort: z.string() })).nullable()).nullable().optional() }).optional(),
-});
-type NamespaceEntry = { kind: BackendReceipt["kind"]; name: string; id: string };
-type InspectedObject = { receipt: BackendReceipt; publishedPorts: number[]; bindings: Record<string, number[]>; running: boolean };
 type FinishedProducer = Extract<Launch, { phase: "exited" }> & {
   started: true; exitCode: number; effect: "create" | "workload" | "hook";
 };
@@ -36,23 +18,6 @@ type CaptureProvenance = { registryRequested: boolean; composeLaunched: boolean 
 /** The only launch kind that asks k3d to create the claimed registry. */
 export const K3D_CLUSTER_CREATE_KIND = "k3d-cluster-create";
 
-const query = async (argv: string[], cwd: string): Promise<string> => {
-  const result = await runCommand(argv, { cwd, timeoutMs: TOOL_TIMEOUT_MS, context: argv.slice(0, 3).join(" "), stdio: "pipe" });
-  if (result.exitCode !== 0) throw new SiloError(`ENGINE_UNAVAILABLE: ${argv.slice(0, 3).join(" ")} failed; absence is not established`, "ENGINE_UNAVAILABLE");
-  return result.stdout;
-};
-
-export const captureEngine = async (cwd: string): Promise<NonNullable<Allocation["engine"]>> => {
-  const endpoint = process.env.DOCKER_HOST && !process.env.DOCKER_CONTEXT
-    ? process.env.DOCKER_HOST
-    : (await query(["docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"], cwd)).trim();
-  if (!endpoint.startsWith("unix:///") || endpoint.length > 4096) {
-    throw new SiloError("ENGINE_UNSUPPORTED: silo requires a local Unix-socket Docker endpoint", "ENGINE_UNSUPPORTED");
-  }
-  const info = EngineSchema.parse(JSON.parse(await query(["docker", "info", "--format", "{{json .}}"], cwd)));
-  return { endpoint, id: info.ID };
-};
-
 export const assertEngine = async (owner: ProjectOperation): Promise<NonNullable<Allocation["engine"]>> => {
   const current = owner.current();
   if (!current) throw new Error("Backend operation requires an allocation");
@@ -61,28 +26,6 @@ export const assertEngine = async (owner: ProjectOperation): Promise<NonNullable
     throw new SiloError("ENGINE_CHANGED: Docker endpoint or engine ID differs from the allocation; no backend effect permitted", "ENGINE_CHANGED");
   }
   return engine;
-};
-
-/** Complete structured enumeration, checked against the engine's known-present bridge. */
-const enumerate = async (cwd: string): Promise<NamespaceEntry[]> => {
-  const entries: NamespaceEntry[] = [];
-  for (const kind of ["container", "network", "volume"] as const) {
-    const args = ["docker", kind, "ls", ...(kind === "container" ? ["-a"] : []), ...(kind === "volume" ? [] : ["--no-trunc"]), "--format", "{{json .}}"];
-    const output = await query(args, cwd);
-    const lines = output.split("\n").filter(line => line.trim().length > 0);
-    if (lines.length > MAX_OBJECTS) throw new SiloError("ENGINE_UNAVAILABLE: namespace exceeds enumeration limit", "ENGINE_UNAVAILABLE");
-    for (const line of lines) {
-      const row = ListRowSchema.parse(JSON.parse(line));
-      const name = kind === "container" ? row.Names : row.Name;
-      if (!name || (kind !== "volume" && !row.ID)) throw new SiloError("ENGINE_UNAVAILABLE: incomplete namespace response", "ENGINE_UNAVAILABLE");
-      entries.push({ kind, name, id: row.ID ?? name });
-    }
-  }
-  const bridge = entries.find(e => e.kind === "network" && e.name === "bridge");
-  if (!bridge) throw new SiloError("ENGINE_UNAVAILABLE: known-present bridge control missing from network enumeration", "ENGINE_UNAVAILABLE");
-  const control = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "network", "inspect", bridge.id], cwd)))[0]!;
-  if (control.Id !== bridge.id || control.Name !== "bridge") throw new SiloError("ENGINE_UNAVAILABLE: enumeration control mismatch", "ENGINE_UNAVAILABLE");
-  return entries;
 };
 
 const selected = (entry: NamespaceEntry, claims: Claim[]): boolean => claims.some(c =>
@@ -107,55 +50,14 @@ const assertLabelledScope = async (owner: ProjectOperation, entries: NamespaceEn
   }
 };
 
-const inspectObject = async (entry: NamespaceEntry, source: BackendReceipt["source"], cwd: string): Promise<InspectedObject> => {
-  const value = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", entry.kind, "inspect", entry.id], cwd)))[0]!;
-  if (entry.kind === "container" && !value.State) throw new SiloError(`ENGINE_UNAVAILABLE: missing container state: ${entry.name}`, "ENGINE_UNAVAILABLE");
-  const labels = value.Config?.Labels ?? value.Labels ?? {};
-  const safeLabels = Object.fromEntries(Object.entries(labels).filter(([key]) =>
-    ["io.silo.project", "io.silo.generation", "k3d.cluster", "k3d.role", "app", "com.docker.compose.project", "com.docker.compose.project.working_dir"].includes(key),
-  ));
-  const createdAt = value.Created ?? value.CreatedAt;
-  if (!createdAt) throw new SiloError(`ENGINE_UNAVAILABLE: missing resource creation identity: ${entry.name}`, "ENGINE_UNAVAILABLE");
-  const identity = {
-    source, name: value.Name.replace(/^\//, ""), id: entry.kind === "volume" ? value.Name : value.Id,
-    createdAt, labels: safeLabels,
-  };
-  const receipt = BackendReceiptSchema.parse(entry.kind === "container"
-    ? { ...identity, kind: "container", anonymousVolumes: await captureAnonymousVolumes(value, cwd) }
-    : { ...identity, kind: entry.kind });
-  const bindings = Object.fromEntries(Object.entries(value.NetworkSettings?.Ports ?? {}).map(([target, bindings]) => [target, (bindings ?? []).map(binding => Number(binding.HostPort))]));
-  const publishedPorts = Object.values(bindings).flat();
-  if (publishedPorts.some(p => !Number.isSafeInteger(p) || p < 1 || p > 65535)) throw new SiloError("ENGINE_UNAVAILABLE: invalid Docker publication", "ENGINE_UNAVAILABLE");
-  return { receipt, publishedPorts, bindings, running: value.State?.Running ?? false };
-};
-
-/** Anonymous mount handles are audit data, never a volume deletion capability. */
-const captureAnonymousVolumes = async (container: z.infer<typeof InspectSchema>, cwd: string): Promise<AnonymousVolume[]> => {
-  if (!container.HostConfig || !container.Mounts) throw new SiloError("ENGINE_UNAVAILABLE: missing container mount provenance", "ENGINE_UNAVAILABLE");
-  const host = container.HostConfig;
-  const volumes: AnonymousVolume[] = [];
-  for (const mount of container.Mounts.filter(m => m.Type === "volume")) {
-    const supplied = host.Mounts?.some(m => m.Target === mount.Destination && m.Source) ||
-      host.Binds?.some(bind => {
-        const parts = bind.split(":");
-        return parts.length > 1 && parts[1] === mount.Destination;
-      });
-    if (supplied) continue;
-    if (host.VolumesFrom?.length) throw new SiloError("CLEANUP_REQUIRED: inherited volume provenance is ambiguous; removing this container with volumes could delete inherited data. No deletion permitted.", "CLEANUP_REQUIRED");
-    if (!mount.Name) throw new SiloError("ENGINE_UNAVAILABLE: missing volume mount name", "ENGINE_UNAVAILABLE");
-    const volume = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "volume", "inspect", mount.Name], cwd)))[0]!;
-    if (volume.Name !== mount.Name || !volume.CreatedAt || !Object.hasOwn(volume.Labels ?? {}, "com.docker.volume.anonymous")) {
-      throw new SiloError(`CLEANUP_REQUIRED: cannot prove anonymous mount origin for ${mount.Name}`, "CLEANUP_REQUIRED");
-    }
-    volumes.push({ name: volume.Name, createdAt: volume.CreatedAt, destination: mount.Destination });
-  }
-  return volumes.sort((a, b) => a.destination < b.destination ? -1 : a.destination > b.destination ? 1 : 0);
-};
-
-const sameObject = (a: BackendReceipt, b: BackendReceipt): boolean => a.kind === b.kind && a.name === b.name && a.id === b.id && a.createdAt === b.createdAt;
-
 const conflict = (entry: NamespaceEntry): never => {
   throw new SiloError(`NAME_CONFLICT: existing ${entry.kind} '${entry.name}' has no matching ownership receipt. Inspect with docker ${entry.kind} inspect ${entry.id}; silo will not reuse or delete it.`, "NAME_CONFLICT", { details: { kind: entry.kind, name: entry.name, id: entry.id } });
+};
+
+const assertResourceMatch = (receipt: BackendReceipt, observed: ObservedBackendReceipt, entry: NamespaceEntry): void => {
+  if (matchesResource(receipt, observed)) return;
+  if (isOwnedImageCache(receipt)) throw new SiloError(`CLEANUP_REQUIRED: owned image-cache identity differs: ${receipt.name}`, "CLEANUP_REQUIRED");
+  conflict(entry);
 };
 
 const exactK3dNames = async (claims: Claim[], owned: BackendReceipt[], cwd: string): Promise<void> => {
@@ -178,12 +80,12 @@ export const assertNamesAvailable = async (claims: Claim[], cwd: string, owned: 
     const prior = owned.find(r => r.kind === entry.kind && r.name === entry.name);
     if (!prior) return conflict(entry);
     const current = await inspectObject(entry, prior.source, cwd);
-    if (!sameObject(prior, current.receipt)) conflict(entry);
+    assertResourceMatch(prior, current.receipt, entry);
   }
 };
 
 /** Records only this generation's creation results, with its declared namespace and provenance. */
-const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], provenance: CaptureProvenance): Promise<BackendReceipt[]> => {
+const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], provenance: CaptureProvenance): Promise<ObservedBackendReceipt[]> => {
   await assertEngine(owner);
   const allocation = owner.current()!.allocation;
   const cluster = allocation.state.identity.k3dClusterName;
@@ -218,12 +120,12 @@ const captureOwnedResources = async (owner: ProjectOperation, source: BackendRec
     }
   }
   const prior = owner.resources();
-  const captured: BackendReceipt[] = [];
+  const captured: ObservedBackendReceipt[] = [];
   for (const entry of entries) {
     const existing = prior.find(r => r.kind === entry.kind && r.name === entry.name);
     const current = await inspectObject(entry, existing?.source ?? source, owner.root);
     if (existing) {
-      if (!sameObject(existing, current.receipt)) conflict(entry);
+      assertResourceMatch(existing, current.receipt, entry);
       validatePublications(current);
       captured.push(current.receipt);
       continue;
@@ -288,7 +190,7 @@ export const verifyResource = async (owner: ProjectOperation, receipt: BackendRe
   const entry = entries.find(e => e.kind === receipt.kind && (receipt.kind === "volume" ? e.name === receipt.name : e.id === receipt.id));
   if (!entry) return false;
   const current = await inspectObject(entry, receipt.source, owner.root);
-  if (!sameObject(receipt, current.receipt)) conflict(entry);
+  assertResourceMatch(receipt, current.receipt, entry);
   return true;
 };
 
@@ -312,7 +214,7 @@ export const proveBackendAbsent = async (owner: ProjectOperation): Promise<void>
   await assertLabelledScope(owner, entries);
   const leaks = anonymousLeaks(entries, owner.resources(true));
   if (leaks.length > 0) {
-    throw new SiloError(`CLEANUP_REQUIRED: leaked anonymous volumes remain (${leaks.map(v => `${v.name} from ${v.parentId}`).join(", ")}). Silo never deletes volumes by name; resolve this data with its owner. Claims retained.`, "CLEANUP_REQUIRED", {
+    throw new SiloError(`CLEANUP_REQUIRED: leaked anonymous volumes remain (${leaks.map(v => `${v.name} from ${v.parentId}`).join(", ")}). Silo never deletes anonymous volumes by name; resolve this data with its owner. Claims retained.`, "CLEANUP_REQUIRED", {
       details: { leakedVolumes: leaks },
     });
   }
@@ -338,3 +240,16 @@ const deleteResources = async (owner: ProjectOperation, source: BackendReceipt["
 
 export const deleteOwnedContainers = (owner: ProjectOperation, source: BackendReceipt["source"]): Promise<void> => deleteResources(owner, source, "container");
 export const deleteOwnedNetworks = (owner: ProjectOperation, source: BackendReceipt["source"]): Promise<void> => deleteResources(owner, source, "network");
+
+/** Only explicit cluster deletion invokes the store's receipt-bound cache capability. */
+export const deleteOwnedImageCaches = async (owner: ProjectOperation): Promise<void> => {
+  for (const receipt of owner.resources().filter(isOwnedImageCache)) {
+    if (await verifyResource(owner, receipt)) {
+      const capability = owner.authorizeImageCacheDeletion(resourceReceiptKey(receipt));
+      const result = await runImageCacheDeletion(owner, capability, K3D_DELETE_TIMEOUT_MS);
+      if (await verifyResource(owner, receipt)) throw new SiloError(`CLEANUP_REQUIRED: deletion left image cache ${receipt.name}`, "CLEANUP_REQUIRED");
+      owner.markLaunchTerminal(result.launch.id);
+    }
+    owner.recordResourceAbsence(receipt);
+  }
+};

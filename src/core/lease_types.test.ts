@@ -19,7 +19,7 @@ describe("Docker receipt IDs", () => {
   });
 
   test("retains named-volume identity for audit without granting a Docker object ID", () => {
-    expect(BackendReceiptSchema.parse({ ...identity, kind: "volume", id: "localnet-a-cache" }).id).toBe("localnet-a-cache");
+    expect(BackendReceiptSchema.parse({ ...identity, kind: "volume", authority: "observed", id: "localnet-a-cache" }).id).toBe("localnet-a-cache");
   });
 
   test("target-absent resolution is a terminal exact-ID delete with an unknown exit", () => {

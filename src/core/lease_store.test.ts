@@ -11,8 +11,8 @@ import { ProjectOperation, digest, processAbsent } from "./lease_store";
 import { fileIdentity, prepareFileTarget } from "./file_target";
 import { appendGithubEnv, writeEnvAndLockfile } from "./env";
 import { runOwnedCommand, startOwnedCommand, stopOwnedCommand } from "./owned_command";
-import type { Allocation, Claim, FileReceipt } from "./lease_types";
-import { BackendReceiptSchema } from "./lease_types";
+import type { Allocation, Claim, FileReceipt, Launch } from "./lease_types";
+import { ObservedBackendReceiptSchema, resourceReceiptKey } from "./lease_types";
 import { createListenerProbe } from "./socket_listeners";
 import { connectedUdp } from "./fixtures/connected_udp";
 
@@ -67,6 +67,150 @@ const injectReceipt = (owner: ProjectOperation, receipt: FileReceipt) => {
 const claims = (name: string, port: number): Claim[] => [
   { domain: "instance-name", resource: name }, { domain: "host-port", resource: String(port) },
 ];
+
+const cacheOwner = async () => {
+  const root = project("cache"); const owner = await open(root);
+  const snapshot = allocation(root, "cache");
+  snapshot.state.identity.k3dClusterName = "receipt-cache";
+  snapshot.engine = { endpoint: "unix:///var/run/docker.sock", id: "fixture-engine" };
+  await owner.allocate(snapshot, [...claims("cache", 3000), { domain: "volume", resource: "k3d-receipt-cache-images" }], targets(root));
+  return owner;
+};
+const grant = (launch: Extract<Launch, { phase: "planned" }>): Extract<Launch, { phase: "granted" }> => ({
+  ...launch, phase: "granted", supervisorPid: 2147483000, leaderPid: 2147483001, groupId: 2147483001, supervisorIdentity: "fixture-executor",
+});
+/** The store boundary receives durable executor facts; no Docker behavior is simulated here. */
+const cacheCreation = (owner: ProjectOperation, outcome: { started: boolean; exitCode: number } | null = { started: true, exitCode: 0 }) => {
+  const planned = owner.planImageCacheCreation();
+  const granted = grant(planned); owner.checkpointLaunch(granted);
+  const launch = { ...granted, phase: "exited" as const, started: outcome?.started ?? true, exitCode: outcome?.exitCode ?? 0 };
+  owner.checkpointLaunch(launch);
+  if (outcome) {
+    const db = new Database(storePath);
+    try {
+      db.query("INSERT INTO completions (project_id, generation, launch_id, receipt) VALUES (?, ?, ?, ?)").run(owner.projectId, owner.generation, launch.id,
+        JSON.stringify({ projectId: owner.projectId, generation: owner.generation, launchId: launch.id, leaderPid: launch.leaderPid, groupId: launch.groupId, ...outcome, completedAt: "2026-11-09T00:00:00Z" }));
+    } finally { db.close(); }
+  }
+  const observed = ObservedBackendReceiptSchema.parse({ source: "k3d", kind: "volume", authority: "observed", name: planned.cacheCreation!.name, id: planned.cacheCreation!.name,
+    createdAt: "2026-11-09T00:00:00Z", labels: { "io.silo.project": owner.projectId, "io.silo.generation": String(owner.generation),
+      "k3d.cluster": "receipt-cache", "io.silo.creation": planned.cacheCreation!.token } });
+  return { launch, observed };
+};
+
+describe("image-cache receipt authority", () => {
+  test("a later operation cannot promote a successful create left without a creation receipt", async () => {
+    const owner = await cacheOwner(); const created = cacheCreation(owner); const root = owner.root;
+    owner.finish();
+    const recovery = await open(root);
+    try {
+      expect(() => recovery.recordImageCacheCreation(created.launch.id, created.observed)).toThrow("CLEANUP_REQUIRED");
+      expect(recovery.resources()).toEqual([]);
+      recovery.recordResources([created.observed]);
+      expect(() => recovery.authorizeImageCacheDeletion(resourceReceiptKey(created.observed))).toThrow("CLEANUP_REQUIRED");
+      expect(recovery.resources()).toEqual([created.observed]);
+    } finally { recovery.finish(); }
+  });
+
+  test.each([null, { started: false, exitCode: 0 }, { started: true, exitCode: 17 }])("a create without successful durable execution has no deletion authority: %j", async outcome => {
+    const owner = await cacheOwner();
+    try {
+      const { launch, observed } = cacheCreation(owner, outcome);
+      expect(() => owner.recordImageCacheCreation(launch.id, observed)).toThrow("CLEANUP_REQUIRED");
+      expect(owner.resources()).toEqual([]);
+      expect(() => owner.authorizeImageCacheDeletion(resourceReceiptKey(observed))).toThrow("CLEANUP_REQUIRED");
+    } finally { owner.finish(); }
+  });
+
+  test.each(["io.silo.project", "io.silo.generation", "k3d.cluster", "io.silo.creation"])("a creation result with different %s never becomes owned", async label => {
+    const owner = await cacheOwner();
+    try {
+      const { launch, observed } = cacheCreation(owner);
+      observed.labels[label] = "different";
+      expect(() => owner.recordImageCacheCreation(launch.id, observed)).toThrow("CLEANUP_REQUIRED");
+      expect(owner.resources()).toEqual([]);
+    } finally { owner.finish(); }
+  });
+
+  test("missing and audit-only receipts confer no authority, even after successful creation", async () => {
+    const owner = await cacheOwner();
+    try {
+      const { launch, observed } = cacheCreation(owner);
+      expect(() => owner.authorizeImageCacheDeletion(resourceReceiptKey(observed))).toThrow("CLEANUP_REQUIRED");
+      owner.recordResources([observed]);
+      expect(() => owner.authorizeImageCacheDeletion(resourceReceiptKey(observed))).toThrow("CLEANUP_REQUIRED");
+      expect(() => owner.recordImageCacheCreation(launch.id, observed)).toThrow("CLEANUP_REQUIRED");
+      expect(owner.resources()).toEqual([observed]);
+    } finally { owner.finish(); }
+  });
+
+  test("generic recapture preserves creation authority but a different-token live replacement refuses", async () => {
+    const owner = await cacheOwner();
+    try {
+      const { launch, observed } = cacheCreation(owner);
+      const receipt = owner.recordImageCacheCreation(launch.id, observed);
+      owner.recordResources([observed]);
+      expect(owner.resources()).toEqual([receipt]);
+      const replacement = { ...observed, labels: { ...observed.labels, "io.silo.creation": "00000000-0000-4000-8000-000000000001" } };
+      expect(() => owner.recordResources([replacement])).toThrow("CLEANUP_REQUIRED");
+      expect(owner.resources()).toEqual([receipt]);
+    } finally { owner.finish(); }
+  });
+
+  test("same-name/same-CreatedAt caches keep separate token histories and stale absence/targets cannot consume their successor", async () => {
+    const owner = await cacheOwner();
+    try {
+      const first = cacheCreation(owner); const a = owner.recordImageCacheCreation(first.launch.id, first.observed);
+      const capability = owner.authorizeImageCacheDeletion(resourceReceiptKey(a));
+      const deletion = owner.planImageCacheDeletion(capability);
+      owner.checkpointLaunch(grant(deletion)); owner.markLaunchTerminal(deletion.id);
+      owner.recordResourceAbsence(a);
+      const second = cacheCreation(owner); const b = owner.recordImageCacheCreation(second.launch.id, second.observed);
+      expect(a.name).toBe(b.name); expect(a.createdAt).toBe(b.createdAt); expect(a.creationToken).not.toBe(b.creationToken);
+      expect(owner.resources(true)).toHaveLength(2); expect(owner.resources(true)).toEqual(expect.arrayContaining([a, b])); expect(owner.resources()).toEqual([b]);
+      owner.recordResourceAbsence(a);
+      expect(owner.resources()).toEqual([b]);
+      expect(() => owner.planImageCacheDeletion(capability)).toThrow("CLEANUP_REQUIRED");
+      const current = owner.planImageCacheDeletion(owner.authorizeImageCacheDeletion(resourceReceiptKey(b)));
+      expect(current.deletionTarget?.kind).toBe("image-cache");
+      owner.recordResourceAbsence(b);
+      expect(() => owner.checkpointLaunch(grant(current))).toThrow("CLEANUP_REQUIRED");
+      expect(owner.resources()).toEqual([]); expect(owner.resources(true)).toHaveLength(2); expect(owner.resources(true)).toEqual(expect.arrayContaining([a, b]));
+      expect(owner.launches().find(l => l.id === deletion.id)?.phase).toBe("resolved");
+    } finally { owner.finish(); }
+  });
+
+  test.each(["projectId", "generation", "cluster", "engine", "creationToken", "labels"])("grant refuses a receipt changed after planning: %s", async field => {
+    const owner = await cacheOwner();
+    try {
+      const { launch, observed } = cacheCreation(owner); const receipt = owner.recordImageCacheCreation(launch.id, observed);
+      const planned = owner.planImageCacheDeletion(owner.authorizeImageCacheDeletion(resourceReceiptKey(receipt)));
+      const changed = { ...receipt, [field]: field === "generation" ? 2 : field === "engine" ? { endpoint: "unix:///other.sock", id: "other" } :
+        field === "labels" ? {} : field === "creationToken" ? "00000000-0000-4000-8000-000000000001" : "other" };
+      const db = new Database(storePath);
+      try { db.query("UPDATE resources SET receipt = ? WHERE receipt_key = ?").run(JSON.stringify(changed), resourceReceiptKey(receipt)); }
+      finally { db.close(); }
+      expect(() => owner.checkpointLaunch(grant(planned))).toThrow("CLEANUP_REQUIRED");
+      expect(owner.launches().find(l => l.id === planned.id)?.phase).toBe("planned");
+    } finally { owner.finish(); }
+  });
+
+  test("compaction retains creation provenance and a closed operation's capability cannot be reused", async () => {
+    const owner = await cacheOwner(); let capability;
+    try {
+      const { launch, observed } = cacheCreation(owner); const receipt = owner.recordImageCacheCreation(launch.id, observed);
+      owner.markLaunchTerminal(launch.id); owner.checkpointLaunch({ ...launch, terminal: true, reconciled: true });
+      capability = owner.authorizeImageCacheDeletion(resourceReceiptKey(receipt));
+      for (let i = 0; i < 1024; i++) owner.markLaunchTerminal(owner.planLaunch({ kind: "read", command: ["true"], effect: "none" }).id);
+      expect(owner.launches().some(l => l.id === launch.id)).toBe(false);
+      expect(owner.resources()).toEqual([receipt]);
+      expect(owner.planImageCacheDeletion(owner.authorizeImageCacheDeletion(resourceReceiptKey(receipt))).deletionTarget?.kind).toBe("image-cache");
+    } finally { owner.finish(); }
+    const next = await open(project("cache"));
+    try { expect(() => next.planImageCacheDeletion(capability!)).toThrow("CLEANUP_REQUIRED"); }
+    finally { next.finish(); }
+  });
+});
 
 const withCompletionWriter = async (root: string, observe: () => void): Promise<void> => {
   const script = 'import {Database} from "bun:sqlite"; const db=new Database(process.argv[1]); db.exec("PRAGMA busy_timeout=5000; BEGIN EXCLUSIVE"); console.log("locked"); await Bun.stdin.stream().getReader().read(); db.exec("COMMIT"); db.close();';
@@ -135,7 +279,7 @@ describe("atomic account leases", () => {
     const root = project("history-capacity"); const op = await open(root);
     try {
       await op.allocate(allocation(root, "history-capacity"), [...claims("history-capacity", 3000), { domain: "container", resource: "old-parent" }], targets(root));
-      const receipt = BackendReceiptSchema.parse({ kind: "container", source: "compose", name: "old-parent", id: "c".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {}, anonymousVolumes: [{ name: "retained-audit", createdAt: "2026-11-06T00:00:00Z", destination: "/data" }] });
+      const receipt = ObservedBackendReceiptSchema.parse({ kind: "container", source: "compose", name: "old-parent", id: "c".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {}, anonymousVolumes: [{ name: "retained-audit", createdAt: "2026-11-06T00:00:00Z", destination: "/data" }] });
       op.recordResources([receipt]); op.recordResourceAbsence(receipt);
       const running = await startOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "pending-creation", effect: "create", timeoutMs: 5000 });
       const result = await running.exited;
@@ -166,11 +310,11 @@ describe("atomic account leases", () => {
     expect(recovered?.projectId).toBe(projectId); recovered?.finish();
   });
 
-  test("an unsupported proposal store is refused without changing its bytes", async () => {
+  test.each([1, 2])("unsupported proposal store format %s is refused without changing its bytes", async version => {
     const root = project("old-format");
     const op = await open(root); op.finish();
     const db = new Database(storePath);
-    db.exec("PRAGMA user_version = 1"); db.close();
+    db.exec(`PRAGMA user_version = ${version}`); db.close();
     const before = readFileSync(storePath);
     await expect(open(root)).rejects.toThrow("LEASE_STORE_UNAVAILABLE");
     expect(() => ProjectOperation.inspect(root, storePath)).toThrow("LEASE_STORE_UNAVAILABLE");
@@ -180,8 +324,8 @@ describe("atomic account leases", () => {
   test.each(["container", "network"])("a fresh %s ID can reuse a proven-absent name while history remains", async kind => {
     const root = project("receipt-cycle"); const op = await open(root);
     const name = "localnet-reusable";
-    const first = BackendReceiptSchema.parse({ kind, source: "compose", name, id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {}, anonymousVolumes: [{ name: "audit-only-mount", createdAt: "2026-11-06T00:00:00Z", destination: "/data" }] });
-    const second = BackendReceiptSchema.parse({ ...first, id: "b".repeat(64), createdAt: "2026-11-06T00:01:00Z" });
+    const first = ObservedBackendReceiptSchema.parse({ kind, source: "compose", name, id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {}, anonymousVolumes: [{ name: "audit-only-mount", createdAt: "2026-11-06T00:00:00Z", destination: "/data" }] });
+    const second = ObservedBackendReceiptSchema.parse({ ...first, id: "b".repeat(64), createdAt: "2026-11-06T00:01:00Z" });
     try {
       await op.allocate(allocation(root, "receipt-cycle"), [...claims("receipt-cycle", 3000), { domain: kind, resource: name }], targets(root));
       op.recordResources([first]);
@@ -199,8 +343,8 @@ describe("atomic account leases", () => {
 
   test("terminal exact-target absence reconciles only that ID's completed deletion", async () => {
     const root = project("absent-delete"); const op = await open(root);
-    const first = BackendReceiptSchema.parse({ kind: "network", source: "compose", name: "network-a", id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {} });
-    const other = BackendReceiptSchema.parse({ ...first, name: "network-b", id: "b".repeat(64) });
+    const first = ObservedBackendReceiptSchema.parse({ kind: "network", source: "compose", name: "network-a", id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {} });
+    const other = ObservedBackendReceiptSchema.parse({ ...first, name: "network-b", id: "b".repeat(64) });
     assert(first.kind === "network"); assert(other.kind === "network");
     try {
       await op.allocate(allocation(root, "absent-delete"), [...claims("absent-delete", 3000), { domain: "network", resource: "network-", prefix: true }], targets(root));
@@ -220,7 +364,7 @@ describe("atomic account leases", () => {
 
   test("exact-target absence closes a terminal delete with a lost completion without inventing an exit", async () => {
     const root = project("lost-delete-fact"); const op = await open(root);
-    const receipt = BackendReceiptSchema.parse({ kind: "network", source: "compose", name: "network-a", id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {} });
+    const receipt = ObservedBackendReceiptSchema.parse({ kind: "network", source: "compose", name: "network-a", id: "a".repeat(64), createdAt: "2026-11-06T00:00:00Z", labels: {} });
     assert(receipt.kind === "network");
     try {
       await op.allocate(allocation(root, "lost-delete-fact"), [...claims("lost-delete-fact", 3000), { domain: "network", resource: receipt.name }], targets(root));

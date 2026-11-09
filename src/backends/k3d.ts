@@ -2,7 +2,9 @@ import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import { K3D_CREATE_TIMEOUT_MS, K3D_LIST_TIMEOUT_MS } from "../core/constants";
 import type { ProjectOperation } from "../core/lease_store";
-import { K3D_CLUSTER_CREATE_KIND, assertEngine, assertNamesAvailable, runProducerCommand, deleteOwnedContainers, deleteOwnedNetworks, verifyResource } from "./ownership";
+import { commandFailure, startImageCacheCreation } from "../core/owned_command";
+import { inspectObject } from "./docker";
+import { K3D_CLUSTER_CREATE_KIND, assertEngine, assertNamesAvailable, captureFinishedProducers, runProducerCommand, deleteOwnedContainers, deleteOwnedNetworks, deleteOwnedImageCaches, verifyResource } from "./ownership";
 
 const CONTROL_FLAGS = new Set([
   "--config", "-c", "--network", "--registry-create", "--api-port", "--runtime-label",
@@ -38,6 +40,24 @@ const recordCreation = async (owner: ProjectOperation, command: string[], kind: 
   await runProducerCommand(owner, command, { kind, effect: "create", timeoutMs: K3D_CREATE_TIMEOUT_MS });
 };
 
+export const createImageCache = async (owner: ProjectOperation): Promise<void> => {
+  await assertEngine(owner);
+  await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+  const running = await startImageCacheCreation(owner, K3D_CREATE_TIMEOUT_MS);
+  const result = await running.exited;
+  const launch = owner.recordCommandResult(result.launch);
+  if (launch.exitCode !== 0) {
+    await captureFinishedProducers(owner);
+    throw commandFailure({ ...result, launch, exitCode: launch.exitCode ?? result.exitCode }, launch.kind, owner.generation);
+  }
+  await assertEngine(owner);
+  const name = launch.cacheCreation!.name;
+  const observed = await inspectObject({ kind: "volume", name, id: name }, "k3d", owner.root);
+  owner.recordImageCacheCreation(launch.id, observed.receipt);
+  owner.markLaunchTerminal(launch.id);
+  owner.checkpointLaunch({ ...launch, terminal: true, reconciled: true });
+};
+
 /** Every backend mutation is bound to this allocation, never to a lockfile name. */
 export const ensureCluster = async (owner: ProjectOperation): Promise<void> => {
   const current = owner.current();
@@ -55,7 +75,7 @@ export const ensureCluster = async (owner: ProjectOperation): Promise<void> => {
   }
   const labels = ["--label", `io.silo.project=${owner.projectId}`, "--label", `io.silo.generation=${owner.generation}`, "--label", `k3d.cluster=${cluster}`];
   await recordCreation(owner, ["docker", "network", "create", ...labels, `k3d-${cluster}`], "k3d-network-create");
-  await recordCreation(owner, ["docker", "volume", "create", ...labels, `k3d-${cluster}-images`], "k3d-volume-create");
+  await createImageCache(owner);
   const command = [
     "k3d", "cluster", "create", cluster, "--no-rollback",
     "--kubeconfig-update-default=false", "--kubeconfig-switch-context=false",
@@ -87,6 +107,7 @@ export const deleteCluster = async (owner: ProjectOperation): Promise<void> => {
   await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
   await deleteOwnedContainers(owner, "k3d");
   await deleteOwnedNetworks(owner, "k3d");
+  await deleteOwnedImageCaches(owner);
   const current = owner.current()!;
   owner.update({ ...current.allocation, state: { ...current.allocation.state, k3dClusterCreated: false } }, "stopped");
 };

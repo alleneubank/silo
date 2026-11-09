@@ -5,6 +5,7 @@ import { assertEngine, assertNamesAvailable, captureFinishedProducers, deleteOwn
 import { stopOwnedCommand } from "../core/owned_command";
 import { logger } from "../utils/logger";
 import { SiloError } from "../utils/errors";
+import { resourceReceiptKey } from "../core/lease_types";
 import { commandRoot } from "./prepare";
 
 const terminalGroups = (owner: ProjectOperation): void => {
@@ -25,7 +26,7 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     for (const launch of owner.launches()) {
       const target = launch.deletionTarget;
       if (!launch.terminal || launch.reconciled || launch.effect !== "delete" || !target) continue;
-      const receipt = owner.resources(true).find(r => r.kind === target.kind && r.id === target.id);
+      const receipt = owner.resources(true).find(r => target.kind === "image-cache" ? resourceReceiptKey(r) === target.receiptKey : r.kind === target.kind && r.id === target.id);
       if (receipt && !(await verifyResource(owner, receipt))) owner.recordResourceAbsence(receipt);
     }
     const missing = owner.launches().find(l => l.phase === "granted");
@@ -44,11 +45,11 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     if (options["delete-cluster"] && owner.resources().some(r => r.source === "k3d")) await deleteCluster(owner);
     terminalGroups(owner);
     const leaks = await findAnonymousLeaks(owner);
-    const leakProblem = leaks.length > 0 ? `Leaked anonymous volumes: ${leaks.map(v => v.name).join(", ")}. Silo never deletes volumes by name; resolve this data with its owner.` : null;
+    const leakProblem = leaks.length > 0 ? `Leaked anonymous volumes: ${leaks.map(v => v.name).join(", ")}. Silo never deletes anonymous volumes by name; resolve this data with its owner.` : null;
     if (leakProblem) logger.warn(leakProblem);
     for (const launch of owner.launches()) {
       if (launch.phase === "planned") owner.markLaunchTerminal(launch.id);
-      else if (launch.phase === "exited" && (launch.effect === "none" || (launch.effect === "delete" && launch.exitCode === 0))) {
+      else if (launch.phase === "exited" && (launch.effect === "none" || (launch.effect === "delete" && launch.exitCode === 0 && launch.deletionTarget?.kind !== "image-cache"))) {
         owner.checkpointLaunch({ ...launch, reconciled: true });
       }
     }
@@ -62,7 +63,7 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     const hasRetainedData = retained.length > 0 || leaks.length > 0;
     owner.update({ ...current.allocation, state }, retained.length > 0 ? "retained" : "stopped", leakProblem);
     if (options.clean) {
-      if (retained.length > 0) throw new SiloError(`CLEANUP_REQUIRED: retained resources (${retained.map(r => `${r.kind}/${r.name}`).join(", ")}); ownership snapshots and claims kept. Explicit cluster deletion removes owned containers/networks. Silo never deletes volumes by name; resolve retained named volumes with their owner.`, "CLEANUP_REQUIRED");
+      if (retained.length > 0) throw new SiloError(`CLEANUP_REQUIRED: retained resources (${retained.map(r => `${r.kind}/${r.name}`).join(", ")}); ownership snapshots and claims kept. Explicit cluster deletion removes owned containers/networks and receipt-verified image caches. Resolve other retained named volumes with their owner.`, "CLEANUP_REQUIRED");
       const proof = await owner.prepareRetirement();
       for (const role of ["env", "kubeconfig", "lock"] as const) if (owner.fileReceipt(role)) owner.file(role).remove();
       owner.retire(proof);

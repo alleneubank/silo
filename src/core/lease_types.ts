@@ -39,13 +39,57 @@ export const FileReceiptSchema = z.object({
 export type FileReceipt = z.infer<typeof FileReceiptSchema>;
 
 const DockerObjectIdSchema = z.string().regex(/^[a-f0-9]{64}$/).brand<"DockerObjectId">();
+const BackendIdentitySchema = z.object({
+  source: z.enum(["k3d", "compose"]), name: z.string(), id: z.string(),
+  createdAt: z.string(), labels: z.record(z.string()),
+});
+const ObservedVolumeSchema = BackendIdentitySchema.extend({ kind: z.literal("volume"), authority: z.literal("observed") });
+export const OwnedImageCacheSchema = BackendIdentitySchema.extend({
+  kind: z.literal("volume"), source: z.literal("k3d"), authority: z.literal("owned-image-cache"),
+  purpose: z.literal("k3d-image-cache"), creationToken: z.string().uuid(),
+  projectId: z.string(), generation: z.number().int().positive(), cluster: z.string().min(1),
+  engine: z.object({ endpoint: z.string(), id: z.string() }),
+});
+export type OwnedImageCache = z.infer<typeof OwnedImageCacheSchema>;
+const AnonymousVolumeSchema = z.object({
+  name: z.string().min(1), createdAt: z.string().min(1), destination: z.string().min(1),
+});
+export type AnonymousVolume = z.infer<typeof AnonymousVolumeSchema>;
+export const ObservedBackendReceiptSchema = z.discriminatedUnion("kind", [
+  BackendIdentitySchema.extend({ kind: z.literal("container"), id: DockerObjectIdSchema, anonymousVolumes: z.array(AnonymousVolumeSchema).max(256) }),
+  BackendIdentitySchema.extend({ kind: z.literal("network"), id: DockerObjectIdSchema }),
+  ObservedVolumeSchema,
+]);
+export type ObservedBackendReceipt = z.infer<typeof ObservedBackendReceiptSchema>;
+export const BackendReceiptSchema = z.union([ObservedBackendReceiptSchema, OwnedImageCacheSchema]);
+export type BackendReceipt = z.infer<typeof BackendReceiptSchema>;
+
+export const isOwnedImageCache = (receipt: BackendReceipt): receipt is OwnedImageCache =>
+  receipt.kind === "volume" && receipt.authority === "owned-image-cache";
+
+/** Canonical identity, independent of object-key order and launch compaction. */
+export const resourceReceiptKey = (receipt: BackendReceipt): string => isOwnedImageCache(receipt)
+  ? JSON.stringify([receipt.authority, receipt.purpose, receipt.kind, receipt.source, receipt.name, receipt.id,
+    receipt.createdAt, receipt.creationToken, receipt.projectId, receipt.generation, receipt.cluster,
+    receipt.engine.endpoint, receipt.engine.id, Object.entries(receipt.labels).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)])
+  : JSON.stringify([receipt.kind, receipt.id, receipt.createdAt]);
+
+/** Observing an object can confirm an owned receipt, but cannot create one. */
+export const matchesResource = (receipt: BackendReceipt, observed: ObservedBackendReceipt): boolean => {
+  if (receipt.kind !== observed.kind || receipt.name !== observed.name || receipt.id !== observed.id || receipt.createdAt !== observed.createdAt) return false;
+  return !isOwnedImageCache(receipt) || Object.entries(receipt.labels).every(([key, value]) => observed.labels[key] === value);
+};
+
 const DockerDeletionTargetSchema = z.object({ kind: z.enum(["container", "network"]), id: DockerObjectIdSchema });
 export type DockerDeletionTarget = z.infer<typeof DockerDeletionTargetSchema>;
+const CacheDeletionTargetSchema = z.object({ kind: z.literal("image-cache"), receiptKey: z.string(), receipt: OwnedImageCacheSchema });
+const DeletionTargetSchema = z.union([DockerDeletionTargetSchema, CacheDeletionTargetSchema]);
 
 const LaunchBaseSchema = z.object({
   id: z.string(), kind: z.string(), command: z.array(z.string()).max(1024),
   effect: z.enum(["none", "workload", "create", "delete", "hook"]),
-  deletionTarget: DockerDeletionTargetSchema.optional(),
+  deletionTarget: DeletionTargetSchema.optional(),
+  cacheCreation: z.object({ token: z.string().uuid(), cluster: z.string(), name: z.string() }).optional(),
 });
 const UnlaunchedSchema = LaunchBaseSchema.extend({
   supervisorPid: z.null(), leaderPid: z.null(), groupId: z.null(), supervisorIdentity: z.null(), exitCode: z.null(),
@@ -59,7 +103,7 @@ export const LaunchSchema = z.discriminatedUnion("phase", [
   UnlaunchedSchema.extend({ phase: z.literal("cancelled"), reconciled: z.literal(true), terminal: z.literal(true) }),
   ExecutorSchema.extend({ phase: z.literal("granted"), exitCode: z.null(), reconciled: z.literal(false), terminal: z.boolean() }),
   ExecutorSchema.extend({ phase: z.literal("exited"), started: z.boolean(), exitCode: z.number().int().nullable(), reconciled: z.boolean(), terminal: z.boolean() }),
-  ExecutorSchema.extend({ phase: z.literal("resolved"), effect: z.literal("delete"), deletionTarget: DockerDeletionTargetSchema,
+  ExecutorSchema.extend({ phase: z.literal("resolved"), effect: z.literal("delete"), deletionTarget: DeletionTargetSchema,
     resolution: z.literal("target-absent"), exitCode: z.null(), reconciled: z.literal(true), terminal: z.literal(true) }),
 ]);
 export type Launch = z.infer<typeof LaunchSchema>;
@@ -71,22 +115,6 @@ export const ExecutorCompletionSchema = z.object({
 });
 export type ExecutorCompletion = z.infer<typeof ExecutorCompletionSchema>;
 export type ExecutorContext = Pick<ExecutorCompletion, "projectId" | "generation" | "launchId" | "leaderPid" | "groupId"> & { root: string };
-
-const AnonymousVolumeSchema = z.object({
-  name: z.string().min(1), createdAt: z.string().min(1), destination: z.string().min(1),
-});
-export type AnonymousVolume = z.infer<typeof AnonymousVolumeSchema>;
-const BackendIdentitySchema = z.object({
-  source: z.enum(["k3d", "compose"]),
-  name: z.string(), id: z.string(),
-  createdAt: z.string(), labels: z.record(z.string()),
-});
-export const BackendReceiptSchema = z.discriminatedUnion("kind", [
-  BackendIdentitySchema.extend({ kind: z.literal("container"), id: DockerObjectIdSchema, anonymousVolumes: z.array(AnonymousVolumeSchema).max(256) }),
-  BackendIdentitySchema.extend({ kind: z.literal("network"), id: DockerObjectIdSchema }),
-  BackendIdentitySchema.extend({ kind: z.literal("volume") }),
-]);
-export type BackendReceipt = z.infer<typeof BackendReceiptSchema>;
 
 export type Claim = { domain: string; resource: string; prefix?: boolean };
 export type LifecyclePhase = "reserved" | "running" | "stopped" | "retained" | "cleanup-required";

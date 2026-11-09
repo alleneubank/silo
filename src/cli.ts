@@ -116,11 +116,12 @@ Stop environment (stops Tilt, keeps k3d by default).
 The Tilt API is gone after down. The k3d cluster stays unless
 --delete-cluster is passed. Retained or uncertain resources keep their claims;
 --clean refuses to erase their ownership. No peer state is garbage-collected.
-Recorded Compose containers are removed with their anonymous volumes. Silo
-never deletes a volume by name. Leaked names keep claims until their owner
+Recorded Compose containers are removed with their anonymous volumes. Only a
+directly created, durably receipted k3d image cache can be removed by its verified
+name during explicit cluster deletion. Leaked anonymous names keep claims until their owner
 resolves them independently; inherited volumes-from provenance refuses.
 Cleanup stops only recorded owned process groups and deletes recorded Docker
-IDs. It does not evaluate the Tiltfile or run teardown hooks. Kubernetes
+IDs and receipt-verified image caches. It does not evaluate the Tiltfile or run teardown hooks. Kubernetes
 workloads remain with a retained cluster; use --delete-cluster to remove it.
 
 Options:

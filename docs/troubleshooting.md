@@ -7,8 +7,9 @@ adopt a same-name replacement. Missing non-delete completion facts, inherited
 mount ambiguity and unsupported provenance still retain claims.
 
 A k3d create with a known failed exit records its labelled partial outputs before
-reporting the error. Use `down --delete-cluster` for exact cleanup; its named cache
-still requires independent owner resolution before final clean. A failed network
+reporting the error. Use `down --delete-cluster` for exact cleanup, including
+its directly created image cache when its durable creation receipt still matches
+and no container references it. A cache left before receipt requires its owner. A failed network
 or volume create with no output can reconcile through complete namespace
 verification. Missing create completion facts remain unresolved.
 
@@ -22,7 +23,7 @@ Retry down on its recorded engine. A lost completion may show a `resolved` /
 `target-absent` launch with null exit code; this is an absence proof, not a
 successful tool exit. Unknown creates remain unresolved.
 
-Unreleased proposal SQLite format 1 is incompatible with format 2 and refuses
+Unreleased proposal SQLite formats 1 and 2 are incompatible with format 3 and refuse
 with `LEASE_STORE_UNAVAILABLE` before application mutation. SQLite may first
 recover an interrupted transaction. Read-only status cannot perform that recovery;
 use `down` to recover a supported store. Use the matching old
@@ -102,9 +103,13 @@ time and destination for audit, never deletion authority. `down` removes exact
 receipted Compose container IDs with their anonymous volumes, then exact network
 IDs. Explicit cluster deletion does the same for k3d containers. Named
 mounts and anonymous volumes another container still references remain intact.
-The named k3d image cache also survives cluster deletion. k3d 5.9.0 needs that
-cache for its tools node; its owner must resolve it independently before clean
-can release claims. Silo will not delete it by name.
+Ordinary down retains k3d's image cache. Explicit cluster deletion removes only
+a cache directly created and durably receipted by this allocation, after the
+executor revalidates its active store receipt, exact identity, creation token,
+recorded labels and engine, and proves no container references it. Mismatches
+return CLEANUP_REQUIRED with claims retained. Other named/observed volumes
+still require their owner. Docker has no conditional volume delete; external
+replacement after the final inspection remains a disclosed API race.
 
 If another tool removed a parent without its volumes, or a shared mount remains,
 Silo reports each surviving name as leaked and never deletes it by name. The

@@ -5,6 +5,7 @@ import { runCommand } from "../utils/exec";
 import { withTimeout } from "../utils/timeout";
 import { SiloError } from "../utils/errors";
 import { EXECUTOR_GRANT_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS } from "./constants";
+import { prepareCacheRemoval } from "./cache_executor";
 
 const MAX_GRANT_BYTES = 1024 * 1024;
 const ArgumentsSchema = z.tuple([z.string().uuid(), z.string().max(4096), z.string().uuid(), z.coerce.number().int().positive(), z.enum(["account", "parent"])]);
@@ -44,8 +45,16 @@ export const executorMain = async (args: string[]): Promise<void> => {
       const grant = LaunchSchema.parse(JSON.parse(payload));
       if (grant.phase !== "granted" || grant.id !== id || grant.leaderPid !== process.pid || grant.groupId !== process.pid) throw new SiloError("Executor received another launch's grant", "INVALID_GRANT");
       if (journal === "account") await ProjectOperation.validateExecutorGrant(context, grant);
+      const cache = grant.deletionTarget?.kind === "image-cache" ? await prepareCacheRemoval(context, grant, journal).catch(async error => {
+        if (journal === "account") await ProjectOperation.recordExecutorCompletion(context, { started: false, exitCode: 77, completedAt: new Date().toISOString() });
+        throw error;
+      }) : null;
       if (!cancelled) {
-        child = Bun.spawn(grant.command, { cwd: root, env: process.env, stdin: "ignore", stdout: "inherit", stderr: "inherit" });
+        // WAIVER(atomicity): Docker has no conditional volume delete. External
+        // delete/recreate after the final inspect can replace this cache before
+        // removal. Permanent — the local volume API offers only a name address.
+        const command = cache ? ["docker", "volume", "rm", cache.name] : grant.command;
+        child = Bun.spawn(command, { cwd: root, env: process.env, stdin: "ignore", stdout: "inherit", stderr: "inherit" });
         started = true;
         exitCode = await child.exited;
       }

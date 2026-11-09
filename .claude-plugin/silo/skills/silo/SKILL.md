@@ -28,18 +28,21 @@ changing its configuration or repairing an environment. Discover topics with
   Matching names/labels without a pending owned producer never grant authority.
   `silo down --delete-cluster --clean` explicitly deletes the owned cluster,
   removing each exact receipted container ID with its anonymous volumes, then
-  snapshots and claims once absence is proved. Silo never deletes a volume by
-  name. `status --json` lists audit-only `anonymousVolumes`, even after a parent
+  snapshots and claims once absence is proved. Only a directly created, durably
+  receipted image cache may use name-addressed deletion, after independent
+  executor receipt/token/identity/engine validation and an all-container reference
+  check. `status --json` lists audit-only `anonymousVolumes`, even after a parent
   is gone. Named/explicit mounts and volumes still used elsewhere survive.
   Leaked or replaced names keep claims and block clean/force until their owner
   resolves them independently; Silo cannot clean a volume whose parent is gone.
   Inherited `volumes-from` provenance refuses before container removal.
-  k3d's named image cache also remains for its owner to resolve before clean.
+  Ordinary down retains k3d's image cache; explicit cluster deletion removes its
+  verified unused cache. Missing creation receipts and mismatches retain claims.
   Same-config ci/down/ci reuses its generation with new ID receipts and keeps
   old mount history. A terminal exact-ID delete can resolve through verified
   target absence; `resolved`/`target-absent` with null exit does not claim success.
-  Unreleased store format 1 requires matching-old-proposal drain and owner-led
-  recreation before format 2; no migration/reset is automatic.
+  Unreleased store formats 1 and 2 require matching-old-proposal drain and owner-led
+  recreation before format 3; format-2 clients also refuse format 3. No migration/reset is automatic.
   Failed or uncertain teardown retains ownership. Inspect `status` and
   `silo doc troubleshooting`; never delete the store, lock or peer reservation
   to make allocation succeed. Never adopt or delete a conflicting object.

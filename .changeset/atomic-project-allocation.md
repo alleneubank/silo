@@ -26,15 +26,18 @@ disowns a live stack: reconcile first, or use separate roots and names. Clean
 requires proof of terminal commands, absent resources and free declared ports.
 Container receipts retain anonymous mount names for audit after parent deletion.
 Down removes exact receipted Compose container IDs with their anonymous volumes;
-explicit cluster deletion does the same for k3d. Silo never deletes a volume by
-name. Named/explicit mounts and volumes still referenced elsewhere survive;
+explicit cluster deletion does the same for k3d. Only a directly created, durably receipted k3d image cache can use Docker's
+name-addressed removal, after independent executor receipt/identity/token/engine
+validation and an all-container reference check. Other volumes gain no authority. Named/explicit mounts and volumes still referenced elsewhere survive;
 inherited volumes-from provenance refuses. Leaked or replaced names block clean
 and force with retained claims until their owner resolves them independently.
-k3d's named image cache is retained for its owner to resolve. A durable successful exact
+Explicit cluster deletion removes its verified unused image cache. Docker has no
+conditional volume deletion; external replacement after final inspection is a
+disclosed residual race. A durable successful exact
 deletion retry is reconciled on recovery even if the caller crashed first.
 
 BREAKING: down stops verified recorded processes and deletes recorded immutable
-container/network IDs only; it never runs tilt down, compose down or arbitrary
+container/network IDs and receipt-bound image caches; it never runs tilt down, compose down or arbitrary
 teardown hooks. Pre-down/post-down config keys are rejected, including profiles.
 Kubernetes workloads remain with a retained cluster. Finished owned producers,
 including k3d network/volume/cluster creates, hooks, failed CI and live up stopped
@@ -48,7 +51,8 @@ stop/restart can record fresh same-name IDs in the same generation. Terminal
 exact-ID delete requests reconcile when that target is verified absent, including
 an explicit target-absent resolution with unknown exit if completion was lost.
 No success is invented and unknown creates remain unresolved. Unreleased proposal
-store format 1 is refused without schema migration by format 2; SQLite's native
+store formats 1 and 2 are refused without schema migration by format 3; format-2
+clients also refuse format 3. SQLite's native
 rollback recovery remains available to writable lifecycle commands. Owners drain the matching old
 proposal before recreating. There is no automatic store migration or reset.
 Terminal reconciled launch/completion history is compacted at the 1024-record

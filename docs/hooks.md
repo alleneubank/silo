@@ -32,6 +32,7 @@ post-up = ["./scripts/seed-db.sh"]
 
 Only startup hooks are supported. `pre-down` and `post-down` are rejected in
 base and profile configuration. Cleanup has no arbitrary shell callbacks: it
-stops recorded owned process groups and deletes receipted Docker IDs only.
+stops recorded owned process groups and deletes receipted Docker IDs and verified
+directly created k3d image caches.
 Run any owner-managed backup or other application workflow separately before
 cleanup; Silo does not delegate project-wide teardown to it.

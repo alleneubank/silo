@@ -27,8 +27,10 @@ The same configuration can restart within its generation with down between runs:
 `ci`, `down`, `ci`,
 then `down --clean`. Old immutable-ID receipts remain audit history while the
 new creation result records fresh IDs under the same names. k3d supports the
-corresponding `ci`, `down --delete-cluster`, `ci` loop; its owned named cache
-remains until independent owner resolution before final clean.
+corresponding `ci`, `down --delete-cluster`, `ci` loop. Explicit cluster deletion
+removes its directly created, durably receipted image cache after exact executor
+validation and an all-container reference check. Restarts record a fresh token
+while retaining prior cache history. Ordinary down retains cluster and cache.
 This loop does not qualify Compose's in-place service rebuild/recreate: inherited
 anonymous data can survive and require independent owner resolution.
 
@@ -46,8 +48,9 @@ for active receipts. The flag is stored knowledge; use immutable IDs for a fresh
 physical-presence check. At the 1024-launch limit, terminal reconciled launch and
 completion history can be compacted while uncertainty and resource history remain.
 
-The unreleased SQLite proposal format is 2. Format-1 stores refuse without
-migration/reset; drain the matching old proposal before owner-led recreation.
+The unreleased SQLite proposal format is 3. Format-1 and format-2 stores refuse
+without migration/reset; format-2 clients also refuse format 3. Drain the matching
+old proposal and resolve its resources before owner-led recreation.
 
 `ci --timeout 300s` forwards the timeout. Passthrough cannot override managed
 listener ports/hosts or an explicit web mode. `env`/`ci --export-ci` require

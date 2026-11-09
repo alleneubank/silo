@@ -1,4 +1,4 @@
-import { ProjectOperation, processAbsent, type CompletionKey } from "./lease_store";
+import { ProjectOperation, processAbsent, type CacheDeletionCapability, type CompletionKey } from "./lease_store";
 import type { DockerDeletionTarget, ExecutorCompletion, Launch } from "./lease_types";
 import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
@@ -133,6 +133,24 @@ export const startOwnedCommand = async (
   if (options.timeoutMs === null && options.kind !== "tilt-up") throw new Error("Only the interactive Tilt session may have an until-stop lifetime");
   const intent = owner.planLaunch({ kind: options.kind, command, effect: options.effect,
     ...(options.deletionTarget === undefined ? {} : { deletionTarget: options.deletionTarget }) });
+  return startPlannedCommand(owner, intent, options);
+};
+
+export const startImageCacheCreation = (owner: ProjectOperation, timeoutMs: number): Promise<RunningCommand> => {
+  const intent = owner.planImageCacheCreation();
+  return startPlannedCommand(owner, intent, { kind: intent.kind, effect: "create", timeoutMs });
+};
+
+export const runImageCacheDeletion = async (owner: ProjectOperation, capability: CacheDeletionCapability, timeoutMs: number): Promise<OwnedCommandResult> => {
+  const intent = owner.planImageCacheDeletion(capability);
+  const result = await (await startPlannedCommand(owner, intent, { kind: intent.kind, effect: "delete", timeoutMs })).exited;
+  const launch = owner.recordCommandResult(result.launch);
+  const completed = { ...result, launch, exitCode: launch.exitCode ?? result.exitCode };
+  if (completed.exitCode !== 0) throw new SiloError(`CLEANUP_REQUIRED: ${intent.kind} failed; receipts and claims retained. ${completed.stderr.slice(-4096)}`, "CLEANUP_REQUIRED");
+  return completed;
+};
+
+const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Launch, { phase: "planned" }>, options: CommandOptions): Promise<RunningCommand> => {
   const startupDeadline = Date.now() + Math.min(options.timeoutMs ?? LAUNCH_START_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS);
   const startupRemaining = () => {
     const remaining = startupDeadline - Date.now();

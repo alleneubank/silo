@@ -20,13 +20,15 @@ Unknown schemas, corruption, missing expected state and failed queries refuse;
 there is no empty-store fallback. Runtime CLI/env store overrides do not exist.
 Tests inject a private constructor store or run in a disposable OS account.
 
-The unreleased proposal store format is 2. Format-1 proposal stores are refused
-before application mutation; no migration or reset occurs. SQLite may recover
-an interrupted transaction before schema validation. Writable lifecycle commands,
-including down, allow this native rollback recovery; read-only status can refuse
-while recovery is required. Owners
-must drain the matching old proposal before recreating its disposable store.
-Config version 1, snapshot version 2 and JSON response version 1 are separate.
+The unreleased proposal store format is 3. Format-1 and format-2 proposal
+stores are refused before application mutation; no migration or reset occurs.
+Format-2 proposal clients also refuse format-3 stores before application
+mutation. SQLite may recover an interrupted transaction before schema
+validation. Writable lifecycle commands, including down, allow this native
+rollback recovery; read-only status can refuse while recovery is required.
+Owners must drain the matching old proposal and resolve its remaining
+resources before recreating its disposable store. Config version 1, snapshot
+version 2 and JSON response version 1 are separate.
 
 A single constructor commits each generation's declared ports, final rendered
 identities, namespace prefixes and file targets in `BEGIN IMMEDIATE`.
@@ -227,12 +229,25 @@ substring text matches. Bounded/invalid responses refuse.
 
 Every selected existing cluster, registry, network, volume or container needs
 an exact matching receipt (kind, name, ID, creation identity). Leftovers are
-`NAME_CONFLICT`, never reuse/adoption/deletion. New k3d networks and named image
-cache volumes are precreated with project/generation labels. The named cache
-is retained after cluster deletion: k3d 5.9.0 requires it for its tools node,
-and Silo never deletes volumes by name. Its owner resolves that cache before
-clean can release the generation. k3d nodes receive those
-labels. Registry provenance requires the completed owned creation request
+`NAME_CONFLICT`, never reuse/adoption/deletion. A receipted image-cache
+replacement instead reports `CLEANUP_REQUIRED`.
+
+New k3d networks and image caches are precreated with project/generation
+labels. Only a k3d image cache Silo directly created and durably receipted at
+creation is eligible for explicit cluster cleanup. The store issues a deletion
+grant only from that generation's active owned-image-cache creation receipt;
+the executor independently re-reads and exactly matches it, including its
+creation token, project, generation, cluster and engine. A target or matching
+labels without that persisted receipt never grant authority. Immediately
+before removal, its name, CreatedAt and recorded ownership labels must match its receipt and
+no running or stopped container may reference it. A mismatch or uncertain
+query refuses with CLEANUP_REQUIRED and keeps receipts and claims. Silo uses
+Docker's name-addressed removal only for this verified cache; it never falls
+back to a volume name without that authority. Docker has no conditional local
+volume deletion, so external replacement after final inspection is a declared
+residual race under the cooperating-tool model. Ordinary down retains the
+cache; anonymous, user, external and other observed named volumes do not gain
+this authority. k3d nodes receive the ownership labels. Registry provenance requires the completed owned creation request
 (the finished cluster create that passed `--registry-create` for that exact
 registry) and matching cluster/name; a nonzero exit of that request uses the
 same provenance as success. Other producers, such as hooks, cannot vouch for a
@@ -246,7 +261,7 @@ times and destinations for audit only. They never grant volume deletion
 authority. `down` removes exact receipted Compose container IDs with
 `docker container rm --force --volumes`, then its receipted network IDs. Explicit cluster
 deletion removes exact receipted k3d container IDs the same way, then removes
-its network by immutable ID. Docker removes attached anonymous volumes;
+its network by immutable ID, then its verified owned image cache. Docker removes attached anonymous volumes;
 explicitly named mounts and volumes still referenced by another container
 survive. Inherited `volumes-from` provenance refuses before container removal:
 Docker could otherwise remove inherited anonymous data after its donor is gone.
@@ -299,11 +314,12 @@ This proof cannot resolve an unknown create or an untargeted generic command.
 
 Decision (provisional 2026-11-06, coordinator via addendum 7): record the
 generation's finished producers before deletion, including failed CI and
-down-stopped live up. Deletion remains recorded IDs only. The human may reverse
+down-stopped live up. Deletion uses recorded immutable IDs and the explicit owned-image-cache receipt exception. The human may reverse
 this interior recording choice; no migration or project-wide teardown is added.
 
 Decision (ratified 2026-11-05, human via silo-redesign addendum 6): stop only
-recorded owned processes and delete only recorded Docker IDs; no delegated
+recorded owned processes and delete recorded Docker IDs, with the explicit
+owned-image-cache receipt exception ratified on 2026-11-09; no delegated
 project teardown. REQ-CLEANUP-004: if real Compose recreates a service after its
 recorded parent is removed, resumed cleanup preserves the new container, its
 anonymous volume and data, and all ownership claims until owner resolution.
@@ -313,22 +329,31 @@ volumes are removed with their recorded container, never by name.
 Decision (provisional 2026-11-05): refuse retirement/reconfiguration with retained
 claims while recorded anonymous names remain; a name cannot establish whether
 the remaining object is original or replacement data. The no-name-deletion
-rule also retains k3d's named image cache; disabling it fails k3d 5.9.0 tools-node
-creation, so its owner must resolve it independently.
+rule continues for anonymous and observed named data. Decision (ratified
+2026-11-09, human via silo-hosted-example addendum 1): explicit cluster deletion
+may remove only its directly created, durably receipted image cache under the
+receipt/token protocol above. The token is persisted before creation; a crash
+before its creation receipt never permits automatic promotion or deletion.
+The creation receipt and token remain after launch compaction. Resource history
+and absence use the full cache identity, so equal names/CreatedAt with different
+tokens remain distinct generations of that cache within one allocation.
 `scripts/allocation-rehearsal.ts --suite volumes` drives ordinary cleanup,
 sharing, same-name replacement and leak refusal; lease-store recovery tests
 cover durable successful retry reconciliation. Named-volume behavior follows
 [Docker's container removal contract](https://docs.docker.com/reference/cli/docker/container/rm/).
 
-- REQ-CLEANUP-001: built-in Docker deletion accepts only container/network
-  targets; anonymous volume deletion uses an exact parent container ID with
+- REQ-CLEANUP-001: built-in Docker deletion accepts immutable container/network
+  targets and the separate receipt-bound image-cache target; anonymous volume deletion uses an exact parent container ID with
   `--volumes`. Check: `--suite parent-volumes`, `same-second`, `paused-delete`.
-- REQ-CLEANUP-002: a surviving recorded anonymous name or named cache prevents
-  retirement/replacement with claims preserved. Check: `--suite volumes` and
+- REQ-CLEANUP-002: a surviving recorded anonymous name or unremoved cache prevents
+  retirement/replacement with claims preserved. Only explicit cluster deletion
+  may remove a verified owned image cache. Check: `--suite volumes` and
   `backend`.
 - REQ-CLEANUP-003: recovery folds durable successful exact deletion retries
   through the common reconciliation rule, never an earlier success over a
-  later failure. Check: `--suite retry-crash` and lease-store deletion tests.
+  later failure. Cache requests reconcile only after successful complete proof
+  of the full receipted identity's absence. Check: `--suite retry-crash`,
+  `cache` and lease-store deletion tests.
 - REQ-CLEANUP-005: Compose ci/down/ci and k3d ci/delete-cluster/ci keep the
   generation and record fresh same-name IDs without discarding prior mount
   history. Check: `--suite lifecycle` and lease-store receipt-cycle tests.
@@ -336,7 +361,7 @@ cover durable successful retry reconciliation. Named-volume behavior follows
   failed CI and stopped live up clean their exact IDs, while partial-cleanup
   retries preserve Q/W and claims. Check: `--suite lifecycle`,
   `live-compose-replacement` and `compose-replacement`.
-- REQ-CLEANUP-007: terminal exact-ID delete requests reconcile on proven target
+- REQ-CLEANUP-007: terminal immutable-ID and full cache-identity delete requests reconcile on proven target
   absence, preserving an unknown exit when completion is lost; unknown creates
   stay unresolved. Check: `--suite absent-delete`, `lost-delete` and lease-store
   exact-target absence tests.
@@ -350,6 +375,14 @@ cover durable successful retry reconciliation. Named-volume behavior follows
 - REQ-CLEANUP-008: finished creating tools reconcile only after labelled outputs
   are recorded or their claimed namespace is proven empty. Check: native
   `--suite producers` port-squatter k3d and overlapping-IPAM network failures.
+- REQ-CLEANUP-012: explicit cluster deletion removes only an unused directly
+  created image cache whose active persisted creation receipt is independently
+  validated at planning, grant and executor boundaries. All-container reference
+  queries, exact final identity/token/label/engine checks and post-removal absence
+  are required. Missing/audit-only/tombstoned/stale authority refuses. Same-name,
+  same-CreatedAt token cycles preserve both histories; stale absence cannot
+  consume a successor. Check: `--suite cache`, `backend`, `lifecycle`,
+  `producers`, copied full example and receipt/executor boundary tests.
 - REQ-STATUS-001: JSON resource receipts distinguish tombstones with `deleted`.
   Check: receipt-cycle unit tests and the native same-generation lifecycle loop.
 
