@@ -1,9 +1,46 @@
-import { describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import os from "node:os";
 import path from "path";
 import { DOC_TOPICS } from "./doc-topics";
 import { doc } from "./doc";
 
 const docsRoot = path.resolve(import.meta.dir, "..", "..", "docs");
+let distributionRoot: string;
+
+beforeAll(async () => {
+  distributionRoot = mkdtempSync(path.join(os.tmpdir(), "silo-doc-distributions-"));
+  for (const [name, flags] of [["cli.js", ["--target=bun"]], ["silo", ["--compile"]]] as const) {
+    const build = Bun.spawn(["nice", "-n", "15", process.execPath, "build", path.resolve(import.meta.dir, "../cli.ts"), ...flags, "--outfile", path.join(distributionRoot, name)], {
+      stdout: "pipe", stderr: "pipe", timeout: 60_000,
+    });
+    const [exitCode, stderr] = await Promise.all([build.exited, new Response(build.stderr).text()]);
+    if (exitCode !== 0) throw new Error(`Doc distribution build failed: ${stderr}`);
+  }
+}, 90_000);
+
+afterAll(() => { if (distributionRoot) rmSync(distributionRoot, { recursive: true }); });
+
+for (const distribution of ["cli.js", "silo"] as const) {
+  it(`${distribution} prints every listed topic outside the source tree`, async () => {
+    const command = distribution === "silo" ? [path.join(distributionRoot, distribution)] : [process.execPath, path.join(distributionRoot, distribution)];
+    const run = async (...args: string[]) => {
+      const proc = Bun.spawn([...command, "doc", ...args], { cwd: distributionRoot, stdout: "pipe", stderr: "pipe", timeout: 10_000 });
+      const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+      expect({ exitCode, stderr }).toEqual({ exitCode: 0, stderr: "" });
+      return stdout;
+    };
+    const topics = (await run("--list")).trim().split("\n");
+    expect(topics.length).toBeGreaterThan(0);
+    for (const topic of topics) {
+      const entry = DOC_TOPICS[topic];
+      expect(entry).toBeDefined();
+      const contents = await Bun.file(path.join(docsRoot, entry!.file)).text();
+      expect(await run(topic)).toBe(contents.trimEnd() + "\n");
+    }
+    expect(await run("silo.toml")).toBe(await run("config"));
+  }, 60_000);
+}
 
 const captureStdout = async (fn: () => Promise<void>): Promise<string> => {
   let output = "";
@@ -36,14 +73,6 @@ const captureStdout = async (fn: () => Promise<void>): Promise<string> => {
 };
 
 describe("doc topics", () => {
-  it("all doc files exist", async () => {
-    for (const entry of Object.values(DOC_TOPICS)) {
-      const docPath = path.join(docsRoot, entry.file);
-      const exists = await Bun.file(docPath).exists();
-      expect(exists).toBe(true);
-    }
-  });
-
   it("prints docs for each topic", async () => {
     for (const [topic, entry] of Object.entries(DOC_TOPICS)) {
       const docPath = path.join(docsRoot, entry.file);
