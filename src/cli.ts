@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { parseArgs } from "util";
 import path from "node:path";
+import { writeFileSync } from "node:fs";
 import { SiloError } from "./utils/errors";
 import { setVerbose, setStructuredOutput } from "./utils/logger";
 import { assertNoLegacyState } from "./core/legacy_check";
@@ -133,6 +134,8 @@ Options:
 Read the account lease store: project, generation, operation, claims, exact
 resource receipts and cleanup conditions. No ownership row is changed.
 Process liveness is not Tilt resource health. --json emits schemaVersion 1.
+Stored project fields and fresh launchStatus observations are separate;
+operationOwnerAbsent and cleanupRequired identify recovery through down.
 
 Options:
   -c, --config    Path to config file (default: silo.toml)
@@ -267,11 +270,42 @@ Examples:
 };
 
 let jsonOutput = Bun.argv.includes("--json");
+let jsonResultEmitted = false;
+let removeInterruptHandlers = () => {};
+
+const writeJsonResult = (result: unknown): void => {
+  if (jsonResultEmitted) return;
+  jsonResultEmitted = true;
+  writeFileSync(1, JSON.stringify(result) + "\n");
+};
+
+const errorResult = (error: unknown) => ({
+  schemaVersion: 1,
+  code: error instanceof SiloError ? error.code : "SILO_ERROR",
+  message: error instanceof Error ? error.message : "Unknown error",
+  ...(error instanceof SiloError ? error.details : {}),
+});
+
+const handleCiInterrupts = (): (() => void) => {
+  const interrupt = (signal: "SIGINT" | "SIGTERM", exitCode: number) => {
+    const error = new SiloError(`ci interrupted by ${signal}; owned claims retained. Run silo status and silo down to reconcile.`, "INTERRUPTED", { details: { signal } });
+    if (jsonOutput) writeJsonResult(errorResult(error));
+    else writeFileSync(2, `silo error: ${error.message}\n`);
+    // Exiting leaves cleanup with Janitor's existing parent watcher. The
+    // handler grants no new process signal or resource deletion authority.
+    process.exit(exitCode);
+  };
+  const onInt = () => interrupt("SIGINT", 130);
+  const onTerm = () => interrupt("SIGTERM", 143);
+  process.on("SIGINT", onInt);
+  process.on("SIGTERM", onTerm);
+  return () => { process.off("SIGINT", onInt); process.off("SIGTERM", onTerm); };
+};
 
 const printJsonResult = async (config: string, enabled: boolean, changed: boolean): Promise<void> => {
   if (!enabled) return;
-  const { status } = await import("./commands/status");
-  await status({ config, json: true, changed });
+  const { readStatus } = await import("./commands/status");
+  writeJsonResult(readStatus(config, changed));
 };
 
 const main = async (): Promise<void> => {
@@ -327,6 +361,8 @@ const main = async (): Promise<void> => {
     return;
   }
 
+  if (command === "ci") removeInterruptHandlers = handleCiInterrupts();
+
   if (["env", "up", "ci", "down", "status"].includes(command)) {
     await assertNoLegacyState(path.dirname(path.resolve(values.config)));
   }
@@ -370,7 +406,8 @@ const main = async (): Promise<void> => {
     }
     case "status": {
       const mod = await import("./commands/status");
-      await mod.status({ config: values.config, json: values.json });
+      if (values.json) writeJsonResult(mod.readStatus(values.config));
+      else await mod.status({ config: values.config });
       return;
     }
     case "env": {
@@ -430,7 +467,7 @@ const main = async (): Promise<void> => {
 
 main().catch((error: unknown) => {
   if (jsonOutput) {
-    console.log(JSON.stringify({ schemaVersion: 1, code: error instanceof SiloError ? error.code : "SILO_ERROR", message: error instanceof Error ? error.message : "Unknown error", ...(error instanceof SiloError ? error.details : {}) }));
+    writeJsonResult(errorResult(error));
     process.exitCode = 1;
     return;
   }
@@ -442,4 +479,4 @@ main().catch((error: unknown) => {
     console.error("silo error: unknown error");
   }
   process.exitCode = 1;
-});
+}).finally(() => removeInterruptHandlers());

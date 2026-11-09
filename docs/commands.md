@@ -58,6 +58,32 @@ must be a separate append-only target and cannot alias a generated file.
 and the current project. Errors carry a stable `code` and message, with
 read-only listings for `LEGACY_STATE`. Diagnostics go to stderr.
 
+Interrupting `ci --json` with SIGINT or SIGTERM returns one `INTERRUPTED`
+error with a top-level `signal` field and exit 130 or 143. The supervisor
+drains its recorded group after the CLI exits. Run `status` and `down` to
+recover an abandoned operation and reconcile retained ownership.
+
+Status preserves stored fields under `project`. Separate `launchStatus` entries
+report `launchId`, observed `state`, `groupsAbsent` and a provenance-checked
+`completion` (or null). A dead recorded group is `terminated` if its result is
+unknown, or `completed` when its durable result exists. Stored exits and terminal
+facts remain known even after PID reuse. `unconfirmed` means no process group
+was recorded; `live-or-unknown` proves neither completion nor readiness.
+`groupsAbsent` is a fresh observation, not a change to the stored terminal flag.
+`operationOwnerAbsent` identifies a dead recorded CLI owner. `cleanupRequired`
+also reflects unreconciled completed/terminated launches and stored cleanup
+problems; inspect a live `project.operation` before attempting recovery.
+Status never imports facts into ownership or releases claims; `down` does that.
+
+Launch identity observations share a 30-second startup budget, capped at the
+finite command's run budget, followed by the durable grant checkpoint. The
+executor waits up to 45 seconds for that grant. The command's execution timer
+still starts after grant. Status text, `up` and `down` allow up to 30 seconds
+per recorded supervisor identity check under load.
+
+`doc` embeds the Markdown references in every build. Topic output works when
+the JavaScript bundle or standalone executable is copied outside the repository.
+
 `env`, `up`, `ci`, `down` and `status` run the host-wide legacy refusal before
 store, file, directory or tool effects. Follow `silo doc ports` for the
 mandatory host cutover procedure; there is no migrate operation.

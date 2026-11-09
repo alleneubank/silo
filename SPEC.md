@@ -64,6 +64,17 @@ start identity and launch token before signalling that group. Dead PIDs alone
 do not prove an external request cancelled. Unknown groups/requests retain
 claims and cleanup state.
 
+REQ-LAUNCH-002: launch handshake and supervisor identity observations share
+`LAUNCH_START_TIMEOUT_MS` (30 s), capped at the finite command's run budget.
+The executor's group-leader check uses the same maximum. Its grant wait is
+`EXECUTOR_GRANT_TIMEOUT_MS` (45 s): the observation maximum plus the store's
+5 s busy timeout and 10 s checkpoint/scheduling margin. Checkpoint fsync and
+OS stalls beyond that window remain unknown outcomes, never launch success.
+The existing execution timeout starts after grant. Identity inspection outside
+startup allows 30 s per recorded supervisor. Checks: `owned_command.test.ts`,
+delayed-ps, startup-expiry and non-leader cases; near-deadline lock rehearsal
+in `evidence/guest-fixes-r17`.
+
 The gated executor appends an immutable completion fact (started, exit status,
 project/generation/launch/group) to the existing canonical store. It cannot
 allocate, delete resources or change lifecycle state. The operation owner
@@ -93,6 +104,13 @@ Tilt; a matching live `up` is idempotent. `ci` uses the same allocation and
 launch paths with `CI=true` and supervised Tilt CI. All errors keep the owned
 state needed for reconciliation. `--force` reconfigures only a stopped,
 reconciled generation; it refuses live, retained and cleanup-required state.
+
+REQ-CLI-001: SIGINT/SIGTERM during public `ci --json`, including setup and final
+status collection, emits one schemaVersion-1 `INTERRUPTED` error with top-level
+`signal` and exits 130/143 respectively. Output is committed once; ordinary
+results/errors use the same writer. Cancellation adds no signal or deletion
+authority: Janitor's existing parent watcher drains its group, and `down`
+recovers an abandoned operation. Check: `src/commands/ci.test.ts`.
 
 `down` stops only journaled owned groups after verifying their owner and command,
 reconciles completion facts, records finished owned Compose producers, and deletes receipted Compose containers and
@@ -165,6 +183,20 @@ replay such an append; its runner file must be inspected with its owner.
 are consumer snapshots, not ownership authorities. Missing snapshots do not
 release claims. `status --json` is read-only and does not initialize a store.
 It exposes ownership, resources, launches, completion facts and problems.
+REQ-STATUS-002: `project` remains the stored inspection. Separate `launchStatus`
+entries carry `launchId`, `state`, `groupsAbsent`, and `completion`. States are
+`unconfirmed` (no recorded groups), `completed` (stored exit or matching durable
+completion), `resolved` (stored resolution), `terminated` (stored terminal or
+both recorded groups absent without a completion), and `live-or-unknown`.
+Completion provenance matches project, generation, launch, leader and group.
+`groupsAbsent` is a fresh ESRCH-only observation, never a persisted terminal
+fact. Stored terminal facts take precedence over later PID reuse.
+`operationOwnerAbsent` requires ESRCH for the recorded operation PID.
+`cleanupRequired` reflects stored cleanup-required, an absent operation owner,
+or observed completed/terminated launches whose stored receipts remain
+unreconciled. It is conservative during a live operation; callers inspect
+`project.operation` before starting recovery. No observation changes rows,
+claims, files or resource authority. Checks: `src/commands/ci.test.ts`.
 Each resource has `deleted`: true records a tombstone, while false denotes an
 active receipt rather than a fresh physical-presence check. At the 1024-launch
 generation limit, terminal reconciled launches and their completion facts can
@@ -357,6 +389,9 @@ The supported runtime is pinned Bun 1.4.4 (SQLite 3.53.4 in the Linux artifact)
 and Janitor 0.3.1 with process-group-only supervision. The package distributes
 `dist/cli.js`, built with `bun build --target=bun`, plus bundled docs, skill
 and Tilt extension. The same built entrypoint executes gated children.
+REQ-DOC-001: every listed documentation topic embeds its Markdown source as
+text in JavaScript and standalone builds, without runtime source-tree paths.
+Check: `src/commands/doc.test.ts`, public distribution topic tests.
 
 Config remains TOML version 1. Profiles select flag > `SILO_PROFILE` > stored
 profile > base, merge maps and replace arrays unless explicitly appended.

@@ -1,15 +1,50 @@
+import assert from "node:assert/strict";
 import { ProjectOperation, processAbsent } from "../core/lease_store";
+import type { ExecutorCompletion, Launch } from "../core/lease_types";
 import { runningStackHintLines } from "../utils/breadcrumbs";
 import { logger, logKeyValues } from "../utils/logger";
 import { commandRoot } from "./prepare";
 import { commandLiveness } from "../core/owned_command";
 
-export const status = async (options: { config: string; json?: boolean; changed?: boolean }): Promise<void> => {
-  const project = ProjectOperation.inspect(commandRoot(options.config));
-  if (options.json) {
-    console.log(JSON.stringify({ schemaVersion: 1, legacy: false, changed: options.changed ?? false, project }));
-    return;
-  }
+type LaunchStatus = {
+  launchId: string;
+  state: "unconfirmed" | "completed" | "resolved" | "terminated" | "live-or-unknown";
+  groupsAbsent: boolean;
+  completion: ExecutorCompletion | null;
+};
+
+export const observedLaunch = (launch: Launch, completion: ExecutorCompletion | null): LaunchStatus => {
+  const groupsAbsent = launch.supervisorPid !== null && processAbsent(launch.supervisorPid) && processAbsent(-launch.groupId);
+  let state: LaunchStatus["state"];
+  if (launch.phase === "planned" || launch.phase === "cancelled") state = "unconfirmed";
+  else if (launch.phase === "resolved") state = "resolved";
+  else if (launch.phase === "exited" || completion) state = "completed";
+  else if (launch.terminal || groupsAbsent) state = "terminated";
+  else state = "live-or-unknown";
+  return { launchId: launch.id, state, groupsAbsent, completion };
+};
+
+/** Fresh process observations never rewrite the stored ownership or terminal facts. */
+export const readStatus = (config: string, changed = false) => {
+  const project = ProjectOperation.inspect(commandRoot(config));
+  const launchStatus = (project?.launches ?? []).map(launch => {
+    const completion = project!.completions.find(c => c.launchId === launch.id) ?? null;
+    if (completion) assert.deepEqual(
+      [completion.projectId, completion.generation, completion.leaderPid, completion.groupId],
+      [project!.projectId, project!.generation, launch.leaderPid, launch.groupId],
+      "Completion provenance differs from the grant",
+    );
+    return observedLaunch(launch, completion);
+  });
+  const operationOwnerAbsent = project?.operation?.pid != null && processAbsent(project.operation.pid);
+  const cleanupRequired = project?.phase === "cleanup-required" || operationOwnerAbsent || launchStatus.some((observation, index) =>
+    ["completed", "terminated"].includes(observation.state) && !project!.launches[index]!.reconciled,
+  );
+  return { schemaVersion: 1 as const, legacy: false as const, changed, project, launchStatus, operationOwnerAbsent, cleanupRequired };
+};
+
+export const status = async (options: { config: string }): Promise<void> => {
+  const { project, launchStatus, cleanupRequired, operationOwnerAbsent } = readStatus(options.config);
   if (!project?.allocation) { logger.info("No allocated instance. Run env or up to allocate."); return; }
   const allocation = project.allocation;
   logger.info(`Instance: ${allocation.state.name}`);
@@ -17,10 +52,12 @@ export const status = async (options: { config: string; json?: boolean; changed?
   logger.info(`State: ${project.phase}`);
   if (project.problem) logger.warn(project.problem);
   if (project.operation) logger.info(`Operation: ${project.operation.token}, pid ${project.operation.pid}`);
-  for (const launch of project.launches) {
-    const terminal = (launch.supervisorPid === null || processAbsent(launch.supervisorPid)) && (launch.groupId === null || processAbsent(-launch.groupId));
-    logger.info(`Launch ${launch.id}: ${launch.kind}, ${launch.phase}; ${terminal ? "recorded groups absent" : "recorded group live or unknown"}`);
+  if (operationOwnerAbsent) logger.warn("Recorded operation owner is absent; down must recover it.");
+  for (const [index, launch] of project.launches.entries()) {
+    const observation = launchStatus[index]!;
+    logger.info(`Launch ${launch.id}: ${launch.kind}, stored ${launch.phase}; observed ${observation.state}; ${observation.groupsAbsent ? "recorded groups absent" : "group absence unproven"}`);
   }
+  if (cleanupRequired) logger.warn("Cleanup required; ownership is retained. Run down to reconcile.");
   for (const resource of project.resources) logger.info(`Resource: ${resource.kind}/${resource.name} (${resource.id}), ${resource.createdAt}`);
   let tiltLive = false;
   for (const launch of project.launches.filter(l => l.kind === "tilt-up" && !l.terminal)) if (await commandLiveness(launch) === "live") tiltLive = true;
