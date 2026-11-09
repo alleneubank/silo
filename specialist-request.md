@@ -62,7 +62,7 @@ containment. Do not silently exclude the demonstrated replacement races.
 
 | Finding | Distinguishing check |
 | --- | --- |
-| Same-second reused anonymous name | Native `--suite same-second`: equal Docker CreatedAt seconds, replacement/claims preserved. Red baseline and corrected observations retained. |
+| Reused anonymous name with constructed timestamp collision | Native `--suite same-second`: historical audit receipt uses the replacement's Docker `CreatedAt`; record original and replacement timestamps separately, then confirm replacement and claims are preserved. No physical simultaneous-creation claim. Red baseline and corrected observations retained. |
 | Replacement after inspection, before delete | Native `--suite paused-delete`: baseline reaches a transparent scheduling barrier and deletes replacement; candidate has no name-delete operation, reports the surviving name and retains claims/replacement. |
 | Anonymous cleanup at parent removal | Native `--suite parent-volumes`: exact parent and anonymous data absent before intentionally failed later Tilt teardown. |
 | Durable successful retry followed by caller crash | Native `--suite retry-crash`: real failed network deletion, real durable successful retry fact while CLI is stopped, killed CLI, then public recovery/retirement. Narrow lease-store tests also cover import and temporal ordering. |
