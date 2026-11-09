@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import { Database } from "bun:sqlite";
 import { chmodSync, existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import net from "node:net";
+import { once } from "node:events";
 import os from "node:os";
 import path from "node:path";
 import { ProjectOperation, digest, processAbsent } from "./lease_store";
@@ -53,7 +55,7 @@ const targets = (root: string) => [
   { role: "lock" as const, target: prepareFileTarget(root, ".silo.lock", "lock") },
   { role: "config" as const, target: prepareFileTarget(root, "silo.toml", "config") },
 ];
-const open = (root: string, recover = false) => ProjectOperation.open(root, { storePath, legacyInputs, recover, portProbe: async () => true });
+const open = (root: string, recover = false) => ProjectOperation.open(root, { storePath, legacyInputs, recover, listenerProbe: async () => true });
 const retire = async (owner: ProjectOperation) => owner.retire(await owner.prepareRetirement());
 const injectReceipt = (owner: ProjectOperation, receipt: FileReceipt) => {
   const db = new Database(storePath);
@@ -647,6 +649,25 @@ describe("atomic account leases", () => {
       op.file("env").remove(); op.retire(proof);
       expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
     } finally { op.finish(); }
+  });
+
+  test("an outgoing connection's local port does not block retirement", async () => {
+    const root = project("a");
+    const server = net.createServer(() => {});
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+    const client = net.connect((server.address() as net.AddressInfo).port, "127.0.0.1");
+    try {
+      await once(client, "connect");
+      const port = client.localPort!;
+      const op = await ProjectOperation.open(root, { storePath, legacyInputs });
+      try {
+        await op.allocate(allocation(root, "a", port), claims("a", port), targets(root));
+        op.file("env").publish("owned sentinel\n");
+        const proof = await op.prepareRetirement();
+        op.file("env").remove(); op.retire(proof);
+        expect(ProjectOperation.inspect(root, storePath)?.claims).toEqual([]);
+      } finally { op.finish(); }
+    } finally { client.destroy(); server.close(); }
   });
 
   test("a physically replaced parent cannot redirect owned cleanup", async () => {

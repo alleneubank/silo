@@ -10,6 +10,8 @@ export const EPHEMERAL_PORT_START = 49152;
 export const EPHEMERAL_PORT_END = 65535;
 
 export const PORT_CHECK_TIMEOUT_MS = 100;
+// Bounds one read of the kernel's socket tables, which grow with host load.
+export const SOCKET_TABLE_TIMEOUT_MS = 2000;
 export const TOOL_CHECK_TIMEOUT_MS = 2000;
 
 // Bare `tilt up` outlives silo whenever silo dies without running its signal

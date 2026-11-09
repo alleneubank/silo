@@ -12,7 +12,7 @@ import { fileIdentity, prepareFileTarget, type FileRole, type FileTarget } from 
 import { OwnedFile, appendSink } from "./owned_file";
 import { assertNoLegacyState, legacyRegistryDirectories, type findLegacyState } from "./legacy_check";
 import { accountStorePath } from "./allocation_domain";
-import { checkPortFree, type PortCheckFn } from "./ports";
+import { checkPortListenerAbsent, type PortCheckFn } from "./ports";
 
 const MAX_PROJECTS = 10_000;
 const MAX_CLAIMS = 4096;
@@ -211,7 +211,7 @@ type OperationOptions = {
   legacyInputs?: Parameters<typeof findLegacyState>[1];
   recover?: boolean;
   executorEntrypoint?: string;
-  portProbe?: PortCheckFn;
+  listenerProbe?: PortCheckFn;
 };
 
 /** The sole mutation capability: every effect is fenced by this root, generation and operation. */
@@ -226,7 +226,7 @@ export class ProjectOperation {
     readonly token: string,
     readonly executorEntrypoint: string,
     readonly completionJournal: "account" | "parent",
-    private readonly portProbe: PortCheckFn,
+    private readonly listenerProbe: PortCheckFn,
     private readonly protectedDirectories: readonly string[],
   ) {}
 
@@ -273,7 +273,7 @@ export class ProjectOperation {
       return new ProjectOperation(db, storePath, project, token,
         options.executorEntrypoint ?? new URL("../cli.ts", import.meta.url).pathname,
         options.storePath === undefined ? "account" : "parent",
-        options.portProbe ?? checkPortFree,
+        options.listenerProbe ?? checkPortListenerAbsent,
         legacyRegistryDirectories(options.legacyInputs),
       );
     } catch (error) {
@@ -706,7 +706,7 @@ export class ProjectOperation {
     await proveBackendAbsent(this);
     const current = this.current();
     for (const port of Object.values(current?.allocation.state.ports ?? {})) {
-      if (!(await this.portProbe(port))) throw new SiloError(`CLEANUP_REQUIRED: declared port ${port} still has a listener or cannot be proved free; no listener was stopped`, "CLEANUP_REQUIRED");
+      if (!(await this.listenerProbe(port))) throw new SiloError(`CLEANUP_REQUIRED: declared port ${port} still has a TCP or UDP listener; no listener was stopped`, "CLEANUP_REQUIRED");
     }
     this.assertCurrent();
   }

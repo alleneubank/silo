@@ -97,9 +97,10 @@ hooks, or delegates teardown to Tilt, Compose, k3d or a name/label selector.
 Cluster resources and Kubernetes workloads remain by default. Explicit
 `--delete-cluster` deletes exact receipted backend objects.
 `--clean` first proves all command groups terminal, requests resolved, backend
-resources absent and declared host ports free. It seals new effects during
-that proof and its consumption, then removes matching owned snapshots and
-releases only that generation's claims. Any uncertainty keeps ownership.
+resources absent and no TCP listener or peerless UDP socket on a declared host
+port; another process's outgoing connection is not a listener. It seals new
+effects during that proof and its consumption, then removes matching owned
+snapshots and releases only that generation's claims. Any uncertainty keeps ownership.
 
 ## File authority
 

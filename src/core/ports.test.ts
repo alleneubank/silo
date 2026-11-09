@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import net from "node:net";
+import { once } from "node:events";
 import { EPHEMERAL_PORT_END, EPHEMERAL_PORT_START } from "./constants";
-import { allocatePorts, checkPortFree, type PortAllocationEvent } from "./ports";
+import { allocatePorts, checkPortFree, checkPortListenerAbsent, type PortAllocationEvent } from "./ports";
 
 const alwaysFree = async (_port: number): Promise<boolean> => true;
 
@@ -262,5 +264,38 @@ describe("checkPortFree (integration)", () => {
     // Port is genuinely free, so it should be used directly
     expect(allocated.TEST_PORT).toBe(freePort);
     expect(events[0]?.source).toBe("default");
+  });
+});
+
+describe("checkPortListenerAbsent (integration)", () => {
+  test("a TCP listener on any address remains", async () => {
+    for (const hostname of ["127.0.0.1", "::1", "0.0.0.0"]) {
+      const server = Bun.listen({ hostname, port: 0, socket: { data() {} } });
+      try { expect(await checkPortListenerAbsent(server.port)).toBe(false); }
+      finally { server.stop(); }
+    }
+  });
+
+  test("a UDP socket without a peer remains", async () => {
+    const socket = await Bun.udpSocket({ hostname: "127.0.0.1", port: 0 });
+    try { expect(await checkPortListenerAbsent(socket.port)).toBe(false); }
+    finally { socket.close(); }
+  });
+
+  test("an outgoing TCP connection's local port is not a listener", async () => {
+    const server = net.createServer(() => {});
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+    const client = net.connect((server.address() as net.AddressInfo).port, "127.0.0.1");
+    try {
+      await once(client, "connect");
+      expect(await checkPortListenerAbsent(client.localPort!)).toBe(true);
+    } finally { client.destroy(); server.close(); }
+  });
+
+  test("a connected UDP socket's local port is not a listener", async () => {
+    const peer = await Bun.udpSocket({ hostname: "127.0.0.1", port: 0 });
+    const client = await Bun.udpSocket({ hostname: "127.0.0.1", connect: { hostname: "127.0.0.1", port: peer.port } });
+    try { expect(await checkPortListenerAbsent(client.port)).toBe(true); }
+    finally { client.close(); peer.close(); }
   });
 });

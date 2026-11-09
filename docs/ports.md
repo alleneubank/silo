@@ -26,8 +26,10 @@ machines and remote engines are outside this domain's guarantee.
 Peer reads never release, rewrite or expire reservations. No TTL, missing
 lockfile, dead PID or empty backend listing independently authorizes reuse.
 `down --clean` releases only its own generation after terminal command groups,
-completed requests, absent owned backend resources and free declared ports are
-proved. Retained resources and uncertain outcomes keep claims.
+completed requests, absent owned backend resources and no remaining TCP or UDP
+listener on a declared port are proved. Another process's outgoing connection
+that happens to use a declared port as its local port does not block it.
+Retained resources and uncertain outcomes keep claims.
 
 `--force` reconfigures only a stopped, reconciled generation. It cannot disown
 a live stack. Parallel stacks require separate roots and names.
