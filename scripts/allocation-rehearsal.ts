@@ -48,8 +48,10 @@ const ResultSchema = z.object({
     resources: z.array(BackendReceiptSchema.and(z.object({ deleted: z.boolean() }))), launches: z.array(LaunchSchema), completions: z.array(ExecutorCompletionSchema), files: z.array(FileReceiptSchema),
   }).passthrough().nullable().optional(),
 });
-// Outlasts every finite bound the CLI puts on one owned command, so a CLI-side
-// timeout reports its own error before the harness stops the CLI.
+// Outlasts the CLI's hook and k3d command bounds, so their timeouts report the
+// CLI's own error before the harness stops the CLI. Tilt CI's two-hour bound
+// (TILT_CI_TIMEOUT_MS) is deliberately not covered: a stuck Tilt CI is stopped
+// by the harness first.
 const COMMAND_TIMEOUT_MS = Math.max(HOOK_TIMEOUT_MS, K3D_CREATE_TIMEOUT_MS, K3D_DELETE_TIMEOUT_MS) + 120_000;
 async function command(cwd: string, argv: string[], env = safeEnv) {
   const id = ++commandNumber;
