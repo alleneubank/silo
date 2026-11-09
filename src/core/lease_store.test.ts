@@ -201,7 +201,21 @@ describe("image-cache receipt authority", () => {
       const { launch, observed } = cacheCreation(owner); const receipt = owner.recordImageCacheCreation(launch.id, observed);
       owner.markLaunchTerminal(launch.id); owner.checkpointLaunch({ ...launch, terminal: true, reconciled: true });
       capability = owner.authorizeImageCacheDeletion(resourceReceiptKey(receipt));
-      for (let i = 0; i < 1024; i++) owner.markLaunchTerminal(owner.planLaunch({ kind: "read", command: ["true"], effect: "none" }).id);
+      const read = owner.planLaunch({ kind: "read", command: ["true"], effect: "none" });
+      owner.markLaunchTerminal(read.id);
+      const history = owner.launches(); const resolved = history.find(l => l.id === read.id)!;
+      const db = new Database(storePath);
+      try {
+        // Seed inert history in one transaction; the real planner performs compaction.
+        db.transaction(() => {
+          const insert = db.query("INSERT INTO launches (project_id, generation, id, receipt) VALUES (?, ?, ?, ?)");
+          for (let index = history.length; index < 1024; index++) {
+            const id = `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
+            insert.run(owner.projectId, owner.generation, id, JSON.stringify({ ...resolved, id }));
+          }
+        })();
+      } finally { db.close(); }
+      owner.markLaunchTerminal(owner.planLaunch({ kind: "read", command: ["true"], effect: "none" }).id);
       expect(owner.launches().some(l => l.id === launch.id)).toBe(false);
       expect(owner.resources()).toEqual([receipt]);
       expect(owner.planImageCacheDeletion(owner.authorizeImageCacheDeletion(resourceReceiptKey(receipt))).deletionTarget?.kind).toBe("image-cache");
