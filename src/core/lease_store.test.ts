@@ -10,7 +10,7 @@ import path from "node:path";
 import { ProjectOperation, digest, processAbsent } from "./lease_store";
 import { fileIdentity, prepareFileTarget } from "./file_target";
 import { appendGithubEnv, writeEnvAndLockfile } from "./env";
-import { runOwnedCommand, startOwnedCommand } from "./owned_command";
+import { runOwnedCommand, startOwnedCommand, stopOwnedCommand } from "./owned_command";
 import type { Allocation, Claim, FileReceipt } from "./lease_types";
 import { BackendReceiptSchema } from "./lease_types";
 import { createListenerProbe } from "./socket_listeners";
@@ -78,6 +78,7 @@ describe("atomic account leases", () => {
       const running = await startOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "pending-creation", effect: "create", timeoutMs: 5000 });
       const result = await running.exited;
       op.recordCommandResult(result.launch);
+      await stopOwnedCommand(result.launch);
       op.markLaunchTerminal(result.launch.id);
       const unresolved = op.launches().find(l => l.id === result.launch.id)!;
       for (let index = 0; index < 1023; index++) {
