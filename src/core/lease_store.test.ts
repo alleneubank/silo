@@ -68,22 +68,36 @@ const claims = (name: string, port: number): Claim[] => [
   { domain: "instance-name", resource: name }, { domain: "host-port", resource: String(port) },
 ];
 
+const withCompletionWriter = async (root: string, observe: () => void): Promise<void> => {
+  const script = 'import {Database} from "bun:sqlite"; const db=new Database(process.argv[1]); db.exec("PRAGMA busy_timeout=5000; BEGIN EXCLUSIVE"); console.log("locked"); await Bun.stdin.stream().getReader().read(); db.exec("COMMIT"); db.close();';
+  const writer = Bun.spawn([process.execPath, "-e", script, storePath], { stdin: "pipe", stdout: "pipe", stderr: "pipe", detached: true, timeout: 15_000 });
+  writeFileSync(path.join(root, "writer.pid"), String(writer.pid));
+  const errors = new Response(writer.stderr).text();
+  try {
+    const ready = await writer.stdout.getReader().read();
+    expect(new TextDecoder().decode(ready.value)).toBe("locked\n");
+    expect(writer.exitCode).toBe(null);
+    const started = performance.now();
+    observe();
+    const elapsedMs = performance.now() - started;
+    expect(elapsedMs, "completion observation must return while the writer holds its lock, well before the 5 s store timeout").toBeLessThan(1000);
+    expect(writer.exitCode).toBe(null);
+    expect(writer.signalCode).toBe(null);
+  } finally {
+    writer.stdin.end();
+    expect({ exitCode: await writer.exited, stderr: await errors }).toEqual({ exitCode: 0, stderr: "" });
+  }
+};
+
 describe("atomic account leases", () => {
   test("a locked completion observation leaves the active operation usable after the writer releases", async () => {
     const root = project("completion-contention");
     const owner = await open(root);
     const key = { storePath, projectId: owner.projectId, generation: owner.generation, launchId: "00000000-0000-4000-8000-000000000001" };
-    const script = 'import {Database} from "bun:sqlite"; const db=new Database(process.argv[1]); db.exec("PRAGMA busy_timeout=5000; BEGIN EXCLUSIVE"); console.log("locked"); await Bun.stdin.stream().getReader().read(); db.exec("COMMIT"); db.close();';
-    const writer = Bun.spawn([process.execPath, "-e", script, storePath], { stdin: "pipe", stdout: "pipe", stderr: "pipe", detached: true, timeout: 15_000 });
-    writeFileSync(path.join(root, "writer.pid"), String(writer.pid));
-    const errors = new Response(writer.stderr).text();
     try {
-      const ready = await writer.stdout.getReader().read();
-      expect(new TextDecoder().decode(ready.value)).toBe("locked\n");
-      expect(() => ProjectOperation.readExecutorCompletion(key)).toThrow();
-      writer.stdin.write("release\n");
-      writer.stdin.end();
-      expect({ exitCode: await writer.exited, stderr: await errors }).toEqual({ exitCode: 0, stderr: "" });
+      await withCompletionWriter(root, () => {
+        expect(() => ProjectOperation.readExecutorCompletion(key)).toThrow();
+      });
       expect(owner.current()).toBe(null);
       expect(ProjectOperation.readExecutorCompletion(key)).toBe(null);
       owner.finish();
@@ -94,13 +108,27 @@ describe("atomic account leases", () => {
         expect(next.current()).toBe(null);
       } finally { next.finish(); }
       expect(ProjectOperation.inspect(root, storePath)?.operation).toBe(null);
+    } finally { owner.finish(); }
+  }, 30_000);
+
+  test("a completion observation yields no fact with two active operations and leaves both usable", async () => {
+    const firstRoot = project("completion-first");
+    const secondRoot = project("completion-second");
+    const first = await open(firstRoot);
+    const second = await open(secondRoot);
+    const key = { storePath, projectId: first.projectId, generation: first.generation, launchId: "00000000-0000-4000-8000-000000000001" };
+    try {
+      await withCompletionWriter(firstRoot, () => {
+        expect(ProjectOperation.readExecutorCompletion(key)).toBe(null);
+      });
+      expect(first.current()).toBe(null);
+      expect(second.current()).toBe(null);
     } finally {
-      writer.stdin.end();
-      if (writer.exitCode === null && writer.signalCode === null) writer.kill("SIGTERM");
-      await writer.exited;
-      await errors;
-      owner.finish();
+      try { first.finish(); }
+      finally { second.finish(); }
     }
+    expect(ProjectOperation.inspect(firstRoot, storePath)?.operation).toBe(null);
+    expect(ProjectOperation.inspect(secondRoot, storePath)?.operation).toBe(null);
   }, 30_000);
 
   test("resolved launch history yields capacity without discarding uncertainty or resource history", async () => {
