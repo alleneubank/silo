@@ -304,8 +304,10 @@ const writeJsonResult = (emission: JsonEmission): Promise<void> | void => {
     process.stdout.write(payload, error => error ? reject(error) : resolve());
   });
   return withTimeout(written, JSON_OUTPUT_TIMEOUT_MS, "JSON output").catch(error => {
-    process.stdout.destroy();
-    throw error;
+    // Bun can keep a native pipe write alive after the Writable is destroyed.
+    // The CLI cannot recover a partly delivered result, so close with failure.
+    try { writeFileSync(2, `silo error: ${error instanceof Error ? error.message : "JSON output failed"}\n`); }
+    finally { process.exit(1); }
   });
 };
 
