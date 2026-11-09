@@ -51,9 +51,11 @@ Cleanup observes each declared port once, serially, with a maximum of
 warnings, missing fields, unknown states, malformed or incomplete output,
 output over 1 MiB, and an observation that does not finish within that bound
 refuse cleanup and replacement before ownership is released. Linux observations
-use the same size and time bounds. Missing or uncertain IPv6 tables also refuse
-the proof; unsupported platforms refuse it. A successful empty macOS listing
-refuses the proof as well.
+use the same size and time bounds. A single missing IPv6 table refuses; both
+missing IPv6 tables also refuse when `/proc/sys/net/ipv6` exists or cannot be
+observed. Both missing tables are accepted when that sysctl directory is absent,
+indicating a kernel without IPv6. Unsupported platforms refuse the proof. A
+successful empty macOS listing refuses the proof as well.
 
 Neither observation reserves the port or prevents a socket appearing after
 the observation. Candidate allocation still uses native TCP/UDP binds and
