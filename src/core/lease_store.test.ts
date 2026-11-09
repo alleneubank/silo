@@ -69,6 +69,40 @@ const claims = (name: string, port: number): Claim[] => [
 ];
 
 describe("atomic account leases", () => {
+  test("a locked completion observation leaves the active operation usable after the writer releases", async () => {
+    const root = project("completion-contention");
+    const owner = await open(root);
+    const key = { storePath, projectId: owner.projectId, generation: owner.generation, launchId: "00000000-0000-4000-8000-000000000001" };
+    const script = 'import {Database} from "bun:sqlite"; const db=new Database(process.argv[1]); db.exec("PRAGMA busy_timeout=5000; BEGIN EXCLUSIVE"); console.log("locked"); await Bun.stdin.stream().getReader().read(); db.exec("COMMIT"); db.close();';
+    const writer = Bun.spawn([process.execPath, "-e", script, storePath], { stdin: "pipe", stdout: "pipe", stderr: "pipe", detached: true, timeout: 15_000 });
+    writeFileSync(path.join(root, "writer.pid"), String(writer.pid));
+    const errors = new Response(writer.stderr).text();
+    try {
+      const ready = await writer.stdout.getReader().read();
+      expect(new TextDecoder().decode(ready.value)).toBe("locked\n");
+      expect(() => ProjectOperation.readExecutorCompletion(key)).toThrow();
+      writer.stdin.write("release\n");
+      writer.stdin.end();
+      expect({ exitCode: await writer.exited, stderr: await errors }).toEqual({ exitCode: 0, stderr: "" });
+      expect(owner.current()).toBe(null);
+      expect(ProjectOperation.readExecutorCompletion(key)).toBe(null);
+      owner.finish();
+      expect(ProjectOperation.readExecutorCompletion(key)).toBe(null);
+      const next = await open(root);
+      try {
+        expect(ProjectOperation.readExecutorCompletion(key)).toBe(null);
+        expect(next.current()).toBe(null);
+      } finally { next.finish(); }
+      expect(ProjectOperation.inspect(root, storePath)?.operation).toBe(null);
+    } finally {
+      writer.stdin.end();
+      if (writer.exitCode === null && writer.signalCode === null) writer.kill("SIGTERM");
+      await writer.exited;
+      await errors;
+      owner.finish();
+    }
+  }, 30_000);
+
   test("resolved launch history yields capacity without discarding uncertainty or resource history", async () => {
     const root = project("history-capacity"); const op = await open(root);
     try {

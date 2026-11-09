@@ -146,8 +146,8 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
         }
       }
       const retry = Bun.spawn([...command, "ci", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 15_000 });
-      const [retryExit, retryOutput] = await Promise.all([retry.exited, new Response(retry.stdout).text()]);
-      expect(retryExit).toBe(1);
+      const [retryExit, retryOutput, retryErrors] = await Promise.all([retry.exited, new Response(retry.stdout).text(), new Response(retry.stderr).text()]);
+      expect(retryExit, `Retry exited ${retryExit}\nstdout: ${retryOutput}\nstderr: ${retryErrors}`).toBe(1);
       expect(JSON.parse(retryOutput)).toMatchObject({ code: "BUSY" });
       const recover = Bun.spawn([...command, "down", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
       const [recoverExit, recoverOutput, recoverErrors] = await Promise.all([recover.exited, new Response(recover.stdout).text(), new Response(recover.stderr).text()]);
@@ -195,12 +195,13 @@ for (const stage of ["setup", "final-status"] as const) {
       expect(result.cleanupRequired).toBe(stage === "setup");
       if (stage === "final-status") expect(result.project.operation).toBe(null);
       const retry = Bun.spawn([...command, "ci", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
-      const [retryExit, retryOutput] = await Promise.all([retry.exited, new Response(retry.stdout).text()]);
+      const [retryExit, retryOutput, retryErrors] = await Promise.all([retry.exited, new Response(retry.stdout).text(), new Response(retry.stderr).text()]);
+      const retryDiagnostic = `Retry exited ${retryExit}\nstdout: ${retryOutput}\nstderr: ${retryErrors}`;
       if (stage === "setup") {
-        expect(retryExit).toBe(1);
+        expect(retryExit, retryDiagnostic).toBe(1);
         expect(JSON.parse(retryOutput)).toMatchObject({ code: "BUSY" });
       } else {
-        expect(retryExit).toBe(0);
+        expect(retryExit, retryDiagnostic).toBe(0);
         expect(JSON.parse(retryOutput).project.operation).toBe(null);
       }
       const down = Bun.spawn([...command, "down", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
