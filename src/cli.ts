@@ -289,6 +289,12 @@ const ciInterruption = (signal: InterruptSignal) => new SiloError(
   "INTERRUPTED", { details: { signal } },
 );
 
+const exitWithDiagnostic = (message: string, exitCode: 1 | 130 | 143): never => {
+  // A stopped diagnostic reader must not hold the exiting CLI open.
+  try { process.stderr.write(`silo error: ${message}\n`); }
+  finally { process.exit(exitCode); }
+};
+
 const writeJsonResult = (emission: JsonEmission): Promise<void> | void => {
   if (jsonResultStarted) return;
   const value = emission.kind === "interrupt" ? errorResult(ciInterruption(emission.signal)) : emission.value;
@@ -306,22 +312,23 @@ const writeJsonResult = (emission: JsonEmission): Promise<void> | void => {
   return withTimeout(written, JSON_OUTPUT_TIMEOUT_MS, "JSON output").catch(error => {
     // Bun can keep a native pipe write alive after the Writable is destroyed.
     // The CLI cannot recover a partly delivered result, so close with failure.
-    try { writeFileSync(2, `silo error: ${error instanceof Error ? error.message : "JSON output failed"}\n`); }
-    finally { process.exit(1); }
+    exitWithDiagnostic(error instanceof Error ? error.message : "JSON output failed", 1);
   });
 };
 
 const handleCiInterrupts = (): (() => void) => {
-  const interrupt = (signal: InterruptSignal, exitCode: number) => {
+  const interrupt = (signal: InterruptSignal) => {
     if (jsonResultStarted) return;
-    if (jsonOutput) writeJsonResult({ kind: "interrupt", signal });
-    else writeFileSync(2, `silo error: ${ciInterruption(signal).message}\n`);
+    const exitCode = signal === "SIGINT" ? 130 : 143;
     // Exiting leaves cleanup with Janitor's existing parent watcher. The
     // handler grants no new process signal or resource deletion authority.
-    process.exit(exitCode);
+    if (jsonOutput) {
+      try { writeJsonResult({ kind: "interrupt", signal }); }
+      finally { process.exit(exitCode); }
+    } else exitWithDiagnostic(ciInterruption(signal).message, exitCode);
   };
-  const onInt = () => interrupt("SIGINT", 130);
-  const onTerm = () => interrupt("SIGTERM", 143);
+  const onInt = () => interrupt("SIGINT");
+  const onTerm = () => interrupt("SIGTERM");
   process.on("SIGINT", onInt);
   process.on("SIGTERM", onTerm);
   return () => { process.off("SIGINT", onInt); process.off("SIGTERM", onTerm); };
