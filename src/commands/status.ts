@@ -1,10 +1,10 @@
-import assert from "node:assert/strict";
 import { ProjectOperation, processAbsent } from "../core/lease_store";
 import type { ExecutorCompletion, Launch } from "../core/lease_types";
 import { runningStackHintLines } from "../utils/breadcrumbs";
 import { logger, logKeyValues } from "../utils/logger";
 import { commandRoot } from "./prepare";
 import { commandLiveness } from "../core/owned_command";
+import { SiloError } from "../utils/errors";
 
 type LaunchStatus = {
   launchId: string;
@@ -29,11 +29,12 @@ export const readStatus = (config: string, changed = false) => {
   const project = ProjectOperation.inspect(commandRoot(config));
   const launchStatus = (project?.launches ?? []).map(launch => {
     const completion = project!.completions.find(c => c.launchId === launch.id) ?? null;
-    if (completion) assert.deepEqual(
-      [completion.projectId, completion.generation, completion.leaderPid, completion.groupId],
-      [project!.projectId, project!.generation, launch.leaderPid, launch.groupId],
-      "Completion provenance differs from the grant",
-    );
+    if (completion && (completion.projectId !== project!.projectId || completion.generation !== project!.generation ||
+        completion.leaderPid !== launch.leaderPid || completion.groupId !== launch.groupId)) {
+      throw new SiloError(`Completion provenance differs from the grant for launch ${launch.id}; ownership retained`, "COMPLETION_PROVENANCE_MISMATCH", {
+        details: { launchId: launch.id, projectId: project!.projectId, generation: project!.generation },
+      });
+    }
     return observedLaunch(launch, completion);
   });
   const operationOwnerAbsent = project?.operation?.pid != null && processAbsent(project.operation.pid);

@@ -108,7 +108,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
           const foreign = Bun.spawn([...command, "status", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 15_000 });
           const foreignResult = JSON.parse(await new Response(foreign.stdout).text());
           expect(await foreign.exited).toBe(1);
-          expect(foreignResult).toMatchObject({ schemaVersion: 1, code: "SILO_ERROR" });
+          expect(foreignResult).toMatchObject({ schemaVersion: 1, code: "COMPLETION_PROVENANCE_MISMATCH" });
           expect(foreignResult.message).toContain("Completion provenance differs from the grant");
         } finally {
           db.query("INSERT OR REPLACE INTO completions (project_id, generation, launch_id, receipt) VALUES (?, ?, ?, ?)").run(...key, JSON.stringify(completion));

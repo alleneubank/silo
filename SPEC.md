@@ -108,7 +108,8 @@ reconciled generation; it refuses live, retained and cleanup-required state.
 REQ-CLI-001: SIGINT/SIGTERM during public `ci --json`, including setup and final
 status collection, emits one schemaVersion-1 `INTERRUPTED` error with top-level
 `signal` and exits 130/143 respectively. Output is committed once; ordinary
-results/errors use the same writer. Cancellation adds no signal or deletion
+results/errors use the same writer. A signal after final JSON emission starts
+does not overwrite that result or its exit status. Cancellation adds no signal or deletion
 authority: Janitor's existing parent watcher drains its group, and `down`
 recovers an abandoned operation. Check: `src/commands/ci.test.ts`.
 
@@ -189,6 +190,7 @@ entries carry `launchId`, `state`, `groupsAbsent`, and `completion`. States are
 completion), `resolved` (stored resolution), `terminated` (stored terminal or
 both recorded groups absent without a completion), and `live-or-unknown`.
 Completion provenance matches project, generation, launch, leader and group.
+A mismatched fact refuses with `COMPLETION_PROVENANCE_MISMATCH` and retains ownership.
 `groupsAbsent` is a fresh ESRCH-only observation, never a persisted terminal
 fact. Stored terminal facts take precedence over later PID reuse.
 `operationOwnerAbsent` requires ESRCH for the recorded operation PID.

@@ -62,6 +62,7 @@ Interrupting `ci --json` with SIGINT or SIGTERM returns one `INTERRUPTED`
 error with a top-level `signal` field and exit 130 or 143. The supervisor
 drains its recorded group after the CLI exits. Run `status` and `down` to
 recover an abandoned operation and reconcile retained ownership.
+A signal after final JSON emission starts preserves that result and its exit status.
 
 Status preserves stored fields under `project`. Separate `launchStatus` entries
 report `launchId`, observed `state`, `groupsAbsent` and a provenance-checked
@@ -74,6 +75,8 @@ was recorded; `live-or-unknown` proves neither completion nor readiness.
 also reflects unreconciled completed/terminated launches and stored cleanup
 problems; inspect a live `project.operation` before attempting recovery.
 Status never imports facts into ownership or releases claims; `down` does that.
+A fact whose provenance conflicts with its grant refuses with
+`COMPLETION_PROVENANCE_MISMATCH`; ownership remains retained.
 
 Launch identity observations share a 30-second startup budget, capped at the
 finite command's run budget, followed by the durable grant checkpoint. The

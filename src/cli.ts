@@ -270,12 +270,12 @@ Examples:
 };
 
 let jsonOutput = Bun.argv.includes("--json");
-let jsonResultEmitted = false;
+let jsonResultStarted = false;
 let removeInterruptHandlers = () => {};
 
 const writeJsonResult = (result: unknown): void => {
-  if (jsonResultEmitted) return;
-  jsonResultEmitted = true;
+  if (jsonResultStarted) return;
+  jsonResultStarted = true;
   writeFileSync(1, JSON.stringify(result) + "\n");
 };
 
@@ -288,6 +288,7 @@ const errorResult = (error: unknown) => ({
 
 const handleCiInterrupts = (): (() => void) => {
   const interrupt = (signal: "SIGINT" | "SIGTERM", exitCode: number) => {
+    if (jsonResultStarted) return;
     const error = new SiloError(`ci interrupted by ${signal}; owned claims retained. Run silo status and silo down to reconcile.`, "INTERRUPTED", { details: { signal } });
     if (jsonOutput) writeJsonResult(errorResult(error));
     else writeFileSync(2, `silo error: ${error.message}\n`);
