@@ -45,11 +45,15 @@ numeric endpoints and NUL-delimited machine fields. TCP LISTEN and UDP sockets
 without a peer block cleanup on loopback, wildcard and non-loopback addresses,
 for both address families. Connected TCP/UDP sockets do not block it.
 The guarantee covers sockets visible to this OS account; other accounts are
-outside the allocation domain. A successful nonempty listing is required:
-execution failure, warnings, missing fields, unknown states, malformed or
-incomplete output, output over 1 MiB, and observations over two seconds all
+outside the allocation domain. A successful nonempty listing is required.
+Cleanup observes each declared port once, serially, with a maximum of
+`SOCKET_TABLE_TIMEOUT_MS` (30,000 ms) per observation. Execution errors,
+warnings, missing fields, unknown states, malformed or incomplete output,
+output over 1 MiB, and an observation that does not finish within that bound
 refuse cleanup and replacement before ownership is released. Linux observations
-use the same size and time bounds. Other platforms refuse this proof.
+use the same size and time bounds. Missing or uncertain IPv6 tables also refuse
+the proof; unsupported platforms refuse it. A successful empty macOS listing
+refuses the proof as well.
 
 Neither observation reserves the port or prevents a socket appearing after
 the observation. Candidate allocation still uses native TCP/UDP binds and
