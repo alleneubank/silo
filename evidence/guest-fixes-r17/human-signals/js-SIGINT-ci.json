@@ -1,0 +1,15 @@
+{
+  "cmd": [
+    "/Users/allen/.local/share/mise/installs/bun/1.4.4/bin/bun",
+    "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/head6c-native-js/cli.js",
+    "ci",
+    "js-sigint",
+    "--timeout",
+    "75s"
+  ],
+  "cwd": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/human-native-js-SIGINT",
+  "pid": 56226,
+  "exitCode": 130,
+  "stdout": "silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/human-native-js-SIGINT/.localnet.env\nsilo info: Wrote lockfile\nsilo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/human-native-js-SIGINT/.localnet.env\nsilo info: Wrote lockfile\n",
+  "stderr": "silo error: ci interrupted by SIGINT; owned claims retained. Run silo status and silo down to reconcile.\n"
+}

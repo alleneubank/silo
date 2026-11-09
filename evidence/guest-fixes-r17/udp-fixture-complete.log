@@ -1,0 +1,14 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/lease_store.test.ts:
+(pass) atomic account leases > connected UDP on 127.0.0.1 permits retirement while its peerless peer refuses [984.61ms]
+(pass) atomic account leases > connected UDP on ::1 permits retirement while its peerless peer refuses [743.17ms]
+
+src/core/ports.test.ts:
+(pass) checkPortListenerAbsent (integration) > a connected UDP socket's local port is not a listener [549.60ms]
+
+ 3 pass
+ 66 filtered out
+ 0 fail
+ 16 expect() calls
+Ran 3 tests across 2 files. [2.47s]

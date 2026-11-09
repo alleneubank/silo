@@ -195,7 +195,7 @@ entries carry `launchId`, `state`, `groupsAbsent`, and `completion`. States are
 completion), `resolved` (stored resolution), `terminated` (stored terminal or
 both recorded groups absent without a completion), and `live-or-unknown`.
 Completion provenance matches project, generation, launch, leader and group.
-A mismatched fact refuses with `COMPLETION_PROVENANCE_MISMATCH` and retains ownership.
+Status refuses a mismatched fact with `COMPLETION_PROVENANCE_MISMATCH` and retains ownership.
 `groupsAbsent` is a fresh ESRCH-only observation, never a persisted terminal
 fact. Stored terminal facts take precedence over later PID reuse.
 `operationOwnerAbsent` requires ESRCH for the recorded operation PID.

@@ -1,0 +1,3 @@
+{"mode":"stream","exitCode":2,"elapsedMs":1692,"bytesAccepted":8192,"stderr":"DEADLINE\n"}
+{"mode":"bun","exitCode":2,"elapsedMs":1510,"bytesAccepted":8192,"stderr":"DEADLINE\n"}
+{"mode":"sink","exitCode":2,"elapsedMs":1553,"bytesAccepted":8192,"stderr":"DEADLINE\n"}

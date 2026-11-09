@@ -1,0 +1,9 @@
+{
+  "mode": "after",
+  "exitCode": 1,
+  "timedOut": false,
+  "elapsedMs": 30884,
+  "stdoutBytes": 8192,
+  "stderrBytes": 8192,
+  "stderrFilledBytes": 8192
+}

@@ -1,0 +1,24 @@
+╭────────────────────────────────────╮
+│ lefthook v1.13.6  hook: pre-commit │
+╰────────────────────────────────────╯
+┃  format ❯ 
+
+Found 0 warnings and 0 errors.
+Finished in 37ms on 1 file with 90 rules using 18 threads.
+
+┃  lint ❯ 
+
+Found 0 warnings and 0 errors.
+Finished in 20ms on 1 file with 90 rules using 18 threads.
+
+┃  typecheck ❯ 
+
+
+                                      
+  ────────────────────────────────────
+summary: (done in 9.88 seconds)       
+✓ format (0.85 seconds)
+✓ lint (0.86 seconds)
+✓ typecheck (9.72 seconds)
+[feat/atomic-allocation 969a3a9] fix(cli): terminate after a structured output flush failure
+ 1 file changed, 4 insertions(+), 2 deletions(-)

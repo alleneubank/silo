@@ -1,0 +1,42 @@
+bun test v1.4.4 (38afee6c8)
+
+src/commands/ci.test.ts:
+106 |           expect(missingResult.project.launches).toEqual(before.launches);
+107 |           db.query("INSERT INTO completions (project_id, generation, launch_id, receipt) VALUES (?, ?, ?, ?)").run(...key, JSON.stringify({ ...completion, projectId: "another-project" }));
+108 |           const foreign = Bun.spawn([...command, "status", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 15_000 });
+109 |           const foreignResult = JSON.parse(await new Response(foreign.stdout).text());
+110 |           expect(await foreign.exited).toBe(1);
+111 |           expect(foreignResult).toMatchObject({ schemaVersion: 1, code: "COMPLETION_PROVENANCE_MISMATCH" });
+                                      ^
+error: expect(received).toMatchObject(expected)
+
+  {
+-   "code": "COMPLETION_PROVENANCE_MISMATCH",
++   "code": "SILO_ERROR",
++   "message": 
++ "Completion provenance differs from the grant
++ + actual - expected
++ 
++   [
++ +   'another-project',
++ -   'a1772d4e-00f3-461e-b27d-6a118c1f97c3',
++     1,
++     92811,
++     92811
++   ]
++ "
++ ,
+    "schemaVersion": 1,
+  }
+
+- Expected  - 1
++ Received  + 14
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:111:33)
+(fail) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [2794.79ms]
+
+ 0 pass
+ 3 filtered out
+ 1 fail
+ 15 expect() calls
+Ran 1 test across 1 file. [3.32s]

@@ -1,0 +1,81 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/owned_command.test.ts:
+(pass) source executes an owned command through the CLI gate after its durable grant [141.55ms]
+(pass) bundled.js executes an owned command through the CLI gate after its durable grant [211.72ms]
+(pass) standalone executes an owned command through the CLI gate after its durable grant [1164.25ms]
+(pass) a launch with every ps delayed 2.2s still executes inside its startup budget [5215.55ms]
+(pass) a launch with every ps delayed 11s still executes inside its startup budget [22800.41ms]
+(pass) source executor refuses malformed JSON without executing the command [611.73ms]
+(pass) source executor refuses invalid schema without executing the command [883.05ms]
+(pass) source executor refuses foreign launch without executing the command [483.83ms]
+(pass) source executor refuses foreign leader without executing the command [471.76ms]
+(pass) source executor refuses foreign group without executing the command [745.68ms]
+(pass) source executor refuses EOF without executing the command [297.57ms]
+(pass) source executor refuses oversized grant without executing the command [372.82ms]
+(pass) standalone executor refuses malformed JSON without executing the command [270.00ms]
+(pass) standalone executor refuses invalid schema without executing the command [510.69ms]
+(pass) standalone executor refuses foreign launch without executing the command [254.28ms]
+(pass) standalone executor refuses foreign leader without executing the command [898.99ms]
+(pass) standalone executor refuses foreign group without executing the command [1164.38ms]
+(pass) standalone executor refuses EOF without executing the command [635.46ms]
+(pass) standalone executor refuses oversized grant without executing the command [483.35ms]
+
+src/commands/ci.test.ts:
+88 |       const [retryExit, retryOutput] = await Promise.all([retry.exited, new Response(retry.stdout).text()]);
+89 |       expect(retryExit).toBe(1);
+90 |       expect(JSON.parse(retryOutput)).toMatchObject({ code: "BUSY" });
+91 |       const recover = Bun.spawn([...command, "down", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
+92 |       const [recoverExit, recoverOutput, recoverErrors] = await Promise.all([recover.exited, new Response(recover.stdout).text(), new Response(recover.stderr).text()]);
+93 |       expect({ recoverExit, recoverErrors: recoverExit === 0 ? "" : recoverErrors }).toEqual({ recoverExit: 0, recoverErrors: "" });
+                                                                                          ^
+error: expect(received).toEqual(expected)
+
+  {
+    "recoverErrors": "",
+-   "recoverExit": 0,
++   "recoverExit": 1,
+  }
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:93:86)
+(fail) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [5615.48ms]
+88 |       const [retryExit, retryOutput] = await Promise.all([retry.exited, new Response(retry.stdout).text()]);
+89 |       expect(retryExit).toBe(1);
+90 |       expect(JSON.parse(retryOutput)).toMatchObject({ code: "BUSY" });
+91 |       const recover = Bun.spawn([...command, "down", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
+92 |       const [recoverExit, recoverOutput, recoverErrors] = await Promise.all([recover.exited, new Response(recover.stdout).text(), new Response(recover.stderr).text()]);
+93 |       expect({ recoverExit, recoverErrors: recoverExit === 0 ? "" : recoverErrors }).toEqual({ recoverExit: 0, recoverErrors: "" });
+                                                                                          ^
+error: expect(received).toEqual(expected)
+
+  {
+    "recoverErrors": "",
+-   "recoverExit": 0,
++   "recoverExit": 1,
+  }
+
+- Expected  - 1
++ Received  + 1
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:93:86)
+(fail) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [4642.27ms]
+
+src/commands/doc.test.ts:
+(pass) cli.js prints every listed topic outside the source tree [6249.69ms]
+(pass) silo prints every listed topic outside the source tree [8026.35ms]
+(pass) doc topics > prints docs for each topic [3.60ms]
+(pass) doc topics > lists topics in plain text [0.26ms]
+(pass) doc topics > prints topics as json [0.15ms]
+(pass) doc topics > lists available topics when the topic is unknown [0.14ms]
+
+2 tests failed:
+(fail) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [5615.48ms]
+(fail) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [4642.27ms]
+
+ 25 pass
+ 2 fail
+ 232 expect() calls
+Ran 27 tests across 3 files. [66.22s]

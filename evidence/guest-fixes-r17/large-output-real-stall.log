@@ -1,0 +1,14 @@
+ 6 |   context: string
+ 7 | ): Promise<T> {
+ 8 |   let timeoutId: ReturnType<typeof setTimeout> | undefined;
+ 9 |   const timeoutPromise = new Promise<T>((_, reject) => {
+10 |     timeoutId = setTimeout(() => {
+11 |       reject(new SiloError(`Timed out after ${timeoutMs}ms: ${context}`, "TIMEOUT"));
+                  ^
+error: Timed out after 40000ms: stalled stdout exit
+ details: {},
+    code: "TIMEOUT"
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/utils/timeout.ts:11:14)
+
+Bun v1.4.4 (macOS arm64)

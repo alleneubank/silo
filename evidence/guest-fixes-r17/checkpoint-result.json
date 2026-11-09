@@ -1,0 +1,100 @@
+{
+  "exitCode": 0,
+  "stdout": "{\"exitCode\":143,\"stdout\":\"tool-output\"}\n",
+  "stderr": "",
+  "elapsedMs": 31581,
+  "markerMs": 31558.32421875,
+  "lockAcquiredAt": "2026-11-09T06:46:20.704Z",
+  "inspection": {
+    "schemaVersion": 1,
+    "projectId": "aff90fbc-b7ab-4897-bfbf-4a112506ea7e",
+    "root": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/checkpoint-project-r2",
+    "generation": 1,
+    "phase": "reserved",
+    "problem": null,
+    "operation": {
+      "token": "e5850dec-84e5-4309-ae9b-7c7d386f5e22",
+      "pid": 41168,
+      "startedAt": "2026-11-09T06:45:53.992Z"
+    },
+    "allocation": {
+      "state": {
+        "name": "owned",
+        "ports": {},
+        "identity": {
+          "name": "owned",
+          "prefix": "localnet",
+          "composeName": "localnet-owned",
+          "dockerNetwork": "localnet-owned",
+          "volumePrefix": "localnet-owned",
+          "containerPrefix": "localnet-owned-",
+          "hosts": {}
+        },
+        "createdAt": "2026-01-01T00:00:00Z",
+        "k3dClusterCreated": false
+      },
+      "configPath": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/checkpoint-project-r2/silo.toml",
+      "configSource": "version = 1\n",
+      "fingerprint": "fixture",
+      "urls": {},
+      "k3dArgs": [],
+      "hostOrder": [],
+      "portOrder": [],
+      "urlOrder": [],
+      "engine": null
+    },
+    "claims": [
+      {
+        "domain": "file-target",
+        "resource": "16777232/125720434/silo.toml"
+      },
+      {
+        "domain": "instance-name",
+        "resource": "owned"
+      }
+    ],
+    "resources": [],
+    "launches": [
+      {
+        "id": "92f79bba-1899-4428-97d2-0cd4fcfe748f",
+        "kind": "entrypoint-proof",
+        "command": [
+          "/bin/sh",
+          "-c",
+          "printf tool-output; printf granted > launched.txt; exec sleep 60"
+        ],
+        "effect": "none",
+        "supervisorPid": 41407,
+        "leaderPid": 41413,
+        "groupId": 41413,
+        "supervisorIdentity": "501 41407 Mon Nov  9 06:45:53 2026     janitor --pgroup-only --watch-pid 41168 --grace-ms 5000 -- /Users/allen/.local/share/mise/installs/bun/1.4.4/bin/bun /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/core/fixtures/owned_cli.ts __silo_execute 92f79bba-1899-4428-97d2-0cd4fcfe748f /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/checkpoint-project-r2 aff90fbc-b7ab-4897-bfbf-4a112506ea7e 1 parent",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 143,
+        "reconciled": true,
+        "terminal": false
+      }
+    ],
+    "files": [
+      {
+        "role": "config",
+        "target": {
+          "path": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/checkpoint-project-r2/silo.toml",
+          "base": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/checkpoint-project-r2",
+          "parent": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/checkpoint-project-r2",
+          "parentDevice": "16777232",
+          "parentInode": "125720434",
+          "key": "16777232/125720434/silo.toml"
+        },
+        "published": {
+          "identity": "16777232/125720435",
+          "hash": "dbab12665d98aef021ba64953c61b0ed8a908cfb56a1c01e2fcb4b052b71a2a1",
+          "generation": 1
+        },
+        "pending": null
+      }
+    ],
+    "sinks": [],
+    "completions": []
+  }
+}

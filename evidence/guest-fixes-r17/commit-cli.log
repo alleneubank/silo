@@ -1,0 +1,22 @@
+╭───────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-commit[m │
+╰───────────────────────────────────────╯
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 22ms on 4 files with 90 rules using 18 threads.
+
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 11ms on 4 files with 90 rules using 18 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 33.54 seconds)
+✓ lint (1.82 seconds)
+✓ format (2.05 seconds)
+✓ typecheck (33.11 seconds)
+[feat/atomic-allocation 82863ef] fix(cli): report ci interruption and observed launch completion
+ 6 files changed, 384 insertions(+), 14 deletions(-)
+ create mode 100644 src/commands/ci.test.ts
+ create mode 100644 src/commands/status.test.ts

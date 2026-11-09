@@ -1,0 +1,22 @@
+{"mode":"before","exitCode":null,"timedOut":true,"elapsedMs":40006,"stdoutBytes":8192,"stderrBytes":8192,"stderrFilledBytes":8192}
+ 6 | const make=(label:string)=>{const file=s+'/dual-'+mode+'-'+label+'.fifo';assert.equal(Bun.spawnSync(['/usr/bin/mkfifo',file]).exitCode,0);return{file,read:openSync(file,constants.O_RDONLY|constants.O_NONBLOCK)};};
+ 7 | const out=make('out'),err=make('err');const stdoutFd=openSync(out.file,constants.O_WRONLY|constants.O_NONBLOCK);const fill=openSync(err.file,constants.O_WRONLY|constants.O_NONBLOCK);let filled=0;
+ 8 | try{while(filled<1024*1024)filled+=writeSync(fill,Buffer.alloc(4096,120));}catch(e){assert(e instanceof Error&&'code'in e&&e.code==='EAGAIN');}closeSync(fill);
+ 9 | const stderrFd=openSync(err.file,constants.O_WRONLY);const start=Date.now();const proc=Bun.spawn([cmd,'status','--json'],{cwd:fixture,env,detached:true,stdout:stdoutFd,stderr:stderrFd,timeout:45000});closeSync(stdoutFd);closeSync(stderrFd);writeFileSync(s+'/pids/dual-fifo-'+mode+'.pid',String(proc.pid));appendFileSync('/Users/allen/.handoffs/boss-mobile-release/silo-guest-fixes/resources','dual-fifo-'+mode+' group '+proc.pid+'; diagnostic status to two unread FIFOs; bound45s; teardown own handle/group after verification; FIFOs '+out.file+' '+err.file+'\n');
+10 | let timedOut=false;try{await withTimeout(proc.exited,40000,'dual FIFO exit');}catch(e){timedOut=true;if(proc.exitCode===null&&proc.signalCode===null)proc.kill('SIGTERM');await proc.exited;}
+11 | const elapsedMs=Date.now()-start;const result={mode,exitCode:proc.exitCode,timedOut,elapsedMs,stdoutBytes:readFileSync(out.read).length,stderrBytes:readFileSync(err.read).length,stderrFilledBytes:filled};closeSync(out.read);closeSync(err.read);unlinkSync(out.file);unlinkSync(err.file);writeFileSync(root+'/evidence/guest-fixes-r17/dual-fifo-'+mode+'.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));assert.equal(timedOut,false);assert.equal(proc.exitCode,1);assert(elapsedMs<40000);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    ^
+AssertionError: Expected values to be strictly equal:
+
+true !== false
+
+ generatedMessage: true,
+     actual: true,
+   expected: false,
+   operator: "strictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/dual-fifo.ts:11:432
+
+Bun v1.4.4 (macOS arm64)

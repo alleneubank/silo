@@ -1,0 +1,14 @@
+{
+  "cmd": [
+    "/Users/allen/.local/share/mise/installs/bun/1.4.4/bin/bun",
+    "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/head6c-native-js/cli.js",
+    "down",
+    "--clean",
+    "--json"
+  ],
+  "cwd": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/human-native-happy-js",
+  "pid": 76678,
+  "exitCode": 0,
+  "stdout": "{\"schemaVersion\":1,\"legacy\":false,\"changed\":true,\"project\":{\"schemaVersion\":1,\"projectId\":\"b69999cf-a8e9-4e4e-a7d3-ed969041cb53\",\"root\":\"/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/human-native-happy-js\",\"generation\":0,\"phase\":\"unallocated\",\"problem\":null,\"operation\":null,\"allocation\":null,\"claims\":[],\"resources\":[],\"launches\":[],\"files\":[],\"sinks\":[],\"completions\":[]},\"launchStatus\":[],\"operationOwnerAbsent\":false,\"cleanupRequired\":false}\n",
+  "stderr": "silo info: Removed owned snapshots and released this generation's claims.\n"
+}

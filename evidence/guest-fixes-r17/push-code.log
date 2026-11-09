@@ -1,0 +1,324 @@
+╭─────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-push[m │
+╰─────────────────────────────────────╯
+┃  jscpd ❯ 
+[90m┌────────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
+[90m│[39m[31m Format     [39m[90m│[39m[31m Files analyzed [39m[90m│[39m[31m Total lines [39m[90m│[39m[31m Total tokens [39m[90m│[39m[31m Clones found [39m[90m│[39m[31m Duplicated lines [39m[90m│[39m[31m Duplicated tokens [39m[90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m typescript [90m│[39m 72             [90m│[39m 7722        [90m│[39m 109758       [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m [1mTotal:[22m     [90m│[39m 72             [90m│[39m 7722        [90m│[39m 109758       [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m└────────────[39m[90m┴────────────────[39m[90m┴─────────────[39m[90m┴──────────────[39m[90m┴──────────────[39m[90m┴──────────────────[39m[90m┴───────────────────┘[39m
+[90mFound 0 clones.[39m
+[3m[90mDetection time:[39m[23m: 11.842s
+
+┃  knip ❯ 
+Configuration hints (1)
+changeset    knip.json  Remove from ignoreBinaries
+
+┃  test ❯ 
+bun test v1.4.4 (38afee6c8)
+
+src/core/lease_store.test.ts:
+23 | beforeAll(() => {
+24 |   const root = mkdtempSync(path.join(os.tmpdir(), "silo-supervisor-preflight-"));
+25 |   try {
+26 |     const result = Bun.spawnSync(["janitor", "version"], { cwd: root, stdout: "pipe", stderr: "pipe", timeout: 2000 });
+27 |     if (result.exitCode !== 0) {
+28 |       throw new Error(`Native launch tests require runnable Janitor on PATH from fixture directories (see README prerequisites). ${result.stderr.toString().slice(-4096)}`.trimEnd());
+                                                                                                                                                                                         ^
+error: Native launch tests require runnable Janitor on PATH from fixture directories (see README prerequisites). mise ERROR No version is set for shim: janitor
+Set a global default version with one of the following:
+mise use -g github:alleneubank/janitor@0.3.1
+mise ERROR Version: 2026.10.17 macos-arm64 (2026-10-20)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/core/lease_store.test.ts:28:181)
+(fail) (unnamed) [370.45ms]
+
+src/core/allocation_domain.test.ts:
+(pass) native account store is invariant under a scrubbed HOME [86.43ms]
+
+src/core/hosts.test.ts:
+(pass) resolveHosts > preserves an explicit Tilt host independently of the app host [0.22ms]
+(pass) resolveHosts > uses the app host only when Tilt host is absent [0.02ms]
+(pass) resolveHosts > does not replace an explicitly empty Tilt host with the app hostname [0.01ms]
+
+src/core/lease_types.test.ts:
+(pass) Docker receipt IDs > accepts an exact immutable container ID [1.24ms]
+(pass) Docker receipt IDs > accepts an exact immutable network ID [0.06ms]
+(pass) Docker receipt IDs > refuses a name, truncated or missing container ID [0.74ms]
+(pass) Docker receipt IDs > refuses a name, truncated or missing network ID [0.04ms]
+(pass) Docker receipt IDs > retains named-volume identity for audit without granting a Docker object ID [0.04ms]
+(pass) Docker receipt IDs > target-absent resolution is a terminal exact-ID delete with an unknown exit [0.45ms]
+
+src/core/instance.test.ts:
+(pass) one allocated state renders consistent env, URLs, registry, kubeconfig and final name claims [1.64ms]
+
+src/core/ports.test.ts:
+(pass) allocatePorts > allocates random ports from the ephemeral range in order [0.60ms]
+(pass) allocatePorts > reuses lockfile ports even when config uses random [0.10ms]
+(pass) allocatePorts > falls back to ephemeral when default port is occupied [0.09ms]
+(pass) allocatePorts > falls back to ephemeral when lockfile port is occupied [0.07ms]
+(pass) allocatePorts > skips occupied ports when scanning ephemeral range [0.06ms]
+(pass) allocatePorts > excludedPorts are skipped during ephemeral scan [0.05ms]
+(pass) allocatePorts > excludedPorts force the configured default to fall back to ephemeral [0.07ms]
+(pass) allocatePorts > excludedPorts force lockfile ports to fall back to ephemeral [0.05ms]
+(pass) allocatePorts > ephemeral scan wraps past EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START [2.16ms]
+(pass) checkPortFree (integration) > a UDP listener excludes the scalar host port [1.99ms]
+(pass) checkPortFree (integration) > an IPv6 loopback listener excludes the scalar host port [0.63ms]
+(pass) checkPortFree (integration) > detects port occupied on 127.0.0.1 [2.10ms]
+(pass) checkPortFree (integration) > detects port occupied on 0.0.0.0 [2.15ms]
+(pass) checkPortFree (integration) > accepts port that is free on both interfaces [0.63ms]
+(pass) checkPortListenerAbsent (integration) > a TCP listener on any address remains [1743.35ms]
+(pass) checkPortListenerAbsent (integration) > a UDP socket without a peer remains [554.73ms]
+(pass) checkPortListenerAbsent (integration) > an outgoing TCP connection's local port is not a listener [217.29ms]
+(pass) checkPortListenerAbsent (integration) > a connected UDP socket's local port is not a listener [795.60ms]
+(pass) checkPortListenerAbsent (integration) > an orderly closed outgoing TCP port does not block on TIME-WAIT [142.51ms]
+
+src/core/registry.test.ts:
+(pass) resolveRegistryAdvertiseSettings > throws when k3d hostFrom override does not match resolved registry identity [0.79ms]
+(pass) resolveRegistryAdvertiseSettings > supports safe hostFrom override using K3D_CLUSTER_NAME [0.13ms]
+(pass) resolveRegistryAdvertiseSettings > throws when cluster-network host override does not match resolved registry identity [0.06ms]
+
+src/core/name.test.ts:
+(pass) sanitizeName > normalizes case and replaces invalid characters [0.12ms]
+(pass) sanitizeName > returns fallback for empty input [0.02ms]
+(pass) shortenK3dClusterName > returns original name when within limit
+(pass) shortenK3dClusterName > shortens long names with hash and suffix [0.09ms]
+(pass) shortenK3dClusterName > produces distinct names for long inputs with shared prefix/suffix [0.03ms]
+
+src/core/socket_listeners.test.ts:
+(pass) Linux listener observation > a hung table read refuses at the observation deadline [32.41ms]
+(pass) Linux listener observation > a slow complete observation preserves absence [2202.89ms]
+(pass) Linux listener observation > a slow complete observation preserves presence [2202.84ms]
+(pass) Linux listener observation > complete empty tables prove absence [0.20ms]
+(pass) Linux listener observation > tcp listeners refuse on every local address [0.13ms]
+(pass) Linux listener observation > udp listeners refuse on every local address [0.04ms]
+(pass) Linux listener observation > tcp6 listeners refuse on every local address [0.05ms]
+(pass) Linux listener observation > udp6 listeners refuse on every local address [0.02ms]
+(pass) Linux listener observation > connected TCP, connected UDP and TIME-WAIT do not refuse [0.19ms]
+(pass) Linux listener observation > missing tcp6 refuses while IPv6 is available [0.15ms]
+(pass) Linux listener observation > missing udp6 refuses while IPv6 is available [0.03ms]
+(pass) Linux listener observation > missing tcp6 and udp6 refuses while IPv6 is available [0.03ms]
+(pass) Linux listener observation > both missing IPv6 tables are explained only by independently unavailable IPv6 [0.10ms]
+(pass) Linux listener observation > missing IPv4 tcp always refuses [0.05ms]
+(pass) Linux listener observation > missing IPv4 udp always refuses [0.02ms]
+(pass) Linux listener observation > read errors and failed IPv6 availability observations propagate [0.12ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000" [0.05ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:ZZZZ 00000000:0000 0A 00000000:00000000 00:00000000 00000000 501 0 1234" [0.05ms]
+(pass) Linux listener observation > malformed row refuses: "0: 01007F:C350 00000000:0000 0A 00000000:00000000 00:00000000 00000000 501 0 1234" [0.02ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 bad:0000 0A 00000000:00000000 00:00000000 00000000 501 0 1234" [0.01ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000 ZZ 00000000:00000000 00:00000000 00000000 501 0 1234" [0.01ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000 00 00000000:00000000 00:00000000 00000000 501 0 1234" [0.01ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000 0A 00000000:00000000 00:00000000 00000000 501 0 broken" [0.02ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000 0A 00000000:00000000 00:00000000 00000000 501 0 1234" [0.01ms]
+(pass) Linux listener observation > an unexpected header and an incomplete IPv6 row refuse [0.07ms]
+(pass) macOS listener observation > a slow complete observation preserves absence [2209.15ms]
+(pass) macOS listener observation > a slow complete observation preserves presence [2207.93ms]
+(pass) macOS listener observation > a TCP listener on 127.0.0.1:50000 refuses [0.39ms]
+(pass) macOS listener observation > a TCP listener on 192.0.2.1:50000 refuses [0.02ms]
+(pass) macOS listener observation > a TCP listener on [::1]:50000 refuses [0.02ms]
+(pass) macOS listener observation > a TCP listener on *:50000 refuses
+(pass) macOS listener observation > peerless UDP refuses, connected UDP and TCP do not [0.15ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "" [0.09ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\n" [0.02ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "f4\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=LISTEN\u0000\n" [0.06ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=LISTEN" [0.02ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000n127.0.0.1:50000\u0000TST=LISTEN\u0000\n" [0.07ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:50000\u0000\n" [0.03ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=UNKNOWN\u0000\n" [0.01ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:99999\u0000TST=LISTEN\u0000\n" [0.01ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000nnot-an-address:50000\u0000TST=LISTEN\u0000\n" [0.03ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=LISTEN\u0000\n" [0.03ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=LISTEN\u0000\np456\u0000\n" [0.01ms]
+(pass) macOS listener observation > nonzero exit, warnings and execution failure refuse [0.14ms]
+(pass) macOS listener observation > a hung listing refuses at the observation deadline [26.71ms]
+(pass) macOS listener observation > other platforms refuse rather than substitute a bind [0.16ms]
+
+src/core/config.test.ts:
+(pass) loadConfig > rejects delegated teardown hook pre-down in base and profile [6.44ms]
+(pass) loadConfig > rejects delegated teardown hook post-down in base and profile [5.26ms]
+(pass) loadConfig > accepts owned kubeconfig and production Tilt mode, including profile overrides [1.95ms]
+(pass) loadConfig > rejects kubeconfig path "" in base and profile config [2.25ms]
+(pass) loadConfig > rejects kubeconfig path "." in base and profile config [1.78ms]
+(pass) loadConfig > rejects kubeconfig path ".." in base and profile config [1.61ms]
+(pass) loadConfig > rejects kubeconfig path "../kubeconfig" in base and profile config [1.65ms]
+(pass) loadConfig > rejects kubeconfig path ".localnet/../../kubeconfig" in base and profile config [1.65ms]
+(pass) loadConfig > rejects kubeconfig path "/tmp/kubeconfig" in base and profile config [3.79ms]
+(pass) loadConfig > rejects kubeconfig path "~/kubeconfig" in base and profile config [1.50ms]
+(pass) loadConfig > rejects kubeconfig path "C:/kubeconfig" in base and profile config [1.59ms]
+(pass) loadConfig > rejects kubeconfig path "dir\\kubeconfig" in base and profile config [1.32ms]
+(pass) loadConfig > rejects kubeconfig path "a:b" in base and profile config [1.37ms]
+(pass) loadConfig > rejects kubeconfig path "${name}/kubeconfig" in base and profile config [1.45ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "local" [1.66ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "dev" [1.30ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "default" [2.94ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "" [3.48ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "PROD" [1.50ms]
+(pass) loadConfig > accepts random ports and 0 as an alias [0.98ms]
+(pass) loadConfig > accepts registry advertisement settings [0.90ms]
+
+src/core/owned_command.test.ts:
+10 | const fixture = path.join(import.meta.dir, "fixtures", "owned_cli.ts");
+11 | 
+12 | beforeAll(async () => {
+13 |   base = mkdtempSync(path.join(os.tmpdir(), "silo-entrypoints-"));
+14 |   const preflight = Bun.spawnSync(["janitor", "version"], { cwd: base, stdout: "pipe", stderr: "pipe", timeout: 2000 });
+15 |   if (preflight.exitCode !== 0) throw new Error(`Native launch tests require Janitor on PATH: ${preflight.stderr}`);
+                                               ^
+error: Native launch tests require Janitor on PATH: mise ERROR No version is set for shim: janitor
+Set a global default version with one of the following:
+mise use -g github:alleneubank/janitor@0.3.1
+mise ERROR Version: 2026.10.17 macos-arm64 (2026-10-20)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/core/owned_command.test.ts:15:43)
+(fail) (unnamed) [128.71ms]
+
+src/core/legacy_check.test.ts:
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in account blocks an unrelated allocator before store creation [104.91ms]
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in home blocks an unrelated allocator before store creation [4.58ms]
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in override blocks an unrelated allocator before store creation [2.12ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data { malformed remains a blocking listing [1.63ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data null remains a blocking listing [3.04ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data [1, 2] remains a blocking listing [1.33ms]
+(pass) host-wide read-only legacy refusal > pre-registry root lock { truncated blocks without any registry entry [1.96ms]
+(pass) host-wide read-only legacy refusal > pre-registry root lock {"version":1,"instance":{"name":"old"}} blocks without any registry entry [2.40ms]
+(pass) host-wide read-only legacy refusal > a store-marked snapshot is not a legacy lock, and duplicate registry locations list once [2.53ms]
+(pass) host-wide read-only legacy refusal > a failed directory query refuses instead of proving the account clean [0.77ms]
+
+src/backends/tilt.test.ts:
+(pass) buildTiltCiArgv > emits one production web-mode flag alongside CI arguments [0.07ms]
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode=dev"]} [0.03ms]
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode","dev"]}
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode=prod"]}
+(pass) buildTiltCiArgv > retains passthrough and default behavior when no mode is selected
+
+src/backends/k3d.test.ts:
+(pass) owned k3d arguments > preserves declared mapping grammar, including node filters and protocols [0.21ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --network=peer [0.04ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --registry-create=peer
+(pass) owned k3d arguments > refuses identity/ownership escape --config=peer.yaml
+(pass) owned k3d arguments > refuses identity/ownership escape --runtime-label=io.silo.project=peer
+(pass) owned k3d arguments > refuses identity/ownership escape --kubeconfig-update-default=true
+(pass) owned k3d arguments > refuses identity/ownership escape --api-port=3000
+(pass) owned k3d arguments > refuses unclaimed publication --port=3001:80 [0.03ms]
+(pass) owned k3d arguments > refuses unclaimed publication --port=80
+(pass) owned k3d arguments > refuses unclaimed publication --port=0:80
+(pass) owned k3d arguments > refuses unclaimed publication --port=3000:0
+(pass) owned k3d arguments > filters diagnostic lines without changing kubeconfig data [0.08ms]
+
+src/utils/ci.test.ts:
+(pass) shouldExportCiEnv > is on when the flag was passed [0.08ms]
+(pass) shouldExportCiEnv > is off outside CI without the flag [0.03ms]
+(pass) shouldExportCiEnv > infers CI from the environment [0.03ms]
+(pass) shouldExportCiEnv > does not infer CI from falsy values [0.02ms]
+(pass) shouldExportCiEnv > infers CI from GITHUB_ACTIONS [0.01ms]
+(pass) withCiEnv > marks the environment as CI [0.02ms]
+(pass) withCiEnv > overrides an inherited CI value
+(pass) withCiEnv > does not mutate the caller's env [0.01ms]
+(pass) resolveGithubEnvPath > returns the path when set [0.04ms]
+(pass) resolveGithubEnvPath > returns null when unset and export was only inferred
+(pass) resolveGithubEnvPath > treats a blank path as unset [0.01ms]
+(pass) resolveGithubEnvPath > throws when unset and export was requested explicitly [0.02ms]
+
+src/utils/breadcrumbs.test.ts:
+(pass) tiltApiHintLines > names the allocated port and the get command [0.03ms]
+(pass) tiltApiHintLines > omits --port when TILT_PORT was not allocated
+(pass) tiltApiHintLines > treats a blank port as unset
+(pass) runningStackHintLines > when Tilt is running, prints API, kubeconfig, and URL isolation [0.06ms]
+(pass) runningStackHintLines > when Tilt is stopped, skips the API hint
+(pass) runningStackHintLines > skips URL isolation when no HTTP URL uses *.localhost [0.01ms]
+(pass) envDidNotStartHint > names the env file to source
+(pass) downKeptClusterHint > points at --delete-cluster
+(pass) missingToolsMessage > includes install URLs for known tools [0.03ms]
+(pass) missingToolsMessage > omits a hint line for unknown tools
+(pass) unknownDocTopicMessage > lists available topics
+(pass) configExistsMessage > points at up and config docs
+
+src/commands/status.test.ts:
+(pass) an absent recorded group without a completion has an unknown result [2.71ms]
+(pass) a live or recycled recorded PID does not prove group absence [0.06ms]
+(pass) stored terminal and exit facts survive a recycled PID [0.11ms]
+(pass) a durable completion can precede process-group disappearance [0.07ms]
+(pass) an ungranted plan has no observable process identity [0.04ms]
+
+src/commands/ci.test.ts:
+(pass) large JSON results survive a reader that starts late [4644.55ms]
+101 |     writeFileSync(path.join(root, "cli.pid"), String(proc.pid));
+102 |     const output = new Response(proc.stdout).text();
+103 |     const errors = new Response(proc.stderr).text();
+104 |     try {
+105 |       await waitFor(() => existsSync(path.join(root, "ready")) || proc.exitCode !== null);
+106 |       if (proc.exitCode !== null) throw new Error(`CLI exited before Tilt: ${await output}\n${await errors}`);
+                                                  ^
+error: CLI exited before Tilt: {"schemaVersion":1,"code":"LAUNCH_FAILED","message":"Launch gate exited before its handshake; supervisor exited 1. mise ERROR janitor is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.\nmise ERROR Version: 2026.10.17 macos-arm64 (2026-10-20)\nmise ERROR Run with --verbose or MISE_VERBOSE=1 for more information","launchId":"6c52e626-9816-4339-bf15-7333443e3959","generation":1,"supervisorExitCode":1}
+
+silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/silo-ci-interrupt-ilhRwL/SIGINT/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/silo-ci-interrupt-ilhRwL/SIGINT/.localnet.env
+silo info: Wrote lockfile
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:106:45)
+(fail) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [375.59ms]
+101 |     writeFileSync(path.join(root, "cli.pid"), String(proc.pid));
+102 |     const output = new Response(proc.stdout).text();
+103 |     const errors = new Response(proc.stderr).text();
+104 |     try {
+105 |       await waitFor(() => existsSync(path.join(root, "ready")) || proc.exitCode !== null);
+106 |       if (proc.exitCode !== null) throw new Error(`CLI exited before Tilt: ${await output}\n${await errors}`);
+                                                  ^
+error: CLI exited before Tilt: {"schemaVersion":1,"code":"LAUNCH_FAILED","message":"Launch gate exited before its handshake; supervisor exited 1. mise ERROR janitor is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.\nmise ERROR Version: 2026.10.17 macos-arm64 (2026-10-20)\nmise ERROR Run with --verbose or MISE_VERBOSE=1 for more information","launchId":"dc51c49b-734c-4427-90c5-aaec59d84c1c","generation":1,"supervisorExitCode":1}
+
+silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/silo-ci-interrupt-ilhRwL/SIGTERM/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/silo-ci-interrupt-ilhRwL/SIGTERM/.localnet.env
+silo info: Wrote lockfile
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:106:45)
+(fail) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [696.56ms]
+(pass) ci interruption during setup emits one JSON object with the matching operation lifetime [3281.24ms]
+179 |     const output = new Response(proc.stdout).text();
+180 |     const errors = new Response(proc.stderr).text();
+181 |     try {
+182 |       const ready = stage === "setup" ? "setup-ready" : "final-status-ready";
+183 |       await waitFor(() => existsSync(path.join(root, ready)) || proc.exitCode !== null);
+184 |       if (proc.exitCode !== null) throw new Error(`CLI exited before ${stage}: ${await output}\n${await errors}`);
+                                                  ^
+error: CLI exited before final-status: {"schemaVersion":1,"code":"LAUNCH_FAILED","message":"Launch gate exited before its handshake; supervisor exited 1. mise ERROR janitor is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.\nmise ERROR Version: 2026.10.17 macos-arm64 (2026-10-20)\nmise ERROR Run with --verbose or MISE_VERBOSE=1 for more information","launchId":"78935d2b-7d1b-4aab-8008-5a89b6b536dd","generation":1,"supervisorExitCode":1}
+
+silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/silo-ci-interrupt-ilhRwL/final-status/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/silo-ci-interrupt-ilhRwL/final-status/.localnet.env
+silo info: Wrote lockfile
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:184:45)
+(fail) ci interruption during final-status emits one JSON object with the matching operation lifetime [394.33ms]
+
+src/commands/doc.test.ts:
+(pass) cli.js prints every listed topic outside the source tree [884.52ms]
+(pass) silo prints every listed topic outside the source tree [1677.67ms]
+(pass) doc topics > prints docs for each topic [5.23ms]
+(pass) doc topics > lists topics in plain text [0.34ms]
+(pass) doc topics > prints topics as json [0.34ms]
+(pass) doc topics > lists available topics when the topic is unknown [0.10ms]
+
+5 tests failed:
+(fail) (unnamed) [370.45ms]
+(fail) (unnamed) [128.71ms]
+(fail) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [375.59ms]
+(fail) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [696.56ms]
+(fail) ci interruption during final-status emits one JSON object with the matching operation lifetime [394.33ms]
+
+ 169 pass
+ 5 fail
+ 393 expect() calls
+Ran 174 tests across 19 files. [26.02s]
+
+exit status 1
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 297.65 seconds)
+✓ jscpd (15.74 seconds)
+✓ knip (8.11 seconds)
+✗ test (26.07 seconds)
+error: failed to push some refs to 'github.com:alleneubank/silo.git'

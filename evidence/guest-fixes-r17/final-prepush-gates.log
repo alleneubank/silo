@@ -1,0 +1,324 @@
+╭──────────────────────────────────╮
+│ lefthook v1.13.6  hook: pre-push │
+╰──────────────────────────────────╯
+┃  jscpd ❯ 
+
+[90m┌────────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
+[90m│[39m[31m Format     [39m[90m│[39m[31m Files analyzed [39m[90m│[39m[31m Total lines [39m[90m│[39m[31m Total tokens [39m[90m│[39m[31m Clones found [39m[90m│[39m[31m Duplicated lines [39m[90m│[39m[31m Duplicated tokens [39m[90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m typescript [90m│[39m 72             [90m│[39m 7731        [90m│[39m 109872       [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m [1mTotal:[22m     [90m│[39m 72             [90m│[39m 7731        [90m│[39m 109872       [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m└────────────[39m[90m┴────────────────[39m[90m┴─────────────[39m[90m┴──────────────[39m[90m┴──────────────[39m[90m┴──────────────────[39m[90m┴───────────────────┘[39m
+[90mFound 0 clones.[39m
+[3m[90mDetection time:[39m[23m: 9.459s
+
+┃  knip ❯ 
+
+[1GReading workspace configuration…
+[1A[0K[1GAnalyzing workspace…
+[1A[0K[1GAnalyzing source files…
+[1A[0K[1GConnecting the dots…
+[1A[0K[1GConfiguration hints (1)
+changeset    knip.json  Remove from ignoreBinaries
+✂️  Excellent, Knip found no issues.
+
+┃  test ❯ 
+
+bun test v1.4.4 (38afee6c8)
+
+src/core/lease_store.test.ts:
+(pass) atomic account leases > resolved launch history yields capacity without discarding uncertainty or resource history [46239.40ms]
+(pass) atomic account leases > existing-only acquisition never creates a missing store or project [10.82ms]
+(pass) atomic account leases > an unsupported proposal store is refused without changing its bytes [6.18ms]
+(pass) atomic account leases > a fresh container ID can reuse a proven-absent name while history remains [11.16ms]
+(pass) atomic account leases > a fresh network ID can reuse a proven-absent name while history remains [14.60ms]
+(pass) atomic account leases > terminal exact-target absence reconciles only that ID's completed deletion [257.91ms]
+(pass) atomic account leases > exact-target absence closes a terminal delete with a lost completion without inventing an exit [318.89ms]
+(pass) atomic account leases > export parent preparation never creates or enters a legacy registry tree [4.20ms]
+(pass) atomic account leases > two allocators probing the same port cannot commit duplicate claims or a partial name [14.82ms]
+(pass) atomic account leases > a peer's inspection and clean cannot release or rewrite another root [19.29ms]
+(pass) atomic account leases > root symlinks share one operation, and a finished capability is fenced [8.95ms]
+(pass) atomic account leases > prefix overlap refuses even when the exact namespace keys differ [10.91ms]
+(pass) atomic account leases > same-name and cross-role file aliases refuse, leaving the peer bytes intact [17.13ms]
+(pass) atomic account leases > unreceipted generated files are refused without alteration [6.05ms]
+(pass) atomic account leases > an uncaptured creating tool keeps its port, even after its executor is absent [281.30ms]
+(pass) atomic account leases > a supervisor that refuses startup reports its diagnostic without executing the tool [137.19ms]
+(pass) atomic account leases > a journaled completion ends the command, with its exit code and output, when its supervisor outlives the executor [10188.51ms]
+(pass) atomic account leases > an until-stop command outlives the operation that started it, then stops and reconciles [3160.91ms]
+(pass) atomic account leases > a successful exact deletion retry reconciles terminal completed deletions [241.40ms]
+(pass) atomic account leases > recovery folds a durable successful deletion retry before releasing claims [240.01ms]
+(pass) atomic account leases > an earlier successful deletion cannot reconcile a later failed request [180.31ms]
+(pass) atomic account leases > corrupt stores refuse instead of opening an empty allocation domain [2.02ms]
+(pass) atomic account leases > a retired root obtains a fresh generation and an old writer cannot overwrite it [13.91ms]
+(pass) atomic account leases > database busy refuses without resetting another project's reservations [10102.38ms]
+(pass) atomic account leases > snapshot replacement, hardlinks and parent swaps refuse without deleting foreign bytes [91.03ms]
+(pass) atomic account leases > parent/final symlinks and absolute or escaping output paths are refused [11.06ms]
+(pass) atomic account leases > a config edit cannot redirect snapshot cleanup to its selected replacement path [9.79ms]
+(pass) atomic account leases > interrupted rename resumes its recorded inode, and refuses an unrelated replacement [11.31ms]
+(pass) atomic account leases > mixed-role output aliases and an active config target cannot receive two file capabilities [7.31ms]
+(pass) atomic account leases > a generation cannot drop a published file role before owner cleanup [112.11ms]
+(pass) atomic account leases > a folded file claim cannot transfer a receipt to a different path spelling [78.09ms]
+(pass) atomic account leases > pending publish retains ownership until parent synchronization succeeds on retry [61.44ms]
+(pass) atomic account leases > pending delete retains ownership until parent synchronization succeeds on retry [13.81ms]
+(pass) atomic account leases > a CI short write remains uncertain and blocks both claim transfer and retirement [18.06ms]
+(pass) atomic account leases > a CI interrupted write remains uncertain and blocks both claim transfer and retirement [80.91ms]
+silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/silo-leases-aisFQY/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Exported env vars to /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/silo-leases-aisFQY/github-export.env
+(pass) atomic account leases > CI sinks reject snapshot aliases and concurrent writers while sequential appends remain append-only [96.06ms]
+(pass) atomic account leases > real gated commands see the durable grant, and a failed checkpoint never executes a tool [436.56ms]
+(pass) atomic account leases > a declared listener on 127.0.0.1 blocks retirement and reallocation before snapshots are removed [1754.92ms]
+(pass) atomic account leases > a declared listener on 192.168.0.81 blocks retirement and reallocation before snapshots are removed [771.47ms]
+(pass) atomic account leases > an outgoing connection's local port does not block retirement [374.58ms]
+(pass) atomic account leases > connected UDP on 127.0.0.1 permits retirement while its peerless peer refuses [984.33ms]
+(pass) atomic account leases > connected UDP on ::1 permits retirement while its peerless peer refuses [858.31ms]
+(pass) atomic account leases > tcp6 missing retains claims and snapshots on retirement and replacement [38.12ms]
+(pass) atomic account leases > udp6 missing retains claims and snapshots on retirement and replacement [40.41ms]
+(pass) atomic account leases > both missing retains claims and snapshots on retirement and replacement [25.06ms]
+(pass) atomic account leases > malformed row retains claims and snapshots on retirement and replacement [8.08ms]
+(pass) atomic account leases > read error retains claims and snapshots on retirement and replacement [8.92ms]
+(pass) atomic account leases > listing error retains claims and snapshots on retirement and replacement [7.90ms]
+(pass) atomic account leases > incomplete listing retains claims and snapshots on retirement and replacement [6.27ms]
+(pass) atomic account leases > a physically replaced parent cannot redirect owned cleanup [7.09ms]
+
+src/core/allocation_domain.test.ts:
+(pass) native account store is invariant under a scrubbed HOME [267.40ms]
+
+src/core/hosts.test.ts:
+(pass) resolveHosts > preserves an explicit Tilt host independently of the app host [0.20ms]
+(pass) resolveHosts > uses the app host only when Tilt host is absent [0.02ms]
+(pass) resolveHosts > does not replace an explicitly empty Tilt host with the app hostname [0.01ms]
+
+src/core/lease_types.test.ts:
+(pass) Docker receipt IDs > accepts an exact immutable container ID [0.09ms]
+(pass) Docker receipt IDs > accepts an exact immutable network ID
+(pass) Docker receipt IDs > refuses a name, truncated or missing container ID [0.36ms]
+(pass) Docker receipt IDs > refuses a name, truncated or missing network ID [0.04ms]
+(pass) Docker receipt IDs > retains named-volume identity for audit without granting a Docker object ID [0.04ms]
+(pass) Docker receipt IDs > target-absent resolution is a terminal exact-ID delete with an unknown exit [0.24ms]
+
+src/core/instance.test.ts:
+(pass) one allocated state renders consistent env, URLs, registry, kubeconfig and final name claims [0.97ms]
+
+src/core/ports.test.ts:
+(pass) allocatePorts > allocates random ports from the ephemeral range in order [0.26ms]
+(pass) allocatePorts > reuses lockfile ports even when config uses random [0.05ms]
+(pass) allocatePorts > falls back to ephemeral when default port is occupied [0.07ms]
+(pass) allocatePorts > falls back to ephemeral when lockfile port is occupied [0.03ms]
+(pass) allocatePorts > skips occupied ports when scanning ephemeral range [0.03ms]
+(pass) allocatePorts > excludedPorts are skipped during ephemeral scan [0.02ms]
+(pass) allocatePorts > excludedPorts force the configured default to fall back to ephemeral [0.03ms]
+(pass) allocatePorts > excludedPorts force lockfile ports to fall back to ephemeral [0.02ms]
+(pass) allocatePorts > ephemeral scan wraps past EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START [1.48ms]
+(pass) checkPortFree (integration) > a UDP listener excludes the scalar host port [0.82ms]
+(pass) checkPortFree (integration) > an IPv6 loopback listener excludes the scalar host port [0.56ms]
+(pass) checkPortFree (integration) > detects port occupied on 127.0.0.1 [0.43ms]
+(pass) checkPortFree (integration) > detects port occupied on 0.0.0.0 [0.66ms]
+(pass) checkPortFree (integration) > accepts port that is free on both interfaces [0.57ms]
+(pass) checkPortListenerAbsent (integration) > a TCP listener on any address remains [1096.63ms]
+(pass) checkPortListenerAbsent (integration) > a UDP socket without a peer remains [566.91ms]
+(pass) checkPortListenerAbsent (integration) > an outgoing TCP connection's local port is not a listener [341.12ms]
+(pass) checkPortListenerAbsent (integration) > a connected UDP socket's local port is not a listener [1180.91ms]
+(pass) checkPortListenerAbsent (integration) > an orderly closed outgoing TCP port does not block on TIME-WAIT [512.80ms]
+
+src/core/registry.test.ts:
+(pass) resolveRegistryAdvertiseSettings > throws when k3d hostFrom override does not match resolved registry identity [0.41ms]
+(pass) resolveRegistryAdvertiseSettings > supports safe hostFrom override using K3D_CLUSTER_NAME [0.08ms]
+(pass) resolveRegistryAdvertiseSettings > throws when cluster-network host override does not match resolved registry identity [0.05ms]
+
+src/core/name.test.ts:
+(pass) sanitizeName > normalizes case and replaces invalid characters [0.09ms]
+(pass) sanitizeName > returns fallback for empty input [0.01ms]
+(pass) shortenK3dClusterName > returns original name when within limit
+(pass) shortenK3dClusterName > shortens long names with hash and suffix [0.04ms]
+(pass) shortenK3dClusterName > produces distinct names for long inputs with shared prefix/suffix [0.02ms]
+
+src/core/socket_listeners.test.ts:
+(pass) Linux listener observation > a hung table read refuses at the observation deadline [27.18ms]
+(pass) Linux listener observation > a slow complete observation preserves absence [2204.17ms]
+(pass) Linux listener observation > a slow complete observation preserves presence [2204.66ms]
+(pass) Linux listener observation > complete empty tables prove absence [0.23ms]
+(pass) Linux listener observation > tcp listeners refuse on every local address [0.14ms]
+(pass) Linux listener observation > udp listeners refuse on every local address [0.05ms]
+(pass) Linux listener observation > tcp6 listeners refuse on every local address [0.04ms]
+(pass) Linux listener observation > udp6 listeners refuse on every local address [0.02ms]
+(pass) Linux listener observation > connected TCP, connected UDP and TIME-WAIT do not refuse [0.22ms]
+(pass) Linux listener observation > missing tcp6 refuses while IPv6 is available [0.13ms]
+(pass) Linux listener observation > missing udp6 refuses while IPv6 is available [0.01ms]
+(pass) Linux listener observation > missing tcp6 and udp6 refuses while IPv6 is available [0.03ms]
+(pass) Linux listener observation > both missing IPv6 tables are explained only by independently unavailable IPv6 [0.05ms]
+(pass) Linux listener observation > missing IPv4 tcp always refuses [0.27ms]
+(pass) Linux listener observation > missing IPv4 udp always refuses [0.03ms]
+(pass) Linux listener observation > read errors and failed IPv6 availability observations propagate [0.28ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000" [0.09ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:ZZZZ 00000000:0000 0A 00000000:00000000 00:00000000 00000000 501 0 1234" [0.05ms]
+(pass) Linux listener observation > malformed row refuses: "0: 01007F:C350 00000000:0000 0A 00000000:00000000 00:00000000 00000000 501 0 1234" [0.03ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 bad:0000 0A 00000000:00000000 00:00000000 00000000 501 0 1234" [0.02ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000 ZZ 00000000:00000000 00:00000000 00000000 501 0 1234" [0.02ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000 00 00000000:00000000 00:00000000 00000000 501 0 1234" [0.02ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000 0A 00000000:00000000 00:00000000 00000000 501 0 broken" [0.12ms]
+(pass) Linux listener observation > malformed row refuses: "0: 0100007F:C350 00000000:0000 0A 00000000:00000000 00:00000000 00000000 501 0 1234" [0.02ms]
+(pass) Linux listener observation > an unexpected header and an incomplete IPv6 row refuse [0.16ms]
+(pass) macOS listener observation > a slow complete observation preserves absence [2201.43ms]
+(pass) macOS listener observation > a slow complete observation preserves presence [2202.71ms]
+(pass) macOS listener observation > a TCP listener on 127.0.0.1:50000 refuses [0.30ms]
+(pass) macOS listener observation > a TCP listener on 192.0.2.1:50000 refuses [0.01ms]
+(pass) macOS listener observation > a TCP listener on [::1]:50000 refuses [0.01ms]
+(pass) macOS listener observation > a TCP listener on *:50000 refuses
+(pass) macOS listener observation > peerless UDP refuses, connected UDP and TCP do not [0.09ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "" [0.06ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\n"
+(pass) macOS listener observation > incomplete or malformed listing refuses: "f4\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=LISTEN\u0000\n"
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=LISTEN"
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000n127.0.0.1:50000\u0000TST=LISTEN\u0000\n" [0.07ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:50000\u0000\n" [0.07ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=UNKNOWN\u0000\n" [0.03ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:99999\u0000TST=LISTEN\u0000\n" [0.01ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000nnot-an-address:50000\u0000TST=LISTEN\u0000\n" [0.01ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=LISTEN\u0000\n" [0.03ms]
+(pass) macOS listener observation > incomplete or malformed listing refuses: "p123\u0000\nf4\u0000PTCP\u0000n127.0.0.1:50000\u0000TST=LISTEN\u0000\np456\u0000\n" [0.01ms]
+(pass) macOS listener observation > nonzero exit, warnings and execution failure refuse [0.21ms]
+(pass) macOS listener observation > a hung listing refuses at the observation deadline [27.15ms]
+(pass) macOS listener observation > other platforms refuse rather than substitute a bind [0.18ms]
+
+src/core/config.test.ts:
+(pass) loadConfig > rejects delegated teardown hook pre-down in base and profile [1.93ms]
+(pass) loadConfig > rejects delegated teardown hook post-down in base and profile [1.48ms]
+(pass) loadConfig > accepts owned kubeconfig and production Tilt mode, including profile overrides [0.78ms]
+(pass) loadConfig > rejects kubeconfig path "" in base and profile config [1.73ms]
+(pass) loadConfig > rejects kubeconfig path "." in base and profile config [1.81ms]
+(pass) loadConfig > rejects kubeconfig path ".." in base and profile config [1.41ms]
+(pass) loadConfig > rejects kubeconfig path "../kubeconfig" in base and profile config [1.16ms]
+(pass) loadConfig > rejects kubeconfig path ".localnet/../../kubeconfig" in base and profile config [1.06ms]
+(pass) loadConfig > rejects kubeconfig path "/tmp/kubeconfig" in base and profile config [0.92ms]
+(pass) loadConfig > rejects kubeconfig path "~/kubeconfig" in base and profile config [1.00ms]
+(pass) loadConfig > rejects kubeconfig path "C:/kubeconfig" in base and profile config [0.96ms]
+(pass) loadConfig > rejects kubeconfig path "dir\\kubeconfig" in base and profile config [1.23ms]
+(pass) loadConfig > rejects kubeconfig path "a:b" in base and profile config [1.62ms]
+(pass) loadConfig > rejects kubeconfig path "${name}/kubeconfig" in base and profile config [1.33ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "local" [1.49ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "dev" [1.02ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "default" [1.03ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "" [1.11ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "PROD" [1.33ms]
+(pass) loadConfig > accepts random ports and 0 as an alias [0.87ms]
+(pass) loadConfig > accepts registry advertisement settings [0.83ms]
+
+src/core/owned_command.test.ts:
+(pass) source executes an owned command through the CLI gate after its durable grant [224.33ms]
+(pass) bundled.js executes an owned command through the CLI gate after its durable grant [234.48ms]
+(pass) standalone executes an owned command through the CLI gate after its durable grant [843.80ms]
+(pass) a launch with every ps delayed 2.2s still executes inside its startup budget [5121.13ms]
+(pass) a launch with every ps delayed 11s still executes inside its startup budget [22561.55ms]
+(pass) startup expiry refuses before a durable grant or command effect [587.03ms]
+(pass) a non-leader executor refuses before publishing its handshake [44.16ms]
+(pass) source executor refuses malformed JSON without executing the command [64.83ms]
+(pass) source executor refuses invalid schema without executing the command [31.25ms]
+(pass) source executor refuses foreign launch without executing the command [70.30ms]
+(pass) source executor refuses foreign leader without executing the command [65.32ms]
+(pass) source executor refuses foreign group without executing the command [43.06ms]
+(pass) source executor refuses EOF without executing the command [40.84ms]
+(pass) source executor refuses oversized grant without executing the command [44.00ms]
+(pass) standalone executor refuses malformed JSON without executing the command [40.89ms]
+(pass) standalone executor refuses invalid schema without executing the command [39.01ms]
+(pass) standalone executor refuses foreign launch without executing the command [41.71ms]
+(pass) standalone executor refuses foreign leader without executing the command [62.42ms]
+(pass) standalone executor refuses foreign group without executing the command [34.70ms]
+(pass) standalone executor refuses EOF without executing the command [58.93ms]
+(pass) standalone executor refuses oversized grant without executing the command [153.26ms]
+
+src/core/legacy_check.test.ts:
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in account blocks an unrelated allocator before store creation [2.70ms]
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in home blocks an unrelated allocator before store creation [1.99ms]
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in override blocks an unrelated allocator before store creation [2.03ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data { malformed remains a blocking listing [1.23ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data null remains a blocking listing [1.25ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data [1, 2] remains a blocking listing [1.78ms]
+(pass) host-wide read-only legacy refusal > pre-registry root lock { truncated blocks without any registry entry [1.12ms]
+(pass) host-wide read-only legacy refusal > pre-registry root lock {"version":1,"instance":{"name":"old"}} blocks without any registry entry [1.15ms]
+(pass) host-wide read-only legacy refusal > a store-marked snapshot is not a legacy lock, and duplicate registry locations list once [2.46ms]
+(pass) host-wide read-only legacy refusal > a failed directory query refuses instead of proving the account clean [0.53ms]
+
+src/backends/tilt.test.ts:
+(pass) buildTiltCiArgv > emits one production web-mode flag alongside CI arguments [0.12ms]
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode=dev"]} [0.05ms]
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode","dev"]}
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode=prod"]}
+(pass) buildTiltCiArgv > retains passthrough and default behavior when no mode is selected [0.01ms]
+
+src/backends/k3d.test.ts:
+(pass) owned k3d arguments > preserves declared mapping grammar, including node filters and protocols [0.24ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --network=peer [0.08ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --registry-create=peer [0.01ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --config=peer.yaml
+(pass) owned k3d arguments > refuses identity/ownership escape --runtime-label=io.silo.project=peer
+(pass) owned k3d arguments > refuses identity/ownership escape --kubeconfig-update-default=true
+(pass) owned k3d arguments > refuses identity/ownership escape --api-port=3000
+(pass) owned k3d arguments > refuses unclaimed publication --port=3001:80 [0.03ms]
+(pass) owned k3d arguments > refuses unclaimed publication --port=80
+(pass) owned k3d arguments > refuses unclaimed publication --port=0:80
+(pass) owned k3d arguments > refuses unclaimed publication --port=3000:0
+(pass) owned k3d arguments > filters diagnostic lines without changing kubeconfig data [0.10ms]
+
+src/utils/ci.test.ts:
+(pass) shouldExportCiEnv > is on when the flag was passed [0.06ms]
+(pass) shouldExportCiEnv > is off outside CI without the flag [0.02ms]
+(pass) shouldExportCiEnv > infers CI from the environment [0.02ms]
+(pass) shouldExportCiEnv > does not infer CI from falsy values
+(pass) shouldExportCiEnv > infers CI from GITHUB_ACTIONS
+(pass) withCiEnv > marks the environment as CI [0.01ms]
+(pass) withCiEnv > overrides an inherited CI value
+(pass) withCiEnv > does not mutate the caller's env [0.07ms]
+(pass) resolveGithubEnvPath > returns the path when set [0.04ms]
+(pass) resolveGithubEnvPath > returns null when unset and export was only inferred
+(pass) resolveGithubEnvPath > treats a blank path as unset
+(pass) resolveGithubEnvPath > throws when unset and export was requested explicitly [0.01ms]
+
+src/utils/breadcrumbs.test.ts:
+(pass) tiltApiHintLines > names the allocated port and the get command [0.04ms]
+(pass) tiltApiHintLines > omits --port when TILT_PORT was not allocated [0.01ms]
+(pass) tiltApiHintLines > treats a blank port as unset [0.01ms]
+(pass) runningStackHintLines > when Tilt is running, prints API, kubeconfig, and URL isolation [0.10ms]
+(pass) runningStackHintLines > when Tilt is stopped, skips the API hint [0.02ms]
+(pass) runningStackHintLines > skips URL isolation when no HTTP URL uses *.localhost [0.03ms]
+(pass) envDidNotStartHint > names the env file to source [0.02ms]
+(pass) downKeptClusterHint > points at --delete-cluster
+(pass) missingToolsMessage > includes install URLs for known tools [0.14ms]
+(pass) missingToolsMessage > omits a hint line for unknown tools [0.04ms]
+(pass) unknownDocTopicMessage > lists available topics [0.03ms]
+(pass) configExistsMessage > points at up and config docs [0.01ms]
+
+src/commands/status.test.ts:
+(pass) an absent recorded group without a completion has an unknown result [2.50ms]
+(pass) a live or recycled recorded PID does not prove group absence [0.02ms]
+(pass) stored terminal and exit facts survive a recycled PID [0.03ms]
+(pass) a durable completion can precede process-group disappearance [0.01ms]
+(pass) an ungranted plan has no observable process identity [0.01ms]
+
+src/commands/ci.test.ts:
+(pass) large JSON results survive a reader that starts late [4541.11ms]
+(pass) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [1301.55ms]
+(pass) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [1098.97ms]
+(pass) ci interruption during setup emits one JSON object with the matching operation lifetime [3098.36ms]
+(pass) ci interruption during final-status emits one JSON object with the matching operation lifetime [2237.28ms]
+
+src/commands/doc.test.ts:
+(pass) cli.js prints every listed topic outside the source tree [1059.70ms]
+(pass) silo prints every listed topic outside the source tree [1550.22ms]
+(pass) doc topics > prints docs for each topic [47.58ms]
+(pass) doc topics > lists topics in plain text [0.38ms]
+(pass) doc topics > prints topics as json [0.13ms]
+(pass) doc topics > lists available topics when the topic is unknown [0.10ms]
+
+ 243 pass
+ 0 fail
+ 774 expect() calls
+Ran 243 tests across 19 files. [136.80s]
+
+                                      
+  ────────────────────────────────────
+summary: (done in 160.65 seconds)     
+✓ jscpd (13.61 seconds)
+✓ knip (9.88 seconds)
+✓ test (137.16 seconds)

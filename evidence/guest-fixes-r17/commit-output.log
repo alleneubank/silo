@@ -1,0 +1,20 @@
+╭───────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-commit[m │
+╰───────────────────────────────────────╯
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 13ms on 2 files with 90 rules using 18 threads.
+
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 11ms on 2 files with 90 rules using 18 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 22.11 seconds)
+✓ format (1.09 seconds)
+✓ lint (1.34 seconds)
+✓ typecheck (22.02 seconds)
+[feat/atomic-allocation 461c759] fix(cli): flush structured results with bounded backpressure
+ 4 files changed, 79 insertions(+), 16 deletions(-)

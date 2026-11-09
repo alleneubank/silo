@@ -1,0 +1,19 @@
+bun test v1.4.4 (38afee6c8)
+
+src/commands/status.test.ts:
+(pass) an absent recorded group without a completion has an unknown result [42.60ms]
+(pass) a live or recycled recorded PID does not prove group absence [0.27ms]
+(pass) stored terminal and exit facts survive a recycled PID [0.27ms]
+(pass) a durable completion can precede process-group disappearance [0.09ms]
+(pass) an ungranted plan has no observable process identity [0.06ms]
+
+src/commands/ci.test.ts:
+(pass) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [2988.12ms]
+(pass) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [3436.46ms]
+(pass) ci interruption during setup emits one JSON object with the matching operation lifetime [3237.63ms]
+(pass) ci interruption during final-status emits one JSON object with the matching operation lifetime [4922.46ms]
+
+ 9 pass
+ 0 fail
+ 58 expect() calls
+Ran 9 tests across 2 files. [14.85s]

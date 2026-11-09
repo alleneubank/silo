@@ -1,0 +1,188 @@
+{
+  "started": "2026-11-09T06:56:57.424Z",
+  "cwd": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/public-docs",
+  "results": [
+    {
+      "distribution": "js",
+      "topic": "config",
+      "file": "silo-toml.md",
+      "bytes": 7799,
+      "sha256": "869020bb92cd8cd12ce09644bb41b0f1fb9221d38194d8177e63ca53b35cb4a1"
+    },
+    {
+      "distribution": "js",
+      "topic": "profiles",
+      "file": "profiles.md",
+      "bytes": 2400,
+      "sha256": "3c2d6ebbeb63b1ffbeb7162f382827bc508953744eabd9e225ba64e6c905276b"
+    },
+    {
+      "distribution": "js",
+      "topic": "commands",
+      "file": "commands.md",
+      "bytes": 6002,
+      "sha256": "5f7969fb29fa526cc1611f1b78fffccf5e389ef83a4bbc81c2898a649c8f1d38"
+    },
+    {
+      "distribution": "js",
+      "topic": "lockfile",
+      "file": "lockfile.md",
+      "bytes": 2931,
+      "sha256": "374c8e9c79e2600cf8e3309e268c2284adafc910b63693c7e998a4f9bfd4a27c"
+    },
+    {
+      "distribution": "js",
+      "topic": "interpolation",
+      "file": "interpolation.md",
+      "bytes": 1665,
+      "sha256": "3d8255b8d9529b1d65ec60c327d9bd0b174e832182445b4a8702b9bc666084d3"
+    },
+    {
+      "distribution": "js",
+      "topic": "ports",
+      "file": "ports.md",
+      "bytes": 5149,
+      "sha256": "58fba12f69c4cfac37684143262b7fbd7eb7d0a136fb961fa4da43c5ed00f6c0"
+    },
+    {
+      "distribution": "js",
+      "topic": "hosts",
+      "file": "hosts.md",
+      "bytes": 1083,
+      "sha256": "471f306b40bef06c2b00441aed313c3602dc1cd5723699a836abe231a988ae13"
+    },
+    {
+      "distribution": "js",
+      "topic": "urls",
+      "file": "urls.md",
+      "bytes": 617,
+      "sha256": "38bfa37d8be603650ed7c2442d90c8ea92d401b71c86eceb0c8a8a9eac11644c"
+    },
+    {
+      "distribution": "js",
+      "topic": "k3d",
+      "file": "k3d.md",
+      "bytes": 3317,
+      "sha256": "5b4faf7d634983c41bcc0711c2587e9749f0da42d811917fa510da1ceb5f39b8"
+    },
+    {
+      "distribution": "js",
+      "topic": "hooks",
+      "file": "hooks.md",
+      "bytes": 1177,
+      "sha256": "c8153f392446cbb6b614dcbd426d4d6f0c10a7393f5e20f6adb3e528bdbe766b"
+    },
+    {
+      "distribution": "js",
+      "topic": "logging",
+      "file": "logging.md",
+      "bytes": 559,
+      "sha256": "7360266c6154b0cd6e157e142ba943524fd0ed43dd98443e5408e22e038501c9"
+    },
+    {
+      "distribution": "js",
+      "topic": "troubleshooting",
+      "file": "troubleshooting.md",
+      "bytes": 8474,
+      "sha256": "51a520207f4e5a2345b129eb3f4e3105b719a7f085738d2fce2cbff58323d7ae"
+    },
+    {
+      "distribution": "js",
+      "topic": "tilt",
+      "file": "tilt.md",
+      "bytes": 5649,
+      "sha256": "a2885320473b56a9f199edf2551300e940f60e55e160c68bcdc77443e929fba0"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "config",
+      "file": "silo-toml.md",
+      "bytes": 7799,
+      "sha256": "869020bb92cd8cd12ce09644bb41b0f1fb9221d38194d8177e63ca53b35cb4a1"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "profiles",
+      "file": "profiles.md",
+      "bytes": 2400,
+      "sha256": "3c2d6ebbeb63b1ffbeb7162f382827bc508953744eabd9e225ba64e6c905276b"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "commands",
+      "file": "commands.md",
+      "bytes": 6002,
+      "sha256": "5f7969fb29fa526cc1611f1b78fffccf5e389ef83a4bbc81c2898a649c8f1d38"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "lockfile",
+      "file": "lockfile.md",
+      "bytes": 2931,
+      "sha256": "374c8e9c79e2600cf8e3309e268c2284adafc910b63693c7e998a4f9bfd4a27c"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "interpolation",
+      "file": "interpolation.md",
+      "bytes": 1665,
+      "sha256": "3d8255b8d9529b1d65ec60c327d9bd0b174e832182445b4a8702b9bc666084d3"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "ports",
+      "file": "ports.md",
+      "bytes": 5149,
+      "sha256": "58fba12f69c4cfac37684143262b7fbd7eb7d0a136fb961fa4da43c5ed00f6c0"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "hosts",
+      "file": "hosts.md",
+      "bytes": 1083,
+      "sha256": "471f306b40bef06c2b00441aed313c3602dc1cd5723699a836abe231a988ae13"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "urls",
+      "file": "urls.md",
+      "bytes": 617,
+      "sha256": "38bfa37d8be603650ed7c2442d90c8ea92d401b71c86eceb0c8a8a9eac11644c"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "k3d",
+      "file": "k3d.md",
+      "bytes": 3317,
+      "sha256": "5b4faf7d634983c41bcc0711c2587e9749f0da42d811917fa510da1ceb5f39b8"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "hooks",
+      "file": "hooks.md",
+      "bytes": 1177,
+      "sha256": "c8153f392446cbb6b614dcbd426d4d6f0c10a7393f5e20f6adb3e528bdbe766b"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "logging",
+      "file": "logging.md",
+      "bytes": 559,
+      "sha256": "7360266c6154b0cd6e157e142ba943524fd0ed43dd98443e5408e22e038501c9"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "troubleshooting",
+      "file": "troubleshooting.md",
+      "bytes": 8474,
+      "sha256": "51a520207f4e5a2345b129eb3f4e3105b719a7f085738d2fce2cbff58323d7ae"
+    },
+    {
+      "distribution": "darwin-arm64",
+      "topic": "tilt",
+      "file": "tilt.md",
+      "bytes": 5649,
+      "sha256": "a2885320473b56a9f199edf2551300e940f60e55e160c68bcdc77443e929fba0"
+    }
+  ]
+}

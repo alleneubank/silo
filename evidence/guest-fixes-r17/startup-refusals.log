@@ -1,0 +1,11 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/owned_command.test.ts:
+(pass) startup expiry refuses before a durable grant or command effect [6104.89ms]
+(pass) a non-leader executor refuses before publishing its handshake [43.02ms]
+
+ 2 pass
+ 19 filtered out
+ 0 fail
+ 7 expect() calls
+Ran 2 tests across 1 file. [8.25s]

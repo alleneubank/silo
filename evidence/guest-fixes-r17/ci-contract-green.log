@@ -1,0 +1,12 @@
+bun test v1.4.4 (38afee6c8)
+
+src/commands/ci.test.ts:
+(pass) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [4083.27ms]
+(pass) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [2215.18ms]
+(pass) ci interruption during setup emits one JSON object with the matching operation lifetime [3310.21ms]
+(pass) ci interruption during final-status emits one JSON object with the matching operation lifetime [3871.69ms]
+
+ 4 pass
+ 0 fail
+ 43 expect() calls
+Ran 4 tests across 1 file. [13.79s]

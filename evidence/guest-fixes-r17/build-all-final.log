@@ -1,0 +1,18 @@
+$ bun build --target=bun --outdir dist src/cli.ts
+Bundled 74 modules in 12ms
+
+  cli.js  0.36 MB  (entry point)
+
+  [11ms]  bundle  74 modules
+ [904ms] compile  dist/silo-darwin-arm64
+  [19ms]  bundle  74 modules
+ [253ms] compile  dist/silo-darwin-x64 bun-darwin-x64-v1.4.4
+  [10ms]  bundle  74 modules
+ [177ms] compile  dist/silo-linux-arm64 bun-linux-aarch64-v1.4.4
+  [11ms]  bundle  74 modules
+ [139ms] compile  dist/silo-linux-x64 bun-linux-x64-v1.4.4
+f9a4596edf85e4c7945f8f5cd431541e12a3dd69e96b9d9ef4bbac42c7fd2469  dist/cli.js
+bc29cbb42caedb39046e99934902192ae7891ac966c4821a6ce5db7b0f848899  dist/silo-darwin-arm64
+f1dc9e4d97f920a0d505031a16082763267da20f373342e55bd756b36bb4bb3a  dist/silo-darwin-x64
+d85a7015e981291f39ae293fea26b16b1c97f6fe32341795c1a38a92257d5541  dist/silo-linux-arm64
+6eef53930bbf28fb72ce73be60ecdb508150efc036b31cf7e2857a84e0c0a3fe  dist/silo-linux-x64

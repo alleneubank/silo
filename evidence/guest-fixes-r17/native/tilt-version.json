@@ -1,0 +1,11 @@
+{
+  "cmd": [
+    "tilt",
+    "version"
+  ],
+  "cwd": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp",
+  "pid": 27043,
+  "exitCode": 0,
+  "stdout": "v0.37.8-fork.20261009.g753c01455, built 2026-10-09\n",
+  "stderr": ""
+}
