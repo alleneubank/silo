@@ -108,6 +108,14 @@ type ProjectRow = {
 type AllocationRow = { snapshot: string; phase: LifecyclePhase; problem: string | null };
 type JsonRow = { receipt: string };
 
+/** The immutable identity of one launch's completion fact, which outlives any operation. */
+export type CompletionKey = { storePath: string; projectId: string; generation: number; launchId: string };
+
+const selectCompletion = (db: Database, key: Omit<CompletionKey, "storePath">): ExecutorCompletion | null => {
+  const row = db.query<JsonRow, [string, number, string]>("SELECT receipt FROM completions WHERE project_id = ? AND generation = ? AND launch_id = ?").get(key.projectId, key.generation, key.launchId);
+  return row ? ExecutorCompletionSchema.parse(JSON.parse(row.receipt)) : null;
+};
+
 const FILE_AUTHORITY = Symbol("owned-file-authority");
 export interface FileAuthority {
   readonly [FILE_AUTHORITY]: true;
@@ -156,7 +164,7 @@ const databaseVersion = (db: Database, create: boolean): number => {
   return version;
 };
 
-const openDatabase = (storePath: string, readonly: boolean, create = !readonly): Database => {
+const openDatabase = (storePath: string, readonly: boolean, create = !readonly, busyTimeoutMs = 5000): Database => {
   let connection: Database | undefined;
   try {
     if (!readonly) {
@@ -165,7 +173,7 @@ const openDatabase = (storePath: string, readonly: boolean, create = !readonly):
     }
     const db = new Database(storePath, { readonly, create, strict: true });
     connection = db;
-    db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
+    db.exec(`PRAGMA foreign_keys = ON; PRAGMA busy_timeout = ${busyTimeoutMs};`);
     databaseVersion(db, create);
     if (!readonly) {
       db.exec("PRAGMA journal_mode = DELETE; PRAGMA synchronous = FULL;");
@@ -349,10 +357,20 @@ export class ProjectOperation {
     } finally { db.close(); }
   }
 
+  /**
+   * Reads a launch's durable completion through its own read-only connection,
+   * so the read needs no operation and survives the one that started the
+   * launch. It never waits for a peer's lock: a locked store throws at once.
+   */
+  static readExecutorCompletion(key: CompletionKey): ExecutorCompletion | null {
+    const db = openDatabase(key.storePath, true, false, 0);
+    try { return selectCompletion(db, key); }
+    finally { db.close(); }
+  }
+
   /** The executor's immutable fact for one of this generation's launches, once it is durable. */
-  executorCompletion(launchId: string): ExecutorCompletion | null {
-    const row = this.db.query<JsonRow, [string, number, string]>("SELECT receipt FROM completions WHERE project_id = ? AND generation = ? AND launch_id = ?").get(this.projectId, this.generation, launchId);
-    return row ? ExecutorCompletionSchema.parse(JSON.parse(row.receipt)) : null;
+  private executorCompletion(launchId: string): ExecutorCompletion | null {
+    return selectCompletion(this.db, { projectId: this.projectId, generation: this.generation, launchId });
   }
 
   applyCompletions(): void {

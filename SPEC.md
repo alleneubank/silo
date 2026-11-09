@@ -78,11 +78,15 @@ The owner treats a command as finished once its supervisor exits or the
 executor's completion fact is in the store, whichever comes first. Supervisor
 exit and EOF on the inherited pipes then get one stop window (Janitor grace plus
 5 s). After it, the owner signals only that launch's own supervisor handle and
-abandons the pipes, keeping the output read so far. Janitor 0.3.1 on macOS can
-miss its child's exit and then waits until its owner dies, and a descendant that
-leaves the group can hold the pipes open; neither holds a finished command to
-its timeout. Polls for the fact back off to 1 s, and a locked store only delays
-the next poll.
+abandons the pipes, keeping the output read so far, and only while Bun has not
+yet recorded the supervisor's exit. Janitor 0.3.1 on macOS can miss its child's
+exit and then waits until its owner dies, and a descendant that leaves the group
+can hold the pipes open; neither holds a finished command to its timeout. Polls
+for the fact back off to 1 s. Each poll reads through its own read-only
+connection keyed by project, generation and launch, so it outlives the operation
+that started the launch: interactive `up` releases that operation while Tilt
+runs. A poll never waits for a locked store, and a failed read only yields no
+fact for that poll; it never ends or signals the command.
 
 `env` reserves and exports without starting tools. `up` supervises foreground
 Tilt; a matching live `up` is idempotent. `ci` uses the same allocation and

@@ -1,9 +1,10 @@
-import { ProjectOperation, processAbsent } from "./lease_store";
+import { ProjectOperation, processAbsent, type CompletionKey } from "./lease_store";
 import type { DockerDeletionTarget, ExecutorCompletion, Launch } from "./lease_types";
 import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import { withTimeout } from "../utils/timeout";
 import { sleep } from "../utils/sleep";
+import { logger } from "../utils/logger";
 import { TILT_DRAIN_GRACE_MS, TILT_SUPERVISOR_BIN } from "./constants";
 
 const MAX_OUTPUT_BYTES = 1024 * 1024;
@@ -81,23 +82,30 @@ const drain = async (reader: ReadableStreamDefaultReader<Uint8Array>, capture: b
 
 type CompletionWatch = { completion: Promise<ExecutorCompletion>; stop: () => void };
 
-const storeLocked = (error: unknown): boolean => error instanceof Error && "code" in error && error.code === "SQLITE_BUSY";
-
 /**
  * The store offers no change event, so the executor's fact is polled with
- * bounded backoff until stopped. A peer's write lock only delays the next poll.
+ * bounded backoff until stopped. The watch holds only the fact's immutable
+ * key, never the operation that started the launch: an until-stop command
+ * outlives that operation, and `down` needs the project free meanwhile.
+ *
+ * The fact only lets the command finish before its supervisor exits; it is
+ * never the sole evidence of the result, which the caller imports durably
+ * afterwards. A failed read therefore just yields no fact for that poll and
+ * cannot, by itself, end or signal the command.
  */
-const watchCompletion = (owner: ProjectOperation, launchId: string): CompletionWatch => {
+const watchCompletion = (key: CompletionKey): CompletionWatch => {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false;
-  const completion = new Promise<ExecutorCompletion>((resolve, reject) => {
+  let readFailureLogged = false;
+  const completion = new Promise<ExecutorCompletion>(resolve => {
     const poll = (delayMs: number) => {
       timer = setTimeout(() => {
         if (stopped) return;
         let fact: ExecutorCompletion | null = null;
-        try { fact = owner.executorCompletion(launchId); }
+        try { fact = ProjectOperation.readExecutorCompletion(key); }
         catch (error) {
-          if (!storeLocked(error)) { reject(error); return; }
+          if (!readFailureLogged) logger.verbose(`Completion read for launch ${key.launchId} failed; retrying:`, error instanceof Error ? error.message : String(error));
+          readFailureLogged = true;
         }
         if (fact) resolve(fact);
         else poll(Math.min(delayMs * 2, JOURNAL_POLL_MS_MAX));
@@ -129,6 +137,9 @@ export const startOwnedCommand = async (
     cwd: owner.root, env: { ...process.env, ...options.env }, detached: true,
     stdin: "pipe", stdout: "pipe", stderr: "pipe",
   });
+  // Bun reaps the supervisor itself; once it has, the handle's PID may be
+  // reused, so only a handle with no recorded exit is signalled.
+  const stopSupervisor = () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGTERM"); };
   const capture = options.capture ?? true;
   const stdoutReader = proc.stdout.getReader();
   const stderrReader = proc.stderr.getReader();
@@ -148,7 +159,7 @@ export const startOwnedCommand = async (
     proc.stdin.write(`${JSON.stringify(launch)}\n`);
     proc.stdin.end();
     const finished = Promise.all([proc.exited, drain(stdoutReader, capture, process.stderr), stderr]);
-    const journal = watchCompletion(owner, launch.id);
+    const journal = watchCompletion({ storePath: owner.storePath, projectId: owner.projectId, generation: owner.generation, launchId: launch.id });
     // The result is known once the supervisor exits or the executor's fact is
     // journaled. Neither a supervisor that misses its child's exit nor an
     // escaped descendant holding the inherited pipes may then hold the command
@@ -157,7 +168,7 @@ export const startOwnedCommand = async (
     const complete = async (): Promise<OwnedCommandResult> => {
       const journaled = await Promise.race([proc.exited.then(() => null), finished.then(() => null), journal.completion]);
       if (!(await settlesWithin(finished, STOP_TIMEOUT_MS))) {
-        proc.kill("SIGTERM");
+        stopSupervisor();
         await withTimeout(proc.exited, STOP_TIMEOUT_MS, "supervisor drain");
         await Promise.all([stdoutReader.cancel(), stderrReader.cancel()]);
       }
@@ -169,14 +180,14 @@ export const startOwnedCommand = async (
     const waited = options.timeoutMs === null ? completed : withTimeout(completed, options.timeoutMs, options.kind);
     const exited = waited.catch(async error => {
       journal.stop();
-      proc.kill("SIGTERM");
+      stopSupervisor();
       await withTimeout(proc.exited, STOP_TIMEOUT_MS, "supervisor drain");
       throw error;
     });
-    return { launch, exited, stop: () => proc.kill("SIGTERM") };
+    return { launch, exited, stop: stopSupervisor };
   } catch (error) {
     proc.stdin.end();
-    proc.kill("SIGTERM");
+    stopSupervisor();
     const exitCode = await withTimeout(proc.exited, STOP_TIMEOUT_MS, "ungranted supervisor drain");
     const diagnostic = await stderr;
     if (error instanceof SiloError && error.code === "LAUNCH_FAILED") {

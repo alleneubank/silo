@@ -293,7 +293,7 @@ describe("atomic account leases", () => {
     } finally { op.finish(); }
   });
 
-  test("a journaled completion ends the command when its supervisor outlives the executor", async () => {
+  test("a journaled completion ends the command, with its exit code and output, when its supervisor outlives the executor", async () => {
     const root = project("a"); const op = await open(root);
     const bin = path.join(base, "bin"); mkdirSync(bin);
     // Reproduces Janitor 0.3.1 on macOS: it can consume its one-shot child-exit
@@ -311,18 +311,46 @@ describe("atomic account leases", () => {
     let running: Awaited<ReturnType<typeof startOwnedCommand>> | undefined;
     try {
       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
-      running = await startOwnedCommand(op, ["/bin/sh", "-c", `touch '${ran}'`], { kind: "parked-supervisor", effect: "none", timeoutMs: 120_000, env: { PATH: `${bin}:${process.env.PATH}` } });
+      running = await startOwnedCommand(op, ["/bin/sh", "-c", `printf tool-done; touch '${ran}'`], { kind: "parked-supervisor", effect: "none", timeoutMs: 120_000, env: { PATH: `${bin}:${process.env.PATH}` } });
       const deadline = Date.now() + 10_000;
       while (!existsSync(ran)) { assert(Date.now() < deadline, "tool did not run"); await Bun.sleep(20); }
-      // This store uses the parent journal, so the test writes the executor's fact.
+      // This store uses the parent journal, so the test writes the executor's
+      // fact. It records a failure the parked supervisor's own exit cannot show.
       const db = new Database(storePath);
       try {
         db.query("INSERT INTO completions (project_id, generation, launch_id, receipt) VALUES (?, ?, ?, ?)").run(op.projectId, op.generation, running.launch.id,
-          JSON.stringify({ projectId: op.projectId, generation: op.generation, launchId: running.launch.id, leaderPid: running.launch.leaderPid, groupId: running.launch.groupId, started: true, exitCode: 0, completedAt: new Date().toISOString() }));
+          JSON.stringify({ projectId: op.projectId, generation: op.generation, launchId: running.launch.id, leaderPid: running.launch.leaderPid, groupId: running.launch.groupId, started: true, exitCode: 3, completedAt: new Date().toISOString() }));
       } finally { db.close(); }
       const result = await running.exited;
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(3);
+      expect(result.stdout).toBe("tool-done");
       expect(processAbsent(running.launch.supervisorPid)).toBe(true);
+    } finally { running?.stop(); op.finish(); }
+  }, 30_000);
+
+  test("an until-stop command outlives the operation that started it, then stops and reconciles", async () => {
+    const root = project("a"); let op = await open(root);
+    const started = path.join(root, "started");
+    let running: Awaited<ReturnType<typeof startOwnedCommand>> | undefined;
+    try {
+      await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+      running = await startOwnedCommand(op, ["/bin/sh", "-c", `touch '${started}'; exec sleep 60`], { kind: "tilt-up", effect: "workload", timeoutMs: null, capture: false });
+      const deadline = Date.now() + 10_000;
+      while (!existsSync(started)) { assert(Date.now() < deadline, "tool did not run"); await Bun.sleep(20); }
+      op.finish();
+      let settled = false;
+      running.exited.then(() => { settled = true; }, () => { settled = true; });
+      // Spans the completion poll's backoff from 50 ms up to its 1 s ceiling.
+      await Bun.sleep(3000);
+      expect(settled).toBe(false);
+      expect(processAbsent(running.launch.supervisorPid)).toBe(false);
+      running.stop();
+      const result = await running.exited;
+      expect(result.exitCode).not.toBe(0);
+      expect(processAbsent(running.launch.supervisorPid)).toBe(true);
+      op = await open(root);
+      expect(op.recordCommandResult(result.launch)).toMatchObject({ id: running.launch.id, phase: "exited", exitCode: result.exitCode });
+      expect(op.launches().find(l => l.id === running?.launch.id)).toMatchObject({ phase: "exited", exitCode: result.exitCode });
     } finally { running?.stop(); op.finish(); }
   }, 30_000);
 
