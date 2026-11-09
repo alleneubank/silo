@@ -46,6 +46,51 @@ for (const distribution of ["source", "bundled.js", "standalone"] as const) {
   }, 30_000);
 }
 
+for (const delay of [2.2, 11]) {
+  test(`a launch with every ps delayed ${delay}s still executes inside its startup budget`, async () => {
+    const root = path.join(base, `slow-ps-${delay}`);
+    const bin = path.join(base, `slow-ps-bin-${delay}`);
+    mkdirSync(bin);
+    writeFileSync(path.join(bin, "ps"), `#!/bin/sh\nsleep ${delay}\nexec /bin/ps "$@"\n`, { mode: 0o755 });
+    const proc = Bun.spawn([...entrypoint("source"), "--exercise-owned-command", root], {
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+      stdout: "pipe", stderr: "pipe", timeout: 60_000,
+    });
+    const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+    expect({ exitCode, stderr }).toEqual({ exitCode: 0, stderr: "" });
+    expect(JSON.parse(stdout)).toEqual({ exitCode: 143, stdout: "tool-output" });
+    expect(readFileSync(path.join(root, "launched.txt"), "utf8")).toBe("granted");
+  }, 75_000);
+}
+
+test("startup expiry refuses before a durable grant or command effect", async () => {
+  const root = path.join(base, "startup-expiry");
+  const bin = path.join(base, "expiry-bin");
+  mkdirSync(bin);
+  writeFileSync(path.join(bin, "ps"), '#!/bin/sh\nsleep 2.2\nexec /bin/ps "$@"\n', { mode: 0o755 });
+  const proc = Bun.spawn([...entrypoint("source"), "--exercise-owned-command", root, "500"], {
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}` }, stdout: "pipe", stderr: "pipe", timeout: 20_000,
+  });
+  const [exitCode, stderr] = await Promise.all([proc.exited, new Response(proc.stderr).text()]);
+  expect(exitCode).toBe(1);
+  expect(stderr).toContain("Timed out");
+  expect(existsSync(path.join(root, "launched.txt"))).toBe(false);
+  const inspection = JSON.parse(readFileSync(path.join(root, "inspection.json"), "utf8"));
+  expect(inspection.launches).toMatchObject([{ phase: "planned", leaderPid: null, groupId: null }]);
+}, 30_000);
+
+test("a non-leader executor refuses before publishing its handshake", async () => {
+  const root = path.join(base, "non-leader");
+  mkdirSync(root);
+  const proc = Bun.spawn([...entrypoint("source"), "__silo_execute", randomUUID(), root, randomUUID(), "1", "parent"], {
+    cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 10_000,
+  });
+  const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+  expect(exitCode).toBe(1);
+  expect(stdout).toBe("");
+  expect(stderr).toContain("Executor is not its process-group leader");
+});
+
 for (const distribution of ["source", "standalone"] as const) {
   for (const refusal of ["malformed JSON", "invalid schema", "foreign launch", "foreign leader", "foreign group", "EOF", "oversized grant"] as const) {
     test(`${distribution} executor refuses ${refusal} without executing the command`, async () => {

@@ -13,6 +13,7 @@ import { OwnedFile, appendSink } from "./owned_file";
 import { assertNoLegacyState, legacyRegistryDirectories, type findLegacyState } from "./legacy_check";
 import { accountStorePath } from "./allocation_domain";
 import { checkPortListenerAbsent, type PortCheckFn } from "./ports";
+import { STORE_BUSY_TIMEOUT_MS } from "./constants";
 
 const MAX_PROJECTS = 10_000;
 const MAX_CLAIMS = 4096;
@@ -164,7 +165,7 @@ const databaseVersion = (db: Database, create: boolean): number => {
   return version;
 };
 
-const openDatabase = (storePath: string, readonly: boolean, create = !readonly, busyTimeoutMs = 5000): Database => {
+const openDatabase = (storePath: string, readonly: boolean, create = !readonly, busyTimeoutMs = STORE_BUSY_TIMEOUT_MS): Database => {
   let connection: Database | undefined;
   try {
     if (!readonly) {

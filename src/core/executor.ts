@@ -4,6 +4,7 @@ import { LaunchSchema, type ExecutorContext } from "./lease_types";
 import { runCommand } from "../utils/exec";
 import { withTimeout } from "../utils/timeout";
 import { SiloError } from "../utils/errors";
+import { EXECUTOR_GRANT_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS } from "./constants";
 
 const MAX_GRANT_BYTES = 1024 * 1024;
 const ArgumentsSchema = z.tuple([z.string().uuid(), z.string().max(4096), z.string().uuid(), z.coerce.number().int().positive(), z.enum(["account", "parent"])]);
@@ -25,7 +26,7 @@ const readGrant = async (): Promise<string> => {
 /** The group leader stays alive to publish completion even when its owning CLI dies. */
 export const executorMain = async (args: string[]): Promise<void> => {
   const [id, root, projectId, generation, journal] = ArgumentsSchema.parse(args);
-  const group = await runCommand(["ps", "-o", "pgid=", "-p", String(process.pid)], { timeoutMs: 2000, context: "executor group", stdio: "pipe" });
+  const group = await runCommand(["ps", "-o", "pgid=", "-p", String(process.pid)], { timeoutMs: LAUNCH_START_TIMEOUT_MS, context: "executor group", stdio: "pipe" });
   if (group.exitCode !== 0 || Number(group.stdout.trim()) !== process.pid) throw new SiloError("Executor is not its process-group leader", "INVALID_EXECUTOR");
   const context: ExecutorContext = { launchId: id, root, projectId, generation, leaderPid: process.pid, groupId: process.pid };
   let child: Bun.Subprocess | undefined;
@@ -38,7 +39,7 @@ export const executorMain = async (args: string[]): Promise<void> => {
   let started = false;
   let exitCode = 77;
   try {
-    const payload = await withTimeout(readGrant(), 10_000, "executor grant");
+    const payload = await withTimeout(readGrant(), EXECUTOR_GRANT_TIMEOUT_MS, "executor grant");
     if (payload.trim().length > 0 && !cancelled) {
       const grant = LaunchSchema.parse(JSON.parse(payload));
       if (grant.phase !== "granted" || grant.id !== id || grant.leaderPid !== process.pid || grant.groupId !== process.pid) throw new SiloError("Executor received another launch's grant", "INVALID_GRANT");

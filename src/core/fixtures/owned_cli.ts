@@ -10,6 +10,8 @@ if (Bun.argv[2] !== "--exercise-owned-command") {
 } else {
   const root = Bun.argv[3];
   assert(root && path.isAbsolute(root), "fixture root must be absolute");
+  const timeoutMs = Number(Bun.argv[4] ?? 60_000);
+  assert(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 60_000, "fixture timeout must be between 1 and 60000 ms");
   mkdirSync(root, { recursive: true });
   const configSource = "version = 1\n";
   const configPath = path.join(root, "silo.toml");
@@ -32,7 +34,7 @@ if (Bun.argv[2] !== "--exercise-owned-command") {
       { role: "config", target: prepareFileTarget(root, "silo.toml", "config") },
     ]);
     const running = await startOwnedCommand(owner, ["/bin/sh", "-c", "printf tool-output; printf granted > launched.txt; exec sleep 60"], {
-      kind: "entrypoint-proof", effect: "none", timeoutMs: 5000,
+      kind: "entrypoint-proof", effect: "none", timeoutMs,
     });
     try {
       const deadline = Date.now() + 5000;

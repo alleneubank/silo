@@ -13,6 +13,11 @@ export const PORT_CHECK_TIMEOUT_MS = 100;
 // Maximum interactive wait for one complete native socket observation under load.
 export const SOCKET_TABLE_TIMEOUT_MS = 30_000;
 export const TOOL_CHECK_TIMEOUT_MS = 2000;
+export const STORE_BUSY_TIMEOUT_MS = 5000;
+export const LAUNCH_START_TIMEOUT_MS = 30_000;
+// The executor must wait through the parent's identity observation and durable
+// checkpoint, including lock contention and scheduling after the handshake.
+export const EXECUTOR_GRANT_TIMEOUT_MS = LAUNCH_START_TIMEOUT_MS + STORE_BUSY_TIMEOUT_MS + 10_000;
 
 // Bare `tilt up` outlives silo whenever silo dies without running its signal
 // handlers (SIGKILL, SIGHUP, crash): Tilt reparents to init and keeps holding

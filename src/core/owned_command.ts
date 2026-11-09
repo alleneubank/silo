@@ -5,10 +5,9 @@ import { SiloError } from "../utils/errors";
 import { withTimeout } from "../utils/timeout";
 import { sleep } from "../utils/sleep";
 import { logger } from "../utils/logger";
-import { TILT_DRAIN_GRACE_MS, TILT_SUPERVISOR_BIN } from "./constants";
+import { LAUNCH_START_TIMEOUT_MS, TILT_DRAIN_GRACE_MS, TILT_SUPERVISOR_BIN } from "./constants";
 
 const MAX_OUTPUT_BYTES = 1024 * 1024;
-const HANDSHAKE_TIMEOUT_MS = 10_000;
 const STOP_TIMEOUT_MS = TILT_DRAIN_GRACE_MS + 5000;
 const JOURNAL_POLL_MS_MIN = 50;
 const JOURNAL_POLL_MS_MAX = 1000;
@@ -18,9 +17,9 @@ const executorCommand = (entrypoint: string): string[] =>
     ? [process.execPath, "__silo_execute"]
     : [process.execPath, entrypoint, "__silo_execute"];
 
-const supervisorIdentity = async (pid: number): Promise<string | null> => {
+const supervisorIdentity = async (pid: number, timeoutMs = LAUNCH_START_TIMEOUT_MS): Promise<string | null> => {
   const result = await runCommand(["ps", "-ww", "-p", String(pid), "-o", "uid=,pgid=,lstart=,command="], {
-    env: { LC_ALL: "C", TZ: "UTC" }, timeoutMs: 2000, context: "inspect recorded supervisor", stdio: "pipe",
+    env: { LC_ALL: "C", TZ: "UTC" }, timeoutMs, context: "inspect recorded supervisor", stdio: "pipe",
   });
   if (result.exitCode !== 0) return null;
   const value = result.stdout.trim();
@@ -134,6 +133,12 @@ export const startOwnedCommand = async (
   if (options.timeoutMs === null && options.kind !== "tilt-up") throw new Error("Only the interactive Tilt session may have an until-stop lifetime");
   const intent = owner.planLaunch({ kind: options.kind, command, effect: options.effect,
     ...(options.deletionTarget === undefined ? {} : { deletionTarget: options.deletionTarget }) });
+  const startupDeadline = Date.now() + Math.min(options.timeoutMs ?? LAUNCH_START_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS);
+  const startupRemaining = () => {
+    const remaining = startupDeadline - Date.now();
+    if (remaining <= 0) throw new SiloError("Timed out waiting for launch identity", "TIMEOUT");
+    return remaining;
+  };
   const proc = Bun.spawn([
     TILT_SUPERVISOR_BIN, "--pgroup-only", "--watch-pid", String(process.pid), "--grace-ms", String(TILT_DRAIN_GRACE_MS),
     "--", ...executorCommand(owner.executorEntrypoint), intent.id, owner.root,
@@ -150,15 +155,17 @@ export const startOwnedCommand = async (
   const stderrReader = proc.stderr.getReader();
   const stderr = drain(stderrReader, capture, process.stderr);
   try {
-    const handshake = await withTimeout(firstLine(stdoutReader), HANDSHAKE_TIMEOUT_MS, "launch gate");
+    const handshakeTimeout = startupRemaining();
+    const handshake = await withTimeout(firstLine(stdoutReader), handshakeTimeout, "launch gate");
     const parts = /^SILO_GATE (\S+) (\d+) (\d+)$/.exec(handshake);
     const leaderPid = Number(parts?.[2]);
     const groupId = Number(parts?.[3]);
     if (parts?.[1] !== intent.id || !Number.isSafeInteger(leaderPid) || leaderPid <= 1 || groupId !== leaderPid) {
       throw new SiloError("Launch gate did not report its actual group leader", "LAUNCH_FAILED");
     }
-    const identity = await supervisorIdentity(proc.pid);
+    const identity = await supervisorIdentity(proc.pid, startupRemaining());
     if (!identity?.includes(intent.id)) throw new SiloError("Cannot verify launch supervisor", "LAUNCH_FAILED");
+    startupRemaining();
     const launch: Extract<Launch, { phase: "granted" }> = { ...intent, phase: "granted", reconciled: false, terminal: false, exitCode: null, supervisorPid: proc.pid, supervisorIdentity: identity, leaderPid, groupId };
     owner.checkpointLaunch(launch);
     proc.stdin.write(`${JSON.stringify(launch)}\n`);
