@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { setImmediate } from "node:timers/promises";
 import { ProjectOperation } from "./lease_store";
 import { LaunchSchema, type ExecutorContext } from "./lease_types";
 import { runCommand } from "../utils/exec";
@@ -64,6 +65,9 @@ export const executorMain = async (args: string[]): Promise<void> => {
         if (journal === "account") await ProjectOperation.recordExecutorCompletion(context, { started: false, exitCode: 77, completedAt: new Date().toISOString() });
         throw error;
       }) : null;
+      // Grant reads and validation can finish in microtasks while a delivered
+      // signal is still queued. Let its handler run before authorizing spawn.
+      await setImmediate();
       if (!cancelled) {
         // WAIVER(atomicity): Docker has no conditional volume delete. External
         // delete/recreate after the final inspect can replace this cache before

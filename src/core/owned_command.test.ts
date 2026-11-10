@@ -30,6 +30,16 @@ const entrypoint = (distribution: "source" | "bundled.js" | "standalone"): strin
   return [process.execPath, path.join(base, distribution)];
 };
 
+const bundledExecutor = (root: string, timeout: number) => {
+  mkdirSync(root);
+  const id = randomUUID();
+  const proc = Bun.spawn([...entrypoint("bundled.js"), "__silo_execute", id, root, randomUUID(), "1", "parent"], {
+    cwd: root, detached: true, stdin: "pipe", stdout: "pipe", stderr: "pipe", timeout,
+  });
+  writeFileSync(path.join(root, "executor.pid"), String(proc.pid));
+  return { id, proc, reader: proc.stdout.getReader(), stderr: new Response(proc.stderr).text() };
+};
+
 for (const distribution of ["source", "bundled.js", "standalone"] as const) {
   test(`${distribution} executes an owned command through the CLI gate after its durable grant`, async () => {
     const root = path.join(base, distribution + "-project");
@@ -144,14 +154,7 @@ for (const distribution of ["source", "standalone"] as const) {
 for (const refusal of ["held-open grant timeout", "cancellation before grant"] as const) {
   test(`bundled executor exits after ${refusal} while its grant writer stays open`, async () => {
     const root = path.join(base, refusal.replaceAll(" ", "-"));
-    mkdirSync(root);
-    const id = randomUUID();
-    const proc = Bun.spawn([...entrypoint("bundled.js"), "__silo_execute", id, root, randomUUID(), "1", "parent"], {
-      cwd: root, detached: true, stdin: "pipe", stdout: "pipe", stderr: "pipe", timeout: 55_000,
-    });
-    writeFileSync(path.join(root, "executor.pid"), String(proc.pid));
-    const reader = proc.stdout.getReader();
-    const stderr = new Response(proc.stderr).text();
+    const { id, proc, reader, stderr } = bundledExecutor(root, 55_000);
     try {
       const handshake = await withTimeout({ result: reader.read(), cancel: () => reader.cancel() }, 5000, "test executor handshake");
       expect(new TextDecoder().decode(handshake.value)).toBe(`SILO_GATE ${id} ${proc.pid} ${proc.pid}\n`);
@@ -177,3 +180,41 @@ for (const refusal of ["held-open grant timeout", "cancellation before grant"] a
     }
   }, 60_000);
 }
+
+for (let attempt = 0; attempt < 16; attempt++) test(`bundled executor refuses a signal pending when a valid grant arrives (${attempt})`, async () => {
+  const root = path.join(base, `pending-signal-${attempt}`);
+  const { id, proc, reader, stderr } = bundledExecutor(root, 10_000);
+  try {
+    const handshake = await withTimeout({ result: reader.read(), cancel: () => reader.cancel() }, 5000, "test executor handshake");
+    expect(new TextDecoder().decode(handshake.value)).toBe(`SILO_GATE ${id} ${proc.pid} ${proc.pid}\n`);
+    proc.kill("SIGSTOP");
+    const deadline = Date.now() + 5000;
+    while (true) {
+      const state = Bun.spawnSync(["ps", "-o", "stat=", "-p", String(proc.pid)], { timeout: 1000 });
+      if (state.exitCode === 0 && state.stdout.toString().trim().startsWith("T")) break;
+      expect(Date.now()).toBeLessThan(deadline);
+      await Bun.sleep(10);
+    }
+    proc.kill("SIGTERM");
+    const grant: Extract<Launch, { phase: "granted" }> = {
+      id, phase: "granted", kind: "pending-signal", effect: "none",
+      command: ["/bin/sh", "-c", "printf executed > must-not-exist"],
+      supervisorPid: process.pid, supervisorIdentity: "test-parent", leaderPid: proc.pid, groupId: proc.pid,
+      exitCode: null, reconciled: false, terminal: false,
+    };
+    proc.stdin.write(JSON.stringify(grant));
+    await proc.stdin.end();
+    proc.kill("SIGCONT");
+    const [exitCode, trailing, diagnostic] = await withTimeout({
+      result: Promise.all([proc.exited, reader.read(), stderr]),
+      cancel: () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL"); },
+    }, 2000, "pending signal refusal");
+    expect({ exitCode, diagnostic, eof: trailing.done, executed: existsSync(path.join(root, "must-not-exist")) })
+      .toEqual({ exitCode: 77, diagnostic: "", eof: true, executed: false });
+  } finally {
+    if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL");
+    await proc.exited;
+    await reader.cancel();
+    reader.releaseLock();
+  }
+}, 20_000);
