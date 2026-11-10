@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ProjectOperation } from "./lease_store";
 import { LaunchSchema, type ExecutorContext } from "./lease_types";
 import { runCommand } from "../utils/exec";
-import { withTimeout } from "../utils/timeout";
+import { withTimeout, type Cancellable } from "../utils/timeout";
 import { SiloError } from "../utils/errors";
 import { EXECUTOR_GRANT_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS } from "./constants";
 import { prepareCacheRemoval } from "./cache_executor";
@@ -10,8 +10,7 @@ import { prepareCacheRemoval } from "./cache_executor";
 const MAX_GRANT_BYTES = 1024 * 1024;
 const ArgumentsSchema = z.tuple([z.string().uuid(), z.string().max(4096), z.string().uuid(), z.coerce.number().int().positive(), z.enum(["account", "parent"])]);
 
-const readGrant = async (): Promise<string> => {
-  const reader = Bun.stdin.stream().getReader();
+const consumeGrant = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string> => {
   const chunks: Uint8Array[] = [];
   let size = 0;
   while (size <= MAX_GRANT_BYTES) {
@@ -24,6 +23,14 @@ const readGrant = async (): Promise<string> => {
   throw new Error("Unreachable grant limit");
 };
 
+const readGrant = (): Cancellable<string> => {
+  const reader = Bun.stdin.stream().getReader();
+  let released = false;
+  const release = () => { if (!released) { reader.releaseLock(); released = true; } };
+  const result = consumeGrant(reader).then(payload => { release(); return payload; });
+  return { result, cancel: async () => { if (!released) { await reader.cancel(); release(); } } };
+};
+
 /** The group leader stays alive to publish completion even when its owning CLI dies. */
 export const executorMain = async (args: string[]): Promise<void> => {
   const [id, root, projectId, generation, journal] = ArgumentsSchema.parse(args);
@@ -32,15 +39,23 @@ export const executorMain = async (args: string[]): Promise<void> => {
   const context: ExecutorContext = { launchId: id, root, projectId, generation, leaderPid: process.pid, groupId: process.pid };
   let child: Bun.Subprocess | undefined;
   let cancelled = false;
+  const grantCancelled = new AbortController();
   // Janitor signals the entire recorded group, including the tool. A second
   // signal can force a tool to exit before it has drained its own foreground work.
-  const stop = () => { cancelled = true; };
+  const stop = () => { cancelled = true; grantCancelled.abort(); };
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) process.on(signal, stop);
   console.log(`SILO_GATE ${id} ${process.pid} ${process.pid}`);
   let started = false;
   let exitCode = 77;
   try {
-    const payload = await withTimeout(readGrant(), EXECUTOR_GRANT_TIMEOUT_MS, "executor grant");
+    let payload: string;
+    try {
+      payload = await withTimeout(readGrant(), EXECUTOR_GRANT_TIMEOUT_MS, "executor grant", grantCancelled.signal);
+    } catch (error) {
+      if (journal === "account") await ProjectOperation.recordExecutorRefusal(context);
+      if (grantCancelled.signal.aborted && error === grantCancelled.signal.reason) { process.exitCode = 77; return; }
+      throw error;
+    }
     if (payload.trim().length > 0 && !cancelled) {
       const grant = LaunchSchema.parse(JSON.parse(payload));
       if (grant.phase !== "granted" || grant.id !== id || grant.leaderPid !== process.pid || grant.groupId !== process.pid) throw new SiloError("Executor received another launch's grant", "INVALID_GRANT");
@@ -59,7 +74,10 @@ export const executorMain = async (args: string[]): Promise<void> => {
         exitCode = await child.exited;
       }
     }
-    if (journal === "account") await ProjectOperation.recordExecutorCompletion(context, { started, exitCode, completedAt: new Date().toISOString() });
+    if (journal === "account") {
+      if (started) await ProjectOperation.recordExecutorCompletion(context, { started, exitCode, completedAt: new Date().toISOString() });
+      else await ProjectOperation.recordExecutorRefusal(context);
+    }
     process.exitCode = exitCode;
   } finally {
     for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) process.off(signal, stop);

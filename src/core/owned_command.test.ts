@@ -103,7 +103,7 @@ for (const distribution of ["source", "standalone"] as const) {
       writeFileSync(path.join(root, "executor.pid"), String(proc.pid));
       const reader = proc.stdout.getReader();
       try {
-        const handshake = await withTimeout(reader.read(), 5000, "test executor handshake");
+        const handshake = await withTimeout({ result: reader.read(), cancel: () => reader.cancel() }, 5000, "test executor handshake");
         expect(new TextDecoder().decode(handshake.value)).toBe(`SILO_GATE ${id} ${proc.pid} ${proc.pid}\n`);
         expect(existsSync(path.join(root, "must-not-exist"))).toBe(false);
         const grant: Extract<Launch, { phase: "granted" }> = {
@@ -139,4 +139,41 @@ for (const distribution of ["source", "standalone"] as const) {
       }
     }, 25_000);
   }
+}
+
+for (const refusal of ["held-open grant timeout", "cancellation before grant"] as const) {
+  test(`bundled executor exits after ${refusal} while its grant writer stays open`, async () => {
+    const root = path.join(base, refusal.replaceAll(" ", "-"));
+    mkdirSync(root);
+    const id = randomUUID();
+    const proc = Bun.spawn([...entrypoint("bundled.js"), "__silo_execute", id, root, randomUUID(), "1", "parent"], {
+      cwd: root, detached: true, stdin: "pipe", stdout: "pipe", stderr: "pipe", timeout: 55_000,
+    });
+    writeFileSync(path.join(root, "executor.pid"), String(proc.pid));
+    const reader = proc.stdout.getReader();
+    const stderr = new Response(proc.stderr).text();
+    try {
+      const handshake = await withTimeout({ result: reader.read(), cancel: () => reader.cancel() }, 5000, "test executor handshake");
+      expect(new TextDecoder().decode(handshake.value)).toBe(`SILO_GATE ${id} ${proc.pid} ${proc.pid}\n`);
+      const start = Date.now();
+      if (refusal === "cancellation before grant") proc.kill("SIGTERM");
+      const [exitCode, trailing, diagnostic] = await withTimeout({
+        result: Promise.all([proc.exited, reader.read(), stderr]),
+        cancel: () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL"); },
+      }, refusal === "held-open grant timeout" ? 48_000 : 2000, "executor refusal exit with stdin held open");
+      expect(trailing.done).toBe(true);
+      expect(exitCode).toBe(refusal === "held-open grant timeout" ? 1 : 77);
+      if (refusal === "held-open grant timeout") {
+        expect(diagnostic).toContain("Timed out after 45000ms: executor grant");
+        expect(Date.now() - start).toBeGreaterThanOrEqual(45_000);
+      } else expect(diagnostic).toBe("");
+      expect(existsSync(path.join(root, "must-not-exist"))).toBe(false);
+    } finally {
+      proc.stdin.end();
+      if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL");
+      await proc.exited;
+      await reader.cancel();
+      reader.releaseLock();
+    }
+  }, 60_000);
 }

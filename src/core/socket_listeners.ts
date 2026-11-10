@@ -11,8 +11,8 @@ const TABLES = ["tcp", "udp", "tcp6", "udp6"] as const;
 type Table = (typeof TABLES)[number];
 
 type Observation =
-  | { platform: "linux"; readText: (path: string) => Promise<string>; exists: (path: string) => Promise<boolean> }
-  | { platform: "darwin"; listSockets: () => Promise<CommandResult> }
+  | { platform: "linux"; readText: (path: string, signal: AbortSignal) => Promise<string>; exists: (path: string, signal: AbortSignal) => Promise<boolean> }
+  | { platform: "darwin"; listSockets: (signal: AbortSignal) => Promise<CommandResult> }
   | { platform: "unsupported" };
 
 const refuse = (context: string): never => {
@@ -44,9 +44,9 @@ const linuxAccepts = (table: Table, text: string, port: number): boolean => {
   return accepts;
 };
 
-const linuxAbsent = async (port: number, source: Extract<Observation, { platform: "linux" }>): Promise<boolean> => {
+const linuxAbsent = async (port: number, source: Extract<Observation, { platform: "linux" }>, signal: AbortSignal): Promise<boolean> => {
   const observations = await Promise.all(TABLES.map(async table => {
-    try { return { table, text: await source.readText(`/proc/net/${table}`) }; }
+    try { return { table, text: await source.readText(`/proc/net/${table}`, signal) }; }
     catch (error) {
       if (table.endsWith("6") && missing(error)) return { table, text: null };
       throw error;
@@ -55,7 +55,7 @@ const linuxAbsent = async (port: number, source: Extract<Observation, { platform
   const missingIPv6 = observations.filter(({ text }) => text === null);
   // Per-interface disable flags can differ from conf/all. Only absence of the
   // kernel's IPv6 sysctl subtree independently explains missing IPv6 tables.
-  if (missingIPv6.length > 0 && (missingIPv6.length !== 2 || await source.exists(IPV6_SYSCTL))) {
+  if (missingIPv6.length > 0 && (missingIPv6.length !== 2 || await source.exists(IPV6_SYSCTL, signal))) {
     refuse("missing IPv6 socket table without proof that IPv6 is unavailable");
   }
   const accepting = observations.map(({ table, text }) => text !== null && linuxAccepts(table, text, port));
@@ -101,8 +101,8 @@ const lsofAccepts = (line: string, port: number): boolean => {
   return localPort === port && state === "ST=LISTEN";
 };
 
-const darwinAbsent = async (port: number, source: Extract<Observation, { platform: "darwin" }>): Promise<boolean> => {
-  const { exitCode, stdout, stderr } = await source.listSockets();
+const darwinAbsent = async (port: number, source: Extract<Observation, { platform: "darwin" }>, signal: AbortSignal): Promise<boolean> => {
+  const { exitCode, stdout, stderr } = await source.listSockets(signal);
   if (exitCode !== 0 || stderr !== "" || !stdout.endsWith("\0\n") || stdout.length > OBSERVATION_BYTES_MAX) refuse("lsof: failed or incomplete listing");
   let files = 0;
   let processSeen = false;
@@ -125,21 +125,22 @@ const darwinAbsent = async (port: number, source: Extract<Observation, { platfor
 
 /** A failed observation rejects; callers retain ownership on rejection. */
 export const createListenerProbe = (source: Observation, timeoutMs = SOCKET_TABLE_TIMEOUT_MS) => (port: number): Promise<boolean> => {
+  const cancellation = new AbortController();
   const observe = async () => {
     switch (source.platform) {
-      case "linux": return await linuxAbsent(port, source);
-      case "darwin": return await darwinAbsent(port, source);
+      case "linux": return await linuxAbsent(port, source, cancellation.signal);
+      case "darwin": return await darwinAbsent(port, source, cancellation.signal);
       case "unsupported": return refuse("listener observation is supported only on Linux and macOS");
     }
   };
-  return withTimeout(observe(), timeoutMs, `socket observation for port ${port}`);
+  return withTimeout({ result: observe(), cancel: () => cancellation.abort() }, timeoutMs, `socket observation for port ${port}`);
 };
 
 const nativeObservation = (): Observation => {
   switch (process.platform) {
     case "linux": return {
       platform: "linux",
-      readText: file => readFile(file, "utf8"),
+      readText: (file, signal) => readFile(file, { encoding: "utf8", signal }),
       exists: async file => {
         try { await stat(file); return true; }
         catch (error) { if (missing(error)) return false; throw error; }
@@ -148,8 +149,8 @@ const nativeObservation = (): Observation => {
     case "darwin": return {
       platform: "darwin",
       // NUL fields and numeric endpoints avoid column widths, names and locale.
-      listSockets: () => runCommand(["/usr/sbin/lsof", "-nP", "-iTCP", "-iUDP", "-F0pfPnT", "-Ts"], {
-        stdio: "pipe", timeoutMs: SOCKET_TABLE_TIMEOUT_MS, context: "native socket listing", env: { LC_ALL: "C" },
+      listSockets: signal => runCommand(["/usr/sbin/lsof", "-nP", "-iTCP", "-iUDP", "-F0pfPnT", "-Ts"], {
+        signal, stdio: "pipe", timeoutMs: SOCKET_TABLE_TIMEOUT_MS, context: "native socket listing", env: { LC_ALL: "C" },
       }),
     };
     default: return { platform: "unsupported" };

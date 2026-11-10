@@ -107,7 +107,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
       const launch = ProjectOperation.inspect(root, storePath)!.launches[0]!;
       expect(launch.phase).toBe("granted");
       proc.kill(signal);
-      const [exitCode, stdout] = await withTimeout(Promise.all([proc.exited, output]), 15_000, "interrupted CLI output");
+      const [exitCode, stdout] = await withTimeout({ result: Promise.all([proc.exited, output]), cancel: () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGTERM"); } }, 15_000, "interrupted CLI output");
       expect(exitCode).toBe(signal === "SIGINT" ? 130 : 143);
       await waitFor(() => processAbsent(launch.supervisorPid!) && processAbsent(-launch.groupId!));
       const before = ProjectOperation.inspect(root, storePath)!;

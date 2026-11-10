@@ -392,6 +392,13 @@ export class ProjectOperation {
     } finally { db.close(); }
   }
 
+  /** Refusal is journaled only if the parent durably granted this exact executor. */
+  static async recordExecutorRefusal(context: ExecutorContext): Promise<void> {
+    const launch = this.inspect(context.root)?.launches.find(launch => launch.id === context.launchId);
+    if (launch?.phase !== "granted" || launch.leaderPid !== context.leaderPid || launch.groupId !== context.groupId) return;
+    await this.recordExecutorCompletion(context, { started: false, exitCode: 77, completedAt: new Date().toISOString() });
+  }
+
   /** An executor may append its own immutable fact; it cannot change lifecycle or claims. */
   static async recordExecutorCompletion(context: ExecutorContext, result: Pick<ExecutorCompletion, "started" | "exitCode" | "completedAt">): Promise<void> {
     await assertNoLegacyState(context.root);

@@ -2,7 +2,7 @@ import { ProjectOperation, processAbsent, type CacheDeletionCapability, type Com
 import type { DockerDeletionTarget, ExecutorCompletion, Launch } from "./lease_types";
 import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
-import { withTimeout } from "../utils/timeout";
+import { withTimeout, observe, raceOperations } from "../utils/timeout";
 import { sleep } from "../utils/sleep";
 import { logger } from "../utils/logger";
 import { LAUNCH_START_TIMEOUT_MS, TILT_DRAIN_GRACE_MS, TILT_SUPERVISOR_BIN } from "./constants";
@@ -121,10 +121,13 @@ const watchCompletion = (key: CompletionKey): CompletionWatch => {
 };
 
 const settlesWithin = async (promise: Promise<unknown>, timeoutMs: number): Promise<boolean> => {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const expired = new Promise<false>(resolve => { timer = setTimeout(() => resolve(false), timeoutMs); });
-  try { return await Promise.race([promise.then(() => true as const), expired]); }
-  finally { clearTimeout(timer); }
+  try {
+    await withTimeout(observe(promise), timeoutMs, "command completion observation");
+    return true;
+  } catch (error) {
+    if (error instanceof SiloError && error.code === "TIMEOUT") return false;
+    throw error;
+  }
 };
 
 export const startOwnedCommand = async (
@@ -172,9 +175,14 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
   const stdoutReader = proc.stdout.getReader();
   const stderrReader = proc.stderr.getReader();
   const stderr = drain(stderrReader, capture, process.stderr);
+  const stopAndDrain = async () => {
+    stopSupervisor();
+    try { await withTimeout(observe(proc.exited), STOP_TIMEOUT_MS, "supervisor drain"); }
+    finally { await Promise.all([stdoutReader.cancel(), stderrReader.cancel()]); }
+  };
   try {
     const handshakeTimeout = startupRemaining();
-    const handshake = await withTimeout(firstLine(stdoutReader), handshakeTimeout, "launch gate");
+    const handshake = await withTimeout({ result: firstLine(stdoutReader), cancel: () => stdoutReader.cancel() }, handshakeTimeout, "launch gate");
     const parts = /^SILO_GATE (\S+) (\d+) (\d+)$/.exec(handshake);
     const leaderPid = Number(parts?.[2]);
     const groupId = Number(parts?.[3]);
@@ -196,29 +204,27 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
     // open: both get one stop window, after which only this launch's own
     // supervisor handle is signalled and the pipes are abandoned.
     const complete = async (): Promise<OwnedCommandResult> => {
-      const journaled = await Promise.race([proc.exited.then(() => null), finished.then(() => null), journal.completion]);
+      const journaled = await raceOperations<ExecutorCompletion | null>([
+        observe(proc.exited.then(() => null)), observe(finished.then(() => null)),
+        { result: journal.completion, cancel: journal.stop },
+      ]);
       if (!(await settlesWithin(finished, STOP_TIMEOUT_MS))) {
-        stopSupervisor();
-        await withTimeout(proc.exited, STOP_TIMEOUT_MS, "supervisor drain");
-        await Promise.all([stdoutReader.cancel(), stderrReader.cancel()]);
+        await stopAndDrain();
       }
       const [supervisorExitCode, stdout, stderrText] = await finished;
       const exitCode = journaled?.exitCode ?? supervisorExitCode;
       return { exitCode, stdout, stderr: stderrText, launch: { ...launch, phase: "exited", started: true, exitCode, reconciled: options.effect === "none" } };
     };
-    const completed = complete().finally(journal.stop);
-    const waited = options.timeoutMs === null ? completed : withTimeout(completed, options.timeoutMs, options.kind);
-    const exited = waited.catch(async error => {
-      journal.stop();
-      stopSupervisor();
-      await withTimeout(proc.exited, STOP_TIMEOUT_MS, "supervisor drain");
+    const completed = complete().catch(async error => {
+      await stopAndDrain();
       throw error;
-    });
+    }).finally(journal.stop);
+    const exited = options.timeoutMs === null ? completed : withTimeout({ result: completed, cancel: stopAndDrain }, options.timeoutMs, options.kind);
     return { launch, exited, stop: stopSupervisor };
   } catch (error) {
     proc.stdin.end();
-    stopSupervisor();
-    const exitCode = await withTimeout(proc.exited, STOP_TIMEOUT_MS, "ungranted supervisor drain");
+    await stopAndDrain();
+    const exitCode = proc.exitCode ?? 1;
     const diagnostic = await stderr;
     if (error instanceof SiloError && error.code === "LAUNCH_FAILED") {
       throw new SiloError(`${error.message}; supervisor exited ${exitCode}. ${diagnostic.slice(-4096)}`.trimEnd(), error.code, {

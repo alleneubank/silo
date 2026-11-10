@@ -310,7 +310,7 @@ const writeJsonResult = (emission: JsonEmission): Promise<void> | void => {
   const written = new Promise<void>((resolve, reject) => {
     process.stdout.write(payload, error => error ? reject(error) : resolve());
   });
-  return withTimeout(written, JSON_OUTPUT_TIMEOUT_MS, "JSON output").catch(error => {
+  return withTimeout({ result: written, cancel: () => { process.stdout.destroy(); } }, JSON_OUTPUT_TIMEOUT_MS, "JSON output").catch(error => {
     // Bun can keep a native pipe write alive after the Writable is destroyed.
     // The CLI cannot recover a partly delivered result, so close with failure.
     exitWithDiagnostic(error instanceof Error ? error.message : "JSON output failed", 1);

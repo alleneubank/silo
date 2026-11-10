@@ -1,4 +1,4 @@
-import { withTimeout } from "./timeout";
+import { withTimeout, observe } from "./timeout";
 import { SiloError } from "./errors";
 
 export interface CommandOptions {
@@ -7,6 +7,7 @@ export interface CommandOptions {
   timeoutMs: number;
   context: string;
   stdio?: "inherit" | "pipe";
+  signal?: AbortSignal;
 }
 
 export interface CommandResult {
@@ -15,13 +16,7 @@ export interface CommandResult {
   stderr: string;
 }
 
-const toText = async (
-  stream: ReadableStream | null | undefined
-): Promise<string> => {
-  if (!stream) {
-    return "";
-  }
-  const reader = stream.getReader();
+const toText = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string> => {
   const chunks: Uint8Array[] = [];
   const limit = 1024 * 1024;
   let size = 0;
@@ -35,47 +30,29 @@ const toText = async (
   throw new Error("Unreachable output limit");
 };
 
-export async function runCommand(
-  cmd: string[],
-  options: CommandOptions
-): Promise<CommandResult> {
-  const { cwd, env, timeoutMs, context, stdio = "inherit" } = options;
-  const spawnOptions: Parameters<typeof Bun.spawn>[1] = {
+export async function runCommand(cmd: string[], options: CommandOptions): Promise<CommandResult> {
+  const { cwd, env, timeoutMs, context, stdio = "inherit", signal } = options;
+  signal?.throwIfAborted();
+  const proc = Bun.spawn(cmd, {
+    ...(cwd === undefined ? {} : { cwd }),
     env: env ? { ...process.env, ...env } : process.env,
-    stdin: "ignore",
-    stdout: stdio,
-    stderr: stdio,
+    stdin: "ignore", stdout: stdio, stderr: stdio,
+  });
+  const stdout = typeof proc.stdout === "object" ? proc.stdout.getReader() : null;
+  const stderr = typeof proc.stderr === "object" ? proc.stderr.getReader() : null;
+  const cancel = async () => {
+    if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL");
+    await Promise.all([stdout?.cancel(), stderr?.cancel()]);
+    await withTimeout(observe(proc.exited), 1000, `${context} exit after cancellation`);
   };
-  if (cwd) {
-    spawnOptions.cwd = cwd;
-  }
-
-  const proc = Bun.spawn(cmd, spawnOptions);
-
+  const result = Promise.all([stdout ? toText(stdout) : "", stderr ? toText(stderr) : "", proc.exited])
+    .then(([stdout, stderr, exitCode]) => ({ stdout, stderr, exitCode }));
+  // The command scope owns both its process handle and its output readers.
   try {
-    if (stdio === "inherit") {
-      const exitCode = await withTimeout(proc.exited, timeoutMs, context);
-      return { exitCode, stdout: "", stderr: "" };
-    }
-
-    const resultPromise = (async () => {
-      const stdoutStream = proc.stdout as ReadableStream | null | undefined;
-      const stderrStream = proc.stderr as ReadableStream | null | undefined;
-      const [stdout, stderr, exitCode] = await Promise.all([
-        toText(stdoutStream),
-        toText(stderrStream),
-        proc.exited,
-      ]);
-      return { exitCode, stdout, stderr };
-    })();
-
-    return await withTimeout(resultPromise, timeoutMs, context);
-  } catch (error) {
-    try {
-      proc.kill();
-    } catch {
-      // ignore
-    }
-    throw error;
+    return await withTimeout({ result, cancel }, timeoutMs, context, signal);
+  } finally {
+    await Promise.all([stdout?.cancel(), stderr?.cancel()]);
+    stdout?.releaseLock();
+    stderr?.releaseLock();
   }
 }

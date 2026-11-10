@@ -1,10 +1,11 @@
+import { createSocket } from "node:dgram";
 import {
   EPHEMERAL_PORT_END,
   EPHEMERAL_PORT_START,
   PORT_CHECK_TIMEOUT_MS,
 } from "./constants";
 import { checkListenerAbsent } from "./socket_listeners";
-import { withTimeout } from "../utils/timeout";
+import { withTimeout, type Cancellable } from "../utils/timeout";
 import { SiloError } from "../utils/errors";
 import type { PortConfigValue } from "./types";
 
@@ -18,6 +19,10 @@ export type PortCheckFn = (port: number) => Promise<boolean>;
 // which causes "address already in use" when another process binds loopback.
 const PORT_CHECK_HOSTNAMES = ["0.0.0.0", "127.0.0.1", "::", "::1"] as const;
 
+const unsupportedIPv6 = (hostname: string, error: unknown): boolean =>
+  hostname.includes(":") && error instanceof Error && "code" in error &&
+  ["EAFNOSUPPORT", "EPROTONOSUPPORT", "EADDRNOTAVAIL"].includes(String(error.code));
+
 const tryBind = async (hostname: string, port: number): Promise<boolean> => {
   try {
     const server = Bun.listen({
@@ -30,31 +35,50 @@ const tryBind = async (hostname: string, port: number): Promise<boolean> => {
     server.stop();
     return true;
   } catch (error) {
-    if (hostname.includes(":") && error instanceof Error && "code" in error &&
-      ["EAFNOSUPPORT", "EPROTONOSUPPORT", "EADDRNOTAVAIL"].includes(String(error.code))) return true;
-    return false;
+    return unsupportedIPv6(hostname, error);
   }
 };
 
+const bindUdp = (hostname: string, port: number): Cancellable<boolean> => {
+  const socket = createSocket(hostname.includes(":") ? "udp6" : "udp4");
+  let finish: (free: boolean) => void;
+  let closed: Promise<void> | undefined;
+  const result = new Promise<boolean>(resolve => {
+    finish = resolve;
+    socket.once("error", error => resolve(unsupportedIPv6(hostname, error)));
+    socket.bind(port, hostname, () => resolve(true));
+  });
+  const cancel = (): Promise<void> => {
+    closed ??= new Promise<void>((resolve, reject) => {
+      try { socket.close(resolve); }
+      catch (error) {
+        if (error instanceof Error && "code" in error && error.code === "ERR_SOCKET_DGRAM_NOT_RUNNING") resolve();
+        else reject(error);
+      }
+    });
+    finish(false);
+    return closed;
+  };
+  return { result, cancel };
+};
+
 export const checkPortFree: PortCheckFn = async (port: number): Promise<boolean> => {
+  let cancelled = false;
+  let udp: Cancellable<boolean> | undefined;
   const attempt = async (): Promise<boolean> => {
     for (const hostname of PORT_CHECK_HOSTNAMES) {
-      if (!(await tryBind(hostname, port))) {
-        return false;
-      }
-      try {
-        const udp = await Bun.udpSocket({ hostname, port });
-        udp.close();
-      } catch (error) {
-        const unsupported = hostname.includes(":") && error instanceof Error && "code" in error &&
-          ["EAFNOSUPPORT", "EPROTONOSUPPORT", "EADDRNOTAVAIL"].includes(String(error.code));
-        if (!unsupported) return false;
-      }
+      if (cancelled) throw new SiloError("Port check cancelled", "INTERRUPTED");
+      if (!(await tryBind(hostname, port))) return false;
+      udp = bindUdp(hostname, port);
+      try { if (!(await udp.result)) return false; }
+      finally { await udp.cancel(); udp = undefined; }
     }
     return true;
   };
-
-  return await withTimeout(attempt(), PORT_CHECK_TIMEOUT_MS, `port check ${port}`);
+  return withTimeout({ result: attempt(), cancel: async () => {
+    cancelled = true;
+    await udp?.cancel();
+  } }, PORT_CHECK_TIMEOUT_MS, "port check " + port);
 };
 
 /**
