@@ -7,6 +7,7 @@ import {
 import { checkListenerAbsent } from "./socket_listeners";
 import { withTimeout, type Cancellable } from "../utils/timeout";
 import { SiloError } from "../utils/errors";
+import { operationSignal } from "../utils/interrupt";
 import type { PortConfigValue } from "./types";
 
 const isPortInRange = (port: number): boolean => port >= 1 && port <= 65535;
@@ -78,7 +79,7 @@ export const checkPortFree: PortCheckFn = async (port: number): Promise<boolean>
   return withTimeout({ result: attempt(), cancel: async () => {
     cancelled = true;
     await udp?.cancel();
-  } }, PORT_CHECK_TIMEOUT_MS, "port check " + port);
+  } }, PORT_CHECK_TIMEOUT_MS, "port check " + port, operationSignal());
 };
 
 /**

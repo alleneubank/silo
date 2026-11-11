@@ -4,7 +4,7 @@ import { SiloError } from "../utils/errors";
 import { ObservedBackendReceiptSchema } from "../core/lease_types";
 import type { Allocation, AnonymousVolume, BackendReceipt, ObservedBackendReceipt } from "../core/lease_types";
 
-export type BackendContext = { readonly root: string; readonly signal?: AbortSignal | undefined };
+export type BackendContext = { readonly root: string };
 
 export const MAX_OBJECTS = 10_000;
 const TOOL_TIMEOUT_MS = 5000;
@@ -30,8 +30,7 @@ const InspectSchema = z.object({
 export type NamespaceEntry = { kind: BackendReceipt["kind"]; name: string; id: string };
 export type InspectedObject = { receipt: ObservedBackendReceipt; publishedPorts: number[]; bindings: Record<string, number[]>; running: boolean };
 export const query = async (argv: string[], context: BackendContext): Promise<string> => {
-  const result = await runCommand(argv, { cwd: context.root, ...(context.signal === undefined ? {} : { signal: context.signal }), timeoutMs: TOOL_TIMEOUT_MS, context: argv.slice(0, 3).join(" "), stdio: "pipe" });
-  context.signal?.throwIfAborted();
+  const result = await runCommand(argv, { cwd: context.root, timeoutMs: TOOL_TIMEOUT_MS, context: argv.slice(0, 3).join(" "), stdio: "pipe" });
   if (result.exitCode !== 0) throw new SiloError(`ENGINE_UNAVAILABLE: ${argv.slice(0, 3).join(" ")} failed; absence is not established`, "ENGINE_UNAVAILABLE");
   return result.stdout;
 };

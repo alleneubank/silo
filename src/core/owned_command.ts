@@ -17,10 +17,9 @@ const executorCommand = (entrypoint: string): string[] =>
     ? [process.execPath, "__silo_execute"]
     : [process.execPath, entrypoint, "__silo_execute"];
 
-const supervisorIdentity = async (pid: number, timeoutMs = LAUNCH_START_TIMEOUT_MS, signal?: AbortSignal): Promise<string | null> => {
+const supervisorIdentity = async (pid: number, timeoutMs = LAUNCH_START_TIMEOUT_MS): Promise<string | null> => {
   const result = await runCommand(["ps", "-ww", "-p", String(pid), "-o", "uid=,pgid=,lstart=,command="], {
     env: { LC_ALL: "C", TZ: "UTC" }, timeoutMs, context: "inspect recorded supervisor", stdio: "pipe",
-    ...(signal === undefined ? {} : { signal }),
   });
   if (result.exitCode !== 0) return null;
   const value = result.stdout.trim();
@@ -223,7 +222,7 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
     if (parts?.[1] !== intent.id || !Number.isSafeInteger(leaderPid) || leaderPid <= 1 || groupId !== leaderPid) {
       throw new SiloError("Launch gate did not report its actual group leader", "LAUNCH_FAILED");
     }
-    const identity = await supervisorIdentity(proc.pid, startupRemaining(), owner.signal);
+    const identity = await supervisorIdentity(proc.pid, startupRemaining());
     if (!identity?.includes(intent.id)) throw new SiloError("Cannot verify launch supervisor", "LAUNCH_FAILED");
     startupRemaining();
     owner.signal?.throwIfAborted();

@@ -17,7 +17,7 @@ beforeAll(async () => {
   bin = path.join(base, "bin");
   mkdirSync(account);
   mkdirSync(bin);
-  writeFileSync(path.join(bin, "tilt"), "#!/bin/sh\nprintf ready > ready\nif test -f quick-ci; then exit 0; fi\nexec sleep 60\n", { mode: 0o755 });
+  writeFileSync(path.join(bin, "tilt"), "#!/bin/sh\nprintf ready > ready\nif test -f reconcile-probe; then touch cancel-probe; exit 0; fi\nif test -f quick-ci; then exit 0; fi\nexec sleep 60\n", { mode: 0o755 });
   writeFileSync(path.join(bin, "docker"), `#!/bin/sh
 if test -f cancel-probe; then echo $$ > probe.pid; printf ready > probe-ready; exec sleep 60; fi
 if test -f k3d-fixture; then exec bun ${JSON.stringify(path.resolve(import.meta.dir, "fixtures/docker.ts"))} "$@"; fi
@@ -223,7 +223,7 @@ for (const stage of ["setup", "final-status"] as const) {
   }, 45_000);
 }
 
-for (const phase of ["hook", "k3d-create", "tilt"] as const) {
+for (const phase of ["hook", "k3d-create", "tilt", "tilt-reconcile"] as const) {
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     test(`up ${phase} stops its owned group on first ${signal}, reports interruption and recovers through down`, async () => {
       const root = path.join(base, `up-${phase}-${signal}`);
@@ -231,6 +231,7 @@ for (const phase of ["hook", "k3d-create", "tilt"] as const) {
       const extra = phase === "hook" ? '[hooks]\npre-up = ["echo $$ > tool.pid; printf ready > ready; exec sleep 60"]\n' :
         phase === "k3d-create" ? '[k3d]\nenabled = true\n' : '';
       if (phase === "k3d-create") writeFileSync(path.join(root, "k3d-fixture"), "");
+      if (phase === "tilt-reconcile") writeFileSync(path.join(root, "reconcile-probe"), "");
       writeFileSync(path.join(root, "silo.toml"), `version = 1\n${extra}[ports]\nTILT_PORT = "random"\n`);
       const storePath = path.join(account, ".silo/leases.sqlite");
       const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, HOME: account, DOCKER_HOST: "unix:///private-fixture.sock" };
@@ -240,11 +241,11 @@ for (const phase of ["hook", "k3d-create", "tilt"] as const) {
       const output = new Response(proc.stdout).text();
       const errors = new Response(proc.stderr).text();
       try {
-        await waitFor(() => existsSync(path.join(root, "ready")) || proc.exitCode !== null);
+        await waitFor(() => existsSync(path.join(root, phase === "tilt-reconcile" ? "probe-ready" : "ready")) || proc.exitCode !== null);
         if (proc.exitCode !== null) throw new Error(`Exited before ${phase}: ${await output}\n${await errors}`);
         const before = ProjectOperation.inspect(root, storePath)!;
         const launch = before.launches.find(l => l.kind === (phase === "hook" ? "hook-pre-up" : phase === "k3d-create" ? "k3d-cluster-create" : "tilt-up"))!;
-        expect(launch.phase).toBe("granted");
+        expect(launch.phase).toBe(phase === "tilt-reconcile" ? "exited" : "granted");
         const start = Date.now();
         process.kill(-proc.pid, signal);
         const [exitCode, stdout] = await withTimeout({ result: Promise.all([proc.exited, output]), cancel: () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL"); } }, 12_000, "up interrupt deadline");
@@ -255,6 +256,12 @@ for (const phase of ["hook", "k3d-create", "tilt"] as const) {
         await waitFor(() => processAbsent(launch.supervisorPid!) && processAbsent(-launch.groupId!));
         const after = ProjectOperation.inspect(root, storePath)!;
         expect(after.claims).toEqual(before.claims);
+        const status = Bun.spawn([...command, "status", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 10_000 });
+        const [statusCode, statusOutput] = await Promise.all([status.exited, new Response(status.stdout).text()]);
+        expect(statusCode).toBe(0);
+        const { phase: recordedPhase, problem } = JSON.parse(statusOutput).project;
+        expect({ phase: recordedPhase, problem }).toEqual({ phase: "cleanup-required", problem: JSON.parse(stdout).message });
+        if (phase === "tilt-reconcile") unlinkSync(path.join(root, "cancel-probe"));
         const recover = Bun.spawn([...command, "down", "--delete-cluster", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 25_000 });
         const [recovered, recoveredOutput, recoveredErrors] = await Promise.all([recover.exited, new Response(recover.stdout).text(), new Response(recover.stderr).text()]);
         expect(recovered, `${recoveredOutput}\n${recoveredErrors}`).toBe(0);

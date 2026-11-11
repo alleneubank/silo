@@ -4,6 +4,7 @@ import { SOCKET_TABLE_TIMEOUT_MS } from "./constants";
 import { runCommand, type CommandResult } from "../utils/exec";
 import { SiloError } from "../utils/errors";
 import { withTimeout } from "../utils/timeout";
+import { operationSignal } from "../utils/interrupt";
 
 const OBSERVATION_BYTES_MAX = 1024 * 1024;
 const IPV6_SYSCTL = "/proc/sys/net/ipv6";
@@ -133,7 +134,7 @@ export const createListenerProbe = (source: Observation, timeoutMs = SOCKET_TABL
       case "unsupported": return refuse("listener observation is supported only on Linux and macOS");
     }
   };
-  return withTimeout({ result: observe(), cancel: () => cancellation.abort() }, timeoutMs, `socket observation for port ${port}`);
+  return withTimeout({ result: observe(), cancel: () => cancellation.abort() }, timeoutMs, `socket observation for port ${port}`, operationSignal());
 };
 
 const nativeObservation = (): Observation => {

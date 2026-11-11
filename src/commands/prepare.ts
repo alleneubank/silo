@@ -63,14 +63,9 @@ export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<R
 export const withAllocation = async <T>(name: string | undefined, options: {
   config: string; force: boolean; profile: string | undefined;
   executorEntrypoint?: string;
-  signal?: AbortSignal;
 }, run: (owner: ProjectOperation, allocation: Allocation) => Promise<T>, validateConfig?: (config: ResolvedConfig) => void): Promise<T> => {
   await loadConfig(options.config);
-  options.signal?.throwIfAborted();
-  const owner = await ProjectOperation.open(commandRoot(options.config), {
-    ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }),
-    ...(options.signal === undefined ? {} : { signal: options.signal }),
-  });
+  const owner = await ProjectOperation.open(commandRoot(options.config), options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint });
   const initialLaunches = new Set(owner.launches().map(l => l.id));
   try {
     const allocation = await allocateProject(owner, name, options, validateConfig);
@@ -78,7 +73,7 @@ export const withAllocation = async <T>(name: string | undefined, options: {
   } catch (error) {
     const current = owner.current();
     if (current && owner.launches().some(l => !initialLaunches.has(l.id) && (l.phase === "granted" || (l.phase === "exited" && !l.reconciled)))) {
-      owner.update(current.allocation, "cleanup-required", error instanceof Error ? error.message : String(error));
+      owner.noteFailure(error);
     }
     throw error;
   } finally { owner.finish(); }

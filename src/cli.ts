@@ -397,110 +397,111 @@ const main = async (): Promise<void> => {
     removeInterruptHandlers = () => operationInterrupts!.close();
   }
 
-  if (["env", "up", "ci", "down", "status"].includes(command)) {
-    await assertNoLegacyState(path.dirname(path.resolve(values.config)));
-  }
+  const execute = async () => {
+    if (["env", "up", "ci", "down", "status"].includes(command)) {
+      await assertNoLegacyState(path.dirname(path.resolve(values.config)));
+    }
 
-  switch (command) {
-    case "init": {
-      const mod = await import("./commands/init");
-      await mod.init({ config: values.config });
-      return;
-    }
-    case "doc": {
-      const mod = await import("./commands/doc");
-      await mod.doc({
-        ...(args[0] !== undefined && { topic: args[0] }),
-        ...(values.list && { list: values.list }),
-        ...(values.json && { json: values.json }),
-      });
-      return;
-    }
-    case "up": {
-      const mod = await import("./commands/up");
-      const changed = await mod.up(args[0], {
-        executorEntrypoint: import.meta.path,
-        ...(operationInterrupts === undefined ? {} : { signal: operationInterrupts.signal }),
-        config: values.config,
-        force: values.force,
-        profile: values.profile,
-      });
-      operationInterrupts?.signal.throwIfAborted();
-      await printJsonResult(values.config, values.json, changed);
-      return;
-    }
-    case "down": {
-      const mod = await import("./commands/down");
-      const changed = await mod.down({
-        executorEntrypoint: import.meta.path,
-        ...(operationInterrupts === undefined ? {} : { signal: operationInterrupts.signal }),
-        config: values.config,
-        "delete-cluster": values["delete-cluster"],
-        clean: values.clean,
-      });
-      operationInterrupts?.signal.throwIfAborted();
-      await printJsonResult(values.config, values.json, changed);
-      return;
-    }
-    case "status": {
-      const mod = await import("./commands/status");
-      if (values.json) await writeJsonResult({ kind: "result", value: mod.readStatus(values.config) });
-      else await mod.status({ config: values.config });
-      return;
-    }
-    case "env": {
-      const mod = await import("./commands/env");
-      const changed = await mod.env(args[0], {
-        executorEntrypoint: import.meta.path,
-        config: values.config,
-        force: values.force,
-        profile: values.profile,
-        exportCi: values["export-ci"],
-      });
-      await printJsonResult(values.config, values.json, changed);
-      return;
-    }
-    case "ci": {
-      const mod = await import("./commands/ci");
-      const changed = await mod.ci(args[0], {
-        executorEntrypoint: import.meta.path,
-        config: values.config,
-        force: values.force,
-        profile: values.profile,
-        timeout: values.timeout,
-        exportCi: values["export-ci"],
-        tiltArgs: passthroughArgs,
-      });
-      await printJsonResult(values.config, values.json, changed);
-      return;
-    }
-    case "profiles": {
-      const mod = await import("./commands/profiles");
-      await mod.profiles({ config: values.config });
-      return;
-    }
-    case "version": {
-      const version = await getVersion();
-      if (isInteractive()) {
-        console.log(colors.yellow(VERSION_SILO));
-        console.log(colors.green(VERSION_GROUND));
-        console.log("");
-        console.log(`${colors.bold("silo")} ${colors.green(`v${version}`)}`);
-        console.log("Isolated local development environments for Tilt and k3d.");
-        console.log("");
-        console.log(
-          colors.dim(
-            '"War. War never changes. But your localhost can." - Silo Overseer'
-          )
-        );
-      } else {
-        console.log(`silo v${version}`);
+    switch (command) {
+      case "init": {
+        const mod = await import("./commands/init");
+        await mod.init({ config: values.config });
+        return;
       }
-      return;
+      case "doc": {
+        const mod = await import("./commands/doc");
+        await mod.doc({
+          ...(args[0] !== undefined && { topic: args[0] }),
+          ...(values.list && { list: values.list }),
+          ...(values.json && { json: values.json }),
+        });
+        return;
+      }
+      case "up": {
+        const mod = await import("./commands/up");
+        const changed = await mod.up(args[0], {
+          executorEntrypoint: import.meta.path,
+          config: values.config,
+          force: values.force,
+          profile: values.profile,
+        });
+        operationInterrupts?.throwIfAborted();
+        await printJsonResult(values.config, values.json, changed);
+        return;
+      }
+      case "down": {
+        const mod = await import("./commands/down");
+        const changed = await mod.down({
+          executorEntrypoint: import.meta.path,
+          config: values.config,
+          "delete-cluster": values["delete-cluster"],
+          clean: values.clean,
+        });
+        operationInterrupts?.throwIfAborted();
+        await printJsonResult(values.config, values.json, changed);
+        return;
+      }
+      case "status": {
+        const mod = await import("./commands/status");
+        if (values.json) await writeJsonResult({ kind: "result", value: mod.readStatus(values.config) });
+        else await mod.status({ config: values.config });
+        return;
+      }
+      case "env": {
+        const mod = await import("./commands/env");
+        const changed = await mod.env(args[0], {
+          executorEntrypoint: import.meta.path,
+          config: values.config,
+          force: values.force,
+          profile: values.profile,
+          exportCi: values["export-ci"],
+        });
+        await printJsonResult(values.config, values.json, changed);
+        return;
+      }
+      case "ci": {
+        const mod = await import("./commands/ci");
+        const changed = await mod.ci(args[0], {
+          executorEntrypoint: import.meta.path,
+          config: values.config,
+          force: values.force,
+          profile: values.profile,
+          timeout: values.timeout,
+          exportCi: values["export-ci"],
+          tiltArgs: passthroughArgs,
+        });
+        await printJsonResult(values.config, values.json, changed);
+        return;
+      }
+      case "profiles": {
+        const mod = await import("./commands/profiles");
+        await mod.profiles({ config: values.config });
+        return;
+      }
+      case "version": {
+        const version = await getVersion();
+        if (isInteractive()) {
+          console.log(colors.yellow(VERSION_SILO));
+          console.log(colors.green(VERSION_GROUND));
+          console.log("");
+          console.log(`${colors.bold("silo")} ${colors.green(`v${version}`)}`);
+          console.log("Isolated local development environments for Tilt and k3d.");
+          console.log("");
+          console.log(
+            colors.dim(
+              '"War. War never changes. But your localhost can." - Silo Overseer'
+            )
+          );
+        } else {
+          console.log(`silo v${version}`);
+        }
+        return;
+      }
+      default:
+        printHelp();
     }
-    default:
-      printHelp();
-  }
+  };
+  return operationInterrupts ? operationInterrupts.run(execute) : execute();
 };
 
 main().catch(async (error: unknown) => {

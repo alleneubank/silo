@@ -95,7 +95,7 @@ export const writeKubeconfig = async (owner: ProjectOperation): Promise<void> =>
   if (!cluster || !allocation.state.identity.kubeconfigPath) return;
   await assertEngine(owner);
   const result = await runCommand(["k3d", "kubeconfig", "get", cluster], {
-    cwd: owner.root, ...(owner.signal === undefined ? {} : { signal: owner.signal }), timeoutMs: K3D_LIST_TIMEOUT_MS, context: "owned kubeconfig read", stdio: "pipe",
+    cwd: owner.root, timeoutMs: K3D_LIST_TIMEOUT_MS, context: "owned kubeconfig read", stdio: "pipe",
   });
   if (result.exitCode !== 0) throw new SiloError("KUBECONFIG_FAILED: could not read owned cluster kubeconfig", "KUBECONFIG_FAILED");
   owner.file("kubeconfig").publish(stripDebugOutput(result.stdout));

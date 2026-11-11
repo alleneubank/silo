@@ -12,10 +12,9 @@ const terminalGroups = (owner: ProjectOperation): void => {
   for (const launch of owner.launches()) owner.markLaunchTerminal(launch.id);
 };
 
-export const down = async (options: { config: string; "delete-cluster": boolean; clean: boolean; executorEntrypoint?: string; signal?: AbortSignal }): Promise<boolean> => {
+export const down = async (options: { config: string; "delete-cluster": boolean; clean: boolean; executorEntrypoint?: string }): Promise<boolean> => {
   const root = commandRoot(options.config);
-  options.signal?.throwIfAborted();
-  const owner = await ProjectOperation.openExisting(root, { recover: true, ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }), ...(options.signal === undefined ? {} : { signal: options.signal }) });
+  const owner = await ProjectOperation.openExisting(root, { recover: true, ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }) });
   if (!owner) { logger.info("No allocated instance. Nothing to stop."); return false; }
   try {
     const initial = owner.current();

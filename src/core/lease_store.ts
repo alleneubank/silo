@@ -14,6 +14,7 @@ import { assertNoLegacyState, legacyRegistryDirectories, type findLegacyState } 
 import { accountStorePath } from "./allocation_domain";
 import { checkPortListenerAbsent, type PortCheckFn } from "./ports";
 import { STORE_BUSY_TIMEOUT_MS } from "./constants";
+import { OperationInterrupts } from "../utils/interrupt";
 
 const MAX_PROJECTS = 10_000;
 const MAX_CLAIMS = 4096;
@@ -245,7 +246,6 @@ export type ProjectInspection = {
 };
 
 type OperationOptions = {
-  signal?: AbortSignal;
   storePath?: string;
   legacyInputs?: Parameters<typeof findLegacyState>[1];
   recover?: boolean;
@@ -256,6 +256,7 @@ type OperationOptions = {
 /** The sole mutation capability: every effect is fenced by this root, generation and operation. */
 export class ProjectOperation {
   private closed = false;
+  private sealedInterruptionRow: AllocationRow | null = null;
   private readonly cacheCapabilities = new WeakMap<CacheDeletionCapability, { key: string; generation: number; token: string }>();
   private readonly cacheCreations = new Set<string>();
   private mutationState: "active" | "allocating" | "proving-retirement" | "retiring" = "active";
@@ -269,11 +270,42 @@ export class ProjectOperation {
     readonly completionJournal: "account" | "parent",
     private readonly listenerProbe: PortCheckFn,
     private readonly protectedDirectories: readonly string[],
-    readonly signal: AbortSignal | undefined,
   ) {
     const connections = operationConnections.get(storePath) ?? new Set<Database>();
     connections.add(db);
     operationConnections.set(storePath, connections);
+    OperationInterrupts.current()?.recordWith({
+      storePath, projectId: this.projectId, generation: () => this.generation,
+      revision: () => JSON.stringify(this.interruptionRow()),
+      record: error => this.recordInterruption(error),
+    });
+  }
+
+  readonly signal = OperationInterrupts.current()?.signal;
+
+  private interruptionRow(): AllocationRow | null {
+    if (this.closed) return this.sealedInterruptionRow;
+    return this.db.query<AllocationRow, [string, number]>("SELECT snapshot, phase, problem FROM allocations WHERE project_id = ? AND generation = ?").get(this.projectId, this.generation);
+  }
+
+  private recordInterruption(error: unknown): void {
+    // The foreground Tilt wait releases its operation capability so down can
+    // acquire it. Record the signal even in that gap, but never write through
+    // another operation's fence or into a changed allocation. The closed
+    // capability's last revision also fences a later restart in this generation.
+    const row = this.interruptionRow();
+    if (!row) return;
+    const db = this.closed ? openDatabase(this.storePath, false, false) : this.db;
+    try {
+      db.transaction(() => {
+        db.query(`UPDATE allocations SET phase = 'cleanup-required', problem = ?
+          WHERE project_id = ? AND generation = ? AND EXISTS (
+            SELECT 1 FROM projects WHERE id = ? AND generation = ?
+              AND (operation_token = ? OR (operation_token IS NULL
+                AND snapshot = ? AND phase = ? AND problem IS ?)))`)
+          .run((error instanceof Error ? error.message : String(error)).slice(0, 4096), this.projectId, this.generation, this.projectId, this.generation, this.token, row.snapshot, row.phase, row.problem);
+      }).immediate();
+    } finally { if (this.closed) db.close(); }
   }
 
   static async open(root: string, options: OperationOptions = {}): Promise<ProjectOperation> {
@@ -288,6 +320,7 @@ export class ProjectOperation {
 
   private static async acquire(root: string, options: OperationOptions, existingOnly: boolean): Promise<ProjectOperation | null> {
     await assertNoLegacyState(root, options.legacyInputs);
+    OperationInterrupts.current()?.throwIfAborted();
     const identity = rootIdentity(root);
     const storePath = options.storePath ?? accountStorePath();
     if (existingOnly && !existsSync(storePath)) return null;
@@ -321,7 +354,6 @@ export class ProjectOperation {
         options.storePath === undefined ? "account" : "parent",
         options.listenerProbe ?? checkPortListenerAbsent,
         legacyRegistryDirectories(options.legacyInputs),
-        options.signal,
       );
     } catch (error) {
       db.close();
@@ -837,6 +869,7 @@ export class ProjectOperation {
   }
 
   noteFailure(error: unknown): void {
+    if (this.signal?.aborted) return; // The command scope records interruption across acquisition gaps.
     const problem = (error instanceof Error ? error.message : String(error)).slice(0, 4096);
     this.transaction(() => {
       this.db.query("UPDATE allocations SET phase = 'cleanup-required', problem = ? WHERE project_id = ? AND generation = ?").run(problem, this.projectId, this.generation);
@@ -933,6 +966,7 @@ export class ProjectOperation {
     if (this.closed) return;
     try {
       this.transaction(() => {
+        this.sealedInterruptionRow = this.interruptionRow();
         this.db.query("UPDATE projects SET operation_token = NULL, operation_pid = NULL, operation_started = NULL WHERE id = ? AND generation = ? AND operation_token = ?").run(this.projectId, this.generation, this.token);
       }, true);
     } finally {

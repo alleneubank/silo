@@ -9,7 +9,10 @@ export const accountHome = (): string => {
   if (process.platform === "linux") command = ["/usr/bin/getent", "passwd", String(uid)];
   else if (process.platform === "darwin") command = ["/usr/bin/dscacheutil", "-q", "user", "-a", "uid", String(uid)];
   else throw new SiloError("Account identity requires Linux or macOS", "ACCOUNT_UNAVAILABLE");
-  const result = Bun.spawnSync(command, { env: { PATH: "/usr/bin:/bin", LC_ALL: "C" }, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 5000 });
+  // This synchronous identity lookup cannot run JS cancellation handlers. Its
+  // five-second bound yields back to the command; terminal signals must not
+  // kill the lookup and masquerade as a failure of the account database.
+  const result = Bun.spawnSync(command, { env: { PATH: "/usr/bin:/bin", LC_ALL: "C" }, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 5000, detached: true });
   if (result.exitCode !== 0 || result.stdout.byteLength > 64 * 1024) throw new SiloError("Cannot query native account home; refusing a split allocation domain", "ACCOUNT_UNAVAILABLE");
   const output = result.stdout.toString("utf8");
   const homes = process.platform === "linux"

@@ -1,5 +1,5 @@
 {
-  "entry": ["src/cli.ts", "src/core/fixtures/owned_cli.ts", "src/commands/fixtures/docker.ts"],
+  "entry": ["src/cli.ts", "src/core/fixtures/owned_cli.ts", "src/commands/fixtures/docker.ts", "src/utils/fixtures/probe_cli.ts"],
   "project": ["src/**/*.ts"],
   "ignore": ["example/**"],
   "ignoreBinaries": ["changeset"],

@@ -12,7 +12,6 @@ import { prepareTiltEnvironment, withAllocation } from "./prepare";
 export const up = async (name: string | undefined, options: {
   config: string; force: boolean; profile: string | undefined;
   executorEntrypoint?: string;
-  signal?: AbortSignal;
 }): Promise<boolean> => {
   const started = await withAllocation(name, options, async (owner, allocation): Promise<{ command: RunningCommand; root: string; projectId: string; generation: number } | null> => {
     let existing;
@@ -59,8 +58,7 @@ export const up = async (name: string | undefined, options: {
     owner.update({ ...current.allocation, state }, phase, result.exitCode === 0 ? null : `Tilt exited ${result.exitCode}; down must reconcile before reuse`);
     writeEnvAndLockfile(owner);
   } catch (error) {
-    const current = owner.current();
-    if (current) owner.update(current.allocation, "cleanup-required", error instanceof Error ? error.message : String(error));
+    if (owner.current()) owner.noteFailure(error);
     throw error;
   } finally { owner.finish(); }
   if (result.exitCode !== 0) throw commandFailure(result, "tilt-up", started.generation);
