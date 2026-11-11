@@ -256,7 +256,13 @@ this authority. k3d nodes receive the ownership labels. Registry provenance requ
 registry) and matching cluster/name; a nonzero exit of that request uses the
 same provenance as success. Other producers, such as hooks, cannot vouch for a
 registry, and unknown completion cannot grant capture. k3d 5.9 uses the requested registry hostname without a
-`k3d-` prefix; claims and capture use that actual name. Compose container
+`k3d-` prefix; claims and capture use that actual name. Its tools container also
+omits Silo labels. Only a finished direct cluster create can vouch for it:
+the exact tools name, k3d app/cluster/noRole labels and a mount at `/k3d/images`
+must match this generation's active, identity-verified owned image cache.
+Conflicting Silo labels, an observed cache or another producer confer no
+authority. Capture persists the exact container ID before deletion; ordinary
+foreign cache borrowers still block cache removal. Compose container
 provenance includes project label, physical working root and owned launch;
 other objects require ownership labels. Backend publications must be claimed.
 
@@ -376,9 +382,10 @@ cover durable successful retry reconciliation. Named-volume behavior follows
 - REQ-LAUNCH-001: terminal reconciled launch history cannot exhaust cleanup
   capacity; unresolved facts and resource audit history survive compaction.
   Check: lease-store capacity test and native `--suite producers` at 1023 records.
-- REQ-CLEANUP-008: finished creating tools reconcile only after labelled outputs
+- REQ-CLEANUP-008: finished creating tools reconcile only after attributable outputs
   are recorded or their claimed namespace is proven empty. Check: native
-  `--suite producers` port-squatter k3d and overlapping-IPAM network failures.
+  `--suite producers` port-squatter k3d and overlapping-IPAM network failures,
+  and `partial k3d tools cleanup` CLI tests for interrupted auxiliary containers.
 - REQ-CLEANUP-012: explicit cluster deletion removes only an unused directly
   created image cache whose active persisted creation receipt is independently
   validated at planning, grant and executor boundaries. All-container reference

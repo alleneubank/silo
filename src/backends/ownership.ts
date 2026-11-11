@@ -13,7 +13,7 @@ type FinishedProducer = Extract<Launch, { phase: "exited" }> & {
   started: true; exitCode: number; effect: "create" | "workload" | "hook";
 };
 /** Which finished launches a capture may attribute unlabelled outputs to. */
-type CaptureProvenance = { registryRequested: boolean; composeLaunched: boolean };
+type CaptureProvenance = { clusterCreated: boolean; registryRequested: boolean; composeLaunched: boolean };
 
 /** The only launch kind that asks k3d to create the claimed registry. */
 export const K3D_CLUSTER_CREATE_KIND = "k3d-cluster-create";
@@ -84,6 +84,20 @@ export const assertNamesAvailable = async (claims: Claim[], context: BackendCont
   }
 };
 
+/** k3d tools omit runtime labels; its cluster label and owned cache bind the generation. */
+const toolsFromClusterCreate = async (owner: ProjectOperation, current: InspectedObject, provenance: CaptureProvenance): Promise<boolean> => {
+  const { receipt, volumeMounts } = current;
+  const cluster = owner.current()!.allocation.state.identity.k3dClusterName;
+  if (!provenance.clusterCreated || !cluster || receipt.source !== "k3d" || receipt.kind !== "container" || receipt.name !== `k3d-${cluster}-tools`) return false;
+  const labels = receipt.labels;
+  if (labels.app !== "k3d" || labels["k3d.cluster"] !== cluster || labels["k3d.role"] !== "noRole" ||
+    labels["io.silo.project"] !== undefined || labels["io.silo.generation"] !== undefined) return false;
+  const cache = owner.resources().filter(isOwnedImageCache).find(resource => resource.cluster === cluster &&
+    volumeMounts.some(mount => mount.name === resource.name && mount.destination === "/k3d/images"));
+  // A mount name cannot promote an observed cache or a replaced creation result.
+  return cache !== undefined && await verifyResource(owner, cache);
+};
+
 /** Records only this generation's creation results, with its declared namespace and provenance. */
 const captureOwnedResources = async (owner: ProjectOperation, source: BackendReceipt["source"], provenance: CaptureProvenance): Promise<ObservedBackendReceipt[]> => {
   await assertEngine(owner);
@@ -139,7 +153,7 @@ const captureOwnedResources = async (owner: ProjectOperation, source: BackendRec
     const composeFromOwnedLaunch = source === "compose" && entry.kind === "container" &&
       labels["com.docker.compose.project"] === allocation.state.identity.composeName && composeRoot !== undefined &&
       realpathSync(composeRoot) === owner.root && provenance.composeLaunched;
-    if (!projectLabel && !registryFromClusterCreate && !composeFromOwnedLaunch) conflict(entry);
+    if (!projectLabel && !registryFromClusterCreate && !composeFromOwnedLaunch && !await toolsFromClusterCreate(owner, current, provenance)) conflict(entry);
     validatePublications(current);
     captured.push(current.receipt);
   }
@@ -154,11 +168,15 @@ export const captureFinishedProducers = async (owner: ProjectOperation): Promise
     (launch.effect === "create" || launch.effect === "workload" || launch.effect === "hook"));
   if (pending.length === 0) return;
   for (const launch of pending) owner.markLaunchTerminal(launch.id);
-  // k3d's registry carries no Silo labels; only the finished cluster create
-  // that requested this exact registry may vouch for it, whatever its exit.
-  const registryName = owner.current()!.allocation.state.identity.k3dRegistryName;
+  // k3d's auxiliary containers carry no Silo labels. Only this cluster's
+  // finished direct create can vouch for them, whatever its exit.
+  const identity = owner.current()!.allocation.state.identity;
+  const clusterCreates = pending.filter(launch => launch.effect === "create" && launch.kind === K3D_CLUSTER_CREATE_KIND &&
+    launch.command[0] === "k3d" && launch.command[1] === "cluster" && launch.command[2] === "create" && launch.command[3] === identity.k3dClusterName);
+  const registryName = identity.k3dRegistryName;
   const provenance: CaptureProvenance = {
-    registryRequested: registryName !== undefined && pending.some(launch => launch.kind === K3D_CLUSTER_CREATE_KIND &&
+    clusterCreated: clusterCreates.length > 0,
+    registryRequested: registryName !== undefined && clusterCreates.some(launch =>
       launch.command.some((arg, index) => arg === "--registry-create" && launch.command[index + 1] === registryName)),
     composeLaunched: pending.some(launch => launch.effect === "workload" || launch.effect === "hook"),
   };

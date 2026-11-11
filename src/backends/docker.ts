@@ -28,7 +28,10 @@ const InspectSchema = z.object({
   NetworkSettings: z.object({ Ports: z.record(z.array(z.object({ HostPort: z.string() })).nullable()).nullable().optional() }).optional(),
 });
 export type NamespaceEntry = { kind: BackendReceipt["kind"]; name: string; id: string };
-export type InspectedObject = { receipt: ObservedBackendReceipt; publishedPorts: number[]; bindings: Record<string, number[]>; running: boolean };
+export type InspectedObject = {
+  receipt: ObservedBackendReceipt; publishedPorts: number[]; bindings: Record<string, number[]>; running: boolean;
+  volumeMounts: { name: string; destination: string }[];
+};
 export const query = async (argv: string[], context: BackendContext): Promise<string> => {
   const result = await runCommand(argv, { cwd: context.root, timeoutMs: TOOL_TIMEOUT_MS, context: argv.slice(0, 3).join(" "), stdio: "pipe" });
   if (result.exitCode !== 0) throw new SiloError(`ENGINE_UNAVAILABLE: ${argv.slice(0, 3).join(" ")} failed; absence is not established`, "ENGINE_UNAVAILABLE");
@@ -87,7 +90,8 @@ export const inspectObject = async (entry: NamespaceEntry, source: BackendReceip
   const bindings = Object.fromEntries(Object.entries(value.NetworkSettings?.Ports ?? {}).map(([target, bindings]) => [target, (bindings ?? []).map(binding => Number(binding.HostPort))]));
   const publishedPorts = Object.values(bindings).flat();
   if (publishedPorts.some(p => !Number.isSafeInteger(p) || p < 1 || p > 65535)) throw new SiloError("ENGINE_UNAVAILABLE: invalid Docker publication", "ENGINE_UNAVAILABLE");
-  return { receipt, publishedPorts, bindings, running: value.State?.Running ?? false };
+  const volumeMounts = (value.Mounts ?? []).flatMap(mount => mount.Type === "volume" ? [{ name: mount.Name, destination: mount.Destination }] : []);
+  return { receipt, publishedPorts, bindings, running: value.State?.Running ?? false, volumeMounts };
 };
 
 /** Every container state can hold a volume reference, including created and stopped. */

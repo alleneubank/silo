@@ -6,6 +6,7 @@ import { ProjectOperation, processAbsent } from "../core/lease_store";
 import { withTimeout } from "../utils/timeout";
 import { Database } from "bun:sqlite";
 import { startOwnedCommand } from "../core/owned_command";
+import { resourceReceiptKey } from "../core/lease_types";
 
 let base: string;
 let account: string;
@@ -32,7 +33,11 @@ case "$*" in
   *) echo "Unexpected Docker fixture request: $*" >&2; exit 1 ;;
 esac
 `, { mode: 0o755 });
-  writeFileSync(path.join(bin, "k3d"), '#!/bin/sh\nif test "$2" = list; then echo "[]"; else echo $$ > tool.pid; printf ready > ready; exec sleep 60; fi\n', { mode: 0o755 });
+  writeFileSync(path.join(bin, "k3d"), `#!/bin/sh
+if test "$2" = list; then echo "[]"; exit; fi
+if test -f tools-fixture; then exec bun ${JSON.stringify(path.resolve(import.meta.dir, "fixtures/k3d.ts"))} "$@"; fi
+echo $$ > tool.pid; printf ready > ready; exec sleep 60
+`, { mode: 0o755 });
   // Account lookup uses a private store; status import can pause at an explicit
   // fixture marker to expose the final-result signal window. Other behavior is
   // production code, with shell stand-ins at the Docker and Tilt boundaries.
@@ -274,6 +279,74 @@ for (const phase of ["hook", "k3d-create", "tilt", "tilt-reconcile"] as const) {
       }
     }, 45_000);
   }
+}
+
+for (const mode of ["owned", "cluster", "role", "app", "owner", "generation", "mount", "cache-token", "audit-cache", "hook"] as const) {
+  test(`partial k3d tools cleanup requires the finished creator and the owned cache: ${mode}`, async () => {
+    const root = path.join(base, `tools-${mode}`);
+    mkdirSync(root);
+    writeFileSync(path.join(root, "tools-fixture"), mode);
+    writeFileSync(path.join(root, "k3d-fixture"), "");
+    writeFileSync(path.join(root, "silo.toml"), 'version = 1\n[k3d]\nenabled = true\n[ports]\nTILT_PORT = "random"\n');
+    const storePath = path.join(account, ".silo/leases.sqlite");
+    const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, HOME: account, DOCKER_HOST: "unix:///private-fixture.sock" };
+    const command = [process.execPath, path.join(base, "cli.js")];
+    const proc = Bun.spawn([...command, "up", `tools-${mode}`, "--json"], { cwd: root, env, detached: true, stdout: "pipe", stderr: "pipe", timeout: 25_000 });
+    writeFileSync(path.join(root, "cli.pid"), String(proc.pid));
+    const output = new Response(proc.stdout).text();
+    const errors = new Response(proc.stderr).text();
+    try {
+      await waitFor(() => existsSync(path.join(root, "ready")) || proc.exitCode !== null);
+      if (proc.exitCode !== null) throw new Error(`Exited before tools creation: ${await output}\n${await errors}`);
+      const before = ProjectOperation.inspect(root, storePath)!;
+      const launch = before.launches.find(l => l.kind === "k3d-cluster-create")!;
+      process.kill(-proc.pid, "SIGINT");
+      expect(await proc.exited).toBe(130);
+      expect(JSON.parse(await output).code).toBe("INTERRUPTED");
+      await waitFor(() => processAbsent(launch.supervisorPid!) && processAbsent(-launch.groupId!));
+      const tools = readFileSync(path.join(root, "tools.json"));
+      if (mode === "cache-token") {
+        const cache = JSON.parse(readFileSync(path.join(root, "cache.json"), "utf8"));
+        cache.Labels["io.silo.creation"] = "replacement";
+        writeFileSync(path.join(root, "cache.json"), JSON.stringify(cache));
+      } else if (mode === "audit-cache") {
+        const receipt = before.resources.find(r => r.kind === "volume")!;
+        const observed = { kind: "volume" as const, source: "k3d" as const, authority: "observed" as const,
+          name: receipt.name, id: receipt.id, createdAt: receipt.createdAt, labels: receipt.labels };
+        const db = new Database(storePath);
+        try { db.query("UPDATE resources SET receipt = ?, receipt_key = ? WHERE project_id = ? AND kind = 'volume'").run(JSON.stringify(observed), resourceReceiptKey(observed), before.projectId); }
+        finally { db.close(); }
+      } else if (mode === "hook") {
+        // A completed hook with the same argv is not k3d creation provenance.
+        // Seed this durable input at the store seam; the production parser and
+        // reconciliation path decide whether it conveys authority.
+        const db = new Database(storePath);
+        try {
+          const row = db.query<{ receipt: string }, [string]>("SELECT receipt FROM launches WHERE id = ?").get(launch.id)!;
+          db.query("UPDATE launches SET receipt = ? WHERE id = ?").run(JSON.stringify({ ...JSON.parse(row.receipt), kind: "hook-pre-up", effect: "hook" }), launch.id);
+        } finally { db.close(); }
+      }
+      const recover = Bun.spawn([...command, "down", "--delete-cluster", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 25_000 });
+      const [exitCode, stdout, stderr] = await Promise.all([recover.exited, new Response(recover.stdout).text(), new Response(recover.stderr).text()]);
+      if (mode === "owned") {
+        expect(exitCode, stdout + stderr).toBe(0);
+        expect(JSON.parse(stdout).project).toMatchObject({ phase: "unallocated", claims: [] });
+        expect(existsSync(path.join(root, "tools.json"))).toBe(false);
+        expect(existsSync(path.join(root, "cache.json"))).toBe(false);
+      } else {
+        expect(exitCode, stdout + stderr).toBe(1);
+        expect(JSON.parse(stdout).code).toBe(mode === "cache-token" ? "CLEANUP_REQUIRED" : "NAME_CONFLICT");
+        expect(readFileSync(path.join(root, "tools.json"))).toEqual(tools);
+        expect(ProjectOperation.inspect(root, storePath)!.claims).toEqual(before.claims);
+        expect(ProjectOperation.inspect(root, storePath)!.resources.some(r => r.kind === "container")).toBe(false);
+      }
+    } finally {
+      if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGTERM");
+      await proc.exited;
+      await output;
+      await errors;
+    }
+  }, 45_000);
 }
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
