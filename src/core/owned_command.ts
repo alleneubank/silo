@@ -2,7 +2,7 @@ import { ProjectOperation, processAbsent, type CacheDeletionCapability, type Com
 import type { DockerDeletionTarget, ExecutorCompletion, Launch } from "./lease_types";
 import { runCommand } from "../utils/exec";
 import { SiloError } from "../utils/errors";
-import { withTimeout, observe, raceOperations } from "../utils/timeout";
+import { withTimeout, observe, raceOperations, type Cancellable } from "../utils/timeout";
 import { sleep } from "../utils/sleep";
 import { logger } from "../utils/logger";
 import { LAUNCH_START_TIMEOUT_MS, TILT_DRAIN_GRACE_MS, TILT_SUPERVISOR_BIN } from "./constants";
@@ -66,22 +66,53 @@ const firstLine = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promi
   throw new SiloError("Oversized launch handshake", "LAUNCH_FAILED");
 };
 
-const drain = async (reader: ReadableStreamDefaultReader<Uint8Array>, capture: boolean, channel: NodeJS.WriteStream): Promise<string> => {
+const drain = (reader: ReadableStreamDefaultReader<Uint8Array>, capture: boolean): Cancellable<string> => {
   const decoder = new TextDecoder();
-  let result = "";
+  const sink = capture ? null : Bun.stderr.writer();
+  let ending: Promise<number> | undefined;
+  const end = () => ending ??= Promise.resolve(sink?.end() ?? 0);
+  let text = "";
   let size = 0;
-  while (true) {
-    const chunk = await reader.read();
-    if (chunk.done) return result + decoder.decode();
-    if (capture) {
-      size += chunk.value.byteLength;
-      if (size > MAX_OUTPUT_BYTES) throw new SiloError("Command output exceeds 1 MiB", "COMMAND_OUTPUT_LIMIT");
-      result += decoder.decode(chunk.value, { stream: true });
-    } else {
-      result = (result + decoder.decode(chunk.value, { stream: true })).slice(-4096);
-      await new Promise<void>((resolve, reject) => channel.write(chunk.value, error => error ? reject(error) : resolve()));
+  let stopped = false;
+  const copy = async (): Promise<string> => {
+    while (!stopped) {
+      const chunk = await reader.read();
+      if (chunk.done) { await end(); return text + decoder.decode(); }
+      if (sink) {
+        text = (text + decoder.decode(chunk.value, { stream: true })).slice(-4096);
+        await sink.write(chunk.value);
+        await sink.flush();
+      } else {
+        size += chunk.value.byteLength;
+        if (size > MAX_OUTPUT_BYTES) throw new SiloError("Command output exceeds 1 MiB", "COMMAND_OUTPUT_LIMIT");
+        text += decoder.decode(chunk.value, { stream: true });
+      }
     }
-  }
+    return text;
+  };
+  const copied = observe(copy());
+  let abandon: (text: string) => void;
+  const abandoned = new Promise<string>(resolve => { abandon = resolve; });
+  const release = async () => {
+    stopped = true;
+    copied.cancel();
+    await reader.cancel();
+  };
+  const result = raceOperations([
+    { result: copied.result, cancel: release },
+    { result: abandoned, cancel: () => {} },
+  ]).finally(() => {
+    try {
+      // Normal EOF awaits the flush above. On abandonment, end stops new
+      // writes and unref releases the native flush from process lifetime.
+      // The shared stderr descriptor stays with the caller.
+      observe(end()).cancel();
+    } finally {
+      sink?.unref();
+      reader.releaseLock();
+    }
+  });
+  return { result, cancel: async () => { abandon(text); await result; } };
 };
 
 type CompletionWatch = { completion: Promise<ExecutorCompletion>; stop: () => void };
@@ -174,11 +205,12 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
   const capture = options.capture ?? true;
   const stdoutReader = proc.stdout.getReader();
   const stderrReader = proc.stderr.getReader();
-  const stderr = drain(stderrReader, capture, process.stderr);
+  const stderr = drain(stderrReader, capture);
+  let stdout: Cancellable<string> | undefined;
   const stopAndDrain = async () => {
     stopSupervisor();
     try { await withTimeout(observe(proc.exited), STOP_TIMEOUT_MS, "supervisor drain"); }
-    finally { await Promise.all([stdoutReader.cancel(), stderrReader.cancel()]); }
+    finally { await Promise.all([stdout ? stdout.cancel() : stdoutReader.cancel(), stderr.cancel()]); }
   };
   try {
     const handshakeTimeout = startupRemaining();
@@ -196,7 +228,8 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
     owner.checkpointLaunch(launch);
     proc.stdin.write(`${JSON.stringify(launch)}\n`);
     proc.stdin.end();
-    const finished = Promise.all([proc.exited, drain(stdoutReader, capture, process.stderr), stderr]);
+    stdout = drain(stdoutReader, capture);
+    const finished = Promise.all([proc.exited, stdout.result, stderr.result]);
     const journal = watchCompletion({ storePath: owner.storePath, projectId: owner.projectId, generation: owner.generation, launchId: launch.id });
     // The result is known once the supervisor exits or the executor's fact is
     // journaled. Neither a supervisor that misses its child's exit nor an
@@ -225,7 +258,7 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
     proc.stdin.end();
     await stopAndDrain();
     const exitCode = proc.exitCode ?? 1;
-    const diagnostic = await stderr;
+    const diagnostic = await stderr.result;
     if (error instanceof SiloError && error.code === "LAUNCH_FAILED") {
       throw new SiloError(`${error.message}; supervisor exited ${exitCode}. ${diagnostic.slice(-4096)}`.trimEnd(), error.code, {
         cause: error, details: { ...error.details, launchId: intent.id, generation: owner.generation, supervisorExitCode: exitCode },

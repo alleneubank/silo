@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { closeSync, constants, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readSync, rmSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
@@ -218,3 +218,33 @@ for (let attempt = 0; attempt < 16; attempt++) test(`bundled executor refuses a 
     reader.releaseLock();
   }
 }, 20_000);
+
+test("a finished non-capture command releases a blocked output pipe within its stop window", async () => {
+  const root = path.join(base, "blocked-output");
+  const fifo = path.join(base, "unread-output.fifo");
+  expect(Bun.spawnSync(["mkfifo", fifo], { timeout: 1000 }).exitCode).toBe(0);
+  const reader = openSync(fifo, constants.O_RDONLY | constants.O_NONBLOCK);
+  const writer = openSync(fifo, constants.O_WRONLY | constants.O_NONBLOCK);
+  const proc = Bun.spawn([...entrypoint("bundled.js"), "--exercise-blocked-output", root], {
+    detached: true, stdin: "ignore", stdout: "pipe", stderr: writer, timeout: 20_000,
+  });
+  closeSync(writer);
+  writeFileSync(path.join(base, "blocked-output.pid"), String(proc.pid));
+  const stdout = new Response(proc.stdout).text();
+  try {
+    const exitCode = await withTimeout({
+      result: proc.exited,
+      cancel: () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL"); },
+    }, 15_000, "non-capture command stop window");
+    expect(exitCode).toBe(0);
+    expect(JSON.parse(await stdout)).toEqual({ exitCode: 0, stdout: "" });
+    expect(readSync(reader, Buffer.alloc(65536), 0, 65536, null)).toBeGreaterThan(0);
+    expect(readFileSync(path.join(root, "launched.txt"), "utf8")).toBe("granted");
+    const inspection = JSON.parse(readFileSync(path.join(root, "inspection.json"), "utf8"));
+    expect(inspection.launches).toMatchObject([{ phase: "exited", started: true, exitCode: 0, reconciled: true }]);
+  } finally {
+    if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL");
+    await proc.exited;
+    closeSync(reader);
+  }
+}, 25_000);

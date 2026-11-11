@@ -5,7 +5,8 @@ import { ProjectOperation } from "../lease_store";
 import { startOwnedCommand } from "../owned_command";
 import { prepareFileTarget } from "../file_target";
 
-if (Bun.argv[2] !== "--exercise-owned-command") {
+const blockedOutput = Bun.argv[2] === "--exercise-blocked-output";
+if (Bun.argv[2] !== "--exercise-owned-command" && !blockedOutput) {
   await import("../../cli");
 } else {
   const root = Bun.argv[3];
@@ -33,10 +34,14 @@ if (Bun.argv[2] !== "--exercise-owned-command") {
     }, [{ domain: "instance-name", resource: "owned" }], [
       { role: "config", target: prepareFileTarget(root, "silo.toml", "config") },
     ]);
-    const running = await startOwnedCommand(owner, ["/bin/sh", "-c", "printf tool-output; printf granted > launched.txt; exec sleep 60"], {
-      kind: "entrypoint-proof", effect: "none", timeoutMs,
+    const command = blockedOutput
+      ? [process.execPath, "-e", 'await Bun.write(Bun.stderr, "x".repeat(128 * 1024)); await Bun.write("launched.txt", "granted");']
+      : ["/bin/sh", "-c", "printf tool-output; printf granted > launched.txt; exec sleep 60"];
+    const running = await startOwnedCommand(owner, command, {
+      kind: blockedOutput ? "tilt-up" : "entrypoint-proof", effect: "none", timeoutMs: blockedOutput ? null : timeoutMs, capture: !blockedOutput,
     });
-    try {
+    writeFileSync(path.join(root, "launch.json"), JSON.stringify(running.launch));
+    if (!blockedOutput) try {
       const deadline = Date.now() + 5000;
       while (!existsSync(path.join(root, "launched.txt"))) {
         assert(Date.now() < deadline, "granted tool did not write its marker");
