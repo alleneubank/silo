@@ -436,6 +436,20 @@ describe("atomic account leases", () => {
     expect(readFileSync(path.join(a, ".localnet.env"), "utf8")).toBe("a sentinel\n");
   });
 
+  test("store-leaf symlinks permit read-only inspection without changing bytes and refuse writers", async () => {
+    const root = project("a"); const owner = await open(root);
+    await owner.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+    owner.finish();
+    const alias = path.join(base, "store-alias.sqlite");
+    symlinkSync(storePath, alias);
+    const before = readFileSync(storePath);
+    const expected = ProjectOperation.inspect(root, storePath);
+    expect(ProjectOperation.inspect(root, alias)).toEqual(expected);
+    expect(readFileSync(storePath)).toEqual(before);
+    await expect(ProjectOperation.open(root, { storePath: alias, legacyInputs })).rejects.toThrow("LEASE_STORE_UNAVAILABLE");
+    expect(readFileSync(storePath)).toEqual(before);
+  });
+
   test("root symlinks share one operation, and a finished capability is fenced", async () => {
     const root = project("a"); const alias = path.join(base, "alias"); symlinkSync(root, alias);
     const op = await open(root);
