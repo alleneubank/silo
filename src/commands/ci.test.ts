@@ -5,6 +5,7 @@ import path from "node:path";
 import { ProjectOperation, processAbsent } from "../core/lease_store";
 import { withTimeout } from "../utils/timeout";
 import { Database } from "bun:sqlite";
+import { startOwnedCommand } from "../core/owned_command";
 
 let base: string;
 let account: string;
@@ -18,6 +19,8 @@ beforeAll(async () => {
   mkdirSync(bin);
   writeFileSync(path.join(bin, "tilt"), "#!/bin/sh\nprintf ready > ready\nif test -f quick-ci; then exit 0; fi\nexec sleep 60\n", { mode: 0o755 });
   writeFileSync(path.join(bin, "docker"), `#!/bin/sh
+if test -f cancel-probe; then echo $$ > probe.pid; printf ready > probe-ready; exec sleep 60; fi
+if test -f k3d-fixture; then exec bun ${JSON.stringify(path.resolve(import.meta.dir, "fixtures/docker.ts"))} "$@"; fi
 if test -f setup-block; then echo $$ > setup.pid; printf ready > setup-ready; sleep 3; fi
 case "$*" in
   'context inspect --format {{.Endpoints.docker.Host}}') echo unix:///private-fixture.sock ;;
@@ -29,6 +32,7 @@ case "$*" in
   *) echo "Unexpected Docker fixture request: $*" >&2; exit 1 ;;
 esac
 `, { mode: 0o755 });
+  writeFileSync(path.join(bin, "k3d"), '#!/bin/sh\nif test "$2" = list; then echo "[]"; else echo $$ > tool.pid; printf ready > ready; exec sleep 60; fi\n', { mode: 0o755 });
   // Account lookup uses a private store; status import can pause at an explicit
   // fixture marker to expose the final-result signal window. Other behavior is
   // production code, with shell stand-ins at the Docker and Tilt boundaries.
@@ -218,3 +222,126 @@ for (const stage of ["setup", "final-status"] as const) {
     }
   }, 45_000);
 }
+
+for (const phase of ["hook", "k3d-create", "tilt"] as const) {
+  for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    test(`up ${phase} stops its owned group on first ${signal}, reports interruption and recovers through down`, async () => {
+      const root = path.join(base, `up-${phase}-${signal}`);
+      mkdirSync(root);
+      const extra = phase === "hook" ? '[hooks]\npre-up = ["echo $$ > tool.pid; printf ready > ready; exec sleep 60"]\n' :
+        phase === "k3d-create" ? '[k3d]\nenabled = true\n' : '';
+      if (phase === "k3d-create") writeFileSync(path.join(root, "k3d-fixture"), "");
+      writeFileSync(path.join(root, "silo.toml"), `version = 1\n${extra}[ports]\nTILT_PORT = "random"\n`);
+      const storePath = path.join(account, ".silo/leases.sqlite");
+      const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, HOME: account, DOCKER_HOST: "unix:///private-fixture.sock" };
+      const command = [process.execPath, path.join(base, "cli.js")];
+      const proc = Bun.spawn([...command, "up", `${phase}-${signal.toLowerCase()}`, "--json"], { cwd: root, env, detached: true, stdout: "pipe", stderr: "pipe", timeout: 25_000 });
+      writeFileSync(path.join(root, "cli.pid"), String(proc.pid));
+      const output = new Response(proc.stdout).text();
+      const errors = new Response(proc.stderr).text();
+      try {
+        await waitFor(() => existsSync(path.join(root, "ready")) || proc.exitCode !== null);
+        if (proc.exitCode !== null) throw new Error(`Exited before ${phase}: ${await output}\n${await errors}`);
+        const before = ProjectOperation.inspect(root, storePath)!;
+        const launch = before.launches.find(l => l.kind === (phase === "hook" ? "hook-pre-up" : phase === "k3d-create" ? "k3d-cluster-create" : "tilt-up"))!;
+        expect(launch.phase).toBe("granted");
+        const start = Date.now();
+        process.kill(-proc.pid, signal);
+        const [exitCode, stdout] = await withTimeout({ result: Promise.all([proc.exited, output]), cancel: () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL"); } }, 12_000, "up interrupt deadline");
+        expect(Date.now() - start).toBeLessThan(11_000);
+        expect(exitCode).toBe(signal === "SIGINT" ? 130 : 143);
+        expect(JSON.parse(stdout)).toMatchObject({ schemaVersion: 1, code: "INTERRUPTED", signal });
+        expect(JSON.parse(stdout).message).toContain("silo down");
+        await waitFor(() => processAbsent(launch.supervisorPid!) && processAbsent(-launch.groupId!));
+        const after = ProjectOperation.inspect(root, storePath)!;
+        expect(after.claims).toEqual(before.claims);
+        const recover = Bun.spawn([...command, "down", "--delete-cluster", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 25_000 });
+        const [recovered, recoveredOutput, recoveredErrors] = await Promise.all([recover.exited, new Response(recover.stdout).text(), new Response(recover.stderr).text()]);
+        expect(recovered, `${recoveredOutput}\n${recoveredErrors}`).toBe(0);
+        expect(JSON.parse(recoveredOutput).project).toMatchObject({ phase: "unallocated", claims: [] });
+      } finally {
+        if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL");
+        await proc.exited;
+        await errors;
+        await waitFor(() => (ProjectOperation.inspect(root, storePath)?.launches ?? []).every(l => l.supervisorPid === null || (processAbsent(l.supervisorPid) && processAbsent(-l.groupId!))));
+      }
+    }, 45_000);
+  }
+}
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  test(`down cancelled probe reports ${signal} as INTERRUPTED and retains claims until retry`, async () => {
+    const root = path.join(base, `down-probe-${signal}`);
+    mkdirSync(root);
+    writeFileSync(path.join(root, "silo.toml"), 'version = 1\n[ports]\nTILT_PORT = "random"\n');
+    const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, HOME: account, DOCKER_HOST: "unix:///private-fixture.sock" };
+    const command = [process.execPath, path.join(base, "cli.js")];
+    const invoke = async (args: string[]) => {
+      const proc = Bun.spawn([...command, ...args, "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 20_000 });
+      const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+      expect(exitCode, stdout + stderr).toBe(0);
+      return JSON.parse(stdout);
+    };
+    await invoke(["env", `probe-${signal.toLowerCase()}`]);
+    // A completed hook requires backend reconciliation during down, even
+    // though this fixture created no Docker objects.
+    const owner = await ProjectOperation.open(root, { storePath: path.join(account, ".silo/leases.sqlite"), executorEntrypoint: path.join(base, "cli.js") });
+    try {
+      const running = await startOwnedCommand(owner, [process.execPath, "-e", ""], { kind: "hook-pre-up", effect: "hook", timeoutMs: 5000 });
+      owner.recordCommandResult((await running.exited).launch);
+    } finally { owner.finish(); }
+    const before = await invoke(["status"]);
+    writeFileSync(path.join(root, "cancel-probe"), "");
+    const proc = Bun.spawn([...command, "down", "--delete-cluster", "--clean", "--json"], { cwd: root, env, detached: true, stdout: "pipe", stderr: "pipe", timeout: 20_000 });
+    writeFileSync(path.join(root, "cli.pid"), String(proc.pid));
+    const output = new Response(proc.stdout).text();
+    const errors = new Response(proc.stderr).text();
+    try {
+      await waitFor(() => existsSync(path.join(root, "probe-ready")) || proc.exitCode !== null);
+      if (proc.exitCode !== null) throw new Error(`Exited before probe: ${await output}\n${await errors}`);
+      process.kill(-proc.pid, signal);
+      const [exitCode, stdout] = await Promise.all([proc.exited, output]);
+      expect(exitCode).toBe(signal === "SIGINT" ? 130 : 143);
+      expect(JSON.parse(stdout)).toMatchObject({ code: "INTERRUPTED", signal });
+      expect(stdout).not.toContain("ENGINE_UNAVAILABLE");
+      const status = await invoke(["status"]);
+      expect(status.project.claims).toEqual(before.project.claims);
+      expect(status.project.phase).toBe("cleanup-required");
+      expect(status.project.problem).toContain("interrupted");
+      expect(status.project.problem).not.toContain("ENGINE_UNAVAILABLE");
+      unlinkSync(path.join(root, "cancel-probe"));
+      const recovered = await invoke(["down", "--delete-cluster", "--clean"]);
+      expect(recovered.project).toMatchObject({ phase: "unallocated", claims: [] });
+      await waitFor(() => processAbsent(Number(readFileSync(path.join(root, "probe.pid"), "utf8"))));
+    } finally {
+      if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL");
+      await proc.exited;
+      await errors;
+    }
+  }, 45_000);
+}
+
+test("up interrupted before final status emission cannot select a success result", async () => {
+  const root = path.join(base, "up-final-status");
+  mkdirSync(root);
+  writeFileSync(path.join(root, "silo.toml"), 'version = 1\n[ports]\nTILT_PORT = "random"\n');
+  writeFileSync(path.join(root, "quick-ci"), "");
+  writeFileSync(path.join(root, "delay-final-status"), "");
+  const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, HOME: account };
+  const proc = Bun.spawn([process.execPath, path.join(base, "cli.js"), "up", "up-final-status", "--json"], { cwd: root, env, detached: true, stdout: "pipe", stderr: "pipe", timeout: 15_000 });
+  writeFileSync(path.join(root, "cli.pid"), String(proc.pid));
+  const output = new Response(proc.stdout).text();
+  const errors = new Response(proc.stderr).text();
+  try {
+    await waitFor(() => existsSync(path.join(root, "final-status-ready")) || proc.exitCode !== null);
+    if (proc.exitCode !== null) throw new Error(`Exited before status: ${await output}\n${await errors}`);
+    proc.kill("SIGTERM");
+    const [exitCode, stdout] = await Promise.all([proc.exited, output]);
+    expect(exitCode).toBe(143);
+    expect(JSON.parse(stdout)).toMatchObject({ code: "INTERRUPTED", signal: "SIGTERM" });
+  } finally {
+    if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGKILL");
+    await proc.exited;
+    await errors;
+  }
+}, 20_000);

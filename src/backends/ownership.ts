@@ -1,6 +1,6 @@
 import { realpathSync } from "node:fs";
 import { z } from "zod";
-import { MAX_OBJECTS, ListRowSchema, enumerate, inspectObject, query, captureEngine, type NamespaceEntry, type InspectedObject } from "./docker";
+import { MAX_OBJECTS, ListRowSchema, enumerate, inspectObject, query, captureEngine, type BackendContext, type NamespaceEntry, type InspectedObject } from "./docker";
 export { captureEngine } from "./docker";
 import { SiloError } from "../utils/errors";
 import type { ProjectOperation } from "../core/lease_store";
@@ -21,7 +21,7 @@ export const K3D_CLUSTER_CREATE_KIND = "k3d-cluster-create";
 export const assertEngine = async (owner: ProjectOperation): Promise<NonNullable<Allocation["engine"]>> => {
   const current = owner.current();
   if (!current) throw new Error("Backend operation requires an allocation");
-  const engine = await captureEngine(owner.root);
+  const engine = await captureEngine(owner);
   if (current.allocation.engine && (engine.id !== current.allocation.engine.id || engine.endpoint !== current.allocation.engine.endpoint)) {
     throw new SiloError("ENGINE_CHANGED: Docker endpoint or engine ID differs from the allocation; no backend effect permitted", "ENGINE_CHANGED");
   }
@@ -37,7 +37,7 @@ const assertLabelledScope = async (owner: ProjectOperation, entries: NamespaceEn
   const claims = owner.resourceClaims();
   for (const kind of ["container", "network", "volume"] as const) {
     const output = await query(["docker", kind, "ls", ...(kind === "container" ? ["-a"] : []), ...(kind === "volume" ? [] : ["--no-trunc"]),
-      "--filter", `label=io.silo.project=${owner.projectId}`, "--filter", `label=io.silo.generation=${owner.generation}`, "--format", "{{json .}}"], owner.root);
+      "--filter", `label=io.silo.project=${owner.projectId}`, "--filter", `label=io.silo.generation=${owner.generation}`, "--format", "{{json .}}"], owner);
     const lines = output.split("\n").filter(line => line.trim().length > 0);
     if (lines.length > MAX_OBJECTS) throw new SiloError("ENGINE_UNAVAILABLE: owner namespace exceeds enumeration limit", "ENGINE_UNAVAILABLE");
     for (const line of lines) {
@@ -60,11 +60,11 @@ const assertResourceMatch = (receipt: BackendReceipt, observed: ObservedBackendR
   conflict(entry);
 };
 
-const exactK3dNames = async (claims: Claim[], owned: BackendReceipt[], cwd: string): Promise<void> => {
+const exactK3dNames = async (claims: Claim[], owned: BackendReceipt[], context: BackendContext): Promise<void> => {
   for (const [domain, command] of [["k3d-cluster", "cluster"], ["k3d-registry", "registry"]] as const) {
     const names = claims.filter(c => c.domain === domain).map(c => c.resource);
     if (names.length === 0) continue;
-    const values = z.array(z.object({ name: z.string() })).max(MAX_OBJECTS).parse(JSON.parse(await query(["k3d", command, "list", "-o", "json"], cwd)));
+    const values = z.array(z.object({ name: z.string() })).max(MAX_OBJECTS).parse(JSON.parse(await query(["k3d", command, "list", "-o", "json"], context)));
     for (const name of names) {
       if (!values.some(v => v.name === name || (command === "registry" && v.name === `k3d-${name}`))) continue;
       const hasReceipt = owned.some(r => r.source === "k3d" && r.kind === "container" && (command === "cluster" ? r.labels["k3d.cluster"] === name : r.name === name));
@@ -73,13 +73,13 @@ const exactK3dNames = async (claims: Claim[], owned: BackendReceipt[], cwd: stri
   }
 };
 
-export const assertNamesAvailable = async (claims: Claim[], cwd: string, owned: BackendReceipt[] = []): Promise<void> => {
-  await exactK3dNames(claims, owned, cwd);
-  const entries = await enumerate(cwd);
+export const assertNamesAvailable = async (claims: Claim[], context: BackendContext, owned: BackendReceipt[] = []): Promise<void> => {
+  await exactK3dNames(claims, owned, context);
+  const entries = await enumerate(context);
   for (const entry of entries.filter(e => selected(e, claims))) {
     const prior = owned.find(r => r.kind === entry.kind && r.name === entry.name);
     if (!prior) return conflict(entry);
-    const current = await inspectObject(entry, prior.source, cwd);
+    const current = await inspectObject(entry, prior.source, context);
     assertResourceMatch(prior, current.receipt, entry);
   }
 };
@@ -109,7 +109,7 @@ const captureOwnedResources = async (owner: ProjectOperation, source: BackendRec
     (entry.kind === "network" && entry.name === `k3d-${cluster}`) ||
     (entry.kind === "volume" && entry.name === `k3d-${cluster}-images`)
   );
-  const namespace = await enumerate(owner.root);
+  const namespace = await enumerate(owner);
   await assertLabelledScope(owner, namespace);
   const entries = namespace.filter(e => selected(e, owner.resourceClaims()) && isK3d(e) === (source === "k3d"));
   // An absent immutable object remains in audit history, but cannot reserve a
@@ -123,7 +123,7 @@ const captureOwnedResources = async (owner: ProjectOperation, source: BackendRec
   const captured: ObservedBackendReceipt[] = [];
   for (const entry of entries) {
     const existing = prior.find(r => r.kind === entry.kind && r.name === entry.name);
-    const current = await inspectObject(entry, existing?.source ?? source, owner.root);
+    const current = await inspectObject(entry, existing?.source ?? source, owner);
     if (existing) {
       assertResourceMatch(existing, current.receipt, entry);
       validatePublications(current);
@@ -186,10 +186,10 @@ export const runProducerCommand = async (owner: ProjectOperation, command: strin
 /** Revalidates exact IDs and creation identities before any deletion capability is used. */
 export const verifyResource = async (owner: ProjectOperation, receipt: BackendReceipt): Promise<boolean> => {
   await assertEngine(owner);
-  const entries = await enumerate(owner.root);
+  const entries = await enumerate(owner);
   const entry = entries.find(e => e.kind === receipt.kind && (receipt.kind === "volume" ? e.name === receipt.name : e.id === receipt.id));
   if (!entry) return false;
-  const current = await inspectObject(entry, receipt.source, owner.root);
+  const current = await inspectObject(entry, receipt.source, owner);
   assertResourceMatch(receipt, current.receipt, entry);
   return true;
 };
@@ -203,14 +203,14 @@ export const findAnonymousLeaks = async (owner: ProjectOperation): Promise<(Anon
   const receipts = owner.resources(true);
   if (!receipts.some(r => r.kind === "container" && r.anonymousVolumes.length > 0)) return [];
   await assertEngine(owner);
-  return anonymousLeaks(await enumerate(owner.root), receipts);
+  return anonymousLeaks(await enumerate(owner), receipts);
 };
 
 export const proveBackendAbsent = async (owner: ProjectOperation): Promise<void> => {
   const record = owner.current();
   if (!record?.allocation.engine && owner.resources(true).length === 0) return;
   await assertEngine(owner);
-  const entries = await enumerate(owner.root);
+  const entries = await enumerate(owner);
   await assertLabelledScope(owner, entries);
   const leaks = anonymousLeaks(entries, owner.resources(true));
   if (leaks.length > 0) {

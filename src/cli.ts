@@ -9,6 +9,7 @@ import { assertNoLegacyState } from "./core/legacy_check";
 import { DOC_TOPICS } from "./commands/doc-topics";
 import { VERSION } from "./version";
 import { colors, isInteractive } from "./utils/colors";
+import { OperationInterrupts, interruption, type InterruptSignal } from "./utils/interrupt";
 
 const VERSION_SILO = `      __               ____  _ _
      /  \\             / ___|| (_) ___
@@ -274,8 +275,8 @@ Examples:
 let jsonOutput = Bun.argv.includes("--json");
 let jsonResultStarted = false;
 let removeInterruptHandlers = () => {};
+let operationInterrupts: OperationInterrupts | undefined;
 const JSON_OUTPUT_TIMEOUT_MS = 30_000;
-type InterruptSignal = "SIGINT" | "SIGTERM";
 type JsonEmission = { kind: "result"; value: unknown } | { kind: "interrupt"; signal: InterruptSignal };
 
 const errorResult = (error: unknown) => ({
@@ -285,11 +286,6 @@ const errorResult = (error: unknown) => ({
   ...(error instanceof SiloError ? error.details : {}),
 });
 
-const ciInterruption = (signal: InterruptSignal) => new SiloError(
-  `ci interrupted by ${signal}; owned claims retained. Run silo status and silo down to reconcile.`,
-  "INTERRUPTED", { details: { signal } },
-);
-
 const exitWithDiagnostic = (message: string, exitCode: 1 | 130 | 143): never => {
   // A stopped diagnostic reader must not hold the exiting CLI open.
   try { process.stderr.write(`silo error: ${message}\n`); }
@@ -298,7 +294,7 @@ const exitWithDiagnostic = (message: string, exitCode: 1 | 130 | 143): never => 
 
 const writeJsonResult = (emission: JsonEmission): Promise<void> | void => {
   if (jsonResultStarted) return;
-  const value = emission.kind === "interrupt" ? errorResult(ciInterruption(emission.signal)) : emission.value;
+  const value = emission.kind === "interrupt" ? errorResult(interruption("ci", emission.signal)) : emission.value;
   const payload = JSON.stringify(value) + "\n";
   jsonResultStarted = true;
   if (emission.kind === "interrupt") {
@@ -326,7 +322,7 @@ const handleCiInterrupts = (): (() => void) => {
     if (jsonOutput) {
       try { writeJsonResult({ kind: "interrupt", signal }); }
       finally { process.exit(exitCode); }
-    } else exitWithDiagnostic(ciInterruption(signal).message, exitCode);
+    } else exitWithDiagnostic(interruption("ci", signal).message, exitCode);
   };
   const onInt = () => interrupt("SIGINT");
   const onTerm = () => interrupt("SIGTERM");
@@ -338,6 +334,7 @@ const handleCiInterrupts = (): (() => void) => {
 const printJsonResult = async (config: string, enabled: boolean, changed: boolean): Promise<void> => {
   if (!enabled) return;
   const { readStatus } = await import("./commands/status");
+  operationInterrupts?.signal.throwIfAborted();
   await writeJsonResult({ kind: "result", value: readStatus(config, changed) });
 };
 
@@ -395,6 +392,10 @@ const main = async (): Promise<void> => {
   }
 
   if (command === "ci") removeInterruptHandlers = handleCiInterrupts();
+  if (command === "up" || command === "down") {
+    operationInterrupts = new OperationInterrupts(command);
+    removeInterruptHandlers = () => operationInterrupts!.close();
+  }
 
   if (["env", "up", "ci", "down", "status"].includes(command)) {
     await assertNoLegacyState(path.dirname(path.resolve(values.config)));
@@ -419,10 +420,12 @@ const main = async (): Promise<void> => {
       const mod = await import("./commands/up");
       const changed = await mod.up(args[0], {
         executorEntrypoint: import.meta.path,
+        ...(operationInterrupts === undefined ? {} : { signal: operationInterrupts.signal }),
         config: values.config,
         force: values.force,
         profile: values.profile,
       });
+      operationInterrupts?.signal.throwIfAborted();
       await printJsonResult(values.config, values.json, changed);
       return;
     }
@@ -430,10 +433,12 @@ const main = async (): Promise<void> => {
       const mod = await import("./commands/down");
       const changed = await mod.down({
         executorEntrypoint: import.meta.path,
+        ...(operationInterrupts === undefined ? {} : { signal: operationInterrupts.signal }),
         config: values.config,
         "delete-cluster": values["delete-cluster"],
         clean: values.clean,
       });
+      operationInterrupts?.signal.throwIfAborted();
       await printJsonResult(values.config, values.json, changed);
       return;
     }
@@ -499,7 +504,8 @@ const main = async (): Promise<void> => {
 };
 
 main().catch(async (error: unknown) => {
-  process.exitCode = 1;
+  process.exitCode = error instanceof SiloError && error.code === "INTERRUPTED"
+    ? (error.details.signal === "SIGINT" ? 130 : 143) : 1;
   if (jsonOutput) {
     if (jsonResultStarted) console.error(`silo error: ${error instanceof Error ? error.message : "JSON output failed"}`);
     else {

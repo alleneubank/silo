@@ -6,6 +6,7 @@ export const withRetry = async <T>(
     attempts: number;
     baseDelayMs: number;
     maxDelayMs: number;
+    signal?: AbortSignal | undefined;
   }
 ): Promise<T> => {
   const { attempts, baseDelayMs, maxDelayMs } = params;
@@ -13,15 +14,17 @@ export const withRetry = async <T>(
   const totalAttempts = Math.max(1, attempts);
 
   for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
+    params.signal?.throwIfAborted();
     try {
       return await fn(attempt);
     } catch (error) {
+      params.signal?.throwIfAborted();
       lastError = error;
       if (attempt >= totalAttempts) {
         break;
       }
       const delay = Math.min(baseDelayMs * 2 ** (attempt - 1), maxDelayMs);
-      await sleep(delay);
+      await sleep(delay, params.signal);
     }
   }
 

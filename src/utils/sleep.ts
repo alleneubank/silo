@@ -1,2 +1,6 @@
-export const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+import { setTimeout } from "node:timers/promises";
+
+export const sleep = async (ms: number, signal?: AbortSignal): Promise<void> => {
+  try { await setTimeout(ms, undefined, signal === undefined ? {} : { signal }); }
+  catch (error) { signal?.throwIfAborted(); throw error; }
+};

@@ -245,6 +245,7 @@ export type ProjectInspection = {
 };
 
 type OperationOptions = {
+  signal?: AbortSignal;
   storePath?: string;
   legacyInputs?: Parameters<typeof findLegacyState>[1];
   recover?: boolean;
@@ -268,6 +269,7 @@ export class ProjectOperation {
     readonly completionJournal: "account" | "parent",
     private readonly listenerProbe: PortCheckFn,
     private readonly protectedDirectories: readonly string[],
+    readonly signal: AbortSignal | undefined,
   ) {
     const connections = operationConnections.get(storePath) ?? new Set<Database>();
     connections.add(db);
@@ -319,6 +321,7 @@ export class ProjectOperation {
         options.storePath === undefined ? "account" : "parent",
         options.listenerProbe ?? checkPortListenerAbsent,
         legacyRegistryDirectories(options.legacyInputs),
+        options.signal,
       );
     } catch (error) {
       db.close();

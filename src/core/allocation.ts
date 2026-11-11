@@ -58,7 +58,7 @@ export const allocateProject = async (owner: ProjectOperation, nameArg: string |
   validateConfig?.(config);
   const name = nameArg ? sanitizeName(nameArg) : current?.allocation.state.name ?? generateName(owner.root);
   const fingerprint = digest(JSON.stringify({ configSource, name, profile: profileName ?? null, home: config.k3d?.enabled && config.k3d.kubeconfigPath === undefined ? os.homedir() : null }));
-  const engine = await captureEngine(owner.root);
+  const engine = await captureEngine(owner);
   if (current) {
     if (current.allocation.engine?.id !== engine.id || current.allocation.engine.endpoint !== engine.endpoint) {
       throw new SiloError("ENGINE_CHANGED: Docker endpoint or identity changed; reconcile the original engine first", "ENGINE_CHANGED");
@@ -91,7 +91,7 @@ export const allocateProject = async (owner: ProjectOperation, nameArg: string |
       validateK3dArgs(allocation.k3dArgs, allocation.state.ports);
       const claims = resourceClaims(allocation.state, config);
       try {
-        await assertNamesAvailable(claims, owner.root, owner.resources());
+        await assertNamesAvailable(claims, owner, owner.resources());
         const targets = fileTargets(owner, config, allocation);
         await owner.allocate(allocation, claims, targets);
         logPortAllocations(events);

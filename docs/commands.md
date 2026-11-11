@@ -61,13 +61,17 @@ must be a separate append-only target and cannot alias a generated file.
 and the current project. Errors carry a stable `code` and message, with
 read-only listings for `LEGACY_STATE`. Diagnostics go to stderr.
 
-Interrupting `ci --json` with SIGINT or SIGTERM returns one `INTERRUPTED`
-error with a top-level `signal` field and exit 130 or 143. The supervisor
+Interrupting `up`, `ci` or `down` with SIGINT or SIGTERM exits 130 or 143
+and names `status` and `down` as the next steps. With `--json`, it returns one
+`INTERRUPTED` error with a top-level `signal` field. The first interrupt stops
+`up` during hooks, k3d setup or Tilt using the same owned-group stop deadline.
+Claims and receipts remain for recovery; an interrupted Docker probe does not
+establish resource absence or diagnose an engine failure. `ci`'s supervisor
 drains its recorded group after the CLI exits. Run `status` and `down` to
-recover an abandoned operation and reconcile retained ownership.
+reconcile retained ownership, then retry any interrupted cleanup.
 A signal after final JSON emission starts preserves that result and its exit status.
 Normal JSON output handles pipe backpressure for up to 30 seconds. During that
-flush, CI interrupts preserve the selected result. A reader stalled longer than
+flush, interrupts preserve the selected result. A reader stalled longer than
 30 seconds gets a nonzero exit; a failed output stream receives no second object.
 
 Status preserves stored fields under `project`. Separate `launchStatus` entries

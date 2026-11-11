@@ -4,6 +4,8 @@ import { SiloError } from "../utils/errors";
 import { ObservedBackendReceiptSchema } from "../core/lease_types";
 import type { Allocation, AnonymousVolume, BackendReceipt, ObservedBackendReceipt } from "../core/lease_types";
 
+export type BackendContext = { readonly root: string; readonly signal?: AbortSignal | undefined };
+
 export const MAX_OBJECTS = 10_000;
 const TOOL_TIMEOUT_MS = 5000;
 const EngineSchema = z.object({ ID: z.string().min(1), OSType: z.literal("linux") });
@@ -27,29 +29,30 @@ const InspectSchema = z.object({
 });
 export type NamespaceEntry = { kind: BackendReceipt["kind"]; name: string; id: string };
 export type InspectedObject = { receipt: ObservedBackendReceipt; publishedPorts: number[]; bindings: Record<string, number[]>; running: boolean };
-export const query = async (argv: string[], cwd: string): Promise<string> => {
-  const result = await runCommand(argv, { cwd, timeoutMs: TOOL_TIMEOUT_MS, context: argv.slice(0, 3).join(" "), stdio: "pipe" });
+export const query = async (argv: string[], context: BackendContext): Promise<string> => {
+  const result = await runCommand(argv, { cwd: context.root, ...(context.signal === undefined ? {} : { signal: context.signal }), timeoutMs: TOOL_TIMEOUT_MS, context: argv.slice(0, 3).join(" "), stdio: "pipe" });
+  context.signal?.throwIfAborted();
   if (result.exitCode !== 0) throw new SiloError(`ENGINE_UNAVAILABLE: ${argv.slice(0, 3).join(" ")} failed; absence is not established`, "ENGINE_UNAVAILABLE");
   return result.stdout;
 };
 
-export const captureEngine = async (cwd: string): Promise<NonNullable<Allocation["engine"]>> => {
+export const captureEngine = async (context: BackendContext): Promise<NonNullable<Allocation["engine"]>> => {
   const endpoint = process.env.DOCKER_HOST && !process.env.DOCKER_CONTEXT
     ? process.env.DOCKER_HOST
-    : (await query(["docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"], cwd)).trim();
+    : (await query(["docker", "context", "inspect", "--format", "{{.Endpoints.docker.Host}}"], context)).trim();
   if (!endpoint.startsWith("unix:///") || endpoint.length > 4096) {
     throw new SiloError("ENGINE_UNSUPPORTED: silo requires a local Unix-socket Docker endpoint", "ENGINE_UNSUPPORTED");
   }
-  const info = EngineSchema.parse(JSON.parse(await query(["docker", "info", "--format", "{{json .}}"], cwd)));
+  const info = EngineSchema.parse(JSON.parse(await query(["docker", "info", "--format", "{{json .}}"], context)));
   return { endpoint, id: info.ID };
 };
 
 /** Complete structured enumeration, checked against the engine's known-present bridge. */
-export const enumerate = async (cwd: string): Promise<NamespaceEntry[]> => {
+export const enumerate = async (context: BackendContext): Promise<NamespaceEntry[]> => {
   const entries: NamespaceEntry[] = [];
   for (const kind of ["container", "network", "volume"] as const) {
     const args = ["docker", kind, "ls", ...(kind === "container" ? ["-a"] : []), ...(kind === "volume" ? [] : ["--no-trunc"]), "--format", "{{json .}}"];
-    const output = await query(args, cwd);
+    const output = await query(args, context);
     const lines = output.split("\n").filter(line => line.trim().length > 0);
     if (lines.length > MAX_OBJECTS) throw new SiloError("ENGINE_UNAVAILABLE: namespace exceeds enumeration limit", "ENGINE_UNAVAILABLE");
     for (const line of lines) {
@@ -61,13 +64,13 @@ export const enumerate = async (cwd: string): Promise<NamespaceEntry[]> => {
   }
   const bridge = entries.find(e => e.kind === "network" && e.name === "bridge");
   if (!bridge) throw new SiloError("ENGINE_UNAVAILABLE: known-present bridge control missing from network enumeration", "ENGINE_UNAVAILABLE");
-  const control = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "network", "inspect", bridge.id], cwd)))[0]!;
+  const control = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "network", "inspect", bridge.id], context)))[0]!;
   if (control.Id !== bridge.id || control.Name !== "bridge") throw new SiloError("ENGINE_UNAVAILABLE: enumeration control mismatch", "ENGINE_UNAVAILABLE");
   return entries;
 };
 
-export const inspectObject = async (entry: NamespaceEntry, source: BackendReceipt["source"], cwd: string): Promise<InspectedObject> => {
-  const value = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", entry.kind, "inspect", entry.id], cwd)))[0]!;
+export const inspectObject = async (entry: NamespaceEntry, source: BackendReceipt["source"], context: BackendContext): Promise<InspectedObject> => {
+  const value = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", entry.kind, "inspect", entry.id], context)))[0]!;
   if (entry.kind === "container" && !value.State) throw new SiloError(`ENGINE_UNAVAILABLE: missing container state: ${entry.name}`, "ENGINE_UNAVAILABLE");
   const labels = value.Config?.Labels ?? value.Labels ?? {};
   const safeLabels = Object.fromEntries(Object.entries(labels).filter(([key]) =>
@@ -80,7 +83,7 @@ export const inspectObject = async (entry: NamespaceEntry, source: BackendReceip
     createdAt, labels: safeLabels,
   };
   const receipt = ObservedBackendReceiptSchema.parse(entry.kind === "container"
-    ? { ...identity, kind: "container", anonymousVolumes: await captureAnonymousVolumes(value, cwd) }
+    ? { ...identity, kind: "container", anonymousVolumes: await captureAnonymousVolumes(value, context) }
     : { ...identity, kind: entry.kind, ...(entry.kind === "volume" ? { authority: "observed" } : {}) });
   const bindings = Object.fromEntries(Object.entries(value.NetworkSettings?.Ports ?? {}).map(([target, bindings]) => [target, (bindings ?? []).map(binding => Number(binding.HostPort))]));
   const publishedPorts = Object.values(bindings).flat();
@@ -89,9 +92,9 @@ export const inspectObject = async (entry: NamespaceEntry, source: BackendReceip
 };
 
 /** Every container state can hold a volume reference, including created and stopped. */
-export const assertCacheUnreferenced = async (entries: NamespaceEntry[], name: string, cwd: string): Promise<void> => {
+export const assertCacheUnreferenced = async (entries: NamespaceEntry[], name: string, context: BackendContext): Promise<void> => {
   for (const entry of entries.filter(e => e.kind === "container")) {
-    const value = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "container", "inspect", entry.id], cwd)))[0]!;
+    const value = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "container", "inspect", entry.id], context)))[0]!;
     if (value.Id !== entry.id || !value.Mounts) throw new SiloError(`CLEANUP_REQUIRED: incomplete mount inspection for ${entry.id}`, "CLEANUP_REQUIRED");
     for (const mount of value.Mounts) {
       if (mount.Type !== "volume") continue;
@@ -101,7 +104,7 @@ export const assertCacheUnreferenced = async (entries: NamespaceEntry[], name: s
 };
 
 /** Anonymous mount handles are audit data, never a volume deletion capability. */
-const captureAnonymousVolumes = async (container: z.infer<typeof InspectSchema>, cwd: string): Promise<AnonymousVolume[]> => {
+const captureAnonymousVolumes = async (container: z.infer<typeof InspectSchema>, context: BackendContext): Promise<AnonymousVolume[]> => {
   if (!container.HostConfig || !container.Mounts) throw new SiloError("ENGINE_UNAVAILABLE: missing container mount provenance", "ENGINE_UNAVAILABLE");
   const host = container.HostConfig;
   const volumes: AnonymousVolume[] = [];
@@ -113,7 +116,7 @@ const captureAnonymousVolumes = async (container: z.infer<typeof InspectSchema>,
       });
     if (supplied) continue;
     if (host.VolumesFrom?.length) throw new SiloError("CLEANUP_REQUIRED: inherited volume provenance is ambiguous; removing this container with volumes could delete inherited data. No deletion permitted.", "CLEANUP_REQUIRED");
-    const volume = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "volume", "inspect", mount.Name], cwd)))[0]!;
+    const volume = z.array(InspectSchema).length(1).parse(JSON.parse(await query(["docker", "volume", "inspect", mount.Name], context)))[0]!;
     if (volume.Name !== mount.Name || !volume.CreatedAt || !Object.hasOwn(volume.Labels ?? {}, "com.docker.volume.anonymous")) {
       throw new SiloError(`CLEANUP_REQUIRED: cannot prove anonymous mount origin for ${mount.Name}`, "CLEANUP_REQUIRED");
     }

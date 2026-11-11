@@ -35,15 +35,18 @@ export const observe = <T>(promise: Promise<T>): Cancellable<T> => {
 
 export async function withTimeout<T>(
   operation: Cancellable<T>,
-  timeoutMs: number,
+  timeoutMs: number | null,
   context: string,
   signal?: AbortSignal,
 ): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const result = new Promise<T>((_, reject) => {
-    timer = setTimeout(() => reject(new SiloError(`Timed out after ${timeoutMs}ms: ${context}`, "TIMEOUT")), timeoutMs);
-  });
-  const waits: [Cancellable<T>, ...Cancellable<T>[]] = [operation, { result, cancel: () => clearTimeout(timer) }];
+  const waits: [Cancellable<T>, ...Cancellable<T>[]] = [operation];
+  if (timeoutMs !== null) {
+    const result = new Promise<T>((_, reject) => {
+      timer = setTimeout(() => reject(new SiloError(`Timed out after ${timeoutMs}ms: ${context}`, "TIMEOUT")), timeoutMs);
+    });
+    waits.push({ result, cancel: () => clearTimeout(timer) });
+  }
   if (signal) {
     const abort = () => rejectAbort(signal.reason);
     let rejectAbort: (reason: unknown) => void;

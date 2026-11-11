@@ -12,9 +12,10 @@ const terminalGroups = (owner: ProjectOperation): void => {
   for (const launch of owner.launches()) owner.markLaunchTerminal(launch.id);
 };
 
-export const down = async (options: { config: string; "delete-cluster": boolean; clean: boolean; executorEntrypoint?: string }): Promise<boolean> => {
+export const down = async (options: { config: string; "delete-cluster": boolean; clean: boolean; executorEntrypoint?: string; signal?: AbortSignal }): Promise<boolean> => {
   const root = commandRoot(options.config);
-  const owner = await ProjectOperation.openExisting(root, { recover: true, ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }) });
+  options.signal?.throwIfAborted();
+  const owner = await ProjectOperation.openExisting(root, { recover: true, ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }), ...(options.signal === undefined ? {} : { signal: options.signal }) });
   if (!owner) { logger.info("No allocated instance. Nothing to stop."); return false; }
   try {
     const initial = owner.current();
@@ -35,7 +36,7 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     const effects = owner.launches().filter(l => l.phase === "exited" && !l.reconciled && l.effect !== "none");
     if (effects.length > 0 || owner.resources().length > 0) {
       await assertEngine(owner);
-      await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+      await assertNamesAvailable(owner.resourceClaims(), owner, owner.resources());
     }
     // Finished producers are sealed above. No capture can run after deletion
     // starts or renew authority on a later cleanup retry.
@@ -63,14 +64,14 @@ export const down = async (options: { config: string; "delete-cluster": boolean;
     const hasRetainedData = retained.length > 0 || leaks.length > 0;
     owner.update({ ...current.allocation, state }, retained.length > 0 ? "retained" : "stopped", leakProblem);
     if (options.clean) {
-      if (retained.length > 0) throw new SiloError(`CLEANUP_REQUIRED: retained resources (${retained.map(r => `${r.kind}/${r.name}`).join(", ")}); ownership snapshots and claims kept. Explicit cluster deletion removes owned containers/networks and receipt-verified image caches. Resolve other retained named volumes with their owner.`, "CLEANUP_REQUIRED");
+      if (retained.length > 0) throw new SiloError(`CLEANUP_REQUIRED: retained resources (${retained.map(r => `${r.kind}/${r.name}`).join(", ")}); ownership snapshots and claims kept. down --delete-cluster --clean removes owned cluster containers/networks and receipt-verified image caches. Resolve other retained named volumes with their owner.`, "CLEANUP_REQUIRED");
       const proof = await owner.prepareRetirement();
       for (const role of ["env", "kubeconfig", "lock"] as const) if (owner.fileReceipt(role)) owner.file(role).remove();
       owner.retire(proof);
       logger.info("Removed owned snapshots and released this generation's claims.");
     } else {
       writeEnvAndLockfile(owner);
-      logger.info(hasRetainedData ? "Stopped Tilt; resources and claims retained. Inspect status before clean." : "Stopped; allocation remains reserved until down --clean.");
+      logger.info(hasRetainedData ? "Stopped owned processes; resources and claims retained. Inspect status before clean." : "Stopped; allocation remains reserved until down --clean.");
     }
     return options.clean || options["delete-cluster"] || effects.length > 0 || initial.phase !== (retained.length > 0 ? "retained" : "stopped");
   } catch (error) {

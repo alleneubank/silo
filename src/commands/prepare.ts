@@ -36,7 +36,7 @@ export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<R
   if (advertise) tools.push("kubectl");
   await ensureToolsAvailable(tools);
   await assertEngine(owner);
-  await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+  await assertNamesAvailable(owner.resourceClaims(), owner, owner.resources());
   writeEnvAndLockfile(owner);
   const env = processEnvironment(owner);
   await runHooks(owner, { hooks: config.hooks["pre-up"], env, phase: "pre-up" });
@@ -63,9 +63,14 @@ export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<R
 export const withAllocation = async <T>(name: string | undefined, options: {
   config: string; force: boolean; profile: string | undefined;
   executorEntrypoint?: string;
+  signal?: AbortSignal;
 }, run: (owner: ProjectOperation, allocation: Allocation) => Promise<T>, validateConfig?: (config: ResolvedConfig) => void): Promise<T> => {
   await loadConfig(options.config);
-  const owner = await ProjectOperation.open(commandRoot(options.config), options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint });
+  options.signal?.throwIfAborted();
+  const owner = await ProjectOperation.open(commandRoot(options.config), {
+    ...(options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint }),
+    ...(options.signal === undefined ? {} : { signal: options.signal }),
+  });
   const initialLaunches = new Set(owner.launches().map(l => l.id));
   try {
     const allocation = await allocateProject(owner, name, options, validateConfig);

@@ -74,7 +74,7 @@ export const advertiseLocalRegistry = async (params: {
           kind: "registry-advertise",
           effect: "hook",
         }),
-      retry
+      { ...retry, signal: owner.signal }
     );
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });

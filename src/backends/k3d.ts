@@ -42,7 +42,7 @@ const recordCreation = async (owner: ProjectOperation, command: string[], kind: 
 
 export const createImageCache = async (owner: ProjectOperation): Promise<void> => {
   await assertEngine(owner);
-  await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+  await assertNamesAvailable(owner.resourceClaims(), owner, owner.resources());
   const running = await startImageCacheCreation(owner, K3D_CREATE_TIMEOUT_MS);
   const result = await running.exited;
   const launch = owner.recordCommandResult(result.launch);
@@ -52,7 +52,7 @@ export const createImageCache = async (owner: ProjectOperation): Promise<void> =
   }
   await assertEngine(owner);
   const name = launch.cacheCreation!.name;
-  const observed = await inspectObject({ kind: "volume", name, id: name }, "k3d", owner.root);
+  const observed = await inspectObject({ kind: "volume", name, id: name }, "k3d", owner);
   owner.recordImageCacheCreation(launch.id, observed.receipt);
   owner.markLaunchTerminal(launch.id);
   owner.checkpointLaunch({ ...launch, terminal: true, reconciled: true });
@@ -66,7 +66,7 @@ export const ensureCluster = async (owner: ProjectOperation): Promise<void> => {
   const cluster = allocation.state.identity.k3dClusterName;
   if (!cluster) return;
   await assertEngine(owner);
-  await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+  await assertNamesAvailable(owner.resourceClaims(), owner, owner.resources());
   if (allocation.state.k3dClusterCreated) {
     for (const receipt of owner.resources().filter(r => r.source === "k3d")) {
       if (!(await verifyResource(owner, receipt))) throw new SiloError(`CLEANUP_REQUIRED: retained resource disappeared: ${receipt.name}`, "CLEANUP_REQUIRED");
@@ -95,7 +95,7 @@ export const writeKubeconfig = async (owner: ProjectOperation): Promise<void> =>
   if (!cluster || !allocation.state.identity.kubeconfigPath) return;
   await assertEngine(owner);
   const result = await runCommand(["k3d", "kubeconfig", "get", cluster], {
-    cwd: owner.root, timeoutMs: K3D_LIST_TIMEOUT_MS, context: "owned kubeconfig read", stdio: "pipe",
+    cwd: owner.root, ...(owner.signal === undefined ? {} : { signal: owner.signal }), timeoutMs: K3D_LIST_TIMEOUT_MS, context: "owned kubeconfig read", stdio: "pipe",
   });
   if (result.exitCode !== 0) throw new SiloError("KUBECONFIG_FAILED: could not read owned cluster kubeconfig", "KUBECONFIG_FAILED");
   owner.file("kubeconfig").publish(stripDebugOutput(result.stdout));
@@ -104,7 +104,7 @@ export const writeKubeconfig = async (owner: ProjectOperation): Promise<void> =>
 /** Deletes only exact journaled Docker objects; k3d's name/label-wide delete is not used. */
 export const deleteCluster = async (owner: ProjectOperation): Promise<void> => {
   await assertEngine(owner);
-  await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+  await assertNamesAvailable(owner.resourceClaims(), owner, owner.resources());
   await deleteOwnedContainers(owner, "k3d");
   await deleteOwnedNetworks(owner, "k3d");
   await deleteOwnedImageCaches(owner);

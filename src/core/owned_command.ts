@@ -17,9 +17,10 @@ const executorCommand = (entrypoint: string): string[] =>
     ? [process.execPath, "__silo_execute"]
     : [process.execPath, entrypoint, "__silo_execute"];
 
-const supervisorIdentity = async (pid: number, timeoutMs = LAUNCH_START_TIMEOUT_MS): Promise<string | null> => {
+const supervisorIdentity = async (pid: number, timeoutMs = LAUNCH_START_TIMEOUT_MS, signal?: AbortSignal): Promise<string | null> => {
   const result = await runCommand(["ps", "-ww", "-p", String(pid), "-o", "uid=,pgid=,lstart=,command="], {
     env: { LC_ALL: "C", TZ: "UTC" }, timeoutMs, context: "inspect recorded supervisor", stdio: "pipe",
+    ...(signal === undefined ? {} : { signal }),
   });
   if (result.exitCode !== 0) return null;
   const value = result.stdout.trim();
@@ -185,6 +186,7 @@ export const runImageCacheDeletion = async (owner: ProjectOperation, capability:
 };
 
 const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Launch, { phase: "planned" }>, options: CommandOptions): Promise<RunningCommand> => {
+  owner.signal?.throwIfAborted();
   const startupDeadline = Date.now() + Math.min(options.timeoutMs ?? LAUNCH_START_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS);
   const startupRemaining = () => {
     const remaining = startupDeadline - Date.now();
@@ -214,16 +216,17 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
   };
   try {
     const handshakeTimeout = startupRemaining();
-    const handshake = await withTimeout({ result: firstLine(stdoutReader), cancel: () => stdoutReader.cancel() }, handshakeTimeout, "launch gate");
+    const handshake = await withTimeout({ result: firstLine(stdoutReader), cancel: () => stdoutReader.cancel() }, handshakeTimeout, "launch gate", owner.signal);
     const parts = /^SILO_GATE (\S+) (\d+) (\d+)$/.exec(handshake);
     const leaderPid = Number(parts?.[2]);
     const groupId = Number(parts?.[3]);
     if (parts?.[1] !== intent.id || !Number.isSafeInteger(leaderPid) || leaderPid <= 1 || groupId !== leaderPid) {
       throw new SiloError("Launch gate did not report its actual group leader", "LAUNCH_FAILED");
     }
-    const identity = await supervisorIdentity(proc.pid, startupRemaining());
+    const identity = await supervisorIdentity(proc.pid, startupRemaining(), owner.signal);
     if (!identity?.includes(intent.id)) throw new SiloError("Cannot verify launch supervisor", "LAUNCH_FAILED");
     startupRemaining();
+    owner.signal?.throwIfAborted();
     const launch: Extract<Launch, { phase: "granted" }> = { ...intent, phase: "granted", reconciled: false, terminal: false, exitCode: null, supervisorPid: proc.pid, supervisorIdentity: identity, leaderPid, groupId };
     owner.checkpointLaunch(launch);
     proc.stdin.write(`${JSON.stringify(launch)}\n`);
@@ -252,7 +255,7 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
       await stopAndDrain();
       throw error;
     }).finally(journal.stop);
-    const exited = options.timeoutMs === null ? completed : withTimeout({ result: completed, cancel: stopAndDrain }, options.timeoutMs, options.kind);
+    const exited = withTimeout({ result: completed, cancel: stopAndDrain }, options.timeoutMs, options.kind, owner.signal);
     return { launch, exited, stop: stopSupervisor };
   } catch (error) {
     proc.stdin.end();

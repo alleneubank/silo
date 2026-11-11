@@ -12,6 +12,7 @@ import { prepareTiltEnvironment, withAllocation } from "./prepare";
 export const up = async (name: string | undefined, options: {
   config: string; force: boolean; profile: string | undefined;
   executorEntrypoint?: string;
+  signal?: AbortSignal;
 }): Promise<boolean> => {
   const started = await withAllocation(name, options, async (owner, allocation): Promise<{ command: RunningCommand; root: string; projectId: string; generation: number } | null> => {
     let existing;
@@ -37,11 +38,7 @@ export const up = async (name: string | undefined, options: {
     return { command, root: owner.root, projectId: owner.projectId, generation: owner.generation };
   });
   if (!started) return false;
-  const stop = () => started.command.stop();
-  process.on("SIGINT", stop); process.on("SIGTERM", stop);
-  let result: OwnedCommandResult;
-  try { result = await started.command.exited; }
-  finally { process.off("SIGINT", stop); process.off("SIGTERM", stop); }
+  let result: OwnedCommandResult = await started.command.exited;
   let owner: ProjectOperation;
   try { owner = await ProjectOperation.open(started.root); }
   catch (error) {
