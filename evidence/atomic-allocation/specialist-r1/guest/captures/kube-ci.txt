@@ -1,0 +1,4 @@
+silo info: Generated env file at /tmp/guest/kube-switch/owned.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/guest/kube-switch/owned.env
+silo info: Wrote lockfile

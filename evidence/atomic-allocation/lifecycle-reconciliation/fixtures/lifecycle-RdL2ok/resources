@@ -1,0 +1,2 @@
+process pid/pgid=843566; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","proof-lifecycle-rdl2ok-prehook-cluster","--timeout","90s","--json"]; stop only verified exact returned group
+process pid/pgid=845005; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"]; stop only verified exact returned group

@@ -1,0 +1,13 @@
+#!/bin/sh
+label=$1
+shift
+setsid timeout --signal=TERM --kill-after=10s 240s "$@" > "/tmp/registry-followup/logs/$label.out" 2> "/tmp/registry-followup/logs/$label.err" &
+pid=$!
+printf "%s\n" "$pid" > "/tmp/pids/r7-guest-regfollow-$label.pid"
+printf "process\t%s\t%s\t%s\n" "$label" "$pid" "$*" >> /tmp/registry-followup/resources/ledger
+printf "r7-guest-regfollow process\t%s\t%s\t%s\n" "$label" "$pid" "$*" >> /tmp/shared-resources
+wait "$pid"
+code=$?
+printf "%s\n" "$code" > "/tmp/registry-followup/logs/$label.exit"
+printf "%s exit=%s\n" "$label" "$code"
+cat "/tmp/registry-followup/logs/$label.err"

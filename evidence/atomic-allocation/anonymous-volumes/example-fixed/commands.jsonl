@@ -1,0 +1,15 @@
+{"n":1,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","anon-fixed","--timeout","300s","--json"],"code":0}
+{"n":2,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"n":3,"argv":["kubectl","--kubeconfig","/home/ae/.kube/localnet-anon-fixed","wait","--for=condition=available","--timeout=60s","deployment/web","deployment/api"],"code":0}
+{"n":4,"argv":["kubectl","--kubeconfig","/home/ae/.kube/localnet-anon-fixed","get","--raw","/api/v1/namespaces/default/services/web:3000/proxy/health"],"code":0}
+{"n":5,"argv":["kubectl","--kubeconfig","/home/ae/.kube/localnet-anon-fixed","get","--raw","/api/v1/namespaces/default/services/api:8080/proxy/health"],"code":0}
+{"n":6,"argv":["docker","container","inspect","33e0734c25be9c0b931bf27b0b2326fe4fc044ac6ec36ea148fe89d2dfbb523b"],"code":0}
+{"n":7,"argv":["docker","container","inspect","f119a87c73522d3654c78e9e58bc87504eaee6d8c59bc1a17074f7cc4d69c3dc"],"code":0}
+{"n":8,"argv":["docker","container","inspect","23cce72a768c532e8406ad6667f104caea1d18b40b5f4d88fdc42fb6e879ce07"],"code":0}
+{"n":9,"argv":["docker","container","inspect","38fa69b0e189ae7a3d82703efff49853e52203db2e3e42f803cc532c8a2a2383"],"code":0}
+{"n":10,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"n":11,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"n":12,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"n":13,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"n":14,"argv":["docker","volume","ls","--format","{{.Name}}"],"code":0}
+{"n":15,"argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}

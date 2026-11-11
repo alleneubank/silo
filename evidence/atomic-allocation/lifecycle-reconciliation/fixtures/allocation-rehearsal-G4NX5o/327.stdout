@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"COMMAND_FAILED","message":"COMMAND_FAILED: owned-network-delete exited 1; owned claims retained. \nError response from daemon: error while removing network: network k3d-localnet-proof-g-e60f9f83-letion has active endpoints (name:\"serene_wilson\" id:\"51f60c1e81fa\")\nexit status 1\n","launchId":"def4360e-9404-422c-a1fd-ca5617cbbe5a","generation":1}

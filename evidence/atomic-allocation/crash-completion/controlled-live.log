@@ -1,0 +1,3 @@
+{"scenario":"completion insert held","marker":{"projectId":"4d08e50a-737b-4e97-a7af-6391cbe6cada","generation":4,"launchId":"aab516e6-3759-4ffc-830b-5cf8960b2e2b","leaderPid":1283802,"groupId":1283802,"started":true,"exitCode":0,"completedAt":"2026-11-04T22:18:32.535Z"},"firstCommand":24}
+{"scenario":"rehearsal waited through missing exact completion","observedCommands":[26,27],"marker":{"projectId":"4d08e50a-737b-4e97-a7af-6391cbe6cada","generation":4,"launchId":"aab516e6-3759-4ffc-830b-5cf8960b2e2b","leaderPid":1283802,"groupId":1283802,"started":true,"exitCode":0,"completedAt":"2026-11-04T22:18:32.535Z"},"pass":true}
+{"scenario":"controlled live suite and cleanup","pass":true}

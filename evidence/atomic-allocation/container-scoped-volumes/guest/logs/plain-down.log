@@ -1,0 +1,5 @@
+silo info: Generated env file at /tmp/guest/fixtures/plain/.localnet.env
+silo info: Wrote lockfile
+silo info: Stopped; allocation remains reserved until down --clean.
+
+EXIT=0

@@ -1,0 +1,2 @@
+silo info: Removed owned snapshots and released this generation's claims.
+{"schemaVersion":1,"legacy":false,"changed":true,"project":{"schemaVersion":1,"projectId":"467240b6-c0e6-4318-92ac-c399ae4e5dc6","root":"/tmp/post-recovery/fixtures/cluster","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}

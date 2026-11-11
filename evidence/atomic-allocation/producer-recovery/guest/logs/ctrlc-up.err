@@ -1,0 +1,41 @@
+silo info: Generated env file at /tmp/fixtures/restart/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/fixtures/restart/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/fixtures/restart/.localnet.env
+silo info: Wrote lockfile
+silo info: Tilt API is on port 49153 (pid-alive is not resource health).
+silo info:   tilt get uiresources --port 49153
+silo info:   silo doc tilt
+Tilt started on http://127.0.0.1:49153/
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+Tilt analytics disabled: Environment variable CI=false
+
+Initial Build
+Loading Tiltfile at: /tmp/fixtures/restart/Tiltfile
+Successfully loaded Tiltfile (28.337348ms)
+        redis │ 
+        redis │ Initial Build
+        redis │ STEP 1/1 — Deploying
+        redis │  Network localnet-r7guest-restart_default Creating 
+        redis │  Network localnet-r7guest-restart_default Creating 
+        redis │  Network localnet-r7guest-restart_default Created 
+        redis │  Network localnet-r7guest-restart_default Created 
+        redis │  Container localnet-r7guest-restart-redis-1 Creating 
+        redis │  Container localnet-r7guest-restart-redis-1 Created 
+        redis │  Container localnet-r7guest-restart-redis-1 Starting 
+        redis │  Container localnet-r7guest-restart-redis-1 Started 
+        redis │ 1:C 06 Nov 2026 05:05:45.296 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+        redis │ 1:C 06 Nov 2026 05:05:45.296 * Redis version=7.4.12, bits=64, commit=00000000, modified=0, pid=1, just started
+        redis │ 1:C 06 Nov 2026 05:05:45.296 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+        redis │ 1:M 06 Nov 2026 05:05:45.296 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+        redis │ 1:M 06 Nov 2026 05:05:45.296 * monotonic clock: POSIX clock_gettime
+        redis │ 1:M 06 Nov 2026 05:05:45.296 * Running mode=standalone, port=6379.
+        redis │ 1:M 06 Nov 2026 05:05:45.296 * Server initialized
+        redis │ 1:M 06 Nov 2026 05:05:45.296 * Ready to accept connections tcp
+        redis │ 
+        redis │      Step 1 - 3.58s (Deploying)
+        redis │      DONE IN: 3.58s 
+        redis │ 
+silo info: Generated env file at /tmp/fixtures/restart/.localnet.env
+silo info: Wrote lockfile

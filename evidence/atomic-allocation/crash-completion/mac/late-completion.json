@@ -1,0 +1,8 @@
+{
+  "launch": {
+    "receipt": "{\"id\":\"00009f98-3ef9-4f8a-8241-6565c7276b00\",\"kind\":\"tilt-up\",\"command\":[\"tilt\",\"up\",\"--web-mode=prod\"],\"effect\":\"workload\",\"supervisorPid\":52565,\"leaderPid\":52566,\"groupId\":52566,\"supervisorIdentity\":\"501 52565 Wed Nov  4 22:02:19 2026     janitor --pgroup-only --watch-pid 52473 --grace-ms 5000 -- /Users/allen/.local/share/mise/installs/bun/1.4.4/bin/bun /Users/allen/Work/alleneubank/boss-mobile-release-silo-macos/dist/cli.js __silo_execute 00009f98-3ef9-4f8a-8241-6565c7276b00 /Users/allen/Work/alleneubank/boss-mobile-release-silo-macos-tmp/fixtures/allocation-rehearsal-19bqpB/a 21592c88-d06b-4188-923f-604d33bf44f1 4 account\",\"phase\":\"exited\",\"started\":true,\"exitCode\":0,\"reconciled\":true,\"terminal\":true}"
+  },
+  "completion": {
+    "receipt": "{\"projectId\":\"21592c88-d06b-4188-923f-604d33bf44f1\",\"generation\":4,\"launchId\":\"00009f98-3ef9-4f8a-8241-6565c7276b00\",\"leaderPid\":52566,\"groupId\":52566,\"started\":true,\"exitCode\":0,\"completedAt\":\"2026-11-04T22:02:21.368Z\"}"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "cmd": [
+    "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/final-native-silo",
+    "ci",
+    "standalone-sigint",
+    "--timeout",
+    "75s",
+    "--json"
+  ],
+  "cwd": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/final-native-standalone-SIGINT",
+  "pid": 78171,
+  "exitCode": 130,
+  "stdout": "{\"schemaVersion\":1,\"code\":\"INTERRUPTED\",\"message\":\"ci interrupted by SIGINT; owned claims retained. Run silo status and silo down to reconcile.\",\"signal\":\"SIGINT\"}\n",
+  "stderr": "silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/final-native-standalone-SIGINT/.localnet.env\nsilo info: Wrote lockfile\nsilo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/final-native-standalone-SIGINT/.localnet.env\nsilo info: Wrote lockfile\n"
+}

@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+if [ "${1-}" = network ] && [ "${2-}" = rm ] && [ "${3-}" = "$RETRY_PROBE_TARGET" ]; then
+  if [ "${RETRY_PROBE_LOSE_FACT-0}" = 1 ]; then "$RETRY_PROBE_DOCKER" "$@"; fi
+  printf paused > "$RETRY_PROBE_PAUSED"
+  count=0
+  while [ ! -f "$RETRY_PROBE_RELEASE" ]; do
+    count=$((count + 1))
+    [ "$count" -lt 1500 ] || exit 78
+    sleep 0.02
+  done
+  if [ "${RETRY_PROBE_LOSE_FACT-0}" = 1 ]; then exit 0; fi
+fi
+exec "$RETRY_PROBE_DOCKER" "$@"

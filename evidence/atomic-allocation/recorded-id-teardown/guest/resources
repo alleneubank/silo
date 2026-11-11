@@ -1,0 +1,12 @@
+r5 guest launch redis-ci PID=274896 PGID=274896 timeout=150s log=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r5/guest/logs/redis-ci.log
+r5 guest launch redis-ci-2 PID=284735 PGID=284735 timeout=150s log=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r5/guest/logs/redis-ci-2.log
+r5 guest created Redis via silo ci container=d505d40003e086332fdda9a6c04e4c593f070d18b6f27626f098f77434c47f36 anonymous-data=8e750977ea926df023ceeb4a589d0b0949095176cc435d50a1569cf19ef5123f network=7f0e7b3adabb7b9afa52ca8880416b1161a874ef84ef309d72120f889af497da
+r5 guest launch redis-down PID=356257 PGID=356257 timeout=90s log=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r5/guest/logs/redis-down.log
+r5 guest launch own-up PID=386016 PGID=386016 timeout=900s log=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r5/guest/logs/own-up.log
+r5 guest launch peer-up PID=386039 PGID=386039 timeout=900s log=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r5/guest/logs/peer-up.log
+r5 guest launch own-down PID=432949 PGID=432949 timeout=90s log=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r5/guest/logs/own-down.log
+r5 guest launch peer-down PID=519827 PGID=519827 timeout=90s log=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r5/guest/logs/peer-down.log
+r5 guest foreign fixture outside silo container=bac4a25de3fb7b9cfda9c369c72f740aa78ff0453dc9427a394eebf204069c3f anonymous-data=411c8c8be7c8c4a8257b44ab9cc8dc620b62683077759a43be678d84b54b9b2f network=8479c389cdc7b4e3df66e3ad331374c97dfd000b9b4f695dfa1119b69345390c (Compose create only, no listener)
+r5 guest local stacks own and peer fully retired; recorded launch/supervisor/leader PIDs 386016,386039,388007,388008,388408,388410 absent at 2026-11-06T01:23Z
+r5 guest launch foreign-remove-retry PID=619170 PGID=619170 timeout=90s log=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign-tmp/r5/guest/logs/foreign-remove-retry.log
+r5 guest FINAL audit 2026-11-06T01:22:46Z: all exact recorded guest outer/supervisor/leader PIDs and PGIDs absent; both created Docker container IDs/network IDs/anonymous data IDs absent; redis/own/peer/foreign unallocated with empty claims/resources/launches. Prior approximate 01:23Z retirement label superseded by this captured audit time. Evidence: r5/guest/logs/final-resource-audit.log. No remaining live guest resources.

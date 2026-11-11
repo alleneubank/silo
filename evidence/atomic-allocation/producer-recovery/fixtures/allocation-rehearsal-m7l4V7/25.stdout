@@ -1,0 +1,9 @@
+silo info: Loading config
+silo info: Resolved instance name: proof-m7l4v7-old (arg)
+silo info: Allocating ports
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-m7l4V7/old/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-m7l4V7/old/.localnet.env; set +a

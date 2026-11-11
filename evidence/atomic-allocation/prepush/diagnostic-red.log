@@ -1,0 +1,32 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/lease_store.test.ts:
+159 |     const canary = path.join(root, "must-not-exist");
+160 |     try {
+161 |       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+162 |       await expect(runOwnedCommand(op, ["/bin/sh", "-c", "touch must-not-exist"], {
+163 |         kind: "refused-supervisor", effect: "create", timeoutMs: 5000, env: { PATH: bin },
+164 |       })).rejects.toMatchObject({
+                        ^
+error: expect(received).toMatchObject(expected)
+
+- {
+-   "code": "LAUNCH_FAILED",
+-   "details": ObjectContaining {
+-     "supervisorExitCode": 78,
+-   },
+-   "message": StringContaining "supervisor fixture: no runtime configured",
+- }
++ [SiloError: Launch gate exited before its handshake]
+
+- Expected  - 7
++ Received  + 1
+
+      at <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/lease_store.test.ts:164:19)
+(fail) atomic account leases > a supervisor that refuses startup reports its diagnostic without executing the tool [16.17ms]
+
+ 0 pass
+ 27 filtered out
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [42.00ms]

@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-06T03:43:02Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "2f5bd0b3-9dbe-4e70-adb9-cb41fbd29d6c",
+            "k3d.cluster": "r6guest-cluster"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-r6guest-cluster-images/_data",
+        "Name": "k3d-r6guest-cluster-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

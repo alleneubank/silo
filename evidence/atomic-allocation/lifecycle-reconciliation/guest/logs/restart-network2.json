@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "r6guest-restart",
+        "Id": "6c65183f1561a48dfc7d8fdf6fb95bfdc3619fe1597dc1291db42a70b71ffaf6",
+        "Created": "2026-11-06T03:42:57.095630873Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.23.0.0/16",
+                    "Gateway": "172.23.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "79e5a8b5870226582d316c3198fef7f142fb9cf0c1556ef26f39985e22226dd0",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "r6guest-restart",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "7d11e249-b03d-4b64-9a5a-c7045b6c7e04"
+        },
+        "Containers": {
+            "04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5": {
+                "Name": "r6guest-restart-redis-1",
+                "EndpointID": "082d8c5b37d885e792e5495e047c65788aba07c97b4594ecde4e0fcbfe428a8b",
+                "MacAddress": "32:24:2c:64:60:6a",
+                "IPv4Address": "172.23.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.23.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

@@ -1,0 +1,22 @@
+process 4037661 pgid=4037661: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","ci","proof-gersax-compose-replacement","--timeout","60s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 4039755 pgid=4039755: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 4039773 pgid=4039773: ["docker","container","inspect","92710078a191251e212dd6ac3489886b653121f4f9599402ad81b4361096eade","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 4039789 pgid=4039789: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 4040782 pgid=4040782: ["docker","container","ls","-a","--no-trunc","--format","{{.ID}}"]; teardown via returned subprocess handle or verified recorded group
+process 4040799 pgid=4040799: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 4040814 pgid=4040814: ["docker","compose","--project-name","localnet-proof-gersax-compose-replacement","-f","compose.yaml","up","-d"]; teardown via returned subprocess handle or verified recorded group
+process 4040983 pgid=4040983: ["docker","container","inspect","localnet-proof-gersax-compose-replacement-redis-1","--format","{{.Id}}"]; teardown via returned subprocess handle or verified recorded group
+replacement Q container 954c4997c73eb6f3f66258c3c6b2ba56f131e5b7536b1ae61b605b7c6616eb16 created by real Compose under project localnet-proof-gersax-compose-replacement; fixture-owner teardown exact ID --force --volumes
+process 4041004 pgid=4041004: ["docker","container","inspect","954c4997c73eb6f3f66258c3c6b2ba56f131e5b7536b1ae61b605b7c6616eb16","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 4041023 pgid=4041023: ["docker","volume","inspect","caa4d550ab9e084ba95d5db9331c7e74f86087398dca1c07599b3b1e8af546b1"]; teardown via returned subprocess handle or verified recorded group
+replacement Q anonymous volume W caa4d550ab9e084ba95d5db9331c7e74f86087398dca1c07599b3b1e8af546b1; teardown with Q; if baseline removes Q without volumes, fixture owner verifies exact snapshot before independent removal
+process 4041052 pgid=4041052: ["docker","container","exec","954c4997c73eb6f3f66258c3c6b2ba56f131e5b7536b1ae61b605b7c6616eb16","sh","-c","printf replacement-data > /data/identity"]; teardown via returned subprocess handle or verified recorded group
+process 4041098 pgid=4041098: ["docker","container","inspect","954c4997c73eb6f3f66258c3c6b2ba56f131e5b7536b1ae61b605b7c6616eb16"]; teardown via returned subprocess handle or verified recorded group
+process 4042255 pgid=4042255: ["docker","container","ls","-a","--no-trunc","--format","{{.ID}}"]; teardown via returned subprocess handle or verified recorded group
+process 4042289 pgid=4042289: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 4042307 pgid=4042307: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 4042324 pgid=4042324: ["docker","container","ls","-a","--no-trunc","--format","{{.ID}}"]; teardown via returned subprocess handle or verified recorded group
+process 4042339 pgid=4042339: ["docker","volume","ls","--format","{{.Name}}"]; teardown via returned subprocess handle or verified recorded group
+process 4042355 pgid=4042355: ["docker","volume","inspect","caa4d550ab9e084ba95d5db9331c7e74f86087398dca1c07599b3b1e8af546b1"]; teardown via returned subprocess handle or verified recorded group
+process 4042371 pgid=4042371: ["docker","volume","rm","caa4d550ab9e084ba95d5db9331c7e74f86087398dca1c07599b3b1e8af546b1"]; teardown via returned subprocess handle or verified recorded group
+process 4042387 pgid=4042387: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--delete-cluster","--clean","--json"]; teardown via returned subprocess handle or verified recorded group

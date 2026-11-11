@@ -1,0 +1,35 @@
+{"environment":{"platform":"linux","arch":"x64","bun":"1.4.4","root":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","accountHome":"/home/ae","artifact":"/mnt/dist/cli.js","sha256":"492be5fec07d54662c51d2c11645eeedb81a54435b40d62946513b0553c56e5b"}}
+{"command":1,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-gaee6n-registry-hook-squatter","--json"],"code":0}
+{"command":2,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":3,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--timeout","30s","--json"],"code":1}
+{"command":4,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","inspect","627a846f248cea4c72ef42e2d37ebfac12b23185898b21e904805eefc22b3ed3"],"code":0}
+{"command":5,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"observation":"pre-up hook squatter then ci","exit":1,"code":"NAME_CONFLICT","squatterReceipted":false}
+{"command":6,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","inspect","627a846f248cea4c72ef42e2d37ebfac12b23185898b21e904805eefc22b3ed3"],"code":0}
+{"command":7,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--json"],"code":1}
+{"command":8,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"observation":"down --delete-cluster after refused hook capture","exit":1,"code":"NAME_CONFLICT","squatterReceipted":false}
+{"command":9,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","inspect","627a846f248cea4c72ef42e2d37ebfac12b23185898b21e904805eefc22b3ed3"],"code":0}
+{"command":10,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","inspect","627a846f248cea4c72ef42e2d37ebfac12b23185898b21e904805eefc22b3ed3"],"code":0}
+{"command":11,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","rm","--force","--volumes","627a846f248cea4c72ef42e2d37ebfac12b23185898b21e904805eefc22b3ed3"],"code":0}
+{"command":12,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":13,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"scenario":"pre-up hook cannot vouch for a same-name registry: ci refuses NAME_CONFLICT and the squatter is preserved","pass":true}
+{"command":14,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","env","proof-gaee6n-registry-hook-timeout","--json"],"code":0}
+{"command":15,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","ci","--timeout","30s","--json"],"code":1}
+{"command":16,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","inspect","0405ec85f1d64fea87bffeac192bd3f31320dfe09325ff2dd25ac1c2a0a2238c"],"code":0}
+{"command":17,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"observation":"pre-up hook timeout","exit":1,"code":"TIMEOUT","squatterReceipted":false}
+{"command":18,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--json"],"code":1}
+{"command":19,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"observation":"down --delete-cluster with timed-out hook pending","exit":1,"code":"NAME_CONFLICT","squatterReceipted":false}
+{"command":20,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","inspect","0405ec85f1d64fea87bffeac192bd3f31320dfe09325ff2dd25ac1c2a0a2238c"],"code":0}
+{"command":21,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","inspect","0405ec85f1d64fea87bffeac192bd3f31320dfe09325ff2dd25ac1c2a0a2238c"],"code":0}
+{"command":22,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","argv":["docker","container","rm","--force","--volumes","0405ec85f1d64fea87bffeac192bd3f31320dfe09325ff2dd25ac1c2a0a2238c"],"code":0}
+{"command":23,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":24,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"scenario":"timed-out pre-up hook pending at down cannot vouch for a same-name registry; squatter preserved","pass":true}
+{"result":"pass","suite":"registry-provenance"}
+{"command":25,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":26,"cwd":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-timeout","argv":["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"resources":"/tmp/rehearsal/allocation-rehearsal-GAEE6n/resources","evidence":"/tmp/rehearsal/allocation-rehearsal-GAEE6n","retainedEvidence":true}

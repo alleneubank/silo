@@ -1,0 +1,264 @@
+╭─────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-push[m │
+╰─────────────────────────────────────╯
+┃  jscpd ❯ 
+[90m┌────────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
+[90m│[39m[31m Format     [39m[90m│[39m[31m Files analyzed [39m[90m│[39m[31m Total lines [39m[90m│[39m[31m Total tokens [39m[90m│[39m[31m Clones found [39m[90m│[39m[31m Duplicated lines [39m[90m│[39m[31m Duplicated tokens [39m[90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m typescript [90m│[39m 63             [90m│[39m 6063        [90m│[39m 79861        [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m [1mTotal:[22m     [90m│[39m 63             [90m│[39m 6063        [90m│[39m 79861        [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m└────────────[39m[90m┴────────────────[39m[90m┴─────────────[39m[90m┴──────────────[39m[90m┴──────────────[39m[90m┴──────────────────[39m[90m┴───────────────────┘[39m
+[90mFound 0 clones.[39m
+[3m[90mDetection time:[39m[23m: 813.823ms
+
+┃  knip ❯ 
+Configuration hints (1)
+changeset    knip.json  Remove from ignoreBinaries
+
+┃  test ❯ 
+bun test v1.4.4 (38afee6c8)
+
+src/utils/ci.test.ts:
+(pass) shouldExportCiEnv > is on when the flag was passed [0.22ms]
+(pass) shouldExportCiEnv > is off outside CI without the flag [0.04ms]
+(pass) shouldExportCiEnv > infers CI from the environment [0.04ms]
+(pass) shouldExportCiEnv > does not infer CI from falsy values [0.02ms]
+(pass) shouldExportCiEnv > infers CI from GITHUB_ACTIONS
+(pass) withCiEnv > marks the environment as CI [0.04ms]
+(pass) withCiEnv > overrides an inherited CI value
+(pass) withCiEnv > does not mutate the caller's env [0.01ms]
+(pass) resolveGithubEnvPath > returns the path when set [0.04ms]
+(pass) resolveGithubEnvPath > returns null when unset and export was only inferred [0.01ms]
+(pass) resolveGithubEnvPath > treats a blank path as unset
+(pass) resolveGithubEnvPath > throws when unset and export was requested explicitly [0.15ms]
+
+src/utils/breadcrumbs.test.ts:
+(pass) tiltApiHintLines > names the allocated port and the get command [0.06ms]
+(pass) tiltApiHintLines > omits --port when TILT_PORT was not allocated
+(pass) tiltApiHintLines > treats a blank port as unset
+(pass) runningStackHintLines > when Tilt is running, prints API, kubeconfig, and URL isolation [0.18ms]
+(pass) runningStackHintLines > when Tilt is stopped, skips the API hint [0.02ms]
+(pass) runningStackHintLines > skips URL isolation when no HTTP URL uses *.localhost [0.03ms]
+(pass) envDidNotStartHint > names the env file to source [0.02ms]
+(pass) downKeptClusterHint > points at --delete-cluster [0.01ms]
+(pass) missingToolsMessage > includes install URLs for known tools [0.08ms]
+(pass) missingToolsMessage > omits a hint line for unknown tools
+(pass) unknownDocTopicMessage > lists available topics
+(pass) configExistsMessage > points at up and config docs
+
+src/core/lease_store.test.ts:
+(pass) atomic account leases > export parent preparation never creates or enters a legacy registry tree [7.12ms]
+(pass) atomic account leases > two allocators probing the same port cannot commit duplicate claims or a partial name [9.26ms]
+(pass) atomic account leases > a peer's inspection and clean cannot release or rewrite another root [11.57ms]
+(pass) atomic account leases > root symlinks share one operation, and a finished capability is fenced [4.19ms]
+(pass) atomic account leases > prefix overlap refuses even when the exact namespace keys differ [3.66ms]
+(pass) atomic account leases > same-name and cross-role file aliases refuse, leaving the peer bytes intact [5.83ms]
+(pass) atomic account leases > unreceipted generated files are refused without alteration [2.30ms]
+DIAGNOSTIC launch stderr: mise ERROR No version is set for shim: janitor
+Set a global default version with one of the following:
+mise use -g github:alleneubank/janitor@0.2.3
+mise use -g github:alleneubank/janitor@0.3.0
+mise use -g github:alleneubank/janitor@0.3.1
+mise ERROR Version: 2026.10.23 linux-x64 (2026-10-29)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+
+142 | 
+143 |   test("a failed creating tool keeps its port, even after its executor is absent", async () => {
+144 |     const root = project("a"); const op = await open(root);
+145 |     try {
+146 |       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+147 |       await expect(runOwnedCommand(op, ["/bin/sh", "-c", "exit 17"], { kind: "uncertain-create", effect: "create", timeoutMs: 5000 })).rejects.toThrow("COMMAND_FAILED");
+                                                                                                                                                     ^
+error: expect(received).toThrow(expected)
+
+Expected substring: "COMMAND_FAILED"
+Received message: "Launch gate exited before its handshake"
+
+      at <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/lease_store.test.ts:147:144)
+(fail) atomic account leases > a failed creating tool keeps its port, even after its executor is absent [30.14ms]
+DIAGNOSTIC launch stderr: mise ERROR No version is set for shim: janitor
+Set a global default version with one of the following:
+mise use -g github:alleneubank/janitor@0.2.3
+mise use -g github:alleneubank/janitor@0.3.0
+mise use -g github:alleneubank/janitor@0.3.1
+mise ERROR Version: 2026.10.23 linux-x64 (2026-10-29)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+
+153 |   test("a successful exact deletion retry reconciles terminal completed deletions", async () => {
+154 |     const root = project("a"); const op = await open(root);
+155 |     const command = ["/bin/sh", "-c", "if test -f attempted; then exit 0; else touch attempted; exit 17; fi"];
+156 |     try {
+157 |       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+158 |       await expect(runOwnedCommand(op, command, { kind: "owned-delete", effect: "delete", timeoutMs: 5000 })).rejects.toThrow("COMMAND_FAILED");
+                                                                                                                            ^
+error: expect(received).toThrow(expected)
+
+Expected substring: "COMMAND_FAILED"
+Received message: "Launch gate exited before its handshake"
+
+      at <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/lease_store.test.ts:158:119)
+(fail) atomic account leases > a successful exact deletion retry reconciles terminal completed deletions [28.40ms]
+(pass) atomic account leases > corrupt stores refuse instead of opening an empty allocation domain [1.03ms]
+(pass) atomic account leases > a retired root obtains a fresh generation and an old writer cannot overwrite it [8.88ms]
+(pass) atomic account leases > database busy refuses without resetting another project's reservations [5009.50ms]
+(pass) atomic account leases > snapshot replacement, hardlinks and parent swaps refuse without deleting foreign bytes [63.61ms]
+(pass) atomic account leases > parent/final symlinks and absolute or escaping output paths are refused [5.55ms]
+(pass) atomic account leases > a config edit cannot redirect snapshot cleanup to its selected replacement path [4.60ms]
+(pass) atomic account leases > interrupted rename resumes its recorded inode, and refuses an unrelated replacement [5.11ms]
+(pass) atomic account leases > mixed-role output aliases and an active config target cannot receive two file capabilities [3.07ms]
+(pass) atomic account leases > a generation cannot drop a published file role before owner cleanup [7.62ms]
+(pass) atomic account leases > a folded file claim cannot transfer a receipt to a different path spelling [5.14ms]
+(pass) atomic account leases > pending publish retains ownership until parent synchronization succeeds on retry [5.74ms]
+(pass) atomic account leases > pending delete retains ownership until parent synchronization succeeds on retry [6.20ms]
+(pass) atomic account leases > a CI short write remains uncertain and blocks both claim transfer and retirement [9.70ms]
+(pass) atomic account leases > a CI interrupted write remains uncertain and blocks both claim transfer and retirement [6.40ms]
+silo info: Generated env file at /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/addendum3/silo-leases-X328QP/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Exported env vars to /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/addendum3/silo-leases-X328QP/github-export.env
+(pass) atomic account leases > CI sinks reject snapshot aliases and concurrent writers while sequential appends remain append-only [10.74ms]
+DIAGNOSTIC launch stderr: mise ERROR No version is set for shim: janitor
+Set a global default version with one of the following:
+mise use -g github:alleneubank/janitor@0.2.3
+mise use -g github:alleneubank/janitor@0.3.0
+mise use -g github:alleneubank/janitor@0.3.1
+mise ERROR Version: 2026.10.23 linux-x64 (2026-10-29)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+
+45 | const firstLine = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string> => {
+46 |   const decoder = new TextDecoder();
+47 |   let value = "";
+48 |   while (value.length < 4096) {
+49 |     const chunk = await reader.read();
+50 |     if (chunk.done) throw new SiloError("Launch gate exited before its handshake", "LAUNCH_FAILED");
+                               ^
+error: Launch gate exited before its handshake
+ details: {},
+    code: "LAUNCH_FAILED"
+
+      at <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/owned_command.ts:50:27)
+      at async withTimeout (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/utils/timeout.ts:16:26)
+      at async <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/owned_command.ts:95:29)
+      at async <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/owned_command.ts:130:25)
+      at async <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/lease_store.test.ts:396:28)
+(fail) atomic account leases > real gated commands see the durable grant, and a failed checkpoint never executes a tool [23.40ms]
+(pass) atomic account leases > a declared listener blocks both retirement and reallocation before snapshots are removed [12.47ms]
+(pass) atomic account leases > a physically replaced parent cannot redirect owned cleanup [4.18ms]
+
+src/core/hosts.test.ts:
+(pass) resolveHosts > preserves an explicit Tilt host independently of the app host [0.23ms]
+(pass) resolveHosts > uses the app host only when Tilt host is absent [0.02ms]
+(pass) resolveHosts > does not replace an explicitly empty Tilt host with the app hostname
+
+src/core/registry.test.ts:
+(pass) resolveRegistryAdvertiseSettings > throws when k3d hostFrom override does not match resolved registry identity [0.49ms]
+(pass) resolveRegistryAdvertiseSettings > supports safe hostFrom override using K3D_CLUSTER_NAME [0.07ms]
+(pass) resolveRegistryAdvertiseSettings > throws when cluster-network host override does not match resolved registry identity [0.05ms]
+
+src/core/ports.test.ts:
+(pass) allocatePorts > allocates random ports from the ephemeral range in order [0.32ms]
+(pass) allocatePorts > reuses lockfile ports even when config uses random [0.06ms]
+(pass) allocatePorts > falls back to ephemeral when default port is occupied [0.05ms]
+(pass) allocatePorts > falls back to ephemeral when lockfile port is occupied [0.04ms]
+(pass) allocatePorts > skips occupied ports when scanning ephemeral range [0.03ms]
+(pass) allocatePorts > excludedPorts are skipped during ephemeral scan [0.03ms]
+(pass) allocatePorts > excludedPorts force the configured default to fall back to ephemeral [0.04ms]
+(pass) allocatePorts > excludedPorts force lockfile ports to fall back to ephemeral [0.03ms]
+(pass) allocatePorts > ephemeral scan wraps past EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START [1.11ms]
+(pass) checkPortFree (integration) > a UDP listener excludes the scalar host port [0.18ms]
+(pass) checkPortFree (integration) > an IPv6 loopback listener excludes the scalar host port [0.10ms]
+(pass) checkPortFree (integration) > detects port occupied on 127.0.0.1 [0.20ms]
+(pass) checkPortFree (integration) > detects port occupied on 0.0.0.0 [0.15ms]
+(pass) checkPortFree (integration) > accepts port that is free on both interfaces [0.13ms]
+
+src/core/instance.test.ts:
+(pass) one allocated state renders consistent env, URLs, registry, kubeconfig and final name claims [0.84ms]
+
+src/core/config.test.ts:
+(pass) loadConfig > accepts owned kubeconfig and production Tilt mode, including profile overrides [1.02ms]
+(pass) loadConfig > rejects kubeconfig path "" in base and profile config [0.71ms]
+(pass) loadConfig > rejects kubeconfig path "." in base and profile config [0.28ms]
+(pass) loadConfig > rejects kubeconfig path ".." in base and profile config [0.22ms]
+(pass) loadConfig > rejects kubeconfig path "../kubeconfig" in base and profile config [0.24ms]
+(pass) loadConfig > rejects kubeconfig path ".localnet/../../kubeconfig" in base and profile config [0.24ms]
+(pass) loadConfig > rejects kubeconfig path "/tmp/kubeconfig" in base and profile config [0.21ms]
+(pass) loadConfig > rejects kubeconfig path "~/kubeconfig" in base and profile config [0.25ms]
+(pass) loadConfig > rejects kubeconfig path "C:/kubeconfig" in base and profile config [0.24ms]
+(pass) loadConfig > rejects kubeconfig path "dir\\kubeconfig" in base and profile config [0.19ms]
+(pass) loadConfig > rejects kubeconfig path "a:b" in base and profile config [0.23ms]
+(pass) loadConfig > rejects kubeconfig path "${name}/kubeconfig" in base and profile config [0.25ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "local" [0.48ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "dev" [0.23ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "default" [0.28ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "" [0.20ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "PROD" [0.21ms]
+(pass) loadConfig > accepts random ports and 0 as an alias [0.22ms]
+(pass) loadConfig > accepts registry advertisement settings [0.24ms]
+
+src/core/name.test.ts:
+(pass) sanitizeName > normalizes case and replaces invalid characters [0.10ms]
+(pass) sanitizeName > returns fallback for empty input
+(pass) shortenK3dClusterName > returns original name when within limit
+(pass) shortenK3dClusterName > shortens long names with hash and suffix [0.07ms]
+(pass) shortenK3dClusterName > produces distinct names for long inputs with shared prefix/suffix [0.02ms]
+
+src/core/allocation_domain.test.ts:
+(pass) native account store is invariant under a scrubbed HOME [7.88ms]
+
+src/core/legacy_check.test.ts:
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in account blocks an unrelated allocator before store creation [1.12ms]
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in home blocks an unrelated allocator before store creation [0.37ms]
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in override blocks an unrelated allocator before store creation [0.30ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data { malformed remains a blocking listing [0.33ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data null remains a blocking listing [0.17ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data [1, 2] remains a blocking listing [0.13ms]
+(pass) host-wide read-only legacy refusal > pre-registry root lock { truncated blocks without any registry entry [0.22ms]
+(pass) host-wide read-only legacy refusal > pre-registry root lock {"version":1,"instance":{"name":"old"}} blocks without any registry entry [0.19ms]
+(pass) host-wide read-only legacy refusal > a store-marked snapshot is not a legacy lock, and duplicate registry locations list once [0.41ms]
+(pass) host-wide read-only legacy refusal > a failed directory query refuses instead of proving the account clean [0.14ms]
+
+src/commands/doc.test.ts:
+(pass) doc topics > all doc files exist [0.12ms]
+(pass) doc topics > prints docs for each topic [0.81ms]
+(pass) doc topics > lists topics in plain text [0.18ms]
+(pass) doc topics > prints topics as json [0.08ms]
+(pass) doc topics > lists available topics when the topic is unknown [0.06ms]
+
+src/backends/tilt.test.ts:
+(pass) buildTiltCiArgv > emits one production web-mode flag alongside CI arguments [0.11ms]
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode=dev"]} [0.03ms]
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode","dev"]}
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode=prod"]}
+(pass) buildTiltCiArgv > retains passthrough and default behavior when no mode is selected
+
+src/backends/k3d.test.ts:
+(pass) owned k3d arguments > preserves declared mapping grammar, including node filters and protocols [0.19ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --network=peer [0.02ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --registry-create=peer
+(pass) owned k3d arguments > refuses identity/ownership escape --config=peer.yaml
+(pass) owned k3d arguments > refuses identity/ownership escape --runtime-label=io.silo.project=peer
+(pass) owned k3d arguments > refuses identity/ownership escape --kubeconfig-update-default=true
+(pass) owned k3d arguments > refuses identity/ownership escape --api-port=3000
+(pass) owned k3d arguments > refuses unclaimed publication --port=3001:80 [0.03ms]
+(pass) owned k3d arguments > refuses unclaimed publication --port=80
+(pass) owned k3d arguments > refuses unclaimed publication --port=0:80
+(pass) owned k3d arguments > refuses unclaimed publication --port=3000:0
+(pass) owned k3d arguments > filters diagnostic lines without changing kubeconfig data [0.08ms]
+
+3 tests failed:
+(fail) atomic account leases > a failed creating tool keeps its port, even after its executor is absent [30.14ms]
+(fail) atomic account leases > a successful exact deletion retry reconciles terminal completed deletions [28.40ms]
+(fail) atomic account leases > real gated commands see the durable grant, and a failed checkpoint never executes a tool [23.40ms]
+
+ 126 pass
+ 3 fail
+ 321 expect() calls
+Ran 129 tests across 14 files. [5.35s]
+
+exit status 1
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 7.24 seconds)
+✓ jscpd (1.13 seconds)
+✓ knip (0.75 seconds)
+✗ test (5.36 seconds)
+error: failed to push some refs to '/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/../boss-mobile-release-silo-impl-tmp/addendum3/push.git'

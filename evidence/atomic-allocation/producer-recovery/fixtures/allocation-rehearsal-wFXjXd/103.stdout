@@ -1,0 +1,43 @@
+[
+    {
+        "Name": "k3d-localnet-proof-wfxjxd-backend",
+        "Id": "a18e428ec679357d1ddfadb971ad8d4d144790ec1b50269b82a62d8123e7d4ea",
+        "Created": "2026-11-06T06:04:54.329012563Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.rehearsal": "allocation-rehearsal-wFXjXd"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]

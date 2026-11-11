@@ -1,0 +1,43 @@
+[
+    {
+        "Name": "proof-wfxjxd-failed-network-create-ipam-blocker",
+        "Id": "b5a12cdd68708ad3dc1d701fd238be7b55941fdaf2e9fb177ddde5436b53dc9c",
+        "Created": "2026-11-06T06:07:38.147385337Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.26.0.0/16",
+                    "Gateway": "172.26.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.rehearsal": "allocation-rehearsal-wFXjXd"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.26.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]

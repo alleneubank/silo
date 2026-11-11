@@ -1,10 +1,15 @@
 #!/usr/bin/env bun
 import { parseArgs } from "util";
+import path from "node:path";
+import { writeFileSync } from "node:fs";
+import { withTimeout } from "./utils/timeout";
 import { SiloError } from "./utils/errors";
-import { setVerbose } from "./utils/logger";
+import { setVerbose, setStructuredOutput } from "./utils/logger";
+import { assertNoLegacyState } from "./core/legacy_check";
 import { DOC_TOPICS } from "./commands/doc-topics";
 import { VERSION } from "./version";
 import { colors, isInteractive } from "./utils/colors";
+import { OperationInterrupts, interruption, type InterruptSignal } from "./utils/interrupt";
 
 const VERSION_SILO = `      __               ____  _ _
      /  \\             / ___|| (_) ___
@@ -31,13 +36,14 @@ Commands:
 
 Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
-                  If omitted: reuses name from lockfile
-                  If no lockfile: generates from directory + random suffix
+                  If omitted: reuses the stored allocation name
+                  New root: generates from directory + random suffix
 
 Global Options:
   -c, --config    Path to config file (default: silo.toml)
   -v, --verbose   Show verbose output
   -h, --help      Show help
+  --json          Structured status, results and errors (schemaVersion: 1)
 
 Help:
   silo help <command>
@@ -45,24 +51,27 @@ Help:
 
 Command Options:
   up:
-    -f, --force      Regenerate ports; start a parallel stack if one is live
+    -f, --force      Regenerate a stopped, reconciled generation; live state refuses
     -p, --profile    Use named profile (overrides SILO_PROFILE env var)
 
   down:
     --delete-cluster   Delete k3d cluster (default: keep for faster iteration)
-    --clean            Remove env file and lockfile
+    --clean            Remove owned snapshots and claims only after terminal cleanup
 
   env:
-    -f, --force      Regenerate ports even if lockfile exists
+    -f, --force      Reconfigure only stopped, reconciled state
     -p, --profile    Use named profile for env generation
     --export-ci      Export env vars to $GITHUB_ENV (auto in CI)
 
   ci:
-    -f, --force      Regenerate ports even if lockfile exists
+    -f, --force      Reconfigure only stopped, reconciled state
     -p, --profile    Use named profile for env generation
     --timeout        Passed through to tilt ci --timeout
     --export-ci      Export env vars to $GITHUB_ENV (auto in CI)
     --              Pass remaining args to tilt ci
+Before first allocation: announce host cutover, upgrade/retire all old clients,
+and wait for every old operation to finish. Legacy state refuses read-only;
+each owner stops/recreates its ephemeral projects. See silo doc troubleshooting.
 `;
 
 const DOC_TOPIC_LINES = Object.entries(DOC_TOPICS)
@@ -85,8 +94,8 @@ Global Options:
 Start environment (creates k3d if needed, starts Tilt).
 
 If this project's Tilt is already running, up reports that instance and exits
-0 rather than starting a second stack. --force starts a parallel stack on new
-ports; the running one is recorded as disowned and must be stopped by pid.
+0. --force refuses live, retained or uncertain state. Run down and reconcile
+first. Parallel stacks use separate roots and distinct names.
 
 A live instance prints the Tilt API port. pid-alive is not resource health;
 use tilt get uiresources --port $TILT_PORT (see silo doc tilt).
@@ -95,7 +104,7 @@ Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
 
 Options:
-  -f, --force     Regenerate ports; start a parallel stack if one is live
+  -f, --force     Regenerate a stopped, reconciled generation
   -p, --profile   Use named profile (overrides SILO_PROFILE env var)
   -c, --config    Path to config file (default: silo.toml)
   -v, --verbose   Show verbose output
@@ -106,19 +115,30 @@ Options:
 Stop environment (stops Tilt, keeps k3d by default).
 
 The Tilt API is gone after down. The k3d cluster stays unless
---delete-cluster is passed.
+--delete-cluster is passed. Retained or uncertain resources keep their claims;
+--clean refuses to erase their ownership. No peer state is garbage-collected.
+Recorded Compose containers are removed with their anonymous volumes. Only a
+directly created, durably receipted k3d image cache can be removed by its verified
+name during explicit cluster deletion. Leaked anonymous names keep claims until their owner
+resolves them independently; inherited volumes-from provenance refuses.
+Cleanup stops only recorded owned process groups and deletes recorded Docker
+IDs and receipt-verified image caches. It does not evaluate the Tiltfile or run teardown hooks. Kubernetes
+workloads remain with a retained cluster; use --delete-cluster to remove it.
 
 Options:
   --delete-cluster   Delete k3d cluster (default: keep for faster iteration)
-  --clean            Remove env file and lockfile
+  --clean            Remove owned snapshots and claims after terminal cleanup
   -c, --config       Path to config file (default: silo.toml)
   -v, --verbose      Show verbose output
   -h, --help         Show help
 `,
   status: `silo status [options]
 
-Show current instance state from the lockfile (pid, ports, URLs), not Tilt
-resource health. When Tilt is running, status prints the Tilt API command.
+Read the account lease store: project, generation, operation, claims, exact
+resource receipts and cleanup conditions. No ownership row is changed.
+Process liveness is not Tilt resource health. --json emits schemaVersion 1.
+Stored project fields and fresh launchStatus observations are separate;
+operationOwnerAbsent and cleanupRequired identify recovery through down.
 
 Options:
   -c, --config    Path to config file (default: silo.toml)
@@ -130,12 +150,14 @@ Options:
 Generate env file only, don't start anything.
 
 Does not start Tilt or k3d. Source the env file, or run silo up.
+Claims ports, names and literal project-relative outputs atomically. Existing
+unreceipted files or backend names refuse; they are never adopted or deleted.
 
 Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
 
 Options:
-  -f, --force     Regenerate ports even if lockfile exists
+  -f, --force     Reconfigure only stopped, reconciled state
   -p, --profile   Use named profile for env generation
   --export-ci     Export env vars to $GITHUB_ENV (auto in CI)
   -c, --config    Path to config file (default: silo.toml)
@@ -152,7 +174,7 @@ Arguments:
   [name]          Instance name (e.g., main, feature-x, dev)
 
 Options:
-  -f, --force     Regenerate ports even if lockfile exists
+  -f, --force     Reconfigure only stopped, reconciled state
   -p, --profile   Use named profile for env generation
   --timeout       Passed through to tilt ci --timeout
   --export-ci     Export env vars to $GITHUB_ENV (auto in CI)
@@ -250,8 +272,79 @@ Examples:
 `);
 };
 
+let jsonOutput = Bun.argv.includes("--json");
+let jsonResultStarted = false;
+let removeInterruptHandlers = () => {};
+let operationInterrupts: OperationInterrupts | undefined;
+const JSON_OUTPUT_TIMEOUT_MS = 30_000;
+type JsonEmission = { kind: "result"; value: unknown } | { kind: "interrupt"; signal: InterruptSignal };
+
+const errorResult = (error: unknown) => ({
+  schemaVersion: 1,
+  code: error instanceof SiloError ? error.code : "SILO_ERROR",
+  message: error instanceof Error ? error.message : "Unknown error",
+  ...(error instanceof SiloError ? error.details : {}),
+});
+
+const exitWithDiagnostic = (message: string, exitCode: 1 | 130 | 143): never => {
+  // A stopped diagnostic reader must not hold the exiting CLI open.
+  try { process.stderr.write(`silo error: ${message}\n`); }
+  finally { process.exit(exitCode); }
+};
+
+const writeJsonResult = (emission: JsonEmission): Promise<void> | void => {
+  if (jsonResultStarted) return;
+  const value = emission.kind === "interrupt" ? errorResult(interruption("ci", emission.signal)) : emission.value;
+  const payload = JSON.stringify(value) + "\n";
+  jsonResultStarted = true;
+  if (emission.kind === "interrupt") {
+    // This fixed-size first JSON value fits in an empty pipe. Cancellation
+    // must not let setup continue while waiting for an asynchronous flush.
+    writeFileSync(1, payload);
+    return;
+  }
+  const written = new Promise<void>((resolve, reject) => {
+    process.stdout.write(payload, error => error ? reject(error) : resolve());
+  });
+  return withTimeout({ result: written, cancel: () => { process.stdout.destroy(); } }, JSON_OUTPUT_TIMEOUT_MS, "JSON output").catch(error => {
+    // Bun can keep a native pipe write alive after the Writable is destroyed.
+    // The CLI cannot recover a partly delivered result, so close with failure.
+    exitWithDiagnostic(error instanceof Error ? error.message : "JSON output failed", 1);
+  });
+};
+
+const handleCiInterrupts = (): (() => void) => {
+  const interrupt = (signal: InterruptSignal) => {
+    if (jsonResultStarted) return;
+    const exitCode = signal === "SIGINT" ? 130 : 143;
+    // Exiting leaves cleanup with Janitor's existing parent watcher. The
+    // handler grants no new process signal or resource deletion authority.
+    if (jsonOutput) {
+      try { writeJsonResult({ kind: "interrupt", signal }); }
+      finally { process.exit(exitCode); }
+    } else exitWithDiagnostic(interruption("ci", signal).message, exitCode);
+  };
+  const onInt = () => interrupt("SIGINT");
+  const onTerm = () => interrupt("SIGTERM");
+  process.on("SIGINT", onInt);
+  process.on("SIGTERM", onTerm);
+  return () => { process.off("SIGINT", onInt); process.off("SIGTERM", onTerm); };
+};
+
+const printJsonResult = async (config: string, enabled: boolean, changed: boolean): Promise<void> => {
+  if (!enabled) return;
+  const { readStatus } = await import("./commands/status");
+  operationInterrupts?.signal.throwIfAborted();
+  await writeJsonResult({ kind: "result", value: readStatus(config, changed) });
+};
+
 const main = async (): Promise<void> => {
   const rawArgs = Bun.argv.slice(2);
+  if (rawArgs[0] === "__silo_execute") {
+    const { executorMain } = await import("./core/executor");
+    await executorMain(rawArgs.slice(1));
+    return;
+  }
   const passthroughIndex = rawArgs.indexOf("--");
   const passthroughArgs =
     passthroughIndex === -1 ? [] : rawArgs.slice(passthroughIndex + 1);
@@ -280,6 +373,8 @@ const main = async (): Promise<void> => {
   const [command, ...args] = positionals;
 
   setVerbose(values.verbose);
+  jsonOutput = values.json;
+  setStructuredOutput(values.json);
 
   if (values.help) {
     printHelpFor(command);
@@ -296,96 +391,130 @@ const main = async (): Promise<void> => {
     return;
   }
 
-  switch (command) {
-    case "init": {
-      const mod = await import("./commands/init");
-      await mod.init({ config: values.config });
-      return;
-    }
-    case "doc": {
-      const mod = await import("./commands/doc");
-      await mod.doc({
-        ...(args[0] !== undefined && { topic: args[0] }),
-        ...(values.list && { list: values.list }),
-        ...(values.json && { json: values.json }),
-      });
-      return;
-    }
-    case "up": {
-      const mod = await import("./commands/up");
-      await mod.up(args[0], {
-        config: values.config,
-        force: values.force,
-        profile: values.profile,
-      });
-      return;
-    }
-    case "down": {
-      const mod = await import("./commands/down");
-      await mod.down({
-        config: values.config,
-        "delete-cluster": values["delete-cluster"],
-        clean: values.clean,
-      });
-      return;
-    }
-    case "status": {
-      const mod = await import("./commands/status");
-      await mod.status({ config: values.config });
-      return;
-    }
-    case "env": {
-      const mod = await import("./commands/env");
-      await mod.env(args[0], {
-        config: values.config,
-        force: values.force,
-        profile: values.profile,
-        exportCi: values["export-ci"],
-      });
-      return;
-    }
-    case "ci": {
-      const mod = await import("./commands/ci");
-      await mod.ci(args[0], {
-        config: values.config,
-        force: values.force,
-        profile: values.profile,
-        timeout: values.timeout,
-        exportCi: values["export-ci"],
-        tiltArgs: passthroughArgs,
-      });
-      return;
-    }
-    case "profiles": {
-      const mod = await import("./commands/profiles");
-      await mod.profiles({ config: values.config });
-      return;
-    }
-    case "version": {
-      const version = await getVersion();
-      if (isInteractive()) {
-        console.log(colors.yellow(VERSION_SILO));
-        console.log(colors.green(VERSION_GROUND));
-        console.log("");
-        console.log(`${colors.bold("silo")} ${colors.green(`v${version}`)}`);
-        console.log("Isolated local development environments for Tilt and k3d.");
-        console.log("");
-        console.log(
-          colors.dim(
-            '"War. War never changes. But your localhost can." - Silo Overseer'
-          )
-        );
-      } else {
-        console.log(`silo v${version}`);
-      }
-      return;
-    }
-    default:
-      printHelp();
+  if (command === "ci") removeInterruptHandlers = handleCiInterrupts();
+  if (command === "up" || command === "down") {
+    operationInterrupts = new OperationInterrupts(command);
+    removeInterruptHandlers = () => operationInterrupts!.close();
   }
+
+  const execute = async () => {
+    if (["env", "up", "ci", "down", "status"].includes(command)) {
+      await assertNoLegacyState(path.dirname(path.resolve(values.config)));
+    }
+
+    switch (command) {
+      case "init": {
+        const mod = await import("./commands/init");
+        await mod.init({ config: values.config });
+        return;
+      }
+      case "doc": {
+        const mod = await import("./commands/doc");
+        await mod.doc({
+          ...(args[0] !== undefined && { topic: args[0] }),
+          ...(values.list && { list: values.list }),
+          ...(values.json && { json: values.json }),
+        });
+        return;
+      }
+      case "up": {
+        const mod = await import("./commands/up");
+        const changed = await mod.up(args[0], {
+          executorEntrypoint: import.meta.path,
+          config: values.config,
+          force: values.force,
+          profile: values.profile,
+        });
+        operationInterrupts?.throwIfAborted();
+        await printJsonResult(values.config, values.json, changed);
+        return;
+      }
+      case "down": {
+        const mod = await import("./commands/down");
+        const changed = await mod.down({
+          executorEntrypoint: import.meta.path,
+          config: values.config,
+          "delete-cluster": values["delete-cluster"],
+          clean: values.clean,
+        });
+        operationInterrupts?.throwIfAborted();
+        await printJsonResult(values.config, values.json, changed);
+        return;
+      }
+      case "status": {
+        const mod = await import("./commands/status");
+        if (values.json) await writeJsonResult({ kind: "result", value: mod.readStatus(values.config) });
+        else await mod.status({ config: values.config });
+        return;
+      }
+      case "env": {
+        const mod = await import("./commands/env");
+        const changed = await mod.env(args[0], {
+          executorEntrypoint: import.meta.path,
+          config: values.config,
+          force: values.force,
+          profile: values.profile,
+          exportCi: values["export-ci"],
+        });
+        await printJsonResult(values.config, values.json, changed);
+        return;
+      }
+      case "ci": {
+        const mod = await import("./commands/ci");
+        const changed = await mod.ci(args[0], {
+          executorEntrypoint: import.meta.path,
+          config: values.config,
+          force: values.force,
+          profile: values.profile,
+          timeout: values.timeout,
+          exportCi: values["export-ci"],
+          tiltArgs: passthroughArgs,
+        });
+        await printJsonResult(values.config, values.json, changed);
+        return;
+      }
+      case "profiles": {
+        const mod = await import("./commands/profiles");
+        await mod.profiles({ config: values.config });
+        return;
+      }
+      case "version": {
+        const version = await getVersion();
+        if (isInteractive()) {
+          console.log(colors.yellow(VERSION_SILO));
+          console.log(colors.green(VERSION_GROUND));
+          console.log("");
+          console.log(`${colors.bold("silo")} ${colors.green(`v${version}`)}`);
+          console.log("Isolated local development environments for Tilt and k3d.");
+          console.log("");
+          console.log(
+            colors.dim(
+              '"War. War never changes. But your localhost can." - Silo Overseer'
+            )
+          );
+        } else {
+          console.log(`silo v${version}`);
+        }
+        return;
+      }
+      default:
+        printHelp();
+    }
+  };
+  return operationInterrupts ? operationInterrupts.run(execute) : execute();
 };
 
-main().catch((error: unknown) => {
+main().catch(async (error: unknown) => {
+  process.exitCode = error instanceof SiloError && error.code === "INTERRUPTED"
+    ? (error.details.signal === "SIGINT" ? 130 : 143) : 1;
+  if (jsonOutput) {
+    if (jsonResultStarted) console.error(`silo error: ${error instanceof Error ? error.message : "JSON output failed"}`);
+    else {
+      try { await writeJsonResult({ kind: "result", value: errorResult(error) }); }
+      catch (writeError) { console.error(`silo error: ${writeError instanceof Error ? writeError.message : "JSON output failed"}`); }
+    }
+    return;
+  }
   if (error instanceof SiloError) {
     console.error(`silo error: ${error.message}`);
   } else if (error instanceof Error) {
@@ -393,5 +522,4 @@ main().catch((error: unknown) => {
   } else {
     console.error("silo error: unknown error");
   }
-  process.exitCode = 1;
-});
+}).finally(() => removeInterruptHandlers());

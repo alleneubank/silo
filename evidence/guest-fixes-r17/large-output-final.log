@@ -1,0 +1,18 @@
+ 8 |   const proc=spawn([...command,...args],distribution+'-'+args[0]);const errors=new Response(proc.stderr).text();await Bun.sleep(2000);const[exitCode,stdout,stderr]=await Promise.all([proc.exited,new Response(proc.stdout).text(),errors]);assert.equal(exitCode,0,stderr);const result=JSON.parse(stdout);assert.equal(result.project.allocation.configSource,expected);assert.equal(result.schemaVersion,1);results.push({distribution,command:args[0],exitCode,bytes:stdout.length,lateFirstReadMs:2000,validJson:true});
+ 9 |  }
+10 | }
+11 | const command=[scratch+'/final-native-silo'];
+12 | const closed=spawn([...command,'status','--json'],'closed-reader');const closedErrors=new Response(closed.stderr).text();await closed.stdout.cancel();const closedExit=await withTimeout(closed.exited,10000,'closed stdout');assert.notEqual(closedExit,0);results.push({case:'closed-reader',exitCode:closedExit,stderr:await closedErrors});
+13 | const start=Date.now();const stalled=spawn([...command,'status','--json'],'stalled-reader');const stalledErrors=new Response(stalled.stderr).text();const stalledExit=await withTimeout(stalled.exited,40000,'stalled stdout exit');const elapsedMs=Date.now()-start;assert.notEqual(stalledExit,0);assert(elapsedMs>=29000&&elapsedMs<40000);const truncated=await new Response(stalled.stdout).text();results.push({case:'stalled-reader',exitCode:stalledExit,elapsedMs,partialBytes:truncated.length,stderr:await stalledErrors});
+
+AssertionError: Expected "actual" to be strictly unequal to: 0
+ generatedMessage: true,
+     actual: 0,
+   expected: 0,
+   operator: "notStrictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/large-output-final.ts:13:269
+
+Bun v1.4.4 (macOS arm64)

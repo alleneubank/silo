@@ -9,7 +9,7 @@ app_host = os.getenv('APP_HOST', 'localhost')
 workspace_name = os.getenv('WORKSPACE_NAME', 'unknown')
 
 # Redis via docker-compose (simpler for stateful services)
-docker_compose('docker-compose.yaml')
+docker_compose('docker-compose.yaml', project_name=os.getenv('COMPOSE_PROJECT_NAME'))
 dc_resource('redis', labels=['backend'])
 
 # Web + API services via k8s (demonstrates k3d cluster usage)

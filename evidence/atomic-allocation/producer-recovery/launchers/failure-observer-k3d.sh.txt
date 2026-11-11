@@ -1,0 +1,24 @@
+#!/bin/sh
+if [ "${1-}" != cluster ] || [ "${2-}" != create ]; then exec /tmp/bin/k3d "$@"; fi
+cluster=$3
+project=
+generation=
+for value in "$@"; do
+ case "$value" in
+ io.silo.project=*@all) project=${value#io.silo.project=}; project=${project%@all} ;;
+ io.silo.generation=*@all) generation=${value#io.silo.generation=}; generation=${generation%@all} ;;
+ esac
+done
+/tmp/bin/k3d "$@"
+result=$?
+if [ "$result" -ne 0 ] && [ -n "$project" ] && [ -n "$generation" ]; then
+ for role in serverlb server-0; do
+  name=k3d-$cluster-$role
+  id=$(/usr/bin/timeout 5s /usr/bin/docker container inspect --format '{{.Id}}' "$name" 2>/dev/null) || continue
+  actual=$(/usr/bin/timeout 5s /usr/bin/docker container inspect --format '{{index .Config.Labels "io.silo.project"}}/{{index .Config.Labels "io.silo.generation"}}' "$id" 2>/dev/null) || continue
+  [ "$actual" = "$project/$generation" ] || continue
+  /usr/bin/timeout 5s /usr/bin/docker container inspect --format '{"kind":"container","id":{{json .Id}},"name":{{json .Name}},"created":{{json .Created}},"project":{{json (index .Config.Labels "io.silo.project")}},"generation":{{json (index .Config.Labels "io.silo.generation")}},"role":{{json (index .Config.Labels "k3d.role")}}}' "$id" | tee -a /mnt/resources > "/tmp/evidence/failed-k3d-$id.identity.json"
+  /usr/bin/timeout 5s /usr/bin/docker logs --tail 100 "$id" 2>&1 | bun /tmp/redact-stdin.ts > "/tmp/evidence/failed-k3d-$id.logs"
+ done
+fi
+exit "$result"

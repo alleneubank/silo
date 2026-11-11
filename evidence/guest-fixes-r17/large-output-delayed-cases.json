@@ -1,0 +1,39 @@
+[
+  {
+    "distribution": "js",
+    "command": "env",
+    "exitCode": 0,
+    "bytes": 15350087,
+    "lateFirstReadMs": 2000,
+    "validJson": true
+  },
+  {
+    "distribution": "js",
+    "command": "status",
+    "exitCode": 0,
+    "bytes": 15350087,
+    "lateFirstReadMs": 2000,
+    "validJson": true
+  },
+  {
+    "distribution": "standalone",
+    "command": "env",
+    "exitCode": 0,
+    "bytes": 15350087,
+    "lateFirstReadMs": 2000,
+    "validJson": true
+  },
+  {
+    "distribution": "standalone",
+    "command": "status",
+    "exitCode": 0,
+    "bytes": 15350087,
+    "lateFirstReadMs": 2000,
+    "validJson": true
+  },
+  {
+    "case": "closed-reader",
+    "exitCode": 1,
+    "stderr": "silo error: EPIPE: broken pipe, write\n"
+  }
+]

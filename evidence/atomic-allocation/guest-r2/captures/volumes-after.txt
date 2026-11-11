@@ -1,0 +1,8 @@
+[]
+Error response from daemon: get 8ca63286253fac78da46e405639468d9b35de9ca9850f6910263fbb1945d9d25: no such volume
+Error response from daemon: get dc7128719cf105f1538724bb7df7c8512164b65b184befebde70e03c11d97d01: no such volume
+Error response from daemon: get 586c4c0767463c093621eeb57141ef75aba053fee27f91bbb8421becefa3ebdb: no such volume
+Error response from daemon: get a1d795ced6a82b7883c5ec886d4566bf3d3631b0728bce0f5550955f2a663c1f: no such volume
+Error response from daemon: get k3d-localnet-guest-r2-retained-images: no such volume
+
+exit=1

@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/post-recovery/fixtures/envonly/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   REDIS_PORT: 39223
+silo info:   TILT_PORT: 39224
+silo info: Project 5988b835-a837-4db7-8ae4-2f390d63ab02, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/post-recovery/fixtures/envonly/.localnet.env; set +a

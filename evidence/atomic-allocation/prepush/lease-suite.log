@@ -1,0 +1,39 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/lease_store.test.ts:
+(pass) atomic account leases > export parent preparation never creates or enters a legacy registry tree [6.35ms]
+(pass) atomic account leases > two allocators probing the same port cannot commit duplicate claims or a partial name [8.35ms]
+(pass) atomic account leases > a peer's inspection and clean cannot release or rewrite another root [8.69ms]
+(pass) atomic account leases > root symlinks share one operation, and a finished capability is fenced [3.37ms]
+(pass) atomic account leases > prefix overlap refuses even when the exact namespace keys differ [4.40ms]
+(pass) atomic account leases > same-name and cross-role file aliases refuse, leaving the peer bytes intact [5.94ms]
+(pass) atomic account leases > unreceipted generated files are refused without alteration [1.95ms]
+(pass) atomic account leases > a failed creating tool keeps its port, even after its executor is absent [64.02ms]
+(pass) atomic account leases > a supervisor that refuses startup reports its diagnostic without executing the tool [6.29ms]
+(pass) atomic account leases > a successful exact deletion retry reconciles terminal completed deletions [111.49ms]
+(pass) atomic account leases > corrupt stores refuse instead of opening an empty allocation domain [0.60ms]
+(pass) atomic account leases > a retired root obtains a fresh generation and an old writer cannot overwrite it [5.02ms]
+(pass) atomic account leases > database busy refuses without resetting another project's reservations [5009.61ms]
+(pass) atomic account leases > snapshot replacement, hardlinks and parent swaps refuse without deleting foreign bytes [11.73ms]
+(pass) atomic account leases > parent/final symlinks and absolute or escaping output paths are refused [5.08ms]
+(pass) atomic account leases > a config edit cannot redirect snapshot cleanup to its selected replacement path [5.19ms]
+(pass) atomic account leases > interrupted rename resumes its recorded inode, and refuses an unrelated replacement [6.25ms]
+(pass) atomic account leases > mixed-role output aliases and an active config target cannot receive two file capabilities [3.74ms]
+(pass) atomic account leases > a generation cannot drop a published file role before owner cleanup [8.56ms]
+(pass) atomic account leases > a folded file claim cannot transfer a receipt to a different path spelling [4.50ms]
+(pass) atomic account leases > pending publish retains ownership until parent synchronization succeeds on retry [6.11ms]
+(pass) atomic account leases > pending delete retains ownership until parent synchronization succeeds on retry [4.92ms]
+(pass) atomic account leases > a CI short write remains uncertain and blocks both claim transfer and retirement [8.63ms]
+(pass) atomic account leases > a CI interrupted write remains uncertain and blocks both claim transfer and retirement [6.13ms]
+silo info: Generated env file at /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/addendum3/silo-leases-wuyzqo/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Exported env vars to /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/addendum3/silo-leases-wuyzqo/github-export.env
+(pass) atomic account leases > CI sinks reject snapshot aliases and concurrent writers while sequential appends remain append-only [13.12ms]
+(pass) atomic account leases > real gated commands see the durable grant, and a failed checkpoint never executes a tool [117.16ms]
+(pass) atomic account leases > a declared listener blocks both retirement and reallocation before snapshots are removed [9.28ms]
+(pass) atomic account leases > a physically replaced parent cannot redirect owned cleanup [8.45ms]
+
+ 28 pass
+ 0 fail
+ 130 expect() calls
+Ran 28 tests across 1 file. [5.47s]

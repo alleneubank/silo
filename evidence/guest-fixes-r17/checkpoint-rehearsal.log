@@ -1,0 +1,35 @@
+15 | const proc=Bun.spawn(['/bin/ps',...Bun.argv.slice(2)],{stdin:'ignore',stdout:'inherit',stderr:'inherit'});process.exit(await proc.exited);
+16 | `,{mode:0o755});
+17 | const start=Date.now();const proc=Bun.spawn([bun,root+'/src/core/fixtures/owned_cli.ts','--exercise-owned-command',fixture],{env:{...process.env,PATH:bin+':'+process.env.PATH},detached:true,stdout:'pipe',stderr:'pipe',timeout:90000});
+18 | writeFileSync(scratch+'/pids/checkpoint-fixture.pid',String(proc.pid));appendFileSync('/Users/allen/.handoffs/boss-mobile-release/silo-guest-fixes/resources',`checkpoint-fixture group ${proc.pid}; source owned CLI fixture; teardown verify recorded group; bound90s\n`);
+19 | const [exitCode,stdout,stderr]=await Promise.all([proc.exited,new Response(proc.stdout).text(),new Response(proc.stderr).text()]);
+20 | const elapsedMs=Date.now()-start;assert.equal(exitCode,0,stderr);assert.deepEqual(JSON.parse(stdout),{exitCode:143,stdout:'tool-output'});assert.equal(readFileSync(fixture+'/launched.txt','utf8'),'granted');
+                                             ^
+AssertionError:  6 |   context: string
+ 7 | ): Promise<T> {
+ 8 |   let timeoutId: ReturnType<typeof setTimeout> | undefined;
+ 9 |   const timeoutPromise = new Promise<T>((_, reject) => {
+10 |     timeoutId = setTimeout(() => {
+11 |       reject(new SiloError(`Timed out after ${timeoutMs}ms: ${context}`, "TIMEOUT"));
+                  ^
+error: Timed out after 16773ms: inspect recorded supervisor
+ details: {},
+    code: "TIMEOUT"
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/utils/timeout.ts:11:14)
+
+Bun v1.4.4 (macOS arm64)
+
+
+1 !== 0
+
+ generatedMessage: false,
+     actual: 1,
+   expected: 0,
+   operator: "strictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/checkpoint-rehearsal.ts:20:41
+
+Bun v1.4.4 (macOS arm64)

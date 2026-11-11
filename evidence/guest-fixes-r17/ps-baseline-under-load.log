@@ -1,0 +1,33 @@
+194 |     proc.stdin.end();
+195 |     stopSupervisor();
+196 |     const exitCode = await withTimeout(proc.exited, STOP_TIMEOUT_MS, "ungranted supervisor drain");
+197 |     const diagnostic = await stderr;
+198 |     if (error instanceof SiloError && error.code === "LAUNCH_FAILED") {
+199 |       throw new SiloError(`${error.message}; supervisor exited ${exitCode}. ${diagnostic.slice(-4096)}`.trimEnd(), error.code, {
+                  ^
+error: Launch gate exited before its handshake; supervisor exited 1. silo error: Timed out after 2000ms: executor group
+ details: {
+  launchId: "38bc0535-436e-459e-a7af-331bf1256410",
+  generation: 1,
+  supervisorExitCode: 1,
+},
+    code: "LAUNCH_FAILED"
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/baseline/src/core/owned_command.ts:199:13)
+
+54 | const firstLine = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string> => {
+55 |   const decoder = new TextDecoder();
+56 |   let value = "";
+57 |   while (value.length < 4096) {
+58 |     const chunk = await reader.read();
+59 |     if (chunk.done) throw new SiloError("Launch gate exited before its handshake", "LAUNCH_FAILED");
+                               ^
+error: Launch gate exited before its handshake
+ details: {},
+    code: "LAUNCH_FAILED"
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/baseline/src/core/owned_command.ts:59:27)
+      at async withTimeout (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/baseline/src/utils/timeout.ts:16:26)
+      at async <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/baseline/src/core/owned_command.ts:153:29)
+
+Bun v1.4.4 (macOS arm64)

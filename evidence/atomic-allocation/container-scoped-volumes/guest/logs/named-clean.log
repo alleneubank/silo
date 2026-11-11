@@ -1,0 +1,3 @@
+silo error: CLEANUP_REQUIRED: retained resources (volume/sguest1105-guestnamed_named); ownership snapshots and claims kept. Explicit cluster deletion removes owned containers/networks. Silo never deletes volumes by name; resolve retained named volumes with their owner.
+
+EXIT=1

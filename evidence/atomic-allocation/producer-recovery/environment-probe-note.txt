@@ -1,0 +1,13 @@
+The initial environment capture invoked host kubectl version --client -o json
+outside the disposable view. Host /usr/local/bin/kubectl resolves to k3s; it
+emitted an Unable to read /etc/rancher/k3s/k3s.yaml permission warning in tool
+stderr. That stderr was not redirected into environment.txt. No credential
+contents were printed. The corrected client-only probe ran inside sandbox.sh
+with KUBECONFIG=/tmp/no-global-kubeconfig; outputs are kubectl-client-view.json
+and kubectl-client-view.stderr. All workload/API rehearsal kubectl invocations
+used the disposable view and explicit owned kubeconfigs. No credential or
+system configuration was changed. The default-config read attempt is disclosed;
+client-version output is not evidence of production API reachability.
+Final source/build identity after registry-enabled recovery:
+3f87992621a06888ec32c55afe46ec9b71211005
+2e4f0501ccc6423900d902a70623a629917153cc7c0a772b6eef3cb779741ec6

@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "r6guest-peertwo",
+        "Id": "c0e246f5b2e1d1fad0569b39c3dc4356b98ff733f0f0aba868fa89b4f5b08478",
+        "Created": "2026-11-06T03:43:27.345866244Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.28.0.0/16",
+                    "Gateway": "172.28.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "a492f16afa215559ca59b732546f1776e622f7bb5b57fe1a3076a89d4487e3a4",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "r6guest-peertwo",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "e340f672-88e5-4e73-b782-59532c2f8b3c"
+        },
+        "Containers": {
+            "c1520021a45360e23c50b775e9e57b778de7b8dba074103a0890a9b0aa5bbb4e": {
+                "Name": "r6guest-peertwo-redis-1",
+                "EndpointID": "84cb1af19835d544f72154ba3a4fa90451569c28888b5e5d69fad17f7a72c932",
+                "MacAddress": "9e:20:ac:bf:4a:f2",
+                "IPv4Address": "172.28.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.28.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

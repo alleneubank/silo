@@ -1,0 +1,17 @@
+16 | const env={...process.env,HOME:home,SILO_PORT_REGISTRY_DIR:home+'/registry',PATH:'/Users/allen/.local/share/mise/installs/bun/1.4.4/bin:/Users/allen/.local/share/mise/installs/github-alleneubank-janitor/0.3.1:/Users/allen/.local/share/mise/installs/github-alleneubank-tilt/0.37.8-fork.20261009.g753c01455:'+process.env.PATH};
+17 | const store=home+'/.silo/leases.sqlite';
+18 | const wait=async(fn:()=>boolean,budget=45000)=>{const end=Date.now()+budget;while(!fn()){assert(Date.now()<end,'native condition deadline');await Bun.sleep(40);}};
+19 | let serial=0;
+20 | const spawn=(cmd:string[],cwd:string,label:string)=>{
+21 |  const proc=Bun.spawn(cmd,{cwd,env,detached:true,stdout:'pipe',stderr:'pipe',timeout:90000});
+                     ^
+ENOENT: no such file or directory, posix_spawn '/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/private-silo'
+    path: "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/private-silo",
+ syscall: "posix_spawn",
+   errno: -2,
+    code: "ENOENT"
+
+      at spawn (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/native-rehearsal.ts:21:17)
+      at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/native-rehearsal.ts:38:17
+
+Bun v1.4.4 (macOS arm64)

@@ -1,0 +1,4 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'down', '--delete-cluster', '--clean', '--config', '/tmp/guest/case-switch/silo.toml']
+exit=0
+silo info: Removed owned snapshots and released this generation's claims.
+

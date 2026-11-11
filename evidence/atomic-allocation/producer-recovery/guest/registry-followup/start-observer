@@ -1,0 +1,8 @@
+#!/bin/sh
+tag=$1
+shift
+setsid timeout --signal=TERM --kill-after=5s 1000s bun /tmp/registry-followup/observe.js "$tag" "$@" > "/tmp/registry-followup/logs/$tag-observer.out" 2>&1 &
+pid=$!
+printf "%s\n" "$pid" > "/tmp/pids/r7-guest-regfollow-$tag-observer.pid"
+printf "observer\t%s\t%s\n" "$tag" "$pid" >> /tmp/registry-followup/resources/ledger
+printf "r7-guest-regfollow observer\t%s\t%s\n" "$tag" "$pid" >> /tmp/shared-resources

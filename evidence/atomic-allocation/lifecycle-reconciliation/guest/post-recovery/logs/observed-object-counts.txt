@@ -1,0 +1,4 @@
+  10 /tmp/post-recovery/resources/observed-container-ids.txt
+  15 /tmp/post-recovery/resources/observed-volume-names.txt
+   0 /tmp/post-recovery/resources/observed-network-ids.txt
+  25 total

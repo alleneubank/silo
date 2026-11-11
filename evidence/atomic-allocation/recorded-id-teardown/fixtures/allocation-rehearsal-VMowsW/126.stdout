@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-06T01:27:32Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "2",
+            "io.silo.project": "a5e69626-5478-47be-851e-e133c1729aa1",
+            "k3d.cluster": "localnet-proof-vmowsw-backend"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-proof-vmowsw-backend-images/_data",
+        "Name": "k3d-localnet-proof-vmowsw-backend-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

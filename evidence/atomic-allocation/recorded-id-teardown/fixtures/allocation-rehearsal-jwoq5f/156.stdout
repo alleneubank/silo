@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"NAME_CONFLICT","message":"NAME_CONFLICT: existing k3d registry 'localnet-proof-jwoq5f-backend-registry.localhost' has no ownership receipt. Inspect with k3d registry get localnet-proof-jwoq5f-backend-registry.localhost; silo will not reuse or delete it."}

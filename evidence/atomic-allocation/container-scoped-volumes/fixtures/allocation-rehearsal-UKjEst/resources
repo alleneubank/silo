@@ -1,0 +1,6 @@
+process 2696972 pgid=2696972: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","ci","proof-ukjest-parent-volume-cleanup","--timeout","60s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 2699313 pgid=2699313: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 2699373 pgid=2699373: ["docker","container","inspect","906c1a36b76d0da4e18188b23c26eb98dc2189631a9ee8c281759b6f2bc5254d","--format","{{json .Mounts}}"]; teardown via returned subprocess handle or verified recorded group
+process 2699405 pgid=2699405: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--clean","--json"]; teardown via returned subprocess handle or verified recorded group
+process 2700887 pgid=2700887: ["docker","container","inspect","906c1a36b76d0da4e18188b23c26eb98dc2189631a9ee8c281759b6f2bc5254d"]; teardown via returned subprocess handle or verified recorded group
+process 2700942 pgid=2700942: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--delete-cluster","--clean","--json"]; teardown via returned subprocess handle or verified recorded group

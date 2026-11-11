@@ -1,0 +1,25 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/lease_store.test.ts:
+45 | const firstLine = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string> => {
+46 |   const decoder = new TextDecoder();
+47 |   let value = "";
+48 |   while (value.length < 4096) {
+49 |     const chunk = await reader.read();
+50 |     if (chunk.done) throw new SiloError("Launch gate exited before its handshake", "LAUNCH_FAILED");
+                               ^
+error: Launch gate exited before its handshake
+ details: {},
+    code: "LAUNCH_FAILED"
+
+      at <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/owned_command.ts:50:27)
+      at async withTimeout (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/utils/timeout.ts:16:26)
+      at async <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/owned_command.ts:95:29)
+      at async <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/owned_command.ts:130:25)
+      at async <anonymous> (/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl/src/core/lease_store.test.ts:418:28)
+(fail) atomic account leases > real gated commands see the durable grant, and a failed checkpoint never executes a tool [38.34ms]
+
+ 0 pass
+ 27 filtered out
+ 1 fail
+Ran 1 test across 1 file. [55.00ms]

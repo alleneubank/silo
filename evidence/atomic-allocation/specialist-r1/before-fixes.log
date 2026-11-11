@@ -1,0 +1,126 @@
+bun test v1.4.4 (38afee6c8)
+
+../tmp/pre-fix/src/core/lease_store.test.ts:
+(pass) atomic account leases > export parent preparation never creates or enters a legacy registry tree [8.87ms]
+(pass) atomic account leases > two allocators probing the same port cannot commit duplicate claims or a partial name [14.74ms]
+(pass) atomic account leases > a peer's inspection and clean cannot release or rewrite another root [24.21ms]
+(pass) atomic account leases > root symlinks share one operation, and a finished capability is fenced [6.23ms]
+(pass) atomic account leases > prefix overlap refuses even when the exact namespace keys differ [14.04ms]
+(pass) atomic account leases > same-name and cross-role file aliases refuse, leaving the peer bytes intact [22.94ms]
+(pass) atomic account leases > unreceipted generated files are refused without alteration [7.84ms]
+(pass) atomic account leases > a failed creating tool keeps its port, even after its executor is absent [124.27ms]
+(pass) atomic account leases > a successful exact deletion retry reconciles terminal completed deletions [232.87ms]
+(pass) atomic account leases > corrupt stores refuse instead of opening an empty allocation domain [1.84ms]
+(pass) atomic account leases > a retired root obtains a fresh generation and an old writer cannot overwrite it [15.94ms]
+(pass) atomic account leases > database busy refuses without resetting another project's reservations [5020.58ms]
+(pass) atomic account leases > snapshot replacement, hardlinks and parent swaps refuse without deleting foreign bytes [27.23ms]
+(pass) atomic account leases > parent/final symlinks and absolute or escaping output paths are refused [7.97ms]
+(pass) atomic account leases > a config edit cannot redirect snapshot cleanup to its selected replacement path [26.48ms]
+(pass) atomic account leases > interrupted rename resumes its recorded inode, and refuses an unrelated replacement [28.37ms]
+(pass) atomic account leases > mixed-role output aliases and an active config target cannot receive two file capabilities [7.45ms]
+284 |       await op.allocate(allocation(root, "a"), claims("a", 3000), [
+285 |         ...targets(root), { role: "kubeconfig", target: prepareFileTarget(root, "kubeconfig", "kubeconfig") },
+286 |       ]);
+287 |       op.file("kubeconfig").publish("owned cluster snapshot\n");
+288 |       const before = ProjectOperation.inspect(root, storePath);
+289 |       await expect(op.allocate(allocation(root, "a", 3001), claims("a", 3001), targets(root))).rejects.toThrow("CLEANUP_REQUIRED");
+                                                                                                             ^
+error: expect(received).rejects.toThrow(expected)
+
+Expected promise that rejects
+Received promise that resolved: Promise { <resolved> }
+
+      at <anonymous> (/tmp/pre-fix/src/core/lease_store.test.ts:289:104)
+(fail) atomic account leases > a generation cannot drop a published file role before owner cleanup [34.35ms]
+303 |       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
+304 |       op.file("env").publish("owned snapshot\n");
+305 |       const before = ProjectOperation.inspect(root, storePath);
+306 |       await expect(op.allocate(allocation(root, "a", 3001), claims("a", 3001), [
+307 |         ...targets(root).filter(t => t.role !== "env"), { role: "env", target: prepareFileTarget(root, ".LOCALNET.ENV", "env") },
+308 |       ])).rejects.toThrow("PATH_CONFLICT");
+                        ^
+error: expect(received).rejects.toThrow(expected)
+
+Expected promise that rejects
+Received promise that resolved: Promise { <resolved> }
+
+      at <anonymous> (/tmp/pre-fix/src/core/lease_store.test.ts:308:19)
+(fail) atomic account leases > a folded file claim cannot transfer a receipt to a different path spelling [19.83ms]
+330 |         expect(existsSync(path.join(root, ".localnet.env"))).toBe(action === "publish");
+331 |         expect(ProjectOperation.inspect(root, storePath)?.files.find(f => f.role === "env")?.pending?.action).toBe(action);
+332 |         await expect(op.allocate(allocation(root, "a", 3001), claims("a", 3001), targets(root))).rejects.toThrow("INCOMPLETE_EXPORT");
+333 |         expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: "3000" });
+334 |         op.file("env").recover();
+335 |         expect(synchronizedParents).toBe(1);
+                                          ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: 0
+
+      at <anonymous> (/tmp/pre-fix/src/core/lease_store.test.ts:335:37)
+(fail) atomic account leases > pending publish retains ownership until parent synchronization succeeds on retry [22.93ms]
+330 |         expect(existsSync(path.join(root, ".localnet.env"))).toBe(action === "publish");
+331 |         expect(ProjectOperation.inspect(root, storePath)?.files.find(f => f.role === "env")?.pending?.action).toBe(action);
+332 |         await expect(op.allocate(allocation(root, "a", 3001), claims("a", 3001), targets(root))).rejects.toThrow("INCOMPLETE_EXPORT");
+333 |         expect(ProjectOperation.inspect(root, storePath)?.claims).toContainEqual({ domain: "host-port", resource: "3000" });
+334 |         op.file("env").recover();
+335 |         expect(synchronizedParents).toBe(1);
+                                          ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: 0
+
+      at <anonymous> (/tmp/pre-fix/src/core/lease_store.test.ts:335:37)
+(fail) atomic account leases > pending delete retains ownership until parent synchronization succeeds on retry [14.96ms]
+351 |         const bytes = Buffer.from(String(content));
+352 |         if (failure === "short write") return write(fd, bytes, 0, 4);
+353 |         write(fd, bytes);
+354 |         throw new Error("interrupted append");
+355 |       });
+356 |       try { expect(() => op.appendGithubEnv(sink, "NAME=é\n")).toThrow(failure === "short write" ? "INCOMPLETE_EXPORT" : "interrupted append"); }
+                                                                     ^
+error: expect(received).toThrow(expected)
+
+Expected substring: "INCOMPLETE_EXPORT"
+
+Received function did not throw
+Received value: undefined
+
+      at <anonymous> (/tmp/pre-fix/src/core/lease_store.test.ts:356:64)
+(fail) atomic account leases > a CI short write remains uncertain and blocks both claim transfer and retirement [11.28ms]
+359 |       expect(readFileSync(sink, "utf8")).toBe(expected);
+360 |       const before = ProjectOperation.inspect(root, storePath);
+361 |       expect(before?.sinks).toHaveLength(1);
+362 |       expect(() => peer.appendGithubEnv(sink, "PEER=1\n")).toThrow("PATH_CONFLICT");
+363 |       await expect(op.allocate(allocation(root, "a", 3002), claims("a", 3002), targets(root))).rejects.toThrow("CLEANUP_REQUIRED");
+364 |       await expect(retire(op)).rejects.toThrow("CLEANUP_REQUIRED");
+                                             ^
+error: expect(received).rejects.toThrow(expected)
+
+Expected promise that rejects
+Received promise that resolved: Promise { <resolved> }
+
+      at <anonymous> (/tmp/pre-fix/src/core/lease_store.test.ts:364:40)
+(fail) atomic account leases > a CI interrupted write remains uncertain and blocks both claim transfer and retirement [25.70ms]
+silo info: Generated env file at /tmp/tmp/silo-leases-YooP6s/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Exported env vars to /tmp/tmp/silo-leases-YooP6s/github-export.env
+(pass) atomic account leases > CI sinks reject snapshot aliases and concurrent writers while sequential appends remain append-only [27.28ms]
+(pass) atomic account leases > real gated commands see the durable grant, and a failed checkpoint never executes a tool [188.06ms]
+(pass) atomic account leases > a declared listener blocks both retirement and reallocation before snapshots are removed [21.59ms]
+(pass) atomic account leases > a physically replaced parent cannot redirect owned cleanup [12.52ms]
+
+6 tests failed:
+(fail) atomic account leases > a generation cannot drop a published file role before owner cleanup [34.35ms]
+(fail) atomic account leases > a folded file claim cannot transfer a receipt to a different path spelling [19.83ms]
+(fail) atomic account leases > pending publish retains ownership until parent synchronization succeeds on retry [22.93ms]
+(fail) atomic account leases > pending delete retains ownership until parent synchronization succeeds on retry [14.96ms]
+(fail) atomic account leases > a CI short write remains uncertain and blocks both claim transfer and retirement [11.28ms]
+(fail) atomic account leases > a CI interrupted write remains uncertain and blocks both claim transfer and retirement [25.70ms]
+
+ 21 pass
+ 6 fail
+ 107 expect() calls
+Ran 27 tests across 1 file. [6.01s]

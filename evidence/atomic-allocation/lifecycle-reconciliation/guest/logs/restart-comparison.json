@@ -1,0 +1,24 @@
+{
+  "generationBefore": 1,
+  "generationAfter": 1,
+  "firstIds": [
+    "03bb9defc7bca08ea0e003dfbf383ba6dddc21393dbddbc4f15600331fe223ab",
+    "7fa50cf5a37ba88efa17a34c238b99a1174306ff1c616fdfcf5e8861730327c5"
+  ],
+  "secondHistoryIds": [
+    "03bb9defc7bca08ea0e003dfbf383ba6dddc21393dbddbc4f15600331fe223ab",
+    "04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5",
+    "6c65183f1561a48dfc7d8fdf6fb95bfdc3619fe1597dc1291db42a70b71ffaf6",
+    "7fa50cf5a37ba88efa17a34c238b99a1174306ff1c616fdfcf5e8861730327c5"
+  ],
+  "secondCi": [
+    {
+      "phase": "exited",
+      "exitCode": 0
+    },
+    {
+      "phase": "exited",
+      "exitCode": 0
+    }
+  ]
+}

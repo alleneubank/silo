@@ -1,0 +1,58 @@
+[
+    {
+        "Name": "sguest1105-guestplain_default",
+        "Id": "a18a0a1e3a29865285eb843304151b8f65df251c66be603fe9fc27514e5885f0",
+        "Created": "2026-11-05T02:53:55.621111343Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "b51294e2ab536ae3e2cec5520371db433f979785a50b0a154a435f1a277bf28c",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "sguest1105-guestplain",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "f4b2c633-f580-4ce0-858a-68fa4b5e6dc1"
+        },
+        "Containers": {
+            "d12f5f9a258d26e6e7856608a832d59023c414e9e3a0017406994ff367261215": {
+                "Name": "sguest1105-guestplain-redis-1",
+                "EndpointID": "05b368afef2c4b6cc9dc9629984a89d8fcdd240ac466653a7b442d2e062ab89e",
+                "MacAddress": "82:c7:67:1f:8a:a2",
+                "IPv4Address": "172.24.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]
+
+EXIT=0

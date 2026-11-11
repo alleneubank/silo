@@ -1,0 +1,24 @@
+{"command":["a","down","--clean"],"code":0,"result":"unallocated"}
+{"command":["b","down","--clean"],"code":0}
+{"command":["a","env","atomic-live-a"],"code":0,"result":"reserved"}
+{"command":["b","env","atomic-live-b"],"code":0,"result":"reserved"}
+{"scenario":"concurrent reservations","ap":{"APP_PORT":48127,"TILT_PORT":48128},"bp":{"APP_PORT":49152,"TILT_PORT":49153}}
+{"scenario":"live identities","a":"atomic-live-a","b":"atomic-live-b"}
+{"command":["b","status"],"code":0,"result":"running"}
+{"command":["a","status"],"code":0,"result":"running"}
+{"scenario":"journaled live groups","a":[{"id":"4113c0ed-04c5-4ec3-b078-091ec20af62b","kind":"tilt-up","command":["tilt","up","--web-mode=prod"],"effect":"workload","supervisorPid":3329311,"leaderPid":3329312,"groupId":3329312,"supervisorIdentity":"ae       3329311 Wed Nov  4 02:00:23 2026 janitor --pgroup-only --watch-pid 3328222 --grace-ms 5000 -- /tmp/tools/bun /mnt/src/cli.ts __silo_execute 4113c0ed-04c5-4ec3-b078-091ec20af62b /tmp/native/a e8bb4a1b-d3b3-4b60-93b6-04f1be5bfb3a 2 account","phase":"granted","exitCode":null,"reconciled":false,"terminal":false}],"serverA":"3329810","serverB":"3329735"}
+{"command":["a","down","--clean"],"code":0,"result":"unallocated"}
+{"cleanup":"individually attributed fixture server","pid":3329810,"command":"ae       3329810 bun /tmp/native/server.ts /tmp/native/a/server.pid"}
+{"command":["b","down","--clean"],"code":0,"result":"unallocated"}
+{"cleanup":"individually attributed fixture server","pid":3329735,"command":"ae       3329735 bun /tmp/native/server.ts /tmp/native/b/server.pid"}
+15 |   return value;
+16 | }
+17 | async function until(description: string, check: () => Promise<boolean>, timeout = 20_000) {
+18 |   const deadline = Date.now() + timeout;
+19 |   while (Date.now() < deadline) { if (await check()) return; await Bun.sleep(50); }
+20 |   throw new Error(`Timed out: ${description}`);
+                 ^
+error: Timed out: A drained on owner crash
+      at until (/tmp/native-live.ts:20:13)
+
+Bun v1.4.4 (Linux x64)

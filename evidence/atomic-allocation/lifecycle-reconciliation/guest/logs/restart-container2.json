@@ -1,0 +1,301 @@
+[
+    {
+        "Id": "04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5",
+        "Created": "2026-11-06T03:42:57.117390837Z",
+        "Path": "docker-entrypoint.sh",
+        "Args": [
+            "redis-server"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 3535003,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-11-06T03:42:57.960574612Z",
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+                "Status": "healthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2026-11-06T03:43:05.304530124Z",
+                        "End": "2026-11-06T03:43:05.322815081Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    },
+                    {
+                        "Start": "2026-11-06T03:43:06.324021027Z",
+                        "End": "2026-11-06T03:43:06.347688258Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    },
+                    {
+                        "Start": "2026-11-06T03:43:07.34908333Z",
+                        "End": "2026-11-06T03:43:07.366058663Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    },
+                    {
+                        "Start": "2026-11-06T03:43:08.366525258Z",
+                        "End": "2026-11-06T03:43:08.384497767Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    },
+                    {
+                        "Start": "2026-11-06T03:43:09.384948031Z",
+                        "End": "2026-11-06T03:43:09.403656645Z",
+                        "ExitCode": 0,
+                        "Output": "PONG\n"
+                    }
+                ]
+            }
+        },
+        "Image": "sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f",
+        "ResolvConfPath": "/var/lib/docker/containers/04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5/hostname",
+        "HostsPath": "/var/lib/docker/containers/04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5/hosts",
+        "LogPath": "/var/lib/docker/containers/04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5/04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5-json.log",
+        "Name": "/r6guest-restart-redis-1",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "r6guest-restart",
+            "PortBindings": {
+                "6379/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "39111"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": [],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "edea6bc27737111ee478a1fb6579efc9e10daf188b9a73c34046892e5f8c5ce1",
+                "Source": "/var/lib/docker/volumes/edea6bc27737111ee478a1fb6579efc9e10daf188b9a73c34046892e5f8c5ce1/_data",
+                "Destination": "/data",
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "04513694a58b",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "ExposedPorts": {
+                "6379/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "REDIS_VERSION=7.4.12"
+            ],
+            "Cmd": [
+                "redis-server"
+            ],
+            "Healthcheck": {
+                "Test": [
+                    "CMD",
+                    "redis-cli",
+                    "ping"
+                ],
+                "Interval": 1000000000,
+                "Timeout": 1000000000,
+                "Retries": 20
+            },
+            "Image": "redis:7-alpine",
+            "Volumes": {
+                "/data": {}
+            },
+            "WorkingDir": "/data",
+            "Entrypoint": [
+                "docker-entrypoint.sh"
+            ],
+            "Labels": {
+                "com.docker.compose.config-hash": "5152148290a95c90da0b3738ec580e58d43769af171d7290d4ca73ee98a14a8a",
+                "com.docker.compose.container-number": "1",
+                "com.docker.compose.depends_on": "",
+                "com.docker.compose.image": "sha256:1cf73a2f04808e55a8bd2f5706c2aa0ebb0f71938f93deb7af79f48311cd5cb9",
+                "com.docker.compose.oneoff": "False",
+                "com.docker.compose.project": "r6guest-restart",
+                "com.docker.compose.project.config_files": "/tmp/fixtures/restart/compose.yaml",
+                "com.docker.compose.project.working_dir": "/tmp/fixtures/restart",
+                "com.docker.compose.service": "redis",
+                "com.docker.compose.version": "5.6.1",
+                "io.silo.generation": "1",
+                "io.silo.project": "7d11e249-b03d-4b64-9a5a-c7045b6c7e04"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "bb322ea783dc26c61ea4d0fcd2ebe8a3626271972cf71ebade45d8873072ba79",
+            "SandboxKey": "/var/run/docker/netns/bb322ea783dc",
+            "Ports": {
+                "6379/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "39111"
+                    }
+                ]
+            },
+            "Networks": {
+                "r6guest-restart": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "r6guest-restart-redis-1",
+                        "redis"
+                    ],
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "6c65183f1561a48dfc7d8fdf6fb95bfdc3619fe1597dc1291db42a70b71ffaf6",
+                    "EndpointID": "082d8c5b37d885e792e5495e047c65788aba07c97b4594ecde4e0fcbfe428a8b",
+                    "Gateway": "172.23.0.1",
+                    "IPAddress": "172.23.0.2",
+                    "MacAddress": "32:24:2c:64:60:6a",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "r6guest-restart-redis-1",
+                        "redis",
+                        "04513694a58b"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:1cf73a2f04808e55a8bd2f5706c2aa0ebb0f71938f93deb7af79f48311cd5cb9",
+            "size": 2288,
+            "annotations": {
+                "com.docker.official-images.bashbrew.arch": "amd64",
+                "org.opencontainers.image.base.digest": "sha256:f765c92e59538d44c6946f8073bdbffd2e8d5916981161faed1b30aa0ef0c2c5",
+                "org.opencontainers.image.base.name": "alpine:3.21",
+                "org.opencontainers.image.created": "2026-10-26T16:39:35Z",
+                "org.opencontainers.image.revision": "786872f8c248c1f0990f93244cbcb3949329016d",
+                "org.opencontainers.image.source": "https://github.com/redis/docker-library-redis.git#786872f8c248c1f0990f93244cbcb3949329016d:alpine",
+                "org.opencontainers.image.url": "https://hub.docker.com/_/redis",
+                "org.opencontainers.image.version": "7.4.12-alpine"
+            },
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]

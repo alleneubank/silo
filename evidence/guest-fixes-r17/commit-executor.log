@@ -1,0 +1,20 @@
+╭───────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-commit[m │
+╰───────────────────────────────────────╯
+┃  format ❯ 
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 13ms on 6 files with 90 rules using 18 threads.
+
+Found 0 warnings and 0 errors.
+Finished in 13ms on 6 files with 90 rules using 18 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 38.46 seconds)
+✓ lint (1.11 seconds)
+✓ format (1.11 seconds)
+✓ typecheck (38.33 seconds)
+[feat/atomic-allocation 39abcc4] fix(executor): share bounded launch identity budgets
+ 6 files changed, 71 insertions(+), 10 deletions(-)

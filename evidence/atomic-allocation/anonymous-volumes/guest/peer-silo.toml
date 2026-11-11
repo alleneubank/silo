@@ -1,0 +1,10 @@
+version = 1
+prefix = "guest"
+[ports]
+REDIS_PORT = "random"
+TILT_PORT = "random"
+[hosts]
+APP_HOST = "${name}.localhost"
+TILT_HOST = "127.0.0.1"
+[tilt]
+webMode = "prod"

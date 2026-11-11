@@ -1,0 +1,116 @@
+import assert from "node:assert/strict";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import type { ProjectInspection } from "/mnt/src/core/lease_store";
+import { ProjectOperation } from "/mnt/src/core/lease_store";
+import { captureOwnedResources } from "/mnt/src/backends/ownership";
+
+const root = "/tmp/full-example";
+const out = "/tmp/evidence";
+const cli = "/mnt/dist/cli.js";
+const name = `redesign-${randomUUID().slice(0, 8)}`;
+let ordinal = 0;
+const observations: unknown[] = [];
+const record = (line: string) => appendFileSync("/mnt/resources", `copied example ${name}: ${line}\n`);
+const processes = new Map<number, { proc: Bun.Subprocess; pidFile: string; command: string }>();
+async function run(argv: string[], timeout = 180_000) {
+  const id = ++ordinal;
+  const proc = Bun.spawn(argv, { cwd: root, detached: true, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
+  record(`process pid/pgid=${proc.pid} ${JSON.stringify(argv)}; teardown returned handle/native Janitor supervision`);
+  const timer = setTimeout(() => proc.kill("SIGTERM"), timeout);
+  const [code, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+  clearTimeout(timer);
+  writeFileSync(`${out}/example-${id}.stdout`, stdout); writeFileSync(`${out}/example-${id}.stderr`, stderr);
+  observations.push({ command: id, argv, code });
+  return { code, stdout, stderr };
+}
+async function silo(args: string[]) { return run([process.execPath, cli, ...args, "--json"]); }
+async function state(): Promise<ProjectInspection> {
+  const result = await silo(["status"]); assert.equal(result.code, 0, result.stderr);
+  const saved = JSON.parse(result.stdout).project; assert(saved?.allocation);
+  return saved;
+}
+async function docker(args: string[]) {
+  const result = await run(["docker", ...args], 10_000); assert.equal(result.code, 0, result.stderr); return result.stdout;
+}
+async function stop(pid: number) {
+  const entry = processes.get(pid); assert(entry);
+  const recorded = Number(readFileSync(entry.pidFile, "utf8")); assert.equal(recorded, pid); assert(pid > 1);
+  const identity = await run(["ps", "-o", "user=,pgid=,command=", "-p", String(pid)]);
+  assert.equal(identity.code, 0); const fields = identity.stdout.trim().split(/\s+/);
+  assert.equal(fields[0], "ae"); assert.equal(Number(fields[1]), pid); assert(identity.stdout.includes(entry.command));
+  process.kill(-pid, "SIGTERM"); await entry.proc.exited; processes.delete(pid);
+}
+let made: ProjectInspection | undefined;
+let ciCode: number | undefined;
+let health = false;
+let failure: unknown;
+try {
+  const ci = await silo(["ci", name, "--timeout", "120s"]); ciCode = ci.code;
+  if (ci.code !== 0) {
+    const owner = await ProjectOperation.open(root, { recover: true });
+    try { await captureOwnedResources(owner, "compose"); } finally { owner.finish(); }
+  }
+  made = await state();
+  writeFileSync(`${out}/example-status-before.json`, JSON.stringify(made, null, 2) + "\n");
+  const kcfg = made.allocation!.state.identity.kubeconfigPath; assert(kcfg);
+  await run(["kubectl", "--kubeconfig", kcfg, "get", "deployments,pods", "-o", "json"], 10_000);
+  for (const receipt of made.resources) {
+    record(`receipted ${receipt.kind} ${receipt.id} name=${receipt.name}; teardown public exact owned down; named volume retained for fixture owner`);
+    if (receipt.kind === "container") {
+      const mounts = await docker(["container", "inspect", receipt.id, "--format", "{{json .Mounts}}"]);
+      writeFileSync(`${out}/example-mounts-${receipt.id}.json`, mounts);
+      for (const volume of receipt.anonymousVolumes) record(`anonymous mount ${volume.name} from ${receipt.id}; teardown only with parent --volumes`);
+    }
+  }
+  if (ci.code === 0) {
+    for (const [service, portKey, target] of [["web", "WEB_PORT", 3000], ["api", "API_PORT", 8080]] as const) {
+      const port = made.allocation!.state.ports[portKey]; assert(port);
+      const argv = ["kubectl", "--kubeconfig", kcfg, "port-forward", `service/${service}`, `${port}:${target}`];
+      const proc = Bun.spawn(argv, { cwd: root, detached: true, stdin: "ignore", stdout: Bun.file(`${out}/example-${service}-forward.log`), stderr: Bun.file(`${out}/example-${service}-forward.stderr`) });
+      const pidFile = `/tmp/${service}-forward.pid`; writeFileSync(pidFile, String(proc.pid));
+      processes.set(proc.pid, { proc, pidFile, command: "kubectl" });
+      record(`port-forward pid/pgid=${proc.pid} serial=${service} ${JSON.stringify(argv)}; teardown recorded group after exact user/pgid/command verification`);
+      const end = Date.now() + 15_000;
+      let response: Response | undefined;
+      while (!response && Date.now() < end) {
+        try { response = await fetch(`http://127.0.0.1:${port}/health`, { headers: { host: `${service}.${name}.localhost` }, signal: AbortSignal.timeout(500) }); }
+        catch { assert.equal(proc.exitCode, null, "Port forward exited before health became available"); await Bun.sleep(50); }
+      }
+      assert(response?.ok); const body = await response.json(); assert.equal(body.status, "ok");
+      observations.push({ service, port, health: body });
+      await stop(proc.pid);
+    }
+    health = true;
+  }
+} catch (error) { failure = String(error); }
+finally {
+  for (const pid of processes.keys()) await stop(pid);
+  const cleanup = await silo(["down", "--delete-cluster", "--clean"]);
+  assert.equal(cleanup.code, 1, cleanup.stdout + cleanup.stderr);
+  assert.equal(JSON.parse(cleanup.stdout).code, "CLEANUP_REQUIRED");
+  const retained = await state();
+  writeFileSync(`${out}/example-status-retained.json`, JSON.stringify(retained, null, 2) + "\n");
+  if (made) assert.deepEqual(retained.claims, made.claims);
+  const volumes = new Set((await docker(["volume", "ls", "--format", "{{.Name}}"])).trim().split("\n"));
+  const snapshot = made ?? retained;
+  for (const parent of snapshot.resources) if (parent.kind === "container") {
+    for (const volume of parent.anonymousVolumes) assert(!volumes.has(volume.name), `Leaked anonymous mount ${volume.name}`);
+  }
+  for (const receipt of snapshot.resources.filter(r => r.kind === "volume")) {
+    assert(volumes.has(receipt.name), "Silo must preserve the named cache");
+    const actual = JSON.parse(await docker(["volume", "inspect", receipt.name]))[0];
+    assert.equal(actual.Name, receipt.name); assert.equal(actual.CreatedAt, receipt.createdAt);
+    assert.equal(actual.Labels["io.silo.project"], snapshot.projectId);
+    assert.equal(actual.Labels["io.silo.generation"], String(snapshot.generation));
+    record(`fixture-owner named cache teardown ${receipt.name}, exact receipt creation/project/generation verified; this is not product cleanup`);
+    await docker(["volume", "rm", receipt.name]);
+  }
+  const cleaned = await silo(["down", "--clean"]); assert.equal(cleaned.code, 0, cleaned.stdout + cleaned.stderr);
+  const final = JSON.parse(cleaned.stdout).project; assert.equal(final.generation, 0); assert.deepEqual(final.claims, []);
+  writeFileSync(`${out}/example-status-after.json`, cleaned.stdout);
+  const summary = { name, ciCode, health, failure: failure ?? null, observations, anonymousMountsAbsent: true, namedCachePreservedByProduct: true, fixtureOwnerCacheResolved: true, generation: final.generation, claims: final.claims };
+  writeFileSync(`${out}/example-summary.json`, JSON.stringify(summary, null, 2) + "\n");
+  console.log(JSON.stringify(summary));
+}
+if (failure || ciCode !== 0 || !health) process.exitCode = 1;

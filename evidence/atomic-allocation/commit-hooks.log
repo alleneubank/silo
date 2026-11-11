@@ -1,0 +1,99 @@
+╭───────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-commit[m │
+╰───────────────────────────────────────╯
+│  lint (skip) no files for inspection
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 20ms on 0 files with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 0.94 seconds)
+✓ format (0.05 seconds)
+✓ typecheck (0.93 seconds)
+[feat/atomic-allocation ade05c2] docs(allocation): retain native and guest verification evidence
+ 88 files changed, 1834 insertions(+), 9 deletions(-)
+ create mode 100644 evidence/atomic-allocation/baseline-red.log
+ create mode 100644 evidence/atomic-allocation/bun-account-home.log
+ create mode 100644 evidence/atomic-allocation/check.log
+ create mode 100644 evidence/atomic-allocation/claims-check-initial.md
+ create mode 100644 evidence/atomic-allocation/crash-correction.log
+ create mode 100644 evidence/atomic-allocation/deletion-retry-failure.log
+ create mode 100644 evidence/atomic-allocation/deletion-retry-recovery.log
+ create mode 100644 evidence/atomic-allocation/example-built-status.json
+ create mode 100644 evidence/atomic-allocation/example-built.log
+ create mode 100644 evidence/atomic-allocation/example-clean.log
+ create mode 100644 evidence/atomic-allocation/example-health.log
+ create mode 100644 evidence/atomic-allocation/example-scope-refusal.log
+ create mode 100644 evidence/atomic-allocation/first-crash-failure.log
+ create mode 100644 evidence/atomic-allocation/guest/01-legacy-refusal.txt
+ create mode 100644 evidence/atomic-allocation/guest/02-old-down.txt
+ create mode 100644 evidence/atomic-allocation/guest/03-old-recreated.txt
+ create mode 100644 evidence/atomic-allocation/guest/04-a-up.txt
+ create mode 100644 evidence/atomic-allocation/guest/05-b-up.txt
+ create mode 100644 evidence/atomic-allocation/guest/06-a-live-status.json
+ create mode 100644 evidence/atomic-allocation/guest/07-b-live-status.json
+ create mode 100644 evidence/atomic-allocation/guest/08-a-api.txt
+ create mode 100644 evidence/atomic-allocation/guest/09-b-api.txt
+ create mode 100644 evidence/atomic-allocation/guest/10-live-force-1.txt
+ create mode 100644 evidence/atomic-allocation/guest/11-live-force-2.txt
+ create mode 100644 evidence/atomic-allocation/guest/12-a-http-api.json
+ create mode 100644 evidence/atomic-allocation/guest/13-b-http-api.json
+ create mode 100644 evidence/atomic-allocation/guest/14-a-repeat-up.txt
+ create mode 100644 evidence/atomic-allocation/guest/15-b-down.txt
+ create mode 100644 evidence/atomic-allocation/guest/16-a-api-after-b-down.json
+ create mode 100644 evidence/atomic-allocation/guest/17-a-down.txt
+ create mode 100644 evidence/atomic-allocation/guest/18-a-up-again.txt
+ create mode 100644 evidence/atomic-allocation/guest/19-b-up-again.txt
+ create mode 100644 evidence/atomic-allocation/guest/20-a-real-api.txt
+ create mode 100644 evidence/atomic-allocation/guest/21-b-real-api.txt
+ create mode 100644 evidence/atomic-allocation/guest/22-b-down-again.txt
+ create mode 100644 evidence/atomic-allocation/guest/23-a-api-preserved.json
+ create mode 100644 evidence/atomic-allocation/guest/24-a-stop-for-switch.txt
+ create mode 100644 evidence/atomic-allocation/guest/25-a-stopped-switch.txt
+ create mode 100644 evidence/atomic-allocation/guest/26-a-after-switch.json
+ create mode 100644 evidence/atomic-allocation/guest/27-a-after-switch-api.json
+ create mode 100644 evidence/atomic-allocation/guest/28-retained-ci.txt
+ create mode 100644 evidence/atomic-allocation/guest/29-unknown-profile-1.txt
+ create mode 100644 evidence/atomic-allocation/guest/30-unknown-profile-2.txt
+ create mode 100644 evidence/atomic-allocation/guest/31-retained-creating-status.json
+ create mode 100644 evidence/atomic-allocation/guest/32-k3d-live-list.txt
+ create mode 100644 evidence/atomic-allocation/guest/33-retained-clean-refusal-1.txt
+ create mode 100644 evidence/atomic-allocation/guest/34-retained-clean-refusal-2.txt
+ create mode 100644 evidence/atomic-allocation/guest/35-real-k3d-nodes.txt
+ create mode 100644 evidence/atomic-allocation/guest/36-retained-clean-refusal-repeat.txt
+ create mode 100644 evidence/atomic-allocation/guest/37-a-pre-interrupt-process.txt
+ create mode 100644 evidence/atomic-allocation/guest/38-a-pre-interrupt-status.json
+ create mode 100644 evidence/atomic-allocation/guest/39-retained-explicit-clean.txt
+ create mode 100644 evidence/atomic-allocation/guest/40-a-post-interrupt-status.json
+ create mode 100644 evidence/atomic-allocation/guest/41-name-conflict-1.txt
+ create mode 100644 evidence/atomic-allocation/guest/42-name-conflict-2.txt
+ create mode 100644 evidence/atomic-allocation/guest/43-k3d-after-clean.txt
+ create mode 100644 evidence/atomic-allocation/guest/44-retained-after-clean.json
+ create mode 100644 evidence/atomic-allocation/guest/45-typo-option-1.txt
+ create mode 100644 evidence/atomic-allocation/guest/46-typo-option-2.txt
+ create mode 100644 evidence/atomic-allocation/guest/47-a-restart-after-interrupt.txt
+ create mode 100644 evidence/atomic-allocation/guest/48-restart-live-api.json
+ create mode 100644 evidence/atomic-allocation/guest/49-restart-live-status.json
+ create mode 100644 evidence/atomic-allocation/guest/50-a-restart-after-interrupt-repeat.txt
+ create mode 100644 evidence/atomic-allocation/guest/51-a-interrupt-reconcile.txt
+ create mode 100644 evidence/atomic-allocation/guest/52-a-restart-after-reconcile.txt
+ create mode 100644 evidence/atomic-allocation/guest/53-reconciled-restart-api.json
+ create mode 100644 evidence/atomic-allocation/guest/54-a-final-clean.txt
+ create mode 100644 evidence/atomic-allocation/guest/55-old-final-clean.txt
+ create mode 100644 evidence/atomic-allocation/guest/56-peer-preserved.txt
+ create mode 100644 evidence/atomic-allocation/guest/57-a-final-status.json
+ create mode 100644 evidence/atomic-allocation/guest/58-b-final-status.json
+ create mode 100644 evidence/atomic-allocation/guest/59-old-final-status.json
+ create mode 100644 evidence/atomic-allocation/guest/60-started-processes-final.txt
+ create mode 100644 evidence/atomic-allocation/guest/61-build.sha256
+ create mode 100644 evidence/atomic-allocation/guest/peer-before.sha256
+ create mode 100644 evidence/atomic-allocation/guest/resources.txt
+ create mode 100644 evidence/atomic-allocation/guest/verdict-guest.md
+ create mode 100644 evidence/atomic-allocation/lint.log
+ create mode 100644 evidence/atomic-allocation/linux-native.log
+ create mode 100644 evidence/atomic-allocation/native-refusals.json
+ create mode 100644 evidence/atomic-allocation/skill-validator.log
+ create mode 100644 evidence/atomic-allocation/tests.log
+ create mode 100644 evidence/atomic-allocation/typecheck.log

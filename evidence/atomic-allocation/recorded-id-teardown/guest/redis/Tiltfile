@@ -1,0 +1,2 @@
+local("touch /tmp/redis/down-evaluated-tiltfile")
+fail("deliberate guest failure")

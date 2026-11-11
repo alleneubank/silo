@@ -1,0 +1,6 @@
+{
+  "stalledExit": 1,
+  "elapsedMs": 30696,
+  "partialBytes": 8192,
+  "stderr": "silo error: Timed out after 30000ms: JSON output\n"
+}

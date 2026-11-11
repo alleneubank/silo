@@ -1,0 +1,13 @@
+process 2640033 pgid=2640033: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","env","proof-iae8uk-same-second-replacement","--json"]; teardown via returned subprocess handle or verified recorded group
+container intent localnet-proof-iae8uk-same-second-replacement-audit; teardown exact returned ID with --volumes
+process 2641249 pgid=2641249: ["docker","container","create","--name","localnet-proof-iae8uk-same-second-replacement-audit","--label","io.silo.project=28bfe02c-2005-44f5-8011-fd9eac00b156","--label","io.silo.generation=1","redis:7-alpine"]; teardown via returned subprocess handle or verified recorded group
+container ccd28ea0c0346d2eb40bce592acf23a73c7484ebf9cab6fc281e5057b2dd0b4c; teardown exact recorded ID with --volumes
+process 2644249 pgid=2644249: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+anonymous volume eec5e40189b5c08e53ebe58f090500ba3c819fd7f21e571dc29a1c285ed3a189 under ccd28ea0c0346d2eb40bce592acf23a73c7484ebf9cab6fc281e5057b2dd0b4c; fixture-only teardown exact inspect then docker volume rm, if parent no longer exists
+process 2644266 pgid=2644266: ["docker","container","rm","ccd28ea0c0346d2eb40bce592acf23a73c7484ebf9cab6fc281e5057b2dd0b4c"]; teardown via returned subprocess handle or verified recorded group
+process 2644342 pgid=2644342: ["docker","volume","rm","eec5e40189b5c08e53ebe58f090500ba3c819fd7f21e571dc29a1c285ed3a189"]; teardown via returned subprocess handle or verified recorded group
+process 2644362 pgid=2644362: ["docker","volume","create","--label","com.docker.volume.anonymous=","eec5e40189b5c08e53ebe58f090500ba3c819fd7f21e571dc29a1c285ed3a189"]; teardown via returned subprocess handle or verified recorded group
+process 2644387 pgid=2644387: ["docker","volume","inspect","eec5e40189b5c08e53ebe58f090500ba3c819fd7f21e571dc29a1c285ed3a189"]; teardown via returned subprocess handle or verified recorded group
+process 2644404 pgid=2644404: ["docker","volume","inspect","eec5e40189b5c08e53ebe58f090500ba3c819fd7f21e571dc29a1c285ed3a189"]; teardown via returned subprocess handle or verified recorded group
+process 2644419 pgid=2644419: ["docker","volume","rm","eec5e40189b5c08e53ebe58f090500ba3c819fd7f21e571dc29a1c285ed3a189"]; teardown via returned subprocess handle or verified recorded group
+process 2644435 pgid=2644435: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline-cli.js","down","--delete-cluster","--clean","--json"]; teardown via returned subprocess handle or verified recorded group

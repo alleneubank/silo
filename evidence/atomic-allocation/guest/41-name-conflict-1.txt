@@ -1,0 +1,1 @@
+silo error: NAME_CONFLICT: instance-name/guest-a belongs to /tmp/guest/a; choose another name or output.

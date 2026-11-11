@@ -1,0 +1,23 @@
+46 |    const result=await command.result();assert.equal(result.exitCode,signal==='SIGINT'?130:143);assert.equal(JSON.parse(result.stdout).code,'INTERRUPTED');assert.equal(JSON.parse(result.stdout).signal,signal);
+47 |    await wait(()=>processAbsent(launch.supervisorPid!)&&processAbsent(-launch.groupId!));
+48 |    const bytes=readFileSync(store);const raw=ProjectOperation.inspect(fixture,store)!;
+49 |    const status=await run([...executable,'status','--json'],fixture,label+'-status');assert.equal(status.exitCode,0,status.stdout);
+50 |    const observed=JSON.parse(status.stdout);assert.deepEqual(observed.project,raw);assert.deepEqual(readFileSync(store),bytes);assert.equal(observed.cleanupRequired,true);assert.equal(observed.operationOwnerAbsent,true);assert.equal(observed.launchStatus.find((x:any)=>x.launchId===launch.id).state,'completed');assert(observed.project.claims.length>0);
+51 |    const down=await run([...executable,'down','--clean','--json'],fixture,label+'-down');assert.equal(down.exitCode,0,down.stdout+'\n'+down.stderr);assert.equal(JSON.parse(down.stdout).project.phase,'unallocated');assert.equal(JSON.parse(down.stdout).project.claims.length,0);
+                                                                                                     ^
+AssertionError: {"schemaVersion":1,"code":"CLEANUP_REQUIRED","message":"CLEANUP_REQUIRED: declared port 49153 still has a TCP or UDP listener; no listener was stopped"}
+
+
+
+1 !== 0
+
+ generatedMessage: false,
+     actual: 1,
+   expected: 0,
+   operator: "strictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/native-head-rehearsal.ts:51:97
+
+Bun v1.4.4 (macOS arm64)

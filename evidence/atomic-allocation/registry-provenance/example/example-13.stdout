@@ -1,0 +1,283 @@
+[
+    {
+        "Id": "6a7942f1416865a33131a963a6d0cf5a3968944ad7eec9d726f28cacdbcfb96e",
+        "Created": "2026-11-06T07:12:04.136824891Z",
+        "Path": "/bin/sh",
+        "Args": [
+            "-c",
+            "nginx-proxy"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 1760302,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-11-06T07:12:07.180900692Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "Image": "sha256:7be40abfeb6ac9a81d0d4157a7cbf3aacc68a64a1780ca2efb160f1aea915177",
+        "ResolvConfPath": "/var/lib/docker/containers/6a7942f1416865a33131a963a6d0cf5a3968944ad7eec9d726f28cacdbcfb96e/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/6a7942f1416865a33131a963a6d0cf5a3968944ad7eec9d726f28cacdbcfb96e/hostname",
+        "HostsPath": "/var/lib/docker/containers/6a7942f1416865a33131a963a6d0cf5a3968944ad7eec9d726f28cacdbcfb96e/hosts",
+        "LogPath": "/var/lib/docker/containers/6a7942f1416865a33131a963a6d0cf5a3968944ad7eec9d726f28cacdbcfb96e/6a7942f1416865a33131a963a6d0cf5a3968944ad7eec9d726f28cacdbcfb96e-json.log",
+        "Name": "/k3d-localnet-redesign-98e9b46c-serverlb",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "unconfined",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "k3d-localnet-redesign-98e9b46c-images:/k3d/images"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {
+                "443/tcp": [
+                    {
+                        "HostIp": "",
+                        "HostPort": "8443"
+                    }
+                ],
+                "6443/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "49152"
+                    }
+                ],
+                "80/tcp": [
+                    {
+                        "HostIp": "",
+                        "HostPort": "8880"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": true,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": [
+                "label=disable"
+            ],
+            "Tmpfs": {
+                "/run": "",
+                "/var/run": ""
+            },
+            "UTSMode": "",
+            "UsernsMode": "host",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": null,
+            "ReadonlyPaths": null,
+            "Init": true
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "k3d-localnet-redesign-98e9b46c-images",
+                "Source": "/var/lib/docker/volumes/k3d-localnet-redesign-98e9b46c-images/_data",
+                "Destination": "/k3d/images",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "k3d-localnet-redesign-98e9b46c-serverlb",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "443/tcp": {},
+                "6443/tcp": {},
+                "80/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NGINX_VERSION=1.29.3",
+                "PKG_RELEASE=1",
+                "DYNPKG_RELEASE=1",
+                "NJS_VERSION=0.9.4",
+                "NJS_RELEASE=1",
+                "OS=",
+                "ARCH="
+            ],
+            "Cmd": null,
+            "Image": "ghcr.io/k3d-io/k3d-proxy:5.9.0",
+            "Volumes": null,
+            "WorkingDir": "/",
+            "Entrypoint": [
+                "/bin/sh",
+                "-c",
+                "nginx-proxy"
+            ],
+            "Labels": {
+                "app": "k3d",
+                "io.silo.generation": "1",
+                "io.silo.project": "b43ac74c-9d59-420c-b598-4bcd79d2fa75",
+                "k3d.cluster": "localnet-redesign-98e9b46c",
+                "k3d.cluster.imageVolume": "k3d-localnet-redesign-98e9b46c-images",
+                "k3d.cluster.network": "k3d-localnet-redesign-98e9b46c",
+                "k3d.cluster.network.external": "true",
+                "k3d.cluster.network.id": "e956e3b62572be8642976c06c7a988eeb0344c5524f63b4ac77b78802f01f396",
+                "k3d.cluster.network.iprange": "172.23.0.0/16",
+                "k3d.cluster.token": "[REDACTED_EPHEMERAL_FIXTURE_TOKEN]",
+                "k3d.cluster.url": "https://k3d-localnet-redesign-98e9b46c-server-0:6443",
+                "k3d.role": "loadbalancer",
+                "k3d.server.loadbalancer": "k3d-localnet-redesign-98e9b46c-serverlb",
+                "k3d.version": "v5.9.0",
+                "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>",
+                "org.opencontainers.image.created": "2026-06-02T14:31:27.087Z",
+                "org.opencontainers.image.description": "Little helper to run CNCF's k3s in Docker",
+                "org.opencontainers.image.licenses": "MIT",
+                "org.opencontainers.image.revision": "15dd1e2dbd62c53ed990fce9b7332335e8cb053c",
+                "org.opencontainers.image.source": "https://github.com/k3d-io/k3d",
+                "org.opencontainers.image.title": "k3d",
+                "org.opencontainers.image.url": "https://github.com/k3d-io/k3d",
+                "org.opencontainers.image.version": "5"
+            },
+            "StopSignal": "SIGQUIT"
+        },
+        "NetworkSettings": {
+            "SandboxID": "0fd9072af208687c173653428008f6f9ea9c68c350a2d72a7db70d08304ce451",
+            "SandboxKey": "/var/run/docker/netns/0fd9072af208",
+            "Ports": {
+                "443/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "8443"
+                    },
+                    {
+                        "HostIp": "::",
+                        "HostPort": "8443"
+                    }
+                ],
+                "6443/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "49152"
+                    }
+                ],
+                "80/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "8880"
+                    },
+                    {
+                        "HostIp": "::",
+                        "HostPort": "8880"
+                    }
+                ]
+            },
+            "Networks": {
+                "k3d-localnet-redesign-98e9b46c": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "e956e3b62572be8642976c06c7a988eeb0344c5524f63b4ac77b78802f01f396",
+                    "EndpointID": "1f45fe08037cde6913e64914475b58d353c4e7ca82760b2d638cfea25a85b5a7",
+                    "Gateway": "172.23.0.1",
+                    "IPAddress": "172.23.0.3",
+                    "MacAddress": "9a:12:4b:a3:e4:b7",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "k3d-localnet-redesign-98e9b46c-serverlb",
+                        "6a7942f14168"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:9181bb55f3c04c86510af3526dda86baa9abc389ef988a3c4bb4879b32d8c21c",
+            "size": 2753,
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]

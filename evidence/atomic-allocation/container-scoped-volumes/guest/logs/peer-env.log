@@ -1,0 +1,8 @@
+silo info: Generated env file at /tmp/guest/fixtures/peer/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   TILT_PORT: 49152
+silo info: Project 3a814836-ee4e-4279-b973-a7be26635847, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/guest/fixtures/peer/.localnet.env; set +a
+
+EXIT=0

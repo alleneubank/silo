@@ -14,7 +14,7 @@ silo doc k3d
 enabled = true
 args = [
   # Route host:8080 → cluster ingress port 80 via the k3d loadbalancer
-  "--port=8080:80@loadbalancer",
+  "--port=${HTTP_PORT}:80@loadbalancer",
 ]
 
 [k3d.registry]
@@ -27,7 +27,9 @@ advertise = true
 # help = "See registry docs"
 ```
 
-If the registry is enabled, define `K3D_REGISTRY_PORT` in `[ports]`.
+Define `HTTP_PORT` in `[ports]` for that mapping. If the registry is enabled,
+define `K3D_REGISTRY_PORT`. Silo also claims `K3D_API_PORT` automatically if
+omitted. All host publications must use declared allocated ports.
 
 ## Naming and Paths
 
@@ -39,9 +41,13 @@ silo derives names from `{prefix}-{name}`:
 
 ## Lifecycle Behavior
 
-- `silo up` creates the cluster if missing, otherwise reuses it.
+- `silo up` creates its cluster, or reuses only its own exact recorded objects.
+  Existing unreceipted clusters, registries, networks or volumes refuse with
+  `NAME_CONFLICT`; they are never adopted or deleted.
 - `silo down` keeps the cluster by default.
-- `silo down --delete-cluster` deletes it.
+- `silo down --delete-cluster` deletes only exact receipt-bound objects.
+- Retention, failed teardown and uncertain creation keep names/ports reserved.
+  `--clean` refuses while resources remain. No name-wide k3d delete is used.
 
 ## Kubeconfig
 
@@ -55,6 +61,10 @@ for validation and profile rules. The global kubeconfig is not updated.
 
 Arguments in `k3d.args` are interpolated after ports and URLs resolve, so they
 can reference identity, hosts, ports, and URLs.
+
+Silo owns network, API port, registry creation, runtime labels, rollback and
+kubeconfig control flags; overriding them refuses. Backend endpoint/engine ID
+is checked before effects. Remote engines and failed absence queries refuse.
 
 ## Registry Advertising
 

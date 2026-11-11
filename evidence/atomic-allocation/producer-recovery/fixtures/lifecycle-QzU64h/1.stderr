@@ -1,0 +1,9 @@
+silo info: Generated env file at /tmp/fixtures/lifecycle-QzU64h/k3d-failed-registry/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   K3D_REGISTRY_PORT: 49152
+silo info:   APP_PORT: 49153
+silo info:   TILT_PORT: 49154
+silo info:   K3D_API_PORT: 49155
+silo info: Project ff6d782b-7283-4c87-b12b-ec40cab27380, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/lifecycle-QzU64h/k3d-failed-registry/.localnet.env; set +a

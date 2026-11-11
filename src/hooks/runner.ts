@@ -1,24 +1,23 @@
 import { HOOK_TIMEOUT_MS } from "../core/constants";
-import { runCommandChecked } from "../utils/exec";
+import { runProducerCommand } from "../backends/ownership";
+import type { ProjectOperation } from "../core/lease_store";
 
-export const runHooks = async (params: {
+export const runHooks = async (owner: ProjectOperation, params: {
   hooks: string[] | undefined;
   env: Record<string, string>;
-  cwd: string;
   phase: string;
 }): Promise<void> => {
-  const { hooks, env, cwd, phase } = params;
+  const { hooks, env, phase } = params;
   if (!hooks || hooks.length === 0) {
     return;
   }
 
   for (const hook of hooks) {
-    await runCommandChecked(["/bin/sh", "-c", hook], {
-      cwd,
+    await runProducerCommand(owner, ["/bin/sh", "-c", hook], {
       env,
       timeoutMs: HOOK_TIMEOUT_MS,
-      context: `hook ${phase}: ${hook}`,
-      stdio: "inherit",
+      kind: `hook-${phase}`,
+      effect: "hook",
     });
   }
 };

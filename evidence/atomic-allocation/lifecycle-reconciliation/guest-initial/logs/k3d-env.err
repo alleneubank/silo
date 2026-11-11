@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/k3d/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   TILT_PORT: 39035
+silo info:   K3D_API_PORT: 39036
+silo info: Project b3be5dc8-81b3-4efb-bcb4-76d8ae08c06c, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/k3d/.localnet.env; set +a

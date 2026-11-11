@@ -1,0 +1,23 @@
+r6-post watcher restart project 5b89b0c5-0e98-4740-ad1d-0f738785aae8 pid 471697
+r6-post watcher failed project 5e8dfcf6-8eb0-494d-a096-4402fb8f8dba pid 472182
+r6-post watcher peerone project 0537a0c6-3b8f-47c4-82d8-66124b25ae2b pid 472584
+r6-post watcher peertwo project a687e3af-15da-499a-8c54-5f5654449c7b pid 472992
+r6-post watcher foreign project a35189bc-b2de-4166-8bb8-cf61b037c888 pid 473369
+r6-post watcher envonly project 5988b835-a837-4db7-8ae4-2f390d63ab02 pid 473627
+r6-post watcher cluster project 467240b6-c0e6-4318-92ac-c399ae4e5dc6 pid 474811
+r6-post launch restart-ci1 fixture restart pid 493168
+r6-post launch failed-ci fixture failed pid 493365
+r6-post launch peerone-up fixture peerone pid 512033
+r6-post launch peertwo-up fixture peertwo pid 512037
+r6-post launch restart-ci2 fixture restart pid 540867
+r6-post stopped observer group 471697
+r6-post stopped observer group 472182
+r6-post stopped observer group 472584
+r6-post stopped observer group 472992
+r6-post stopped observer group 473369
+r6-post stopped observer group 473627
+r6-post named network/cache observer pid 671498
+r6-post launch cluster-ci1 fixture cluster pid 714445
+r6-post launch cluster-ci2 fixture cluster pid 752927
+r6-post stopped observer group 474811
+r6-post stopped observer group 671498

@@ -1,0 +1,8 @@
+silo info: Generated env file at /tmp/fixtures/lifecycle-V3RA5l/network-failed/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49155
+silo info:   TILT_PORT: 49156
+silo info:   K3D_API_PORT: 49157
+silo info: Project 703e3321-a432-4cc4-a60f-5db8ff9d1b15, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/lifecycle-V3RA5l/network-failed/.localnet.env; set +a

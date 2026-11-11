@@ -1,0 +1,21 @@
+[38;2;56;56;56m╭──────────────────────────────────────╮[m
+[38;2;56;56;56m│[m lefthook  v2.2.2   hook:  [1mpre-commit[m [38;2;56;56;56m│[m
+[38;2;56;56;56m╰──────────────────────────────────────╯[m
+┃  format ❯ 
+Found 0 warnings and 0 errors.
+Finished in 20ms on 12 files with 90 rules using 32 threads.
+
+┃  lint ❯ 
+Found 0 warnings and 0 errors.
+Finished in 22ms on 12 files with 90 rules using 32 threads.
+
+┃  typecheck ❯ 
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 1.53 seconds)
+✓ format (0.06 seconds)
+✓ lint (0.06 seconds)
+✓ typecheck (1.53 seconds)
+[feat/atomic-allocation dedf35a] fix(lifecycle): retain id history and reconcile finished effects
+ 19 files changed, 493 insertions(+), 83 deletions(-)
+ create mode 100644 review-response-r5.md

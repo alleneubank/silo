@@ -1,0 +1,573 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/kube-switch/silo.toml']
+exit=0
+{
+  "schemaVersion": 1,
+  "legacy": false,
+  "changed": false,
+  "project": {
+    "schemaVersion": 1,
+    "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+    "root": "/tmp/guest/kube-switch",
+    "generation": 1,
+    "phase": "stopped",
+    "problem": null,
+    "operation": null,
+    "allocation": {
+      "state": {
+        "name": "kube1104",
+        "ports": {
+          "TILT_PORT": 49153,
+          "K3D_API_PORT": 49154
+        },
+        "identity": {
+          "name": "kube1104",
+          "prefix": "guest",
+          "composeName": "guest-kube1104",
+          "dockerNetwork": "guest-kube1104",
+          "volumePrefix": "guest-kube1104",
+          "containerPrefix": "guest-kube1104-",
+          "hosts": {
+            "APP_HOST": "kube1104.localhost",
+            "TILT_HOST": "127.0.0.1"
+          },
+          "k3dClusterName": "guest-kube1104",
+          "kubeconfigPath": "/tmp/guest/kube-switch/owned-kubeconfig"
+        },
+        "createdAt": "2026-11-04T04:56:22.921Z",
+        "k3dClusterCreated": false
+      },
+      "configPath": "/tmp/guest/kube-switch/silo.toml",
+      "configSource": "version = 1\nprefix = \"guest\"\noutput = \"owned.env\"\n[ports]\nTILT_PORT = \"random\"\n[hosts]\nAPP_HOST = \"${name}.localhost\"\nTILT_HOST = \"127.0.0.1\"\n[k3d]\nenabled = true\nkubeconfigPath = \"owned-kubeconfig\"\n[tilt]\nwebMode = \"prod\"\n",
+      "fingerprint": "88b012b7173378239ba2be35725611c0fbffd947b3a53754d8ef9a3b45f0d68a",
+      "urls": {},
+      "k3dArgs": [],
+      "hostOrder": [
+        "APP_HOST",
+        "TILT_HOST"
+      ],
+      "portOrder": [
+        "TILT_PORT",
+        "K3D_API_PORT"
+      ],
+      "urlOrder": [],
+      "engine": {
+        "endpoint": "unix:///var/run/docker.sock",
+        "id": "86f30b48-26b3-4a5b-8f5c-8c97fe963463"
+      }
+    },
+    "claims": [
+      {
+        "domain": "compose-name",
+        "resource": "guest-kube1104"
+      },
+      {
+        "domain": "container",
+        "resource": "guest-kube1104-",
+        "prefix": true
+      },
+      {
+        "domain": "container",
+        "resource": "guest-kube1104_",
+        "prefix": true
+      },
+      {
+        "domain": "container",
+        "resource": "k3d-guest-kube1104-",
+        "prefix": true
+      },
+      {
+        "domain": "file-target",
+        "resource": "64513/163609281/.silo.lock"
+      },
+      {
+        "domain": "file-target",
+        "resource": "64513/163609281/owned-kubeconfig"
+      },
+      {
+        "domain": "file-target",
+        "resource": "64513/163609281/owned.env"
+      },
+      {
+        "domain": "file-target",
+        "resource": "64513/163609281/silo.toml"
+      },
+      {
+        "domain": "host-port",
+        "resource": "49153"
+      },
+      {
+        "domain": "host-port",
+        "resource": "49154"
+      },
+      {
+        "domain": "hostname",
+        "resource": "kube1104.localhost"
+      },
+      {
+        "domain": "instance-name",
+        "resource": "kube1104"
+      },
+      {
+        "domain": "k3d-cluster",
+        "resource": "guest-kube1104"
+      },
+      {
+        "domain": "network",
+        "resource": "guest-kube1104"
+      },
+      {
+        "domain": "network",
+        "resource": "guest-kube1104-",
+        "prefix": true
+      },
+      {
+        "domain": "network",
+        "resource": "guest-kube1104_",
+        "prefix": true
+      },
+      {
+        "domain": "network",
+        "resource": "k3d-guest-kube1104"
+      },
+      {
+        "domain": "volume",
+        "resource": "guest-kube1104-",
+        "prefix": true
+      },
+      {
+        "domain": "volume",
+        "resource": "guest-kube1104_",
+        "prefix": true
+      },
+      {
+        "domain": "volume",
+        "resource": "k3d-guest-kube1104-images"
+      }
+    ],
+    "resources": [
+      {
+        "source": "k3d",
+        "kind": "container",
+        "name": "k3d-guest-kube1104-server-0",
+        "id": "09c761eada2d0fc40bd9b2bbe3250e0f9e54ec75e182550dbc43e5b110c7d136",
+        "createdAt": "2026-11-04T04:56:25.270815524Z",
+        "labels": {
+          "app": "k3d",
+          "io.silo.generation": "1",
+          "io.silo.project": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+          "k3d.cluster": "guest-kube1104",
+          "k3d.role": "server"
+        }
+      },
+      {
+        "source": "k3d",
+        "kind": "container",
+        "name": "k3d-guest-kube1104-serverlb",
+        "id": "a3f485a044202e46a5b4a375e25734ef5d636fe0ad0d4d2e51a3bc8f8b469406",
+        "createdAt": "2026-11-04T04:56:25.292997906Z",
+        "labels": {
+          "app": "k3d",
+          "io.silo.generation": "1",
+          "io.silo.project": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+          "k3d.cluster": "guest-kube1104",
+          "k3d.role": "loadbalancer"
+        }
+      },
+      {
+        "source": "k3d",
+        "kind": "network",
+        "name": "k3d-guest-kube1104",
+        "id": "e1cc7e49731652eafe3e5a33a216d63248c43bc727a668e980ad25697ecb84e8",
+        "createdAt": "2026-11-04T04:56:23.549548714Z",
+        "labels": {
+          "io.silo.generation": "1",
+          "io.silo.project": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+          "k3d.cluster": "guest-kube1104"
+        }
+      },
+      {
+        "source": "k3d",
+        "kind": "volume",
+        "name": "k3d-guest-kube1104-images",
+        "id": "k3d-guest-kube1104-images",
+        "createdAt": "2026-11-04T04:56:23Z",
+        "labels": {
+          "io.silo.generation": "1",
+          "io.silo.project": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+          "k3d.cluster": "guest-kube1104"
+        }
+      }
+    ],
+    "launches": [
+      {
+        "id": "048a06d4-82bd-4d9b-bf08-95b45fbce9a9",
+        "kind": "tilt-ci",
+        "command": [
+          "tilt",
+          "ci",
+          "--web-mode=prod",
+          "--timeout",
+          "120s"
+        ],
+        "effect": "workload",
+        "supervisorPid": 3645831,
+        "leaderPid": 3645832,
+        "groupId": 3645832,
+        "supervisorIdentity": "1002 3645831 Wed Nov  4 04:56:39 2026 janitor --pgroup-only --watch-pid 3633641 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute 048a06d4-82bd-4d9b-bf08-95b45fbce9a9 /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      },
+      {
+        "id": "26afd4a4-4efd-480f-92c7-4d1fb003a0a4",
+        "kind": "owned-network-delete",
+        "command": [
+          "docker",
+          "network",
+          "rm",
+          "e1cc7e49731652eafe3e5a33a216d63248c43bc727a668e980ad25697ecb84e8"
+        ],
+        "effect": "delete",
+        "supervisorPid": 3678616,
+        "leaderPid": 3678617,
+        "groupId": 3678617,
+        "supervisorIdentity": "1002 3678616 Wed Nov  4 04:57:13 2026 janitor --pgroup-only --watch-pid 3672625 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute 26afd4a4-4efd-480f-92c7-4d1fb003a0a4 /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      },
+      {
+        "id": "2b8de7f5-5145-4669-99a1-ac93b6543c6f",
+        "kind": "k3d-cluster-create",
+        "command": [
+          "k3d",
+          "cluster",
+          "create",
+          "guest-kube1104",
+          "--no-rollback",
+          "--kubeconfig-update-default=false",
+          "--kubeconfig-switch-context=false",
+          "--network",
+          "k3d-guest-kube1104",
+          "--api-port",
+          "127.0.0.1:49154",
+          "--runtime-label",
+          "io.silo.project=c9217b10-761b-4dde-a027-2294d4f75e4e@all",
+          "--runtime-label",
+          "io.silo.generation=1@all"
+        ],
+        "effect": "create",
+        "supervisorPid": 3635154,
+        "leaderPid": 3635155,
+        "groupId": 3635155,
+        "supervisorIdentity": "1002 3635154 Wed Nov  4 04:56:23 2026 janitor --pgroup-only --watch-pid 3633641 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute 2b8de7f5-5145-4669-99a1-ac93b6543c6f /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      },
+      {
+        "id": "44a3d5ea-e25f-482a-a3ef-6444f2f506b2",
+        "kind": "owned-volume-delete",
+        "command": [
+          "docker",
+          "volume",
+          "rm",
+          "k3d-guest-kube1104-images"
+        ],
+        "effect": "delete",
+        "supervisorPid": 3677835,
+        "leaderPid": 3677836,
+        "groupId": 3677836,
+        "supervisorIdentity": "1002 3677835 Wed Nov  4 04:57:12 2026 janitor --pgroup-only --watch-pid 3672625 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute 44a3d5ea-e25f-482a-a3ef-6444f2f506b2 /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      },
+      {
+        "id": "64747deb-299b-4d1f-85ba-7c68da4256ae",
+        "kind": "owned-container-delete",
+        "command": [
+          "docker",
+          "container",
+          "rm",
+          "--force",
+          "--volumes",
+          "09c761eada2d0fc40bd9b2bbe3250e0f9e54ec75e182550dbc43e5b110c7d136"
+        ],
+        "effect": "delete",
+        "supervisorPid": 3676196,
+        "leaderPid": 3676197,
+        "groupId": 3676197,
+        "supervisorIdentity": "1002 3676196 Wed Nov  4 04:57:11 2026 janitor --pgroup-only --watch-pid 3672625 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute 64747deb-299b-4d1f-85ba-7c68da4256ae /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      },
+      {
+        "id": "a8b2f2c4-e427-445c-b3dc-3dcc311df709",
+        "kind": "k3d-network-create",
+        "command": [
+          "docker",
+          "network",
+          "create",
+          "--label",
+          "io.silo.project=c9217b10-761b-4dde-a027-2294d4f75e4e",
+          "--label",
+          "io.silo.generation=1",
+          "--label",
+          "k3d.cluster=guest-kube1104",
+          "k3d-guest-kube1104"
+        ],
+        "effect": "create",
+        "supervisorPid": 3634410,
+        "leaderPid": 3634411,
+        "groupId": 3634411,
+        "supervisorIdentity": "1002 3634410 Wed Nov  4 04:56:22 2026 janitor --pgroup-only --watch-pid 3633641 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute a8b2f2c4-e427-445c-b3dc-3dcc311df709 /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      },
+      {
+        "id": "ab0a612c-3732-479b-a853-ab2c979c0a6f",
+        "kind": "k3d-volume-create",
+        "command": [
+          "docker",
+          "volume",
+          "create",
+          "--label",
+          "io.silo.project=c9217b10-761b-4dde-a027-2294d4f75e4e",
+          "--label",
+          "io.silo.generation=1",
+          "--label",
+          "k3d.cluster=guest-kube1104",
+          "k3d-guest-kube1104-images"
+        ],
+        "effect": "create",
+        "supervisorPid": 3634795,
+        "leaderPid": 3634796,
+        "groupId": 3634796,
+        "supervisorIdentity": "1002 3634795 Wed Nov  4 04:56:23 2026 janitor --pgroup-only --watch-pid 3633641 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute ab0a612c-3732-479b-a853-ab2c979c0a6f /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      },
+      {
+        "id": "e576628e-9868-4153-9085-4b0591c93066",
+        "kind": "tilt-down",
+        "command": [
+          "tilt",
+          "down"
+        ],
+        "effect": "delete",
+        "supervisorPid": 3662203,
+        "leaderPid": 3662204,
+        "groupId": 3662204,
+        "supervisorIdentity": "1002 3662203 Wed Nov  4 04:56:54 2026 janitor --pgroup-only --watch-pid 3660882 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute e576628e-9868-4153-9085-4b0591c93066 /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      },
+      {
+        "id": "e7bebb6b-be62-4803-a253-ae84f4c97b31",
+        "kind": "owned-container-delete",
+        "command": [
+          "docker",
+          "container",
+          "rm",
+          "--force",
+          "--volumes",
+          "a3f485a044202e46a5b4a375e25734ef5d636fe0ad0d4d2e51a3bc8f8b469406"
+        ],
+        "effect": "delete",
+        "supervisorPid": 3677214,
+        "leaderPid": 3677215,
+        "groupId": 3677215,
+        "supervisorIdentity": "1002 3677214 Wed Nov  4 04:57:12 2026 janitor --pgroup-only --watch-pid 3672625 --grace-ms 5000 -- /tmp/tools/bun /mnt/dist/cli.js __silo_execute e7bebb6b-be62-4803-a253-ae84f4c97b31 /tmp/guest/kube-switch c9217b10-761b-4dde-a027-2294d4f75e4e 1 account",
+        "phase": "exited",
+        "started": true,
+        "exitCode": 0,
+        "reconciled": true,
+        "terminal": true
+      }
+    ],
+    "files": [
+      {
+        "role": "config",
+        "target": {
+          "path": "/tmp/guest/kube-switch/silo.toml",
+          "base": "/tmp/guest/kube-switch",
+          "parent": "/tmp/guest/kube-switch",
+          "parentDevice": "64513",
+          "parentInode": "163609281",
+          "key": "64513/163609281/silo.toml"
+        },
+        "published": {
+          "identity": "64513/163609284",
+          "hash": "68d069f04edb41542c561c715d4a1197ea78550b60a0ec57d7696d33ad6c6a9a",
+          "generation": 1
+        },
+        "pending": null
+      },
+      {
+        "role": "env",
+        "target": {
+          "path": "/tmp/guest/kube-switch/owned.env",
+          "base": "/tmp/guest/kube-switch",
+          "parent": "/tmp/guest/kube-switch",
+          "parentDevice": "64513",
+          "parentInode": "163609281",
+          "key": "64513/163609281/owned.env"
+        },
+        "published": {
+          "identity": "64513/163609301",
+          "hash": "537290d7e148489260b2aacd2751e0b4f42c4cf23454728a861efc9e763f6b86",
+          "generation": 1
+        },
+        "pending": null
+      },
+      {
+        "role": "kubeconfig",
+        "target": {
+          "path": "/tmp/guest/kube-switch/owned-kubeconfig",
+          "base": "/tmp/guest/kube-switch",
+          "parent": "/tmp/guest/kube-switch",
+          "parentDevice": "64513",
+          "parentInode": "163609281",
+          "key": "64513/163609281/owned-kubeconfig"
+        },
+        "published": {
+          "identity": "64513/163609305",
+          "hash": "<private kubeconfig hash omitted>",
+          "generation": 1
+        },
+        "pending": null
+      },
+      {
+        "role": "lock",
+        "target": {
+          "path": "/tmp/guest/kube-switch/.silo.lock",
+          "base": "/tmp/guest/kube-switch",
+          "parent": "/tmp/guest/kube-switch",
+          "parentDevice": "64513",
+          "parentInode": "163609281",
+          "key": "64513/163609281/.silo.lock"
+        },
+        "published": {
+          "identity": "64513/163620982",
+          "hash": "90504df3008ebf3b9a38a10c303480369810c80834b9bf19b78535c6b7dfa824",
+          "generation": 1
+        },
+        "pending": null
+      }
+    ],
+    "sinks": [],
+    "completions": [
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "048a06d4-82bd-4d9b-bf08-95b45fbce9a9",
+        "leaderPid": 3645832,
+        "groupId": 3645832,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:56:40.912Z"
+      },
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "26afd4a4-4efd-480f-92c7-4d1fb003a0a4",
+        "leaderPid": 3678617,
+        "groupId": 3678617,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:57:14.245Z"
+      },
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "2b8de7f5-5145-4669-99a1-ac93b6543c6f",
+        "leaderPid": 3635155,
+        "groupId": 3635155,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:56:38.913Z"
+      },
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "44a3d5ea-e25f-482a-a3ef-6444f2f506b2",
+        "leaderPid": 3677836,
+        "groupId": 3677836,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:57:13.689Z"
+      },
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "64747deb-299b-4d1f-85ba-7c68da4256ae",
+        "leaderPid": 3676197,
+        "groupId": 3676197,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:57:12.682Z"
+      },
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "a8b2f2c4-e427-445c-b3dc-3dcc311df709",
+        "leaderPid": 3634411,
+        "groupId": 3634411,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:56:23.569Z"
+      },
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "ab0a612c-3732-479b-a853-ab2c979c0a6f",
+        "leaderPid": 3634796,
+        "groupId": 3634796,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:56:23.901Z"
+      },
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "e576628e-9868-4153-9085-4b0591c93066",
+        "leaderPid": 3662204,
+        "groupId": 3662204,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:56:55.597Z"
+      },
+      {
+        "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+        "generation": 1,
+        "launchId": "e7bebb6b-be62-4803-a253-ae84f4c97b31",
+        "leaderPid": 3677215,
+        "groupId": 3677215,
+        "started": true,
+        "exitCode": 0,
+        "completedAt": "2026-11-04T04:57:13.289Z"
+      }
+    ]
+  }
+}

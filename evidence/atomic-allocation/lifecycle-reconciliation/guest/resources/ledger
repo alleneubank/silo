@@ -1,0 +1,62 @@
+watcher restart project 7d11e249-b03d-4b64-9a5a-c7045b6c7e04 pid 3504172
+watcher failed project 459c4e34-4251-40db-8382-d1428d4f76f0 pid 3504409
+watcher peerone project a9ae4691-5266-4ed9-8e7c-39c6c76c914f pid 3504631
+watcher peertwo project e340f672-88e5-4e73-b782-59532c2f8b3c pid 3504888
+watcher foreign project 7318552e-d9b6-4db4-93c4-f41ad529232b pid 3505118
+r6-confirm watcher cluster project 2f5bd0b3-9dbe-4e70-adb9-cb41fbd29d6c pid 3505392
+r6-confirm watcher cache pid 3505400
+r6-confirm launch restart-ci1 fixture restart pid 3515194
+r6-confirm launch restart-ci2 fixture restart pid 3533541
+r6-confirm launch cluster-ci1 fixture cluster pid 3538125
+r6-confirm launch failed-ci fixture failed pid 3538273
+r6-confirm launch peerone-up fixture peerone pid 3561574
+r6-confirm launch peertwo-up fixture peertwo pid 3561819
+r6-confirm launch cluster-ci2 fixture cluster pid 3580612
+43333d10c509bd712b97792622be629881924d60ebadf41790a02495d8d46565 /r6guest-foreign-redis-1 2026-11-06T03:43:49.260390829Z
+a5d5f1942d919d9850f445c1ee4876e718dbc01b79c9fc72303b0de6acbc2b24 r6guest-foreign 2026-11-06T03:43:49.239695498Z
+r6-confirm stopped observer group 3505400
+r6-confirm stopped observer group 3505392
+r6-confirm stopped observer group 3504409
+r6-confirm stopped observer group 3505118
+r6-confirm stopped observer group 3504631
+r6-confirm stopped observer group 3504888
+r6-confirm stopped observer group 3504172
+{"kind":"container","id":"03bb9defc7bca08ea0e003dfbf383ba6dddc21393dbddbc4f15600331fe223ab","name":"r6guest-restart-redis-1","createdAt":"2026-11-06T03:42:32.066091447Z","anonymousVolumes":[{"name":"2c94319bfe1b9bc25120a2428ec188c38a1f4b3194e38c9c87cece39116281ba","createdAt":"2026-11-06T03:42:36Z","destination":"/data"}]}
+{"kind":"container","id":"04513694a58b766aa8d79bb213bd608078362db84aa99160248150174de523a5","name":"r6guest-restart-redis-1","createdAt":"2026-11-06T03:42:57.117390837Z","anonymousVolumes":[{"name":"edea6bc27737111ee478a1fb6579efc9e10daf188b9a73c34046892e5f8c5ce1","createdAt":"2026-11-06T03:42:57Z","destination":"/data"}]}
+{"kind":"network","id":"6c65183f1561a48dfc7d8fdf6fb95bfdc3619fe1597dc1291db42a70b71ffaf6","name":"r6guest-restart","createdAt":"2026-11-06T03:42:57.095630873Z","anonymousVolumes":null}
+{"kind":"network","id":"7fa50cf5a37ba88efa17a34c238b99a1174306ff1c616fdfcf5e8861730327c5","name":"r6guest-restart","createdAt":"2026-11-06T03:42:32.049242482Z","anonymousVolumes":null}
+{"id":"80b34233-85f3-40ef-8072-efd838664ab7","kind":"owned-network-delete","supervisorPid":3532803,"groupId":3532804,"phase":"exited"}
+{"id":"a898d682-7000-4212-bb3b-e6d35c90eaf8","kind":"owned-container-delete","supervisorPid":3529772,"groupId":3529773,"phase":"exited"}
+{"id":"d282f9e4-9ee2-4e79-b06f-9cfe3bd8d6ba","kind":"tilt-ci","supervisorPid":3533873,"groupId":3533874,"phase":"exited"}
+{"id":"df64774a-7383-4fb2-82ab-e0e0d6e49975","kind":"tilt-ci","supervisorPid":3515485,"groupId":3515486,"phase":"exited"}
+{"kind":"container","id":"f7bde905e0c882ef5553ee0d7214127a9e0b240eaa5471542bb68ebde41022db","name":"r6guest-failed-redis-1","createdAt":"2026-11-06T03:43:02.865783866Z","anonymousVolumes":[{"name":"1aab046e820bf9da5fb1819cc786f5f30917c23f77e967fb43bccbbd5cc340c2","createdAt":"2026-11-06T03:43:04Z","destination":"/data"}]}
+{"kind":"network","id":"a0545813987f50da4ceb257f1d240d017fcc4eda93d5e4f41acc85c49faa364d","name":"r6guest-failed","createdAt":"2026-11-06T03:43:02.842990359Z","anonymousVolumes":null}
+{"id":"818878b2-f7d7-4dc2-85c0-d6e586603349","kind":"tilt-ci","supervisorPid":3538760,"groupId":3538761,"phase":"exited"}
+{"kind":"container","id":"162bbb90bbbbced9446f1fbe135668c282722e7dd1036af1a728621fcb62d0b5","name":"k3d-r6guest-cluster-serverlb","createdAt":"2026-11-06T03:43:04.671546575Z","anonymousVolumes":[]}
+{"kind":"container","id":"386cdb82962a5687595bdd02369b10e24a244dc2a485e5b1dba6218c433fc20d","name":"k3d-r6guest-cluster-serverlb","createdAt":"2026-11-06T03:43:51.734037876Z","anonymousVolumes":[]}
+{"kind":"container","id":"773de56d5c8643d140f9bc350aebf3d8ac181a98ee298c14630f00961674eb56","name":"k3d-r6guest-cluster-server-0","createdAt":"2026-11-06T03:43:04.644876745Z","anonymousVolumes":[{"name":"b9019ed1923ec3a801f876e386d561c9ddb5e53ee5112c80092715f30b2a8730","createdAt":"2026-11-06T03:43:04Z","destination":"/var/lib/cni"},{"name":"a116cfc2862e4d4ca9db4b4e47dd9cd8add3fc5ee8ec2a08734360efea07d50e","createdAt":"2026-11-06T03:43:04Z","destination":"/var/lib/kubelet"},{"name":"2a62795da6f8346b59b8e0e172d8e9689922b2e41c36fcbb6d51af9b922cf88b","createdAt":"2026-11-06T03:43:04Z","destination":"/var/lib/rancher/k3s"},{"name":"2686a8a0cf91f7fa8d7b5688f034ce25b2d71d59e0a241eb65e04ebd97f63ccf","createdAt":"2026-11-06T03:43:04Z","destination":"/var/log"}]}
+{"kind":"container","id":"8f3c7bae63083234a0301abada597397377254a4b7ec841a769e5ee2f50a98c5","name":"k3d-r6guest-cluster-server-0","createdAt":"2026-11-06T03:43:50.96221906Z","anonymousVolumes":[{"name":"34b017d04656bc173830c457c81a803ee80a3e496da06ed80bfbe941d05eeb86","createdAt":"2026-11-06T03:43:51Z","destination":"/var/lib/cni"},{"name":"da513d46e4024785110abdfd50ee099c8a6a38232694a0d231590d487d8894ef","createdAt":"2026-11-06T03:43:51Z","destination":"/var/lib/kubelet"},{"name":"e4adf2346d979dc20b10d422c0f3a94ed3654e9f950711b3b62c49b3aa8240a5","createdAt":"2026-11-06T03:43:51Z","destination":"/var/lib/rancher/k3s"},{"name":"df5b1e1cf398bde3b909373db34033e02e85bca1b8af995d3f6ad8586c4288c3","createdAt":"2026-11-06T03:43:51Z","destination":"/var/log"}]}
+{"kind":"network","id":"33c5fc508d9321b4749ff2787404b33537fd0d99c8fd948fefe23f51e53c73fc","name":"k3d-r6guest-cluster","createdAt":"2026-11-06T03:43:49.471014701Z","anonymousVolumes":null}
+{"kind":"network","id":"5b90cc169af0529095bddcb39a9e33a79bcf5c5d563f653c4b4b1859315930b4","name":"k3d-r6guest-cluster","createdAt":"2026-11-06T03:43:02.470182937Z","anonymousVolumes":null}
+{"kind":"volume","id":"k3d-r6guest-cluster-images","name":"k3d-r6guest-cluster-images","createdAt":"2026-11-06T03:43:02Z","anonymousVolumes":null}
+{"id":"0f5f4993-738c-4eab-9e0e-6d68f0fca187","kind":"owned-container-delete","supervisorPid":3579000,"groupId":3579001,"phase":"exited"}
+{"id":"0fe3931d-7c05-4b23-80ba-1df3c8f7417d","kind":"tilt-ci","supervisorPid":3595225,"groupId":3595226,"phase":"exited"}
+{"id":"2bf616de-1f24-418c-a3c9-8f269e75dd0a","kind":"k3d-volume-create","supervisorPid":3539333,"groupId":3539334,"phase":"exited"}
+{"id":"4abf45c6-a054-4be7-aff2-1995c79fc772","kind":"owned-network-delete","supervisorPid":3580106,"groupId":3580107,"phase":"exited"}
+{"id":"4e6169bd-3511-448e-8d2e-1e916f7597a0","kind":"k3d-cluster-create","supervisorPid":3582881,"groupId":3582884,"phase":"exited"}
+{"id":"7cd83a22-9aa6-4558-bb91-8bc32d6c1f5e","kind":"k3d-volume-create","supervisorPid":3582304,"groupId":3582309,"phase":"exited"}
+{"id":"b6db65f2-11f8-4e10-bfac-4b89e41f341e","kind":"tilt-ci","supervisorPid":3552209,"groupId":3552210,"phase":"exited"}
+{"id":"d199a3f4-885d-489c-9e12-75a67d8f9e6f","kind":"k3d-network-create","supervisorPid":3538889,"groupId":3538890,"phase":"exited"}
+{"id":"dd1883bc-8f19-41a6-a8f1-b962e781b4a6","kind":"k3d-network-create","supervisorPid":3581536,"groupId":3581537,"phase":"exited"}
+{"id":"dfd1d76f-5e21-4749-8bbc-d9827c0515f6","kind":"k3d-cluster-create","supervisorPid":3540025,"groupId":3540026,"phase":"exited"}
+{"id":"ee1850f5-b431-4625-b3db-710bd4d0af5a","kind":"owned-container-delete","supervisorPid":3576659,"groupId":3576660,"phase":"exited"}
+{"id":"b1a1c76d-80fd-4c57-aa28-abe6d5d9f783","kind":"tilt-up","supervisorPid":3562046,"groupId":3562047,"phase":"granted"}
+{"id":"95724b6a-e6c7-4136-aea5-d858452c0e0c","kind":"tilt-up","supervisorPid":3562197,"groupId":3562198,"phase":"granted"}
+recorded observed container d9999b3cb23b8a32d5c97cfd21a51f45857786437e87a92cbc01640e7b6c67ae source peerone-container-before
+recorded observed anonymous volume 7644a33cb9c3774f4e840e334b2177a95cd1572a7401dd44fa99fee90c109ead source peerone-container-before
+recorded observed container c1520021a45360e23c50b775e9e57b778de7b8dba074103a0890a9b0aa5bbb4e source peertwo-container-before
+recorded observed anonymous volume 477cfaf7cec72445e85553ff9acdca4e0ff2471ea67838760381780aec8e2b8f source peertwo-container-before
+recorded observed container 43333d10c509bd712b97792622be629881924d60ebadf41790a02495d8d46565 source foreign-container-before
+recorded observed anonymous volume affe775826136b5234c7da4d59ac275650e1c891079cabb4a6dd37307ca127bd source foreign-container-before
+recorded observed network c0e246f5b2e1d1fad0569b39c3dc4356b98ff733f0f0aba868fa89b4f5b08478 source peertwo-network-before
+recorded observed network a5d5f1942d919d9850f445c1ee4876e718dbc01b79c9fc72303b0de6acbc2b24 source foreign-network-before

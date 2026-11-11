@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-06T05:11:09Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "3",
+            "io.silo.project": "1d405f52-8791-4e23-8e9d-25c8605c179f",
+            "k3d.cluster": "localnet-backend-trp2"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-backend-trp2-images/_data",
+        "Name": "k3d-localnet-backend-trp2-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

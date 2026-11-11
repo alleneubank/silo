@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+if [ "${1-}" = volume ] && [ "${2-}" = create ]; then shift 2; exec /usr/bin/docker volume create --driver local --opt r7-unsupported=1 "$@"; fi
+exec /usr/bin/docker "$@"

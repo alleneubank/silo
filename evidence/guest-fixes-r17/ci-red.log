@@ -1,0 +1,28 @@
+bun test v1.4.4 (38afee6c8)
+
+src/commands/ci.test.ts:
+69 |       const launch = ProjectOperation.inspect(root, storePath)!.launches[0]!;
+70 |       expect(launch.phase).toBe("granted");
+71 |       proc.kill(signal);
+72 |       const [exitCode, stdout] = await withTimeout(Promise.all([proc.exited, output]), 15_000, "interrupted CLI output");
+73 |       expect(exitCode).toBe(signal === "SIGINT" ? 130 : 143);
+74 |       expect(JSON.parse(stdout)).toMatchObject({ schemaVersion: 1, code: "INTERRUPTED", signal });
+                       ^
+SyntaxError: JSON Parse error: Unexpected EOF
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:74:19)
+(fail) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [1172.49ms]
+69 |       const launch = ProjectOperation.inspect(root, storePath)!.launches[0]!;
+70 |       expect(launch.phase).toBe("granted");
+71 |       proc.kill(signal);
+72 |       const [exitCode, stdout] = await withTimeout(Promise.all([proc.exited, output]), 15_000, "interrupted CLI output");
+73 |       expect(exitCode).toBe(signal === "SIGINT" ? 130 : 143);
+74 |       expect(JSON.parse(stdout)).toMatchObject({ schemaVersion: 1, code: "INTERRUPTED", signal });
+                       ^
+SyntaxError: JSON Parse error: Unexpected EOF
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:74:19)
+(fail) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [1382.58ms]
+
+ 0 pass
+ 2 fail
+ 4 expect() calls
+Ran 2 tests across 1 file. [2.97s]

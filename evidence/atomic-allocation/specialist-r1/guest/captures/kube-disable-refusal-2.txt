@@ -1,0 +1,4 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'kube1104', '--force', '--config', '/tmp/guest/kube-switch/silo.toml']
+exit=1
+silo error: CLEANUP_REQUIRED: owned kubeconfig snapshot remains at /tmp/guest/kube-switch/owned-kubeconfig. Run down --clean before removing its role; claims retained.
+

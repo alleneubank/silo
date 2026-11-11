@@ -1,0 +1,7 @@
+[]
+Error response from daemon: network sguest1105-guestplain_default not found
+Error response from daemon: network sguest1105-guestnamed_default not found
+Error response from daemon: network sguest1105-guestborrowed_default not found
+Error response from daemon: network sguest1105-guestreplaced_default not found
+
+EXIT=1

@@ -1,0 +1,15 @@
+[
+    {
+        "CreatedAt": "2026-11-05T03:01:06Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "2",
+            "io.silo.project": "2bebf3c7-7235-43e4-9b3b-e991f4fe2c54",
+            "k3d.cluster": "localnet-proof-hbhk2w-backend"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-proof-hbhk2w-backend-images/_data",
+        "Name": "k3d-localnet-proof-hbhk2w-backend-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

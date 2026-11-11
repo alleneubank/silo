@@ -1,188 +1,102 @@
-# CLI Commands
+# CLI commands
 
-This document is the canonical reference for silo's CLI commands. It is bundled
-with the CLI and can be printed with:
+Use `silo help [command]` for options and `silo doc --list` for references.
+`--config` selects a config (default `silo.toml`); `--verbose` adds diagnostics.
 
-```
-silo doc commands
-```
+| Command | Behavior |
+| --- | --- |
+| `init` | Create starter config exclusively; refuse an existing file. |
+| `env [name]` | Reserve all identities/files/ports atomically; export env and version-2 snapshot. Start no stack. |
+| `up [name]` | Export, run hooks, prepare owned k3d if enabled, supervise Tilt in the foreground. Matching live up reuses it. |
+| `ci [name] [-- <tilt args>]` | Same preparation with supervised `tilt ci`; set `CI=true`. Record finished owned producers even on failure and retain their resources for down. |
+| `down` | Stop verified recorded Tilt groups; record finished owned producers before deletion, including stopped live up; remove receipted Compose containers/networks by exact ID. Retain clusters, Kubernetes workloads and claims. No Tiltfile evaluation or teardown hooks. |
+| `down --delete-cluster` | Also delete exact owned cluster objects. No name-wide adoption or deletion. |
+| `down --clean` | Retire only after all requests/groups/resources/listeners are proved absent; delete receipted snapshots and release own claims. |
+| `status [--json]` | Read authoritative ownership without repair. Supervisor liveness is not Tilt resource health. |
+| `profiles` | List configured profiles. |
+| `doc [topic]` | Print bundled reference; `--list` or `--json` discovers topics. |
+| `version` | Print CLI version. |
 
-## Global Options
+`env`, `up` and `ci` accept `--profile` and `--force`. Profile resolution is
+flag, `SILO_PROFILE`, stored profile, then base. `--force` reconfigures only a
+stopped, reconciled generation; live, retained or uncertain state refuses.
+Use separate roots and names for parallel stacks. Omitted names reuse the
+stored name or generate a bounded unique candidate for a new root.
 
-Most commands accept:
+The same configuration can restart within its generation with down between runs:
+`ci`, `down`, `ci`,
+then `down --clean`. Old immutable-ID receipts remain audit history while the
+new creation result records fresh IDs under the same names. k3d supports the
+corresponding `ci`, `down --delete-cluster`, `ci` loop. Explicit cluster deletion
+removes its directly created, durably receipted image cache after exact executor
+validation and an all-container reference check. Restarts record a fresh token
+while retaining prior cache history. Ordinary down retains cluster and cache.
+This loop does not qualify Compose's in-place service rebuild/recreate: inherited
+anonymous data can survive and require independent owner resolution.
 
-- `-c, --config` Path to config file (default: `silo.toml`)
-- `-v, --verbose` Enable verbose logging
-- `-h, --help` Show help
+Finite creating tools, including k3d network/volume/cluster creates, hooks and
+Tilt CI, record labelled outputs before reporting a known failure. Down also
+records a finished producer after importing its completion. Recording is sealed
+before the first deletion. A cleanup retry
+cannot adopt a same-name replacement from that old launch. Missing producer facts
+or unsupported provenance still refuse. A terminal exact-ID delete can instead
+resolve through verified target absence; status reports `phase: resolved`,
+`resolution: target-absent`, `exitCode: null` when its completion fact was lost.
+Unknown creates and untargeted commands cannot use that proof. Resources in status
+include historical receipts with `deleted: true` for recorded absence and false
+for active receipts. The flag is stored knowledge; use immutable IDs for a fresh
+physical-presence check. At the 1024-launch limit, terminal reconciled launch and
+completion history can be compacted while uncertainty and resource history remain.
 
-## help
+The unreleased SQLite proposal format is 3. Format-1 and format-2 stores refuse
+without migration/reset; format-2 clients also refuse format 3. Drain the matching
+old proposal and resolve its resources before owner-led recreation.
 
-```
-silo help [command]
-```
+`ci --timeout 300s` forwards the timeout. Passthrough cannot override managed
+listener ports/hosts or an explicit web mode. `env`/`ci --export-ci` require
+`GITHUB_ENV`; automatic CI export warns and skips if it is absent. The sink
+must be a separate append-only target and cannot alias a generated file.
 
-Shows global help or per-command help.
+`--json` lifecycle responses carry `schemaVersion: 1`, `legacy`, `changed`
+and the current project. Errors carry a stable `code` and message, with
+read-only listings for `LEGACY_STATE`. Diagnostics go to stderr.
 
-## init
+Interrupting `up`, `ci` or `down` with SIGINT or SIGTERM exits 130 or 143
+and names `status` and `down` as the next steps. With `--json`, it returns one
+`INTERRUPTED` error with a top-level `signal` field. The first interrupt stops
+`up` during hooks, k3d setup or Tilt using the same owned-group stop deadline.
+Claims and receipts remain for recovery; an interrupted Docker probe does not
+establish resource absence or diagnose an engine failure. `ci`'s supervisor
+drains its recorded group after the CLI exits. Run `status` and `down` to
+reconcile retained ownership, then retry any interrupted cleanup.
+A signal after final JSON emission starts preserves that result and its exit status.
+Normal JSON output handles pipe backpressure for up to 30 seconds. During that
+flush, interrupts preserve the selected result. A reader stalled longer than
+30 seconds gets a nonzero exit; a failed output stream receives no second object.
 
-```
-silo init
-```
+Status preserves stored fields under `project`. Separate `launchStatus` entries
+report `launchId`, observed `state`, `groupsAbsent` and a provenance-checked
+`completion` (or null). A dead recorded group is `terminated` if its result is
+unknown, or `completed` when its durable result exists. Stored exits and terminal
+facts remain known even after PID reuse. `unconfirmed` means no process group
+was recorded; `live-or-unknown` proves neither completion nor readiness.
+`groupsAbsent` is a fresh observation, not a change to the stored terminal flag.
+`operationOwnerAbsent` identifies a dead recorded CLI owner. `cleanupRequired`
+also reflects unreconciled completed/terminated launches and stored cleanup
+problems; inspect a live `project.operation` before attempting recovery.
+Status never imports facts into ownership or releases claims; `down` does that.
+A fact whose provenance conflicts with its grant refuses with
+`COMPLETION_PROVENANCE_MISMATCH`; ownership remains retained.
 
-Creates a starter `silo.toml` in the current directory. Fails if the file
-already exists.
+Launch identity observations share a 30-second startup budget, capped at the
+finite command's run budget, followed by the durable grant checkpoint. The
+executor waits up to 45 seconds for that grant. The command's execution timer
+still starts after grant. Status text, `up` and `down` allow up to 30 seconds
+per recorded supervisor identity check under load.
 
-## doc
+`doc` embeds the Markdown references in every build. Topic output works when
+the JavaScript bundle or standalone executable is copied outside the repository.
 
-```
-silo doc [topic]
-```
-
-Prints bundled documentation as raw markdown. If no topic is provided, silo
-prints the available topics.
-
-Topics currently include:
-
-- `config`
-- `profiles`
-- `commands`
-- `lockfile`
-- `interpolation`
-- `ports`
-- `hosts`
-- `urls`
-- `k3d`
-- `hooks`
-- `logging`
-- `troubleshooting`
-- `tilt`
-
-Options:
-
-- `--list` Print topic keys (one per line)
-- `--json` Print topics as JSON
-
-## up
-
-```
-silo up [name]
-```
-
-Starts an environment (creates k3d if configured, starts Tilt). If `name` is
-omitted, silo reuses the name from the lockfile or generates a new one.
-
-If this project's Tilt is already running, `silo up` reports that instance --
-its ports and URLs -- and exits 0 without starting anything. Running `silo up`
-twice is therefore safe; use `silo down` to stop the instance.
-
-Asking for something else while an instance is live is an error rather than a
-reuse: `silo up other-name` or `silo up --profile other` reports what is
-actually running and points at `silo down`.
-
-Options:
-
-- `-f, --force` Regenerate ports; start a parallel stack if one is live
-- `-p, --profile` Use named profile (overrides `SILO_PROFILE`)
-
-Notes:
-
-- Switching profiles on an existing instance requires `--force`.
-- `--force` against a live instance starts a second, parallel stack on new
-  ports. The running stack is recorded in the lockfile as disowned: it keeps
-  answering on its own ports (which stay reserved), `silo status` lists it, and
-  `silo down` does not stop it -- stop it with `kill <pid>`.
-- Tool validation runs before startup (`tilt`, plus `k3d`/`kubectl` if needed).
-
-## down
-
-```
-silo down
-```
-
-Stops Tilt and runs down hooks. By default, k3d clusters are kept for faster
-restarts.
-
-`--clean` refuses while a stack disowned by `silo up --force` is still running:
-the lockfile is the only record of its pid and the only thing keeping other
-projects off its ports.
-
-Options:
-
-- `--delete-cluster` Delete the k3d cluster
-- `--clean` Remove env file and lockfile
-
-## status
-
-```
-silo status
-```
-
-Shows the current instance state (profile, Tilt pid, k3d, ports, URLs) based on
-the lockfile. That is not Tilt resource health. When Tilt is running, status
-prints `tilt get uiresources --port $TILT_PORT`. See `silo doc tilt`.
-
-## env
-
-```
-silo env [name]
-```
-
-Generates env and lockfile only; does not start k3d or Tilt. Accepts the same
-profile and force options as `silo up`.
-
-Options:
-
-- `-f, --force` Regenerate ports even if lockfile exists
-- `-p, --profile` Use named profile (overrides `SILO_PROFILE`)
-- `--export-ci` Export env vars to `$GITHUB_ENV` (auto in CI)
-
-## ci
-
-```
-silo ci [name] [-- <tilt args>]
-```
-
-Runs the full silo startup sequence for CI (env, hooks, k3d) and executes
-`tilt ci` instead of `tilt up`.
-
-`CI=true` is set in the environment handed to Tilt. Tiltfiles commonly gate e2e
-resources on `os.environ.get("CI") == "true"`; without it those resources stay
-manual, never run, and `tilt ci` still reports success because every workload it
-did build is healthy.
-
-The `$GITHUB_ENV` export is skipped with a warning when the variable is absent,
-so `CI=true silo ci` works outside GitHub Actions. Passing `--export-ci`
-explicitly still fails when there is nowhere to write.
-
-Options:
-
-- `-f, --force` Regenerate ports even if lockfile exists
-- `-p, --profile` Use named profile (overrides `SILO_PROFILE`)
-- `--timeout` Passed through to `tilt ci --timeout`
-- `--export-ci` Export env vars to `$GITHUB_ENV` (auto in CI)
-- `--` Pass remaining args to `tilt ci`
-
-## profiles
-
-```
-silo profiles
-```
-
-Lists profiles defined in `silo.toml`, or prints "No profiles defined" if none.
-
-## version
-
-```
-silo version
-```
-
-Prints the current CLI version in the format `silo vX.Y.Z`.
-
-## Behavioral Guarantees
-
-- Lockfile reuse: if `.silo.lock` exists and ports are free, silo reuses them
-  unless `--force` is used.
-- Profile switching: changing profiles on an existing instance requires
-  `--force`.
-- Port allocation order: ports are allocated in declaration order with
-  default-first, then ephemeral fallback (use `random`/`0` to skip defaults).
+`env`, `up`, `ci`, `down` and `status` run the host-wide legacy refusal before
+store, file, directory or tool effects. Follow `silo doc ports` for the
+mandatory host cutover procedure; there is no migrate operation.

@@ -1,0 +1,102 @@
+bun test v1.4.4 (38afee6c8)
+
+src/core/owned_command.test.ts:
+55 |     const proc = Bun.spawn([...entrypoint("source"), "--exercise-owned-command", root], {
+56 |       env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+57 |       stdout: "pipe", stderr: "pipe", timeout: 60_000,
+58 |     });
+59 |     const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+60 |     expect({ exitCode, stderr }).toEqual({ exitCode: 0, stderr: "" });
+                                      ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exitCode": 0,
+-   "stderr": "",
++   "exitCode": 1,
++   "stderr": 
++ "194 |     proc.stdin.end();
++ 195 |     stopSupervisor();
++ 196 |     const exitCode = await withTimeout(proc.exited, STOP_TIMEOUT_MS, "ungranted supervisor drain");
++ 197 |     const diagnostic = await stderr;
++ 198 |     if (error instanceof SiloError && error.code === "LAUNCH_FAILED") {
++ 199 |       throw new SiloError(`${error.message}; supervisor exited ${exitCode}. ${diagnostic.slice(-4096)}`.trimEnd(), error.code, {
++                   ^
++ error: Launch gate exited before its handshake; supervisor exited 1. silo error: Timed out after 2000ms: executor group
++  details: {
++   launchId: "58b649ae-0b60-4053-bf26-8d1929fa9a48",
++   generation: 1,
++   supervisorExitCode: 1,
++ },
++     code: "LAUNCH_FAILED"
++ 
++       at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/core/owned_command.ts:199:13)
++ 
++ 54 | const firstLine = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promise<string> => {
++ 55 |   const decoder = new TextDecoder();
++ 56 |   let value = "";
++ 57 |   while (value.length < 4096) {
++ 58 |     const chunk = await reader.read();
++ 59 |     if (chunk.done) throw new SiloError("Launch gate exited before its handshake", "LAUNCH_FAILED");
++                                ^
++ error: Launch gate exited before its handshake
++  details: {},
++     code: "LAUNCH_FAILED"
++ 
++       at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/core/owned_command.ts:59:27)
++       at async withTimeout (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/utils/timeout.ts:16:26)
++       at async <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/core/owned_command.ts:153:29)
++ 
++ Bun v1.4.4 (macOS arm64)
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 37
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/core/owned_command.test.ts:60:34)
+(fail) a launch with every ps delayed 2.2s still executes inside its startup budget [2642.93ms]
+55 |     const proc = Bun.spawn([...entrypoint("source"), "--exercise-owned-command", root], {
+56 |       env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+57 |       stdout: "pipe", stderr: "pipe", timeout: 60_000,
+58 |     });
+59 |     const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+60 |     expect({ exitCode, stderr }).toEqual({ exitCode: 0, stderr: "" });
+                                      ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exitCode": 0,
+-   "stderr": "",
++   "exitCode": 1,
++   "stderr": 
++ " 6 |   context: string
++  7 | ): Promise<T> {
++  8 |   let timeoutId: ReturnType<typeof setTimeout> | undefined;
++  9 |   const timeoutPromise = new Promise<T>((_, reject) => {
++ 10 |     timeoutId = setTimeout(() => {
++ 11 |       reject(new SiloError(`Timed out after ${timeoutMs}ms: ${context}`, "TIMEOUT"));
++                   ^
++ error: Timed out after 10000ms: launch gate
++  details: {},
++     code: "TIMEOUT"
++ 
++       at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/utils/timeout.ts:11:14)
++ 
++ Bun v1.4.4 (macOS arm64)
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 18
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/core/owned_command.test.ts:60:34)
+(fail) a launch with every ps delayed 11s still executes inside its startup budget [10365.18ms]
+
+ 0 pass
+ 17 filtered out
+ 2 fail
+ 2 expect() calls
+Ran 2 tests across 1 file. [15.01s]

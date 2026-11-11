@@ -1,0 +1,67 @@
+{
+  "claims": [
+    {
+      "domain": "compose-name",
+      "resource": "sguest1105-guestreplaced"
+    },
+    {
+      "domain": "container",
+      "prefix": true,
+      "resource": "sguest1105-guestreplaced-"
+    },
+    {
+      "domain": "container",
+      "prefix": true,
+      "resource": "sguest1105-guestreplaced_"
+    },
+    {
+      "domain": "file-target",
+      "resource": "64513/61237524/.localnet.env"
+    },
+    {
+      "domain": "file-target",
+      "resource": "64513/61237524/.silo.lock"
+    },
+    {
+      "domain": "file-target",
+      "resource": "64513/61237524/silo.toml"
+    },
+    {
+      "domain": "host-port",
+      "resource": "49153"
+    },
+    {
+      "domain": "hostname",
+      "resource": "guestreplaced.localhost"
+    },
+    {
+      "domain": "instance-name",
+      "resource": "guestreplaced"
+    },
+    {
+      "domain": "network",
+      "resource": "sguest1105-guestreplaced"
+    },
+    {
+      "domain": "network",
+      "prefix": true,
+      "resource": "sguest1105-guestreplaced-"
+    },
+    {
+      "domain": "network",
+      "prefix": true,
+      "resource": "sguest1105-guestreplaced_"
+    },
+    {
+      "domain": "volume",
+      "prefix": true,
+      "resource": "sguest1105-guestreplaced-"
+    },
+    {
+      "domain": "volume",
+      "prefix": true,
+      "resource": "sguest1105-guestreplaced_"
+    }
+  ],
+  "generation": 1
+}

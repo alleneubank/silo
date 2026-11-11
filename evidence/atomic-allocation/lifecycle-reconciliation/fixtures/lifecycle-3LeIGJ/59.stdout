@@ -1,0 +1,60 @@
+[
+    {
+        "Name": "k3d-localnet-proof-l-280cc817-estart",
+        "Id": "577e4bb9cb28df2f0af2e5bb489ac60a430fa4bea87b70168718c7a76c65b497",
+        "Created": "2026-11-06T02:27:43.91107874Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "79c0ef3d-39d0-49c0-a065-7fc8fbf4f842",
+            "k3d.cluster": "localnet-proof-l-280cc817-estart"
+        },
+        "Containers": {
+            "817d5d39b1555079ea10e6ce69e546dbc04ff0e063c203a671bbeb5af6ed0c19": {
+                "Name": "k3d-localnet-proof-l-280cc817-estart-server-0",
+                "EndpointID": "ef333b8e5dfb01b8ecfad9ee86aa1827892823d0e5448349d5b15e58cc605277",
+                "MacAddress": "82:40:d4:f1:2d:cd",
+                "IPv4Address": "172.24.0.2/16",
+                "IPv6Address": ""
+            },
+            "86d2d13be0a2117e5e13017344913ac5d4fee6a2dabb5e879c5a853240fcf859": {
+                "Name": "k3d-localnet-proof-l-280cc817-estart-serverlb",
+                "EndpointID": "d023367238ec3126f73423c8d5e7d261e3fa026afe8e14ded842236eac2d45c1",
+                "MacAddress": "1a:89:e4:d7:1c:7b",
+                "IPv4Address": "172.24.0.3/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 5,
+                        "DynamicIPsAvailable": 65531
+                    }
+                }
+            }
+        }
+    }
+]

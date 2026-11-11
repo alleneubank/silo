@@ -1,0 +1,62 @@
+bun test v1.4.4 (38afee6c8)
+
+src/commands/doc.test.ts:
+25 |   it(`${distribution} prints every listed topic outside the source tree`, async () => {
+26 |     const command = distribution === "silo" ? [path.join(distributionRoot, distribution)] : [process.execPath, path.join(distributionRoot, distribution)];
+27 |     const run = async (...args: string[]) => {
+28 |       const proc = Bun.spawn([...command, "doc", ...args], { cwd: distributionRoot, stdout: "pipe", stderr: "pipe", timeout: 10_000 });
+29 |       const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+30 |       expect({ exitCode, stderr }).toEqual({ exitCode: 0, stderr: "" });
+                                        ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exitCode": 0,
+-   "stderr": "",
++   "exitCode": 1,
++   "stderr": 
++ "silo error: Doc file not found: silo-toml.md
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/doc.test.ts:30:36)
+      at async <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/doc.test.ts:39:20)
+(fail) cli.js prints every listed topic outside the source tree [303.86ms]
+25 |   it(`${distribution} prints every listed topic outside the source tree`, async () => {
+26 |     const command = distribution === "silo" ? [path.join(distributionRoot, distribution)] : [process.execPath, path.join(distributionRoot, distribution)];
+27 |     const run = async (...args: string[]) => {
+28 |       const proc = Bun.spawn([...command, "doc", ...args], { cwd: distributionRoot, stdout: "pipe", stderr: "pipe", timeout: 10_000 });
+29 |       const [exitCode, stdout, stderr] = await Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+30 |       expect({ exitCode, stderr }).toEqual({ exitCode: 0, stderr: "" });
+                                        ^
+error: expect(received).toEqual(expected)
+
+  {
+-   "exitCode": 0,
+-   "stderr": "",
++   "exitCode": 1,
++   "stderr": 
++ "silo error: Doc file not found: silo-toml.md
++ "
++ ,
+  }
+
+- Expected  - 2
++ Received  + 5
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/doc.test.ts:30:36)
+      at async <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/doc.test.ts:39:20)
+(fail) silo prints every listed topic outside the source tree [1411.44ms]
+(pass) doc topics > prints docs for each topic [10.92ms]
+(pass) doc topics > lists topics in plain text [0.39ms]
+(pass) doc topics > prints topics as json [0.14ms]
+(pass) doc topics > lists available topics when the topic is unknown [0.19ms]
+
+ 4 pass
+ 2 fail
+ 26 expect() calls
+Ran 6 tests across 1 file. [3.44s]

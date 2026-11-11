@@ -1,0 +1,46 @@
+import assert from "node:assert/strict";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+const directory = "/tmp/controlled-live-fixtures";
+mkdirSync(directory);
+for (const file of ["/tmp/completion-blocked.json", "/tmp/completion-release"]) if (existsSync(file)) rmSync(file);
+const proc = Bun.spawn([process.execPath, "--preload", "/tmp/hold-completion.ts", "/mnt/scripts/allocation-rehearsal.ts", "--root", directory, "--silo", "/mnt/dist/cli.js", "--suite", "live"], {
+  detached: true, stdout: Bun.file("/tmp/logs/controlled-live-suite.log"), stderr: Bun.file("/tmp/logs/controlled-live-suite.log"),
+});
+appendFileSync("/tmp/controlled-live-resources", `pid/pgid ${proc.pid}: real allocation harness with completion scheduling preload; returned handle then harness public cleanup\n`);
+let marker, firstCommand;
+const observed = new Set();
+const deadline = Date.now() + 120000;
+try {
+  while (proc.exitCode === null && !existsSync("/tmp/completion-release")) {
+    assert(Date.now() < deadline, "Controlled completion never reached its observation boundary");
+    const fixture = readdirSync(directory)[0];
+    if (fixture && existsSync("/tmp/completion-blocked.json")) {
+      const root = directory + "/" + fixture;
+      const events = readFileSync(root + "/events.jsonl", "utf8").trim().split("\n").map(line => JSON.parse(line));
+      if (!marker) {
+        marker = JSON.parse(readFileSync("/tmp/completion-blocked.json", "utf8"));
+        firstCommand = Math.max(...events.map(event => event.command ?? 0));
+        console.log(JSON.stringify({ scenario: "completion insert held", marker, firstCommand }));
+      }
+      for (const event of events) {
+        if (event.command > firstCommand && event.argv?.includes("status") && event.cwd.endsWith("/a")) {
+          const result = JSON.parse(readFileSync(`${root}/${event.command}.stdout`, "utf8"));
+          assert.equal(result.project.projectId, marker.projectId);
+          assert(!result.project.completions.some(completion => completion.launchId === marker.launchId));
+          observed.add(event.command);
+        }
+      }
+      if (observed.size >= 2) {
+        writeFileSync("/tmp/completion-release", "release");
+        console.log(JSON.stringify({ scenario: "rehearsal waited through missing exact completion", observedCommands: [...observed], marker, pass: true }));
+      }
+    }
+    await Bun.sleep(10);
+  }
+  assert(existsSync("/tmp/completion-release"), "Harness exited without exercising the completion wait");
+  assert.equal(await proc.exited, 0, "Controlled live suite failed; retain its log");
+  console.log(JSON.stringify({ scenario: "controlled live suite and cleanup", pass: true }));
+} finally {
+  writeFileSync("/tmp/completion-release", "release");
+  if (proc.exitCode === null) { proc.kill("SIGTERM"); await proc.exited; }
+}

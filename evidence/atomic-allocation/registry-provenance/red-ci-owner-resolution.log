@@ -1,0 +1,5 @@
+fixture-owner resolution of red-ci retained cache k3d-localnet-proof-0-cf44a47c-uatter-images (created 2026-11-06T06:52:37Z, labels project e22b9f8b-66b8-45f6-8978-02d439be85ba gen 1 match receipt)
+k3d-localnet-proof-0-cf44a47c-uatter-images
+silo info: Removed owned snapshots and released this generation's claims.
+{"schemaVersion":1,"legacy":false,"changed":true,"project":{"schemaVersion":1,"projectId":"e22b9f8b-66b8-45f6-8978-02d439be85ba","root":"/tmp/rehearsal/allocation-rehearsal-0yhX6N/registry-hook-squatter","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+ exit=0

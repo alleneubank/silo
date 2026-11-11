@@ -1,0 +1,54 @@
+[
+  {
+    "Id": "f119a87c73522d3654c78e9e58bc87504eaee6d8c59bc1a17074f7cc4d69c3dc",
+    "Name": "/k3d-localnet-anon-fixed-serverlb",
+    "Created": "2026-11-04T23:14:15.259425851Z",
+    "Config": {
+      "Image": "ghcr.io/k3d-io/k3d-proxy:5.9.0",
+      "Volumes": null,
+      "Labels": {
+        "app": "k3d",
+        "io.silo.generation": "1",
+        "io.silo.project": "2fe75086-ea4b-4e68-83d5-4c42c1d05607",
+        "k3d.cluster": "localnet-anon-fixed",
+        "k3d.cluster.imageVolume": "k3d-localnet-anon-fixed-images",
+        "k3d.cluster.network": "k3d-localnet-anon-fixed",
+        "k3d.cluster.network.external": "true",
+        "k3d.cluster.network.id": "7230c45984ce8a590db726775a1351cd4572549dd338ad86c6cabd3dab42b6a3",
+        "k3d.cluster.network.iprange": "172.18.0.0/16",
+        "k3d.cluster.token": "BVoEADrxfcCInFIzccZB",
+        "k3d.cluster.url": "https://k3d-localnet-anon-fixed-server-0:6443",
+        "k3d.role": "loadbalancer",
+        "k3d.server.loadbalancer": "k3d-localnet-anon-fixed-serverlb",
+        "k3d.version": "v5.9.0",
+        "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>",
+        "org.opencontainers.image.created": "2026-06-02T14:31:27.087Z",
+        "org.opencontainers.image.description": "Little helper to run CNCF's k3s in Docker",
+        "org.opencontainers.image.licenses": "MIT",
+        "org.opencontainers.image.revision": "15dd1e2dbd62c53ed990fce9b7332335e8cb053c",
+        "org.opencontainers.image.source": "https://github.com/k3d-io/k3d",
+        "org.opencontainers.image.title": "k3d",
+        "org.opencontainers.image.url": "https://github.com/k3d-io/k3d",
+        "org.opencontainers.image.version": "5"
+      }
+    },
+    "HostConfig": {
+      "Binds": [
+        "k3d-localnet-anon-fixed-images:/k3d/images"
+      ],
+      "VolumesFrom": null
+    },
+    "Mounts": [
+      {
+        "Type": "volume",
+        "Name": "k3d-localnet-anon-fixed-images",
+        "Source": "/var/lib/docker/volumes/k3d-localnet-anon-fixed-images/_data",
+        "Destination": "/k3d/images",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      }
+    ]
+  }
+]

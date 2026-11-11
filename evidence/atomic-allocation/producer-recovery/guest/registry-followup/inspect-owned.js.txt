@@ -1,0 +1,5 @@
+const root="/tmp/registry-followup";
+const project=(await Bun.file(`${root}/logs/failed-status.json`).json()).project;
+const allowed=["io.silo.project","io.silo.generation","k3d.cluster","k3d.role","app"];
+const labels=(raw)=>Object.fromEntries(allowed.filter(k=>raw?.[k]!==undefined).map(k=>[k,raw[k]]));
+for(const r of project.resources){const args=r.kind==="container"?["docker","inspect",r.id]:["docker",r.kind,"inspect",r.id];const result=Bun.spawnSync(args,{stdout:"pipe",stderr:"pipe",timeout:10000});if(result.exitCode!==0)throw Error(`inspect failed ${r.kind}/${r.id}`);const parsed=JSON.parse(result.stdout.toString()).map(o=>({id:o.Id??o.Name,name:o.Name,createdAt:o.Created??o.CreatedAt,labels:labels(o.Config?.Labels??o.Labels),mounts:(o.Mounts??[]).map(m=>({name:m.Name,destination:m.Destination,type:m.Type,source:m.Source}))}));console.log(JSON.stringify({kind:r.kind,resource:r.id,values:parsed}))}

@@ -1,0 +1,9 @@
+{"kind":"network","id":"9684703bc91d65c59e8caa233d150bd212e7760daa2c90811171e4859a5e6feb","name":"k3d-localnet-r7guest-regfail","present":false,"exitCode":1}
+{"kind":"volume","id":"k3d-localnet-r7guest-regfail-images","present":false,"exitCode":1}
+{"kind":"container","id":"cf5be144669bfea9d6a752952d99810c7083e3785dc67ba140ab2f5f096ccfc2","name":"k3d-localnet-r7guest-regfail-tools","present":false,"exitCode":1}
+{"kind":"container","id":"baaf2d6d93ea3524b518c2d368e122b9a10b5f21ca5daa92bc59fff2ad28a25d","name":"k3d-localnet-r7guest-regfail-server-0","present":false,"exitCode":1}
+{"kind":"volume","id":"c98517dfe25aa977fa1e3c6aacc83f98b013f042fdae39e65d20807185286df5","present":false,"exitCode":1}
+{"kind":"volume","id":"fb9bb6868efcfddfc17c4613d27197ec573b6092293fe3ca70fbf5c16dc8e7de","present":false,"exitCode":1}
+{"kind":"volume","id":"bb6c49c9abc9460d6cce3a52fdfa04c94b86234fcb72eba63935a35435819b69","present":false,"exitCode":1}
+{"kind":"volume","id":"115ab68ccf0fb626633cd425c7283254e1f459087a9191f80344e572d5313bea","present":false,"exitCode":1}
+{"kind":"container","id":"51ef3738332ec709ccd0b09a2f66b5e9694830c82a0347538753108dfbc66cd5","name":"k3d-localnet-r7guest-regfail-serverlb","present":false,"exitCode":1}

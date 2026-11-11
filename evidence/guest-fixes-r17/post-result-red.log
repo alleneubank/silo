@@ -1,0 +1,21 @@
+ 9 | const args=[process.execPath,output+'/cli.js'];const proc=Bun.spawn([...args,'ci','post-result-'+mode,'--timeout','45s','--json'],{cwd:fixture,env,detached:true,stdout:'pipe',stderr:'pipe',timeout:90000});
+10 | writeFileSync(scratch+'/pids/post-result-'+mode+'.pid',String(proc.pid));appendFileSync('/Users/allen/.handoffs/boss-mobile-release/silo-guest-fixes/resources',`post-result-${mode} group ${proc.pid}; diagnostic ci; timeout90s; teardown recorded group\n`);
+11 | const out=new Response(proc.stdout).text();const err=new Response(proc.stderr).text();const end=Date.now()+60000;while(!existsSync(fixture+'/result-committed')){assert(Date.now()<end,'post-result marker deadline');if(proc.exitCode!==null)throw new Error(await out+'\n'+await err);await Bun.sleep(20);}
+12 | proc.kill('SIGTERM');const[exitCode,stdout,stderr]=await Promise.all([proc.exited,out,err]);const result=JSON.parse(stdout);
+13 | const down=Bun.spawn([...args,'down','--clean','--json'],{cwd:fixture,env,stdout:'pipe',stderr:'pipe',timeout:60000});const[downExit,downOut]=await Promise.all([down.exited,new Response(down.stdout).text()]);assert.equal(downExit,0,downOut);
+14 | writeFileSync(root+'/evidence/guest-fixes-r17/post-result-'+mode+'.json',JSON.stringify({exitCode,stdout,stderr,downExit,expectedExit:0,resultAlreadyCommitted:true},null,2));assert.equal(result.schemaVersion,1);assert(result.project);assert.equal(exitCode,0,'a signal after the result was committed must preserve its terminal exit');console.log(JSON.stringify({exitCode,resultObjects:1,postResultSignal:'SIGTERM',claimsAfterClean:0}));
+                                                                                                                                                                                                                                                      ^
+AssertionError: a signal after the result was committed must preserve its terminal exit
+
+143 !== 0
+
+ generatedMessage: false,
+     actual: 143,
+   expected: 0,
+   operator: "strictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/post-result-signal.ts:14:242
+
+Bun v1.4.4 (macOS arm64)

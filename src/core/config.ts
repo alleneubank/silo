@@ -9,6 +9,7 @@ import {
 } from "./constants";
 import type { LifecycleHooks, ResolvedConfig, SiloConfig } from "./types";
 import { SiloError } from "../utils/errors";
+import { ProjectRelativePathSchema } from "./file_target";
 
 const PortValueSchema = z.preprocess(
   (value) => (value === 0 ? "random" : value),
@@ -25,8 +26,6 @@ const HooksSchema = z
   .object({
     "pre-up": z.array(z.string()).optional(),
     "post-up": z.array(z.string()).optional(),
-    "pre-down": z.array(z.string()).optional(),
-    "post-down": z.array(z.string()).optional(),
   })
   .strict();
 
@@ -47,16 +46,6 @@ const K3dRegistrySchema = RegistryAdvertiseSchema.extend({
 const ProfileK3dRegistrySchema = RegistryAdvertiseSchema.extend({
   enabled: z.boolean().optional(),
 }).strict();
-
-// Literal POSIX-style file paths keep kubeconfig inside the project and avoid
-// shell expansion or KUBECONFIG's platform-dependent path-list separators.
-const ProjectRelativePathSchema = z.string().max(4096).refine(
-  (value) =>
-    /^[A-Za-z0-9_./-]+$/.test(value) &&
-    !path.posix.isAbsolute(value) &&
-    value.split("/").every((part) => part.length > 0 && part !== "." && part !== ".."),
-  { message: "kubeconfigPath must be a project-relative file path without traversal or expansion" }
-).brand<"ProjectRelativePath">();
 
 const TiltSchema = z.object({ webMode: z.literal("prod").optional() }).strict();
 
@@ -107,7 +96,7 @@ const SiloConfigSchema = z
   .object({
     version: z.literal(CONFIG_VERSION),
     prefix: z.string().optional(),
-    output: z.string().optional(),
+    output: ProjectRelativePathSchema.optional(),
     ports: PortsSchema,
     hosts: z.record(z.string()).optional(),
     urls: z.record(z.string()).optional(),
@@ -125,14 +114,7 @@ const ensureAppHost = (hosts: Record<string, string>): void => {
   }
 };
 
-export const loadConfig = async (configPath: string): Promise<ResolvedConfig> => {
-  const resolvedPath = path.resolve(process.cwd(), configPath);
-  const configFile = Bun.file(resolvedPath);
-  if (!(await configFile.exists())) {
-    throw new SiloError(`Config file not found: ${resolvedPath}`, "CONFIG_NOT_FOUND");
-  }
-
-  const rawText = await configFile.text();
+export const parseConfig = (rawText: string, resolvedPath: string): ResolvedConfig => {
   const rawParsed = Bun.TOML.parse(rawText) as unknown;
   if (!rawParsed || typeof rawParsed !== "object") {
     throw new SiloError("Config file did not parse to an object", "INVALID_CONFIG");
@@ -156,7 +138,7 @@ export const loadConfig = async (configPath: string): Promise<ResolvedConfig> =>
   return {
     version: CONFIG_VERSION,
     prefix: parsed.prefix ?? DEFAULT_PREFIX,
-    output: parsed.output ?? DEFAULT_OUTPUT,
+    output: parsed.output ?? ProjectRelativePathSchema.parse(DEFAULT_OUTPUT),
     ports,
     portOrder,
     hosts,
@@ -171,4 +153,13 @@ export const loadConfig = async (configPath: string): Promise<ResolvedConfig> =>
     configPath: resolvedPath,
     projectRoot: configDir,
   };
+};
+
+export const loadConfig = async (configPath: string): Promise<ResolvedConfig> => {
+  const resolvedPath = path.resolve(process.cwd(), configPath);
+  const configFile = Bun.file(resolvedPath);
+  if (!(await configFile.exists())) {
+    throw new SiloError(`Config file not found: ${resolvedPath}`, "CONFIG_NOT_FOUND");
+  }
+  return parseConfig(await configFile.text(), resolvedPath);
 };

@@ -1,0 +1,21 @@
+version=1
+[hooks]
+pre-up=["sh squat.sh"]
+
+[ports]
+K3D_REGISTRY_PORT="random"
+APP_PORT=48127
+TILT_PORT=48128
+[hosts]
+APP_HOST="${name}.localhost"
+TILT_HOST="127.0.0.1"
+[tilt]
+webMode="prod"
+[profiles.alternative.ports]
+APP_PORT=48129
+
+[k3d]
+enabled=true
+kubeconfigPath=".localnet/kubeconfig"
+[k3d.registry]
+enabled=true

@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"PORT_BIND_CONFLICT","message":"PORT_BIND_CONFLICT: localnet-proof-3-7f610cb6-uatter-registry.localhost did not publish its assigned 5000/tcp host port 49152; claims and snapshots retained"}

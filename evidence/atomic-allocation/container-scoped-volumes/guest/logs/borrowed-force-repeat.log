@@ -1,0 +1,3 @@
+silo error: ALREADY_RUNNING: --force cannot disown or retarget a live, retained or uncertain generation. Run down and reconcile first; parallel stacks need separate roots and names.
+
+EXIT=1

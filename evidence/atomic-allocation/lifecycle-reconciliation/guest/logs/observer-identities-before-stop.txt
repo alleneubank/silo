@@ -1,0 +1,8 @@
+3505400       1 3505400 30033 timeout 1200 docker events --filter type=volume --filter volume=k3d-r6guest-cluster-images --format {{json .}}
+3505400       1 3505400 30033 timeout 1200 docker events --filter type=volume --filter volume=k3d-r6guest-cluster-images --format {{json .}}
+3505392       1 3505392 30033 timeout 1200 docker events --filter label=io.silo.project=2f5bd0b3-9dbe-4e70-adb9-cb41fbd29d6c --format {{json .}}
+3504409       1 3504409 30033 timeout 1200 docker events --filter label=io.silo.project=459c4e34-4251-40db-8382-d1428d4f76f0 --format {{json .}}
+3505118       1 3505118 30033 timeout 1200 docker events --filter label=io.silo.project=7318552e-d9b6-4db4-93c4-f41ad529232b --format {{json .}}
+3504631       1 3504631 30033 timeout 1200 docker events --filter label=io.silo.project=a9ae4691-5266-4ed9-8e7c-39c6c76c914f --format {{json .}}
+3504888       1 3504888 30033 timeout 1200 docker events --filter label=io.silo.project=e340f672-88e5-4e73-b782-59532c2f8b3c --format {{json .}}
+3504172       1 3504172 30033 timeout 1200 docker events --filter label=io.silo.project=7d11e249-b03d-4b64-9a5a-c7045b6c7e04 --format {{json .}}

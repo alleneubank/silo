@@ -1,0 +1,16 @@
+{
+  "cmd": [
+    "/Users/allen/.local/share/mise/installs/bun/1.4.4/bin/bun",
+    "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/final-native-js/cli.js",
+    "ci",
+    "js-sigterm",
+    "--timeout",
+    "75s",
+    "--json"
+  ],
+  "cwd": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/final-native-js-SIGTERM",
+  "pid": 70171,
+  "exitCode": 143,
+  "stdout": "{\"schemaVersion\":1,\"code\":\"INTERRUPTED\",\"message\":\"ci interrupted by SIGTERM; owned claims retained. Run silo status and silo down to reconcile.\",\"signal\":\"SIGTERM\"}\n",
+  "stderr": "silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/final-native-js-SIGTERM/.localnet.env\nsilo info: Wrote lockfile\nsilo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/final-native-js-SIGTERM/.localnet.env\nsilo info: Wrote lockfile\n"
+}

@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/guest/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Instance 'guest-a' is already running (supervisor 427979); generation 1
+silo info: Ports:
+silo info:   APP_PORT: 49152
+silo info:   TILT_PORT: 49153
+silo info: Run down before changing it. Parallel stacks need separate roots and names.

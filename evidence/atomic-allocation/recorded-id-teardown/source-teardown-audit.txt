@@ -1,0 +1,61 @@
+2026-11-06T01:35:37Z
+77e3d68f9b8dffff2aec9c31bc2833349c36c3f3
+b14266a4564fa89dd7440d5cce5de08f51dd587173a9b3ee475b49b2743c2e53  dist/cli.js
+
+Baseline delegated teardown references (positive control):
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/backends/tilt.ts:1:import { TILT_CI_TIMEOUT_MS, TILT_DOWN_TIMEOUT_MS } from "../core/constants";
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/backends/tilt.ts:25:export const tiltDown = (owner: ProjectOperation, env: Record<string, string>) =>
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/backends/tilt.ts:26:  runOwnedCommand(owner, ["tilt", "down"], { kind: "tilt-down", effect: "delete", env, timeoutMs: TILT_DOWN_TIMEOUT_MS });
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/commands/down.ts:7:import { tiltDown } from "../backends/tilt";
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/commands/down.ts:49:      const result = await tiltDown(owner, env);
+a7359a4548ef5ce3f715a05c705c3c9a39876461:src/core/constants.ts:31:export const TILT_DOWN_TIMEOUT_MS = 60000;
+
+Current delegated teardown references (expected no matches):
+rg exit=1 (1 means no matches)
+
+Down capability imports:
+import { ProjectOperation } from "../core/lease_store";
+import { writeEnvAndLockfile } from "../core/env";
+import { deleteCluster } from "../backends/k3d";
+import { assertEngine, assertNamesAvailable, deleteOwnedContainers, deleteOwnedNetworks, findAnonymousLeaks, verifyResource } from "../backends/ownership";
+import { stopOwnedCommand } from "../core/owned_command";
+import { logger } from "../utils/logger";
+import { SiloError } from "../utils/errors";
+import { commandRoot } from "./prepare";
+
+
+Only backend removal leaf and exact k3d callers:
+/** The deletion target is an immutable container/network ID, never a volume name. */
+const deleteResources = async (owner: ProjectOperation, source: BackendReceipt["source"], kind: "container" | "network"): Promise<void> => {
+  const deletable = owner.resources().filter((r): r is Extract<BackendReceipt, { kind: "container" | "network" }> => r.kind !== "volume");
+  for (const receipt of deletable.filter(r => r.source === source && r.kind === kind)) {
+    if (await verifyResource(owner, receipt)) {
+      const result = await runOwnedCommand(owner, ["docker", kind, "rm", ...(kind === "container" ? ["--force", "--volumes"] : []), receipt.id], {
+        kind: `owned-${kind}-delete`, effect: "delete", timeoutMs: K3D_DELETE_TIMEOUT_MS,
+      });
+      if (await verifyResource(owner, receipt)) throw new SiloError(`CLEANUP_REQUIRED: deletion left ${kind}/${receipt.name}`, "CLEANUP_REQUIRED");
+      owner.checkpointLaunch({ ...result.launch, reconciled: true });
+    }
+    owner.forgetResource(receipt);
+  }
+};
+
+export const deleteOwnedContainers = (owner: ProjectOperation, source: BackendReceipt["source"]): Promise<void> => deleteResources(owner, source, "container");
+export const deleteOwnedNetworks = (owner: ProjectOperation, source: BackendReceipt["source"]): Promise<void> => deleteResources(owner, source, "network");
+  owner.file("kubeconfig").publish(stripDebugOutput(result.stdout));
+};
+
+/** Deletes only exact journaled Docker objects; k3d's name/label-wide delete is not used. */
+export const deleteCluster = async (owner: ProjectOperation): Promise<void> => {
+  await assertEngine(owner);
+  await assertNamesAvailable(owner.resourceClaims(), owner.root, owner.resources());
+  await deleteOwnedContainers(owner, "k3d");
+  await deleteOwnedNetworks(owner, "k3d");
+  const current = owner.current()!;
+  owner.update({ ...current.allocation, state: { ...current.allocation.state, k3dClusterCreated: false } }, "stopped");
+};
+
+Cleanup-time creation-capture, hooks, or Tilt backend import (expected no matches):
+rg exit=1 (1 means no matches)
+
+Manual call-path audit: down calls verified stopOwnedCommand, typed exact-ID Compose deletion, and optional exact-ID k3d deletion. It imports no Tilt backend, hooks, generic command executor or capture capability. All Docker remove requests terminate at ownership.ts deleteResources; volume audit records cannot inhabit its container/network branch. Down hooks are rejected by config schema. Startup tools/hooks remain trusted creation-time operations.

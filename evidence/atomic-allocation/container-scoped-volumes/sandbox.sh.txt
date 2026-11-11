@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+lane=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign
+scratch="$lane-tmp/addendum1"
+exec bwrap --ro-bind / / --dev-bind /dev /dev --proc /proc \
+  --bind "$scratch/account" /home/ae \
+  --ro-bind /home/ae/.local/share/mise /home/ae/.local/share/mise \
+  --bind "$scratch" /tmp --bind "$lane" /mnt --chdir /mnt \
+  --setenv HOME /home/ae --setenv TMPDIR /tmp/tmp \
+  --setenv DOCKER_HOST unix:///var/run/docker.sock --unsetenv DOCKER_CONTEXT \
+  --setenv KUBECONFIG /tmp/no-global-kubeconfig \
+  --setenv CI false --setenv GITHUB_ENV "" --unsetenv GITHUB_ACTIONS --setenv SILO_PROFILE "" \
+  --setenv PATH /home/ae/.local/share/mise/installs/bun/1.4.4/bin:/home/ae/.local/share/mise/installs/github-alleneubank-janitor/0.3.1:/home/ae/.local/share/mise/installs/github-alleneubank-tilt/0.37.8-fork.20261009.g753c01455:/tmp/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin \
+  "$@"

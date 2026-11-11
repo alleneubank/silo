@@ -1,0 +1,7 @@
+silo info: Loading config
+silo info: Running pre-down hooks (0)
+silo info: Running tilt down
+Loading Tiltfile at: /tmp/fixtures/allocation-rehearsal-wvvhXm/late-05/Tiltfile
+Successfully loaded Tiltfile (335.127µs)
+silo info: Running post-down hooks (0)
+silo info: Removing env file and lockfile

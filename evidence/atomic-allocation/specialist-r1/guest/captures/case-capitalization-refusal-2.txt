@@ -1,0 +1,4 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'env', 'case1104', '--force', '--config', '/tmp/guest/case-switch/silo.toml']
+exit=1
+silo error: PATH_CONFLICT: env target changed; down --clean uses its recorded target. Clean before reallocating.
+

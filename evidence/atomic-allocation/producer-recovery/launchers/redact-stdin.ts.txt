@@ -1,0 +1,1 @@
+import{redact}from'/tmp/redact-tokens.ts';const value=await new Response(Bun.stdin.stream()).text();await Bun.write(Bun.stdout,redact(value));

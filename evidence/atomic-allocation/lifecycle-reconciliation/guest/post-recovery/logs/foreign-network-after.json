@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "r6post-postforeign",
+        "Id": "3a326a22b2b0edeb1d2e5ab22e309dbe4a7b5970c330ed0649c2078523202139",
+        "Created": "2026-11-06T04:10:30.681790654Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.28.0.0/16",
+                    "Gateway": "172.28.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "86013e8a2315a6b2da45c7f3c1fd9146b9bc9aa917443f33ebba29db004bf105",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "r6post-postforeign",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "a35189bc-b2de-4166-8bb8-cf61b037c888"
+        },
+        "Containers": {
+            "2bd70b805b0f6ddd26c28e3e0adf932b1b2619485f3a97ef4a0a1fbd8292bc7c": {
+                "Name": "r6post-postforeign-redis-1",
+                "EndpointID": "c61d750bcb26c13783aa4ebd97c8c474d6a0a67e416e509fe480103377e3d4b5",
+                "MacAddress": "1a:1c:96:ff:48:33",
+                "IPv4Address": "172.28.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.28.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

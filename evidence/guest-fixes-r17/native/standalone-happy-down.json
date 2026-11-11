@@ -1,0 +1,13 @@
+{
+  "cmd": [
+    "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/private-silo",
+    "down",
+    "--clean",
+    "--json"
+  ],
+  "cwd": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/native-r2-happy-standalone",
+  "pid": 75725,
+  "exitCode": 0,
+  "stdout": "{\"schemaVersion\":1,\"legacy\":false,\"changed\":true,\"project\":{\"schemaVersion\":1,\"projectId\":\"ab009251-c9a4-489e-a4d5-829c4c23bef5\",\"root\":\"/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/native-r2-happy-standalone\",\"generation\":0,\"phase\":\"unallocated\",\"problem\":null,\"operation\":null,\"allocation\":null,\"claims\":[],\"resources\":[],\"launches\":[],\"files\":[],\"sinks\":[],\"completions\":[]},\"launchStatus\":[],\"operationOwnerAbsent\":false,\"cleanupRequired\":false}\n",
+  "stderr": "silo info: Removed owned snapshots and released this generation's claims.\n"
+}

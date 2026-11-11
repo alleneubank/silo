@@ -1,0 +1,2 @@
+silo info: Removed owned snapshots and released this generation's claims.
+{"schemaVersion":1,"legacy":false,"changed":true,"project":{"schemaVersion":1,"projectId":"0ba5fd39-29b2-4e1f-b0ed-7d14d1b80d61","root":"/tmp/fixtures/lifecycle-HDiCFO/volume-failed","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}

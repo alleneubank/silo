@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"COMMAND_FAILED","message":"COMMAND_FAILED: k3d-network-create exited 1; owned claims retained. \nError response from daemon: invalid pool request: Pool overlaps with other one on this address space\n","launchId":"c81f6fbb-2a54-4b60-8ed4-bdd915468fa4","generation":1}

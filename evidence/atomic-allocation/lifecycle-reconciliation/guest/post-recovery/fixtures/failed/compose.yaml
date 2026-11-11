@@ -1,0 +1,19 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:6379"
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID}"
+      io.silo.generation: "${SILO_GENERATION}"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 1s
+      retries: 20
+networks:
+  default:
+    name: "${DOCKER_NETWORK}"
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID}"
+      io.silo.generation: "${SILO_GENERATION}"

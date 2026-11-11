@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-1DFi9N/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info: Project 343266eb-15bc-4940-8757-fd37d97cc5aa, generation 5: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-1DFi9N/a/.localnet.env; set +a

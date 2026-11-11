@@ -1,0 +1,15 @@
+version=1
+[ports]
+TILT_PORT="random"
+K3D_REGISTRY_PORT="random"
+[hosts]
+APP_HOST="${name}.localhost"
+TILT_HOST="127.0.0.1"
+[k3d]
+enabled=true
+kubeconfigPath="kubeconfig"
+[k3d.registry]
+enabled=true
+advertise=true
+[tilt]
+webMode="prod"

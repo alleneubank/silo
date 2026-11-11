@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import net from "node:net";
+import { once } from "node:events";
+import { networkInterfaces } from "node:os";
+import { connectedUdp } from "./fixtures/connected_udp";
 import { EPHEMERAL_PORT_END, EPHEMERAL_PORT_START } from "./constants";
-import { allocatePorts, type PortAllocationEvent } from "./ports";
+import { allocatePorts, checkPortFree, checkPortListenerAbsent, type PortAllocationEvent } from "./ports";
 
 const alwaysFree = async (_port: number): Promise<boolean> => true;
 
@@ -166,6 +170,17 @@ describe("allocatePorts", () => {
 });
 
 describe("checkPortFree (integration)", () => {
+  test("a UDP listener excludes the scalar host port", async () => {
+    const socket = await Bun.udpSocket({ hostname: "127.0.0.1", port: 0 });
+    try { expect(await checkPortFree(socket.port)).toBe(false); }
+    finally { socket.close(); }
+  });
+
+  test("an IPv6 loopback listener excludes the scalar host port", async () => {
+    const server = Bun.listen({ hostname: "::1", port: 0, socket: { data() {} } });
+    try { expect(await checkPortFree(server.port)).toBe(false); }
+    finally { server.stop(); }
+  });
   // Integration test: bind a real server on 127.0.0.1 and verify the
   // default checkPortFree (used when isPortFree is not injected) detects it.
   // We call allocatePorts without isPortFree so it uses the real check.
@@ -252,4 +267,58 @@ describe("checkPortFree (integration)", () => {
     expect(allocated.TEST_PORT).toBe(freePort);
     expect(events[0]?.source).toBe("default");
   });
+});
+
+describe("checkPortListenerAbsent (integration)", () => {
+  test("a TCP listener on any address remains", async () => {
+    const nonLoopback = Object.values(networkInterfaces()).flat().find(address => address?.family === "IPv4" && !address.internal)?.address;
+    for (const hostname of ["127.0.0.1", "::1", "0.0.0.0", ...(nonLoopback ? [nonLoopback] : [])]) {
+      const server = Bun.listen({ hostname, port: 0, socket: { data() {} } });
+      try { expect(await checkPortListenerAbsent(server.port)).toBe(false); }
+      finally { server.stop(); }
+    }
+  }, 180_000);
+
+  test("a UDP socket without a peer remains", async () => {
+    for (const hostname of ["127.0.0.1", "::1"]) {
+      const socket = await Bun.udpSocket({ hostname, port: 0 });
+      try { expect(await checkPortListenerAbsent(socket.port)).toBe(false); }
+      finally { socket.close(); }
+    }
+  }, 180_000);
+
+  test("an outgoing TCP connection's local port is not a listener", async () => {
+    const server = net.createServer(() => {});
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+    const client = net.connect((server.address() as net.AddressInfo).port, "127.0.0.1");
+    try {
+      await once(client, "connect");
+      expect(await checkPortListenerAbsent(client.localPort!)).toBe(true);
+    } finally { client.destroy(); server.close(); }
+  }, 180_000);
+
+  test("a connected UDP socket's local port is not a listener", async () => {
+    for (const hostname of ["127.0.0.1", "::1"] as const) {
+      const sockets = await connectedUdp(hostname);
+      try {
+        expect(await checkPortListenerAbsent(sockets.client.port)).toBe(false);
+        await sockets.releaseListeners();
+        expect(await checkPortListenerAbsent(sockets.client.port)).toBe(true);
+      } finally { await sockets.close(); }
+    }
+  }, 180_000);
+
+  test("an orderly closed outgoing TCP port does not block on TIME-WAIT", async () => {
+    const server = net.createServer(socket => socket.resume());
+    await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
+    const client = net.connect((server.address() as net.AddressInfo).port, "127.0.0.1");
+    try {
+      await once(client, "connect");
+      const port = client.localPort!;
+      const closed = once(client, "close");
+      client.end();
+      await closed;
+      expect(await checkPortListenerAbsent(port)).toBe(true);
+    } finally { client.destroy(); server.close(); }
+  }, 180_000);
 });

@@ -1,23 +1,6 @@
-import path from "path";
 import { unknownDocTopicMessage } from "../utils/breadcrumbs";
 import { SiloError } from "../utils/errors";
 import { DOC_TOPICS, DOC_TOPIC_ALIASES } from "./doc-topics";
-
-const findDocPath = async (filename: string): Promise<string | null> => {
-  const candidates = [
-    path.resolve(import.meta.dir, "..", "docs", filename),
-    path.resolve(import.meta.dir, "..", "..", "docs", filename),
-  ];
-
-  for (const candidate of candidates) {
-    const file = Bun.file(candidate);
-    if (await file.exists()) {
-      return candidate;
-    }
-  }
-
-  return null;
-};
 
 const listTopics = (): Array<{ topic: string; file: string; description: string }> =>
   Object.entries(DOC_TOPICS).map(([topic, entry]) => ({
@@ -66,11 +49,5 @@ export const doc = async (params: {
     );
   }
 
-  const docPath = await findDocPath(entry.file);
-  if (!docPath) {
-    throw new SiloError(`Doc file not found: ${entry.file}`, "DOC_NOT_FOUND");
-  }
-
-  const contents = await Bun.file(docPath).text();
-  process.stdout.write(contents.trimEnd() + "\n");
+  process.stdout.write(entry.contents.trimEnd() + "\n");
 };

@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "bridge",
+        "Id": "4fdb79a9130c6570c1c62acc4ac570f754b2cb2c03c9fb411c84982550da0302",
+        "Created": "2026-10-24T00:09:30.938815054Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "127.0.0.1",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1500"
+        },
+        "Labels": {},
+        "Containers": {
+            "d08dd227f7be43390d820a492b2a73e31b7ae45c2f46b7cc2d49958a0c519141": {
+                "Name": "youthful_keller",
+                "EndpointID": "383db5efc40147d169495e5b44ce76791e8ae5393952d96a61aef38a92282123",
+                "MacAddress": "ce:76:87:01:5c:a1",
+                "IPv4Address": "172.17.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.17.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

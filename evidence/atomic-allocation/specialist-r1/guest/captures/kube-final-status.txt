@@ -1,0 +1,23 @@
+command=['/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/sandbox-guest', '/tmp/tools/bun', '/mnt/dist/cli.js', 'status', '--json', '--config', '/tmp/guest/kube-switch/silo.toml']
+exit=0
+{
+  "schemaVersion": 1,
+  "legacy": false,
+  "changed": false,
+  "project": {
+    "schemaVersion": 1,
+    "projectId": "c9217b10-761b-4dde-a027-2294d4f75e4e",
+    "root": "/tmp/guest/kube-switch",
+    "generation": 0,
+    "phase": "unallocated",
+    "problem": null,
+    "operation": null,
+    "allocation": null,
+    "claims": [],
+    "resources": [],
+    "launches": [],
+    "files": [],
+    "sinks": [],
+    "completions": []
+  }
+}

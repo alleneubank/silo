@@ -1,0 +1,252 @@
+[
+    {
+        "Id": "176b487f57dbfc44d6a7b7d38f3830a3fc19263ad5902dfb818e55b5411534d9",
+        "Created": "2026-11-06T05:54:21.201061371Z",
+        "Path": "/bin/k3s",
+        "Args": [
+            "agent"
+        ],
+        "State": {
+            "Status": "created",
+            "Running": false,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 0,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "0001-01-01T00:00:00Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "Image": "sha256:2074403abe1bded11ef3dde09d457e13be8e0b64c218b1c4f8269b4565cfbc65",
+        "ResolvConfPath": "",
+        "HostnamePath": "",
+        "HostsPath": "",
+        "LogPath": "",
+        "Name": "/unclaimed-allocation-rehearsal-whxisw",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": false,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "90499f85397bcc3cc62ff58b057a538368949d6c691a6fad675d67bedbcfa37e",
+                "Source": "/var/lib/docker/volumes/90499f85397bcc3cc62ff58b057a538368949d6c691a6fad675d67bedbcfa37e/_data",
+                "Destination": "/var/log",
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            },
+            {
+                "Type": "volume",
+                "Name": "d87f6847fab8588602e14b5668bba943786456433d23b26b8de382d95031b140",
+                "Source": "/var/lib/docker/volumes/d87f6847fab8588602e14b5668bba943786456433d23b26b8de382d95031b140/_data",
+                "Destination": "/var/lib/cni",
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            },
+            {
+                "Type": "volume",
+                "Name": "55692cf4c2164fe958538c010852cd00eb8851daf02b7155f772283025b91a7f",
+                "Source": "/var/lib/docker/volumes/55692cf4c2164fe958538c010852cd00eb8851daf02b7155f772283025b91a7f/_data",
+                "Destination": "/var/lib/kubelet",
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            },
+            {
+                "Type": "volume",
+                "Name": "96d795097821d48259f83b1a64dfe08351e850b20baf5ab6b27ebbf6f0799d54",
+                "Source": "/var/lib/docker/volumes/96d795097821d48259f83b1a64dfe08351e850b20baf5ab6b27ebbf6f0799d54/_data",
+                "Destination": "/var/lib/rancher/k3s",
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "176b487f57db",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/var/lib/rancher/k3s/data/cni:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/bin/aux",
+                "CRI_CONFIG_FILE=/var/lib/rancher/k3s/agent/etc/crictl.yaml"
+            ],
+            "Cmd": [
+                "agent"
+            ],
+            "Image": "docker.io/rancher/k3s:v1.35.5-k3s1",
+            "Volumes": {
+                "/var/lib/cni": {},
+                "/var/lib/kubelet": {},
+                "/var/lib/rancher/k3s": {},
+                "/var/log": {}
+            },
+            "WorkingDir": "/",
+            "Entrypoint": [
+                "/bin/k3s"
+            ],
+            "Labels": {
+                "io.silo.generation": "4",
+                "io.silo.project": "c51a138a-1012-4fbe-99d3-c80c6e733477",
+                "org.opencontainers.image.created": "2026-05-20T11:23:17.096Z",
+                "org.opencontainers.image.description": "Lightweight Kubernetes",
+                "org.opencontainers.image.licenses": "Apache-2.0",
+                "org.opencontainers.image.revision": "6a4781ad53ee5cad273bedcd9462ae36ac97d798",
+                "org.opencontainers.image.source": "https://github.com/k3s-io/k3s",
+                "org.opencontainers.image.title": "k3s",
+                "org.opencontainers.image.url": "https://github.com/k3s-io/k3s",
+                "org.opencontainers.image.version": "v1.35.5-k3s1"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "",
+            "SandboxKey": "",
+            "Ports": {},
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "",
+                    "EndpointID": "",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "MacAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:8bb3c7925bd3eb99b5916e0c5b63af3de4067aaa1f7e3140908f14946c29618c",
+            "size": 482,
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]

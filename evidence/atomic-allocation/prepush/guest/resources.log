@@ -1,0 +1,6 @@
+Restored CI outer timeout PID/PGID=1802421 (setsid), maximum 45 seconds
+Restored CI group leader exited status=0
+Cleanup outer timeout PID/PGID=1834601 (setsid), maximum 45 seconds
+Cleanup group leader exited status=0
+recorded_group_1802421=absent
+recorded_group_1834601=absent

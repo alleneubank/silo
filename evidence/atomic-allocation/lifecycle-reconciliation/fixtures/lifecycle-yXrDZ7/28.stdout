@@ -1,0 +1,48 @@
+[
+    {
+        "Name": "localnet-proof-lifecycle-yxrdz7-compose-restart_default",
+        "Id": "52d8c104ffcafbed2cec6f0a406cfcb82843c2c5547f0813adaa719534f13097",
+        "Created": "2026-11-06T02:18:53.948588184Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "fa4bc82610d565d0b93d8d2abca6179bcefd26bfbbd828a55da3c14815503d7a",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "localnet-proof-lifecycle-yxrdz7-compose-restart",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "9e3c0dc0-ae93-4025-bb4d-e63b1a0abc50"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]

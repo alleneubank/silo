@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"COMMAND_FAILED","message":"COMMAND_FAILED: owned-network-delete exited 1; owned claims retained. \nError response from daemon: error while removing network: network k3d-localnet-proof-h5-62aead0c-crash has active endpoints (name:\"tender_meninsky\" id:\"ea71e9bc5baf\")\nexit status 1\n","launchId":"19d45e7d-3ace-4aa9-a9d2-3c45b779ac36","generation":1}

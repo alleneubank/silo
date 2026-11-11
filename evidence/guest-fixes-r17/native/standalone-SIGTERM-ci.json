@@ -1,0 +1,15 @@
+{
+  "cmd": [
+    "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/private-silo",
+    "ci",
+    "standalone-sigterm",
+    "--timeout",
+    "75s",
+    "--json"
+  ],
+  "cwd": "/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/native-r2-standalone-SIGTERM",
+  "pid": 62927,
+  "exitCode": 143,
+  "stdout": "{\"schemaVersion\":1,\"code\":\"INTERRUPTED\",\"message\":\"ci interrupted by SIGTERM; owned claims retained. Run silo status and silo down to reconcile.\",\"signal\":\"SIGTERM\"}\n",
+  "stderr": "silo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/native-r2-standalone-SIGTERM/.localnet.env\nsilo info: Wrote lockfile\nsilo info: Generated env file at /Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes-tmp/native-r2-standalone-SIGTERM/.localnet.env\nsilo info: Wrote lockfile\n"
+}

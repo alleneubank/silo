@@ -1,0 +1,1 @@
+{"stopped":"a898b661941b1375c7e62a3c9c51c02fc29295b87fd6c1d8875c44c35d2d0240","name":"k3d-localnet-atomic-r1-example-serverlb","createdAt":"2026-11-04T04:56:48.246029856Z","reason":"release own API listener after recorded API/teardown failure"}

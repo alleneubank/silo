@@ -16,7 +16,8 @@ silo starts, stops, and isolates Tilt. It does not wrap the Tilt API.
 | Ports, env, k3d, hooks, start/stop | `silo up` / `down` / `env` / `ci` / `status` |
 | Resource health, logs, wait, trigger | `tilt get` / `logs` / `wait` / `trigger` |
 
-`silo status` reads the lockfile (pid, ports, URLs). Pid-alive is not
+`silo status` reads the canonical ownership store (generation, claims, receipts,
+pid, ports, URLs). Process liveness is not
 resource health. The API may not be on 10350; pass `--port` from `TILT_PORT`
 in the env file (default `.localnet.env`):
 
@@ -31,20 +32,41 @@ Do not run `tilt up` or `tilt down` while silo owns the stack. Do not run
 
 - A `Tiltfile` is expected in the current directory.
 - `tilt` and [janitor](https://github.com/alleneubank/janitor) must be on PATH.
+- Config, hooks and Tiltfiles are trusted and must use the generated names,
+  ports and kubeconfig. Silo does not sandbox arbitrary tool behavior.
+
+For Compose, pass the generated project name explicitly. Tilt's default is
+the directory name; its API does not default to `COMPOSE_PROJECT_NAME`:
+
+```python
+docker_compose('docker-compose.yaml', project_name=os.getenv('COMPOSE_PROJECT_NAME'))
+```
+
+Label generated Compose services, networks and volumes with
+`io.silo.project: "${SILO_PROJECT_ID:?run through silo}"` and
+`io.silo.generation: "${SILO_GENERATION:?run through silo}"` in the Compose
+file. The example demonstrates service and default-network labels. Use only
+the claimed project namespace; an owned label on an object outside it causes
+`NAME_CONFLICT` and blocks cleanup. Silo never grants deletion authority for
+that object. See the [Tilt API reference](https://docs.tilt.dev/api.html#api.docker_compose).
 
 ## Startup
 
 `silo up` starts Tilt in the foreground under
 [janitor](https://github.com/alleneubank/janitor):
 
-```
-janitor --grace-ms <ms> -- tilt up
+```sh
+# Source and bundled JavaScript
+janitor --pgroup-only --watch-pid <silo-pid> --grace-ms <ms> -- bun <silo-entrypoint> __silo_execute ...
+# Standalone executable
+janitor --pgroup-only --watch-pid <silo-pid> --grace-ms <ms> -- <silo-binary> __silo_execute ...
 ```
 
 janitor is a required tool. A missing supervisor fails the run rather than
-starting an unsupervised Tilt. The lockfile's `tiltPid` is the supervisor's
-pid; stopping it drains Tilt so it cannot outlive the silo process that
-started it.
+starting an unsupervised Tilt. The executor opens its tool gate only after a
+durable grant records the actual process group. The snapshot's `tiltPid` is
+the supervisor PID. Janitor drains its owned group on owner loss; uncertain
+outcomes retain claims until `down` can prove reconciliation.
 
 silo passes all generated env vars to Tilt, plus these markers so the Tiltfile
 can detect a silo-managed run:
@@ -55,8 +77,9 @@ can detect a silo-managed run:
 
 The process runs in the same terminal, and `Ctrl+C` stops Tilt.
 
-`silo ci` invokes `tilt ci` directly (no supervisor). Tilt CI already exits
-when the run finishes.
+`silo ci` uses the same gated supervisor for `tilt ci`. CI exit does not
+release resource/port ownership; run `down` to reconcile and `--clean` to
+retire only when resources are absent.
 
 For an explicit loopback UI with embedded production assets:
 
@@ -77,8 +100,11 @@ policy; inspect actual listeners when validating a private deployment.
 
 ## Shutdown
 
-`silo down` runs `tilt down` (with a timeout) and then stops any tracked Tilt
-PID if still running.
+`silo down` stops verified recorded groups and deletes recorded Docker IDs with a
+timeout. Teardown errors propagate. It never scans for arbitrary Tilt PIDs.
+Keep lifecycle commands inside Silo. A matching live `up` reuses it;
+`--force` cannot start another stack in that root. Parallel stacks need
+separate roots and names.
 
 ## Env File Usage
 

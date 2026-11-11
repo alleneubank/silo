@@ -1,0 +1,2 @@
+process pid/pgid=1388649; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/pre-registry-cli.js","env","proof-lifecycle-a5zgdr-k3d-failed-registry","--json"]; stop only verified exact returned group
+process pid/pgid=1388816; timeout180 ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/pre-registry-cli.js","down","--delete-cluster","--clean","--json"]; stop only verified exact returned group

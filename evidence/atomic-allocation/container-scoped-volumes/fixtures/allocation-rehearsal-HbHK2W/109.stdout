@@ -1,0 +1,13 @@
+[
+    {
+        "CreatedAt": "2026-11-05T03:01:05Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.rehearsal": "allocation-rehearsal-HbHK2W"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-proof-hbhk2w-backend-images/_data",
+        "Name": "k3d-localnet-proof-hbhk2w-backend-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

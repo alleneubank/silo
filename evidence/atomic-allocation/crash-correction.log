@@ -1,0 +1,16 @@
+{"command":["a","down","--clean"],"code":0,"result":"unallocated"}
+{"command":["b","down","--clean"],"code":0,"result":"unallocated"}
+{"command":["a","env","atomic-live-a"],"code":0,"result":"reserved"}
+{"command":["b","env","atomic-live-b"],"code":0,"result":"reserved"}
+{"scenario":"concurrent reservations","ap":{"APP_PORT":48127,"TILT_PORT":48128},"bp":{"APP_PORT":49152,"TILT_PORT":49153}}
+{"scenario":"live identities","a":"atomic-live-a","b":"atomic-live-b"}
+{"command":["b","status"],"code":0,"result":"running"}
+{"command":["a","status"],"code":0,"result":"running"}
+{"scenario":"journaled live groups","a":[{"id":"37ad07fd-0eaa-44e2-84d2-8f20e4b28127","kind":"tilt-up","command":["tilt","up","--web-mode=prod"],"effect":"workload","supervisorPid":3412339,"leaderPid":3412340,"groupId":3412340,"supervisorIdentity":"ae       3412339 Wed Nov  4 02:04:48 2026 janitor --pgroup-only --watch-pid 3411637 --grace-ms 5000 -- /tmp/tools/bun /mnt/src/cli.ts __silo_execute 37ad07fd-0eaa-44e2-84d2-8f20e4b28127 /tmp/native/a e8bb4a1b-d3b3-4b60-93b6-04f1be5bfb3a 3 account","phase":"granted","exitCode":null,"reconciled":false,"terminal":false}],"serverA":"3412672","serverB":"3412671"}
+{"command":["b","status"],"code":0,"result":"running"}
+{"command":["a","status"],"code":0,"result":"running"}
+{"scenario":"crash retains claims","completions":[{"projectId":"e8bb4a1b-d3b3-4b60-93b6-04f1be5bfb3a","generation":3,"launchId":"37ad07fd-0eaa-44e2-84d2-8f20e4b28127","leaderPid":3412340,"groupId":3412340,"started":true,"exitCode":0,"completedAt":"2026-11-04T02:04:50.149Z"}]}
+{"command":["a","down","--clean"],"code":0,"result":"unallocated"}
+{"scenario":"A owner recovery, B preserved","result":"pass"}
+{"command":["a","down","--clean"],"code":0,"result":"unallocated"}
+{"command":["b","down","--clean"],"code":0,"result":"unallocated"}

@@ -1,0 +1,10 @@
+silo warn: Port APP_PORT in use (48127), allocated 49154
+silo warn: Port TILT_PORT in use (48128), allocated 49155
+silo info: Generated env file at /tmp/rehearsal/allocation-rehearsal-MD2HNi/retry-crash/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 49154
+silo info:   TILT_PORT: 49155
+silo info:   K3D_API_PORT: 49156
+silo info: Project dea7e7f2-66ec-4411-b100-2233cf26a457, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/rehearsal/allocation-rehearsal-MD2HNi/retry-crash/.localnet.env; set +a

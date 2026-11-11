@@ -61,21 +61,28 @@ When determining which profile to use:
 
 1. `--profile` flag (highest priority)
 2. `SILO_PROFILE` env var
-3. Lockfile profile (from a previous run)
+3. Stored allocation profile (from a previous run)
 4. No profile (use base config)
 
 ## Switching Profiles
 
-Switching profiles for an existing instance requires `--force` to prevent
-accidental changes to ports, URLs, k3d settings, or hooks:
+Switching profiles requires a stopped, reconciled generation and `--force`.
+Live, retained or uncertain state cannot be disowned. Stop/reconcile first;
+delete an owned retained cluster explicitly if deletion is intended:
 
 ```bash
 silo up --profile testnet
 silo up --profile devnet   # Error: requires --force
+silo down --delete-cluster
 silo up --profile devnet --force
 ```
 
 ## Notes
+
+- Parallel profiles need separate roots and names. They share the canonical
+  account store even when HOME differs. A legacy entry blocks every profile;
+  follow the host cutover in `silo doc ports`, then stop/recreate with each
+  project's owner. Profiles cannot migrate or adopt old resources.
 
 - Unknown profiles are errors.
 - Using `--profile` when `[profiles]` is missing is an error.

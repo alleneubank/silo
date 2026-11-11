@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-whXiSW/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Instance 'proof-whxisw-a' is already running (supervisor 2223443); generation 4
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info: Run down before changing it. Parallel stacks need separate roots and names.

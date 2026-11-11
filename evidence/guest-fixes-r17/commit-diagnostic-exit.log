@@ -1,0 +1,24 @@
+╭────────────────────────────────────╮
+│ lefthook v1.13.6  hook: pre-commit │
+╰────────────────────────────────────╯
+┃  format ❯ 
+
+Found 0 warnings and 0 errors.
+Finished in 38ms on 1 file with 90 rules using 18 threads.
+
+┃  lint ❯ 
+
+Found 0 warnings and 0 errors.
+Finished in 11ms on 1 file with 90 rules using 18 threads.
+
+┃  typecheck ❯ 
+
+
+                                      
+  ────────────────────────────────────
+summary: (done in 33.82 seconds)      
+✓ format (2.27 seconds)
+✓ lint (2.49 seconds)
+✓ typecheck (32.91 seconds)
+[feat/atomic-allocation 6c250b4] fix(cli): keep fatal diagnostics from blocking exit
+ 1 file changed, 15 insertions(+), 8 deletions(-)

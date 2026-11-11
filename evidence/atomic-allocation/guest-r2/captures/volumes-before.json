@@ -1,0 +1,59 @@
+[
+    {
+        "CreatedAt": "2026-11-04T03:43:37Z",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.volume.anonymous": ""
+        },
+        "Mountpoint": "/var/lib/docker/volumes/8ca63286253fac78da46e405639468d9b35de9ca9850f6910263fbb1945d9d25/_data",
+        "Name": "8ca63286253fac78da46e405639468d9b35de9ca9850f6910263fbb1945d9d25",
+        "Options": null,
+        "Scope": "local"
+    },
+    {
+        "CreatedAt": "2026-11-04T03:43:37Z",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.volume.anonymous": ""
+        },
+        "Mountpoint": "/var/lib/docker/volumes/dc7128719cf105f1538724bb7df7c8512164b65b184befebde70e03c11d97d01/_data",
+        "Name": "dc7128719cf105f1538724bb7df7c8512164b65b184befebde70e03c11d97d01",
+        "Options": null,
+        "Scope": "local"
+    },
+    {
+        "CreatedAt": "2026-11-04T03:43:37Z",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.volume.anonymous": ""
+        },
+        "Mountpoint": "/var/lib/docker/volumes/586c4c0767463c093621eeb57141ef75aba053fee27f91bbb8421becefa3ebdb/_data",
+        "Name": "586c4c0767463c093621eeb57141ef75aba053fee27f91bbb8421becefa3ebdb",
+        "Options": null,
+        "Scope": "local"
+    },
+    {
+        "CreatedAt": "2026-11-04T03:43:37Z",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.volume.anonymous": ""
+        },
+        "Mountpoint": "/var/lib/docker/volumes/a1d795ced6a82b7883c5ec886d4566bf3d3631b0728bce0f5550955f2a663c1f/_data",
+        "Name": "a1d795ced6a82b7883c5ec886d4566bf3d3631b0728bce0f5550955f2a663c1f",
+        "Options": null,
+        "Scope": "local"
+    },
+    {
+        "CreatedAt": "2026-11-04T03:43:36Z",
+        "Driver": "local",
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "abfcd518-163d-46bd-8d9c-4a3d34f8b211",
+            "k3d.cluster": "localnet-guest-r2-retained"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/k3d-localnet-guest-r2-retained-images/_data",
+        "Name": "k3d-localnet-guest-r2-retained-images",
+        "Options": null,
+        "Scope": "local"
+    }
+]

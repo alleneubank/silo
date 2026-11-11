@@ -1,0 +1,1 @@
+silo error: NAME_CONFLICT: owned tool created container/example-redis-1 (c1149d0238231a970d3d99d080a976e8384570ae0a2a627244e5aeef70399c1a) outside declared names. Configure Tilt docker_compose(project_name=COMPOSE_PROJECT_NAME) and claimed names; no cleanup authority was granted for this object.

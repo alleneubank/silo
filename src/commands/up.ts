@@ -1,197 +1,66 @@
-import { loadConfig } from "../core/config";
-import {
-  describeDisownedStacks,
-  describeInstanceMismatch,
-  disownedPorts,
-  releaseTiltOwnership,
-  resolveUpPreflight,
-} from "../core/liveness";
-import { withStartupClaim } from "../core/startup_claim";
-import { resolveInstanceUrls } from "../core/instance";
-import { readLockfile, updateLockfile, writeLockfile } from "../core/lockfile";
-import { registerInstance } from "../core/port_registry";
-import { sanitizeName } from "../core/name";
-import { applyProfile, resolveExplicitProfile } from "../core/profile";
-import { runningStackHintLines } from "../utils/breadcrumbs";
-import { logKeyValues, logger } from "../utils/logger";
+import { ProjectOperation } from "../core/lease_store";
+import { storedConfig } from "../core/allocation";
+import { writeEnvAndLockfile } from "../core/env";
 import { startTilt } from "../backends/tilt";
+import { captureFinishedProducers } from "../backends/ownership";
+import { logger, logKeyValues } from "../utils/logger";
+import { runningStackHintLines } from "../utils/breadcrumbs";
 import { SiloError } from "../utils/errors";
-import { prepareTiltEnvironment } from "./prepare";
-import type { InstanceState, ResolvedConfig } from "../core/types";
+import { commandFailure, commandLiveness, type OwnedCommandResult, type RunningCommand } from "../core/owned_command";
+import { prepareTiltEnvironment, withAllocation } from "./prepare";
 
-const reportRunningInstance = (params: {
-  baseConfig: ResolvedConfig;
-  instance: InstanceState;
-  pid: number;
-}): void => {
-  const { baseConfig, instance, pid } = params;
-  const profileName = instance.profile;
-  // The running stack's profile may have been removed from silo.toml since it
-  // started. Reporting it is still the right answer; only its URLs are lost.
-  let config = baseConfig;
-  if (profileName) {
-    try {
-      config = applyProfile(baseConfig, profileName);
-    } catch {
-      logger.warn(
-        `Profile '${profileName}' is no longer defined in config; URLs may be incomplete`
-      );
+export const up = async (name: string | undefined, options: {
+  config: string; force: boolean; profile: string | undefined;
+  executorEntrypoint?: string;
+}): Promise<boolean> => {
+  const started = await withAllocation(name, options, async (owner, allocation): Promise<{ command: RunningCommand; root: string; projectId: string; generation: number } | null> => {
+    let existing;
+    for (const launch of owner.launches().filter(l => !l.terminal && l.kind === "tilt-up")) {
+      const state = await commandLiveness(launch);
+      if (state === "unknown") throw new SiloError("CLEANUP_REQUIRED: recorded supervisor identity is live or unknown; no replacement started", "CLEANUP_REQUIRED");
+      if (state === "live") existing = launch;
     }
-  }
-
-  logger.info(`Instance '${instance.name}' is already running (Tilt pid ${pid})`);
-  if (profileName) {
-    logger.info(`Profile: ${profileName}`);
-  }
-  const urls = resolveInstanceUrls({ config, instance });
-  logKeyValues("Ports", instance.ports);
-  runningStackHintLines({
-    tiltRunning: true,
-    tiltPort: instance.ports.TILT_PORT,
-    urls,
-    kubeconfigPath: instance.identity.kubeconfigPath,
-  }).forEach((line) => logger.info(line));
-  logKeyValues("URLs", urls);
-  logger.info(
-    "Nothing to start. Run 'silo down' to stop it, or 'silo up --force' for a parallel stack."
-  );
-};
-
-/**
- * Everything from the liveness check to recording the new pid.
- *
- * Held under the project's startup claim, because until `tiltPid` is written
- * the lockfile cannot tell a concurrent `silo up` that a stack is coming up.
- * Returns the started process, or null when the run was an idempotent no-op.
- */
-const startStack = async (params: {
-  baseConfig: ResolvedConfig;
-  nameArg: string | undefined;
-  options: { config: string; force: boolean; profile: string | undefined };
-}): Promise<{ config: ResolvedConfig; proc: Bun.Subprocess } | null> => {
-  const { baseConfig, nameArg, options } = params;
-
-  // Before anything mutates ports, clusters or hooks: a live Tilt for this
-  // project root means `up` has nothing to do. Starting a second one would
-  // succeed silently on ephemeral ports and leave two stacks answering for
-  // one project.
-  const preflight = await resolveUpPreflight({
-    projectRoot: baseConfig.projectRoot,
-    force: options.force,
+    if (existing) {
+      writeEnvAndLockfile(owner);
+      logger.info(`Instance '${allocation.state.name}' is already running (supervisor ${existing.supervisorPid}); generation ${owner.generation}`);
+      logKeyValues("Ports", allocation.state.ports);
+      logger.info("Run down before changing it. Parallel stacks need separate roots and names.");
+      return null;
+    }
+    const env = await prepareTiltEnvironment(owner);
+    const config = storedConfig(allocation);
+    const command = await startTilt(owner, env, config.tilt?.webMode);
+    const current = owner.current()!.allocation;
+    owner.update({ ...current, state: { ...current.state, tiltPid: command.launch.supervisorPid!, tiltStartedAt: new Date().toISOString() } }, "running");
+    writeEnvAndLockfile(owner);
+    runningStackHintLines({ tiltRunning: true, tiltPort: current.state.ports.TILT_PORT, urls: current.urls, kubeconfigPath: current.state.identity.kubeconfigPath }).forEach(line => logger.info(line));
+    return { command, root: owner.root, projectId: owner.projectId, generation: owner.generation };
   });
-
-  if (preflight.action === "blocked") {
-    throw new SiloError(
-      `${preflight.liveDisowned.length} stack(s) from this project are running but no longer own the lockfile: ` +
-        `${describeDisownedStacks(preflight.liveDisowned)}. ` +
-        "Stop them with 'kill <pid>', or run 'silo up --force' to start another stack beside them.",
-      "DISOWNED_RUNNING"
-    );
+  if (!started) return false;
+  let result: OwnedCommandResult = await started.command.exited;
+  let owner: ProjectOperation;
+  try { owner = await ProjectOperation.open(started.root); }
+  catch (error) {
+    if (error instanceof SiloError && error.code === "BUSY") return true; // down owns reconciliation and fences this callback.
+    throw error;
   }
-
-  if (preflight.action === "reuse") {
-    // Reuse is only a no-op when the live instance is the one being asked for.
-    const mismatch = describeInstanceMismatch({
-      instance: preflight.instance,
-      requestedName: nameArg ? sanitizeName(nameArg) : undefined,
-      requestedProfile: resolveExplicitProfile(options.profile),
-    });
-    if (mismatch) {
-      throw new SiloError(
-        `Instance '${preflight.instance.name}' is already running: ${mismatch}. ` +
-          "Run 'silo down' first, or 'silo up --force' for a parallel stack.",
-        "ALREADY_RUNNING"
-      );
-    }
-
-    reportRunningInstance({
-      baseConfig,
-      instance: preflight.instance,
-      pid: preflight.pid,
-    });
-    return null;
-  }
-  if (preflight.disowning) {
-    const { name, pid } = preflight.disowning;
-    logger.warn(
-      `Instance '${name}' is still running (Tilt pid ${pid}); --force starts a parallel stack on new ports.`
-    );
-    logger.warn(
-      `It no longer owns the lockfile. Stop it with 'kill ${pid}'; 'silo down' will not.`
-    );
-  }
-
-  const { config, envVars } = await prepareTiltEnvironment({
-    baseConfig,
-    nameArg,
-    options,
-    disowning: preflight.disowning,
-  });
-
-  logger.info("Starting Tilt");
-  const tiltProc = startTilt({ cwd: config.projectRoot, env: envVars, webMode: config.tilt?.webMode });
-  await updateLockfile(config.projectRoot, (current) => ({
-    ...current.instance,
-    tiltPid: tiltProc.pid,
-    tiltStartedAt: new Date().toISOString(),
-  }));
-  logger.info(`Tilt started (pid ${tiltProc.pid})`);
-
-  return { config, proc: tiltProc };
-};
-
-export const up = async (
-  nameArg: string | undefined,
-  options: { config: string; force: boolean; profile: string | undefined }
-): Promise<void> => {
-  logger.info("Loading config");
-  const baseConfig = await loadConfig(options.config);
-  logger.verbose(`Config path: ${baseConfig.configPath}`);
-
-  const started = await withStartupClaim(baseConfig.projectRoot, () =>
-    startStack({ baseConfig, nameArg, options })
-  );
-  if (!started) {
-    return;
-  }
-  const { config, proc: tiltProc } = started;
-
-  const handleExit = async () => {
-    const current = await readLockfile(config.projectRoot);
-    if (!current) {
-      return;
-    }
-
-    const next = releaseTiltOwnership({
-      instance: current.instance,
-      pid: tiltProc.pid,
-    });
-    await writeLockfile(config.projectRoot, next);
-
-    // Refresh the project's reservation after dropping this Tilt's ownership.
-    // Peers retain its allocated ports and any remaining disowned stack ports
-    // until the project explicitly changes or unregisters its reservation.
-    await registerInstance({
-      projectRoot: config.projectRoot,
-      name: next.name,
-      ports: [
-        ...Object.values(next.ports),
-        ...disownedPorts(next.disownedTilts ?? []),
-      ],
-    });
-  };
-
-  const signalHandler = async (signal: NodeJS.Signals) => {
-    try {
-      tiltProc.kill(signal);
-    } catch {
-      // ignore
-    }
-  };
-
-  process.on("SIGINT", signalHandler);
-  process.on("SIGTERM", signalHandler);
-
-  await tiltProc.exited;
-  await handleExit();
+  try {
+    if (owner.projectId !== started.projectId || owner.generation !== started.generation) return true;
+    const observed = owner.current()!;
+    const journal = owner.launches().find(l => l.id === result.launch.id);
+    if (observed.phase !== "running" || observed.allocation.state.tiltPid !== result.launch.supervisorPid || journal?.phase !== "granted") return true;
+    const recorded = owner.recordCommandResult(result.launch);
+    result = { ...result, launch: recorded, exitCode: recorded.exitCode ?? result.exitCode };
+    await captureFinishedProducers(owner);
+    const current = owner.current()!;
+    const { tiltPid: _pid, tiltStartedAt: _at, ...state } = current.allocation.state;
+    const phase = result.exitCode === 0 ? (owner.resources().length > 0 ? "retained" : "stopped") : "cleanup-required";
+    owner.update({ ...current.allocation, state }, phase, result.exitCode === 0 ? null : `Tilt exited ${result.exitCode}; down must reconcile before reuse`);
+    writeEnvAndLockfile(owner);
+  } catch (error) {
+    if (owner.current()) owner.noteFailure(error);
+    throw error;
+  } finally { owner.finish(); }
+  if (result.exitCode !== 0) throw commandFailure(result, "tilt-up", started.generation);
+  return true;
 };

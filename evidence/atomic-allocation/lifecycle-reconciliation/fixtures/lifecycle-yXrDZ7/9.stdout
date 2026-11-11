@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "localnet-proof-lifecycle-yxrdz7-compose-restart_default",
+        "Id": "1ac1bfa088af1f85e0cc0e8d3f68c759a6e6d1514cf0f2b45287829dc358872f",
+        "Created": "2026-11-06T02:18:45.126882973Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.24.0.0/16",
+                    "Gateway": "172.24.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "fa4bc82610d565d0b93d8d2abca6179bcefd26bfbbd828a55da3c14815503d7a",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "localnet-proof-lifecycle-yxrdz7-compose-restart",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "9e3c0dc0-ae93-4025-bb4d-e63b1a0abc50"
+        },
+        "Containers": {
+            "e80a2c2654b37dcec2473d7d15b4f9cd25d69d8080be05ba114d51257a2e6661": {
+                "Name": "localnet-proof-lifecycle-yxrdz7-compose-restart-redis-1",
+                "EndpointID": "92097e5e27e00f3d45076fcf2677df36269894fe8cf0ddcebff583f5bab3ee33",
+                "MacAddress": "26:c7:4d:ee:3c:50",
+                "IPv4Address": "172.24.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.24.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

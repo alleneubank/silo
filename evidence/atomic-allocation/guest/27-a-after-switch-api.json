@@ -1,0 +1,72 @@
+{
+    "apiVersion": "tilt.dev/v1alpha1",
+    "kind": "UIResource",
+    "metadata": {
+        "annotations": {
+            "tilt.dev/resource": "guest"
+        },
+        "creationTimestamp": "2026-11-04T03:11:43Z",
+        "name": "guest",
+        "ownerReferences": [
+            {
+                "apiVersion": "tilt.dev/v1alpha1",
+                "blockOwnerDeletion": true,
+                "controller": true,
+                "kind": "Tiltfile",
+                "name": "(Tiltfile)",
+                "uid": "4a652a66-1166-453a-82e5-c01d13848a74"
+            }
+        ],
+        "resourceVersion": "44",
+        "uid": "f0463a0f-c9ce-4b98-8c67-abc75c79210d"
+    },
+    "spec": {},
+    "status": {
+        "buildHistory": [
+            {
+                "finishTime": "2026-11-04T03:11:43.146419Z",
+                "spanID": "build:1",
+                "startTime": "2026-11-04T03:11:43.146373Z"
+            }
+        ],
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-11-04T03:11:43.148085Z",
+                "status": "True",
+                "type": "UpToDate"
+            },
+            {
+                "lastTransitionTime": "2026-11-04T03:11:43.150649Z",
+                "status": "True",
+                "type": "Ready"
+            }
+        ],
+        "disableStatus": {
+            "disabledCount": 0,
+            "enabledCount": 1,
+            "sources": [
+                {
+                    "configMap": {
+                        "key": "isDisabled",
+                        "name": "guest-disable"
+                    }
+                }
+            ],
+            "state": "Enabled"
+        },
+        "lastDeployTime": "2026-11-04T03:11:43.146419Z",
+        "localResourceInfo": {
+            "pid": 445901
+        },
+        "order": 2,
+        "pendingBuildSince": null,
+        "runtimeStatus": "ok",
+        "specs": [
+            {
+                "id": "local:guest",
+                "type": "local"
+            }
+        ],
+        "updateStatus": "not_applicable"
+    }
+}

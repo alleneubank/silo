@@ -1,0 +1,1 @@
+{"schemaVersion":1,"code":"NAME_CONFLICT","message":"NAME_CONFLICT: existing k3d cluster 'localnet-proof-vmowsw-backend' has no ownership receipt. Inspect with k3d cluster get localnet-proof-vmowsw-backend; silo will not reuse or delete it."}

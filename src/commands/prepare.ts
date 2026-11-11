@@ -1,335 +1,80 @@
-import { buildInstanceState, resolveInstanceName } from "../core/instance";
-import {
-  buildEnvVars,
-  buildSiloProcessEnv,
-  resolveEnvPath,
-  writeEnvAndLockfile,
-} from "../core/env";
-import { readLockfile, updateLockfile } from "../core/lockfile";
-import {
-  readPeerPorts,
-  registerInstance,
-} from "../core/port_registry";
-import { resolveAndApplyProfile } from "../core/profile";
-import {
-  applyRegistryPortOverride,
-  resolveRegistryAdvertiseSettings,
-} from "../core/registry";
+import path from "node:path";
+import { loadConfig } from "../core/config";
+import { allocateProject, storedConfig } from "../core/allocation";
+import { buildEnvVars, buildSiloProcessEnv, writeEnvAndLockfile } from "../core/env";
+import { ProjectOperation } from "../core/lease_store";
 import { ensureToolsAvailable } from "../utils/validate";
-import { logger, logPortAllocations } from "../utils/logger";
 import { runHooks } from "../hooks/runner";
 import { ensureCluster, writeKubeconfig } from "../backends/k3d";
 import { advertiseLocalRegistry } from "../backends/registry";
-import { resolveRegistryHostPort } from "../backends/registry-port";
-import {
-  excludeKnownStacks,
-  findTiltPidsInDir,
-  readProcessTable,
-} from "../utils/process";
-import { disownedPorts, findLiveDisowned, probeTilt } from "../core/liveness";
+import { assertEngine, assertNamesAvailable } from "../backends/ownership";
+import { resolveRegistryAdvertiseSettings } from "../core/registry";
 import { SiloError } from "../utils/errors";
-import type { PortAllocationEvent } from "../core/ports";
-import type { DisownedTilt, InstanceState, ResolvedConfig } from "../core/types";
-import {
-  REGISTRY_ADVERTISE_RETRY_BASE_DELAY_MS,
-  REGISTRY_ADVERTISE_RETRY_COUNT,
-  REGISTRY_ADVERTISE_RETRY_MAX_DELAY_MS,
-  TILT_SUPERVISOR_BIN,
-} from "../core/constants";
+import type { Allocation } from "../core/lease_types";
+import type { ResolvedConfig } from "../core/types";
+import { REGISTRY_ADVERTISE_RETRY_BASE_DELAY_MS, REGISTRY_ADVERTISE_RETRY_COUNT, REGISTRY_ADVERTISE_RETRY_MAX_DELAY_MS } from "../core/constants";
 
-type PrepareResult = {
-  config: ResolvedConfig;
-  state: InstanceState;
-  urls: Record<string, string>;
-  envVars: Record<string, string>;
-};
+export const commandRoot = (config: string): string => path.dirname(path.resolve(config));
 
-type PrepareOptions = {
-  config: string;
-  force: boolean;
-  profile: string | undefined;
-};
-
-export const prepareTiltEnvironment = async (params: {
-  baseConfig: ResolvedConfig;
-  nameArg: string | undefined;
-  options: PrepareOptions;
-  // The live stack this run is replacing, decided by the caller. Its record is
-  // written as part of the same lockfile write that hands ownership to the new
-  // stack, so a failure before that write leaves the live stack owning it.
-  disowning?: DisownedTilt | null;
-}): Promise<PrepareResult> => {
-  const { baseConfig, nameArg, options, disowning = null } = params;
-  process.env.SILO_ACTIVE = "1";
-
-  const lockfile = await readLockfile(baseConfig.projectRoot);
-  const instance = lockfile?.instance;
-
-  if (
-    disowning === null &&
-    instance?.tiltPid !== undefined &&
-    (await probeTilt(instance.tiltPid))
-  ) {
-    throw new SiloError(
-      `Instance '${instance.name}' already running. Use 'silo down' first.`,
-      "ALREADY_RUNNING"
-    );
-  }
-
-  // Stacks silo started are not "external", including ones a previous
-  // `silo up --force` disowned — refusing on those would make --force
-  // unusable a second time. Each recorded pid stands for its whole process
-  // group, since the `tilt up` under a supervisor is its own pid.
-  const known = [
-    ...(instance?.tiltPid !== undefined ? [instance.tiltPid] : []),
-    ...(instance?.disownedTilts ?? []).map((entry) => entry.pid),
-    ...(disowning ? [disowning.pid] : []),
-  ];
-  const candidates = await findTiltPidsInDir(baseConfig.projectRoot);
-  const external = excludeKnownStacks({
-    candidates,
-    known,
-    table: known.length > 0 ? await readProcessTable() : [],
-  });
-  if (external.length > 0) {
-    throw new SiloError(
-      `Tilt already running outside silo (pid ${external.join(", ")}). Stop it first.`,
-      "TILT_RUNNING"
-    );
-  }
-
-  const { config, profileName } = resolveAndApplyProfile({
-    baseConfig,
-    profileFlag: options.profile,
-    lockfile,
-    force: options.force,
-  });
-
-  const tools = ["tilt", TILT_SUPERVISOR_BIN];
-  if (config.k3d?.enabled) {
-    tools.push("k3d");
-  }
-  const registryAdvertiseEnabled =
-    (config.k3d?.registry?.enabled && config.k3d.registry.advertise !== false) ||
-    (config.registry && config.registry.advertise !== false);
-  if (config.k3d?.registry?.enabled) {
-    tools.push("docker");
-  }
-  if (registryAdvertiseEnabled) {
-    tools.push("kubectl");
-  }
-  logger.info(`Validating tools: ${tools.join(", ")}`);
-  await ensureToolsAvailable(tools);
-
-  const nameSource = nameArg
-    ? "arg"
-    : lockfile?.instance?.name
-    ? "lockfile"
-    : "generated";
-  const name = resolveInstanceName({
-    nameArg,
-    lockfile,
-    projectRoot: config.projectRoot,
-  });
-  logger.info(`Resolved instance name: ${name} (${nameSource})`);
-
-  logger.info("Allocating ports");
-  const excludedPorts = await readPeerPorts({
-    excludeProjectRoot: config.projectRoot,
-  });
-  if (excludedPorts.size > 0) {
-    logger.verbose(
-      `Excluding ${excludedPorts.size} port(s) owned by peer silo instances`
-    );
-  }
-
-  // A disowned stack keeps serving on ports it may not have bound yet, and the
-  // port registry only covers other project roots. Without this, a parallel
-  // `--force` stack can probe one of those ports free and take it.
-  const liveDisowned = [
-    ...(await findLiveDisowned({ disowned: instance?.disownedTilts })),
-    ...(disowning ? [disowning] : []),
-  ];
-  disownedPorts(liveDisowned).forEach((port) => excludedPorts.add(port));
-  if (liveDisowned.length > 0) {
-    logger.verbose(
-      `Excluding port(s) owned by ${liveDisowned.length} disowned stack(s)`
-    );
-  }
-  const portEvents: PortAllocationEvent[] = [];
-  const { state, urls, envVars: baseEnvVars, hostOrder, portOrder, urlOrder, k3dArgs } =
-    await buildInstanceState({
-      config,
-      name,
-      profile: profileName,
-      lockfile,
-      force: options.force,
-      excludedPorts,
-      disownedTilts: liveDisowned,
-      onPortAllocation: (event) => portEvents.push(event),
-    });
-
-  logPortAllocations(portEvents);
-
-  const envFilePath = resolveEnvPath(config);
-  const siloEnv = buildSiloProcessEnv({ state, envFilePath });
-  const envVars = { ...baseEnvVars, ...siloEnv };
-  Object.assign(process.env, siloEnv);
-
-  let currentState = state;
-  let currentUrls = urls;
-  let currentEnvVars = envVars;
-
-  await writeEnvAndLockfile({
-    state: currentState,
-    config,
-    urls: currentUrls,
-    hostOrder,
-    portOrder,
-    urlOrder,
-  });
-
-  // Keep the lockfile on disk before publishing the reservation: older readers
-  // still use its presence to decide whether to retain our ports.
-  // The registry holds one entry per project root, so it must name every port
-  // this project still owns — a disowned stack's included. Registering only the
-  // new stack would let another project allocate a port the disowned one uses.
-  const reservedPorts = (state: InstanceState): number[] => [
-    ...Object.values(state.ports),
-    ...disownedPorts(liveDisowned),
-  ];
-
-  await registerInstance({
-    projectRoot: config.projectRoot,
-    name: currentState.name,
-    ports: reservedPorts(currentState),
-  });
-
-  logger.info(`Running pre-up hooks (${config.hooks["pre-up"]?.length ?? 0})`);
-  await runHooks({
-    hooks: config.hooks["pre-up"],
-    env: currentEnvVars,
-    cwd: config.projectRoot,
-    phase: "pre-up",
-  });
-
-  if (config.k3d?.enabled && currentState.identity.k3dClusterName) {
-    const registryName = currentState.identity.k3dRegistryName;
-    logger.info(`Ensuring k3d cluster '${currentState.identity.k3dClusterName}'`);
-    const { created } = await ensureCluster({
-      clusterName: currentState.identity.k3dClusterName,
-      registryName,
-      args: k3dArgs,
-      cwd: config.projectRoot,
-    });
-
-    currentState = { ...currentState, k3dClusterCreated: true };
-
-    if (currentState.identity.kubeconfigPath) {
-      logger.info("Writing kubeconfig");
-      await writeKubeconfig(
-        currentState.identity.k3dClusterName!,
-        currentState.identity.kubeconfigPath,
-        config.projectRoot
-      );
-    }
-
-    if (config.k3d?.registry?.enabled && registryName) {
-      const actualPort = await resolveRegistryHostPort({
-        registryName,
-        cwd: config.projectRoot,
-      });
-      const { changed, state: reconciledState, urls: reconciledUrls } =
-        applyRegistryPortOverride({
-          state: currentState,
-          config,
-          actualPort,
-        });
-      if (changed) {
-        const previousPort = currentState.ports.K3D_REGISTRY_PORT;
-        logger.warn(
-          `Registry port drift detected (requested ${previousPort}, actual ${actualPort}). Updating lockfile.`
-        );
-        currentState = reconciledState;
-        currentUrls = reconciledUrls;
-        currentEnvVars = { ...buildEnvVars(currentState, currentUrls), ...siloEnv };
-        await writeEnvAndLockfile({
-          state: currentState,
-          config,
-          urls: currentUrls,
-          hostOrder,
-          portOrder,
-          urlOrder,
-        });
-        // K3D_REGISTRY_PORT drifted — refresh the registry entry so peer
-        // instances see the actually-bound port rather than the originally
-        // allocated one.
-        await registerInstance({
-          projectRoot: config.projectRoot,
-          name: currentState.name,
-          ports: reservedPorts(currentState),
-        });
-      }
-    }
-
-    await updateLockfile(config.projectRoot, (current) => ({
-      ...current.instance,
-      k3dClusterCreated: true,
-    }));
-
-    logger.info(
-      created
-        ? `Created k3d cluster '${currentState.identity.k3dClusterName}'`
-        : `Reusing k3d cluster '${currentState.identity.k3dClusterName}'`
-    );
-  }
-
-  const advertiseSettings = resolveRegistryAdvertiseSettings({
-    config,
-    state: currentState,
-    urls: currentUrls,
-  });
-  if (advertiseSettings) {
-    if (!currentState.identity.kubeconfigPath && advertiseSettings.source === "k3d") {
-      throw new SiloError(
-        "Kubeconfig path missing for registry advertisement",
-        "INVALID_STATE"
-      );
-    }
-    logger.info("Advertising registry via ConfigMap");
-    await advertiseLocalRegistry({
-      registryHost: advertiseSettings.host,
-      ...(advertiseSettings.hostFromContainerRuntime !== undefined && {
-        registryHostFromContainerRuntime: advertiseSettings.hostFromContainerRuntime,
-      }),
-      ...(advertiseSettings.hostFromClusterNetwork !== undefined && {
-        registryHostFromClusterNetwork: advertiseSettings.hostFromClusterNetwork,
-      }),
-      ...(advertiseSettings.help !== undefined && { help: advertiseSettings.help }),
-      ...(currentState.identity.kubeconfigPath !== undefined && {
-        kubeconfigPath: currentState.identity.kubeconfigPath,
-      }),
-      cwd: config.projectRoot,
-      retry: {
-        attempts: REGISTRY_ADVERTISE_RETRY_COUNT,
-        baseDelayMs: REGISTRY_ADVERTISE_RETRY_BASE_DELAY_MS,
-        maxDelayMs: REGISTRY_ADVERTISE_RETRY_MAX_DELAY_MS,
-      },
-    });
-  }
-
-  logger.info(`Running post-up hooks (${config.hooks["post-up"]?.length ?? 0})`);
-  await runHooks({
-    hooks: config.hooks["post-up"],
-    env: currentEnvVars,
-    cwd: config.projectRoot,
-    phase: "post-up",
-  });
-
+const processEnvironment = (owner: ProjectOperation): Record<string, string> => {
+  const allocation = owner.current()!.allocation;
   return {
-    config,
-    state: currentState,
-    urls: currentUrls,
-    envVars: currentEnvVars,
+    ...buildEnvVars(allocation.state, allocation.urls),
+    ...buildSiloProcessEnv({ state: allocation.state, envFilePath: owner.file("env").path, projectId: owner.projectId, generation: owner.generation }),
   };
+};
+
+export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<Record<string, string>> => {
+  const current = owner.current();
+  if (!current) throw new Error("Cannot launch an unallocated project");
+  if (current.phase === "cleanup-required" || owner.launches().some(l => l.phase === "granted" || (l.phase === "exited" && !l.reconciled))) {
+    throw new SiloError("CLEANUP_REQUIRED: reconcile this generation with down before starting again", "CLEANUP_REQUIRED");
+  }
+  const config = storedConfig(current.allocation);
+  const tools = ["tilt", "janitor", "docker", ...(config.k3d?.enabled ? ["k3d"] : [])];
+  const advertise = resolveRegistryAdvertiseSettings({ config, state: current.allocation.state, urls: current.allocation.urls });
+  if (advertise) tools.push("kubectl");
+  await ensureToolsAvailable(tools);
+  await assertEngine(owner);
+  await assertNamesAvailable(owner.resourceClaims(), owner, owner.resources());
+  writeEnvAndLockfile(owner);
+  const env = processEnvironment(owner);
+  await runHooks(owner, { hooks: config.hooks["pre-up"], env, phase: "pre-up" });
+  if (config.k3d?.enabled) {
+    await ensureCluster(owner);
+    await writeKubeconfig(owner);
+  }
+  if (advertise) {
+    await advertiseLocalRegistry({
+      owner, registryHost: advertise.host,
+      ...(advertise.hostFromContainerRuntime === undefined ? {} : { registryHostFromContainerRuntime: advertise.hostFromContainerRuntime }),
+      ...(advertise.hostFromClusterNetwork === undefined ? {} : { registryHostFromClusterNetwork: advertise.hostFromClusterNetwork }),
+      ...(advertise.help === undefined ? {} : { help: advertise.help }),
+      ...(env.KUBECONFIG === undefined ? {} : { kubeconfigPath: env.KUBECONFIG }),
+      retry: { attempts: REGISTRY_ADVERTISE_RETRY_COUNT, baseDelayMs: REGISTRY_ADVERTISE_RETRY_BASE_DELAY_MS, maxDelayMs: REGISTRY_ADVERTISE_RETRY_MAX_DELAY_MS },
+    });
+  }
+  await runHooks(owner, { hooks: config.hooks["post-up"], env, phase: "post-up" });
+  writeEnvAndLockfile(owner);
+  for (const role of ["env", "lock", ...(config.k3d?.enabled ? ["kubeconfig" as const] : [])] as const) owner.file(role).verify();
+  return env;
+};
+
+export const withAllocation = async <T>(name: string | undefined, options: {
+  config: string; force: boolean; profile: string | undefined;
+  executorEntrypoint?: string;
+}, run: (owner: ProjectOperation, allocation: Allocation) => Promise<T>, validateConfig?: (config: ResolvedConfig) => void): Promise<T> => {
+  await loadConfig(options.config);
+  const owner = await ProjectOperation.open(commandRoot(options.config), options.executorEntrypoint === undefined ? {} : { executorEntrypoint: options.executorEntrypoint });
+  const initialLaunches = new Set(owner.launches().map(l => l.id));
+  try {
+    const allocation = await allocateProject(owner, name, options, validateConfig);
+    return await run(owner, allocation);
+  } catch (error) {
+    const current = owner.current();
+    if (current && owner.launches().some(l => !initialLaunches.has(l.id) && (l.phase === "granted" || (l.phase === "exited" && !l.reconciled)))) {
+      owner.noteFailure(error);
+    }
+    throw error;
+  } finally { owner.finish(); }
 };

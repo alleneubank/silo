@@ -1,0 +1,5 @@
+{"account":"account","projects":11,"activeGenerations":0}
+{"account":"guest-account","projects":3,"activeGenerations":0}
+{"recordedObjectsAndMounts":54,"remains":[]}
+{"recordedPids":113,"liveOrReusedPids":[]}
+{"result":"pass","scope":"only recorded fixtures, mount handles and launched PIDs; no statement about historical unattributable volumes or shared cache"}

@@ -1,0 +1,4 @@
+Error: Traceback (most recent call last):
+  /tmp/fixtures/allocation-rehearsal-HbHK2W/old-failed-teardown/Tiltfile:1:5: in <toplevel>
+Error in fail: intentional fixture teardown failure
+silo warn: tilt down failed: Command failed (1): tilt down

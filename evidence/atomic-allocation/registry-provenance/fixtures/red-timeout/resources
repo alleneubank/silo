@@ -1,0 +1,8 @@
+process 706610 pgid=706610: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","env","proof-qx7yfk-registry-hook-timeout","--json"]; teardown via returned subprocess handle or verified recorded group
+process 706850 pgid=706850: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","ci","--timeout","30s","--json"]; teardown via returned subprocess handle or verified recorded group
+process 951964 pgid=951964: ["docker","container","inspect","c1cd1c61825f3e0973b3d0b981a8f16f66c5dd36796aee4d484c0ec331bb7270"]; teardown via returned subprocess handle or verified recorded group
+hook-started registry squatter container c1cd1c61825f3e0973b3d0b981a8f16f66c5dd36796aee4d484c0ec331bb7270; fixture-only teardown exact recorded ID after identity check
+process 951982 pgid=951982: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 952020 pgid=952020: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","down","--delete-cluster","--json"]; teardown via returned subprocess handle or verified recorded group
+process 955101 pgid=955101: ["/home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun","/tmp/baseline/cli.js","status","--json"]; teardown via returned subprocess handle or verified recorded group
+process 955150 pgid=955150: ["docker","container","inspect","c1cd1c61825f3e0973b3d0b981a8f16f66c5dd36796aee4d484c0ec331bb7270"]; teardown via returned subprocess handle or verified recorded group

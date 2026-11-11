@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {readFileSync,appendFileSync} from 'node:fs';
+const root='/tmp/fixtures/allocation-rehearsal-jwoq5f';
+function run(argv: string[],cwd=root){ const r=Bun.spawnSync(argv,{cwd,stdout:'pipe',stderr:'pipe',timeout:30000}); console.log(JSON.stringify({argv,code:r.exitCode,stdout:r.stdout.toString(),stderr:r.stderr.toString()})); assert.equal(r.exitCode,0);return r.stdout.toString(); }
+for(const [id,num] of [['cb88834cdf6dac2aaf09d95333c43d54bdcbd5d1f2d8de9031bb49e1c40c09f5',269],['6decedd86cb07117546775f7dc3a1dd40871d0f89082258a0444cbb0df1310cd',265]] as const){
+const before=JSON.parse(readFileSync(`${root}/${num}.stdout`,'utf8'))[0];const now=JSON.parse(run(['docker','container','inspect',id]))[0]; assert.equal(now.Id,before.Id); assert.equal(now.Created,before.Created);assert.equal(now.Name,before.Name);assert.deepEqual(now.Config.Labels,before.Config.Labels);
+appendFileSync('/mnt/resources',`r5 failed inherited fixture recovery exact recorded container ${id}; verified Id/Created/Name/labels; remove --volumes\n`);
+run(['docker','container','rm','--volumes',id]);}
+const named='silo-inherited-allocation-rehearsal-jwoq5f';const before=JSON.parse(readFileSync(`${root}/263.stdout`,'utf8'));assert.deepEqual(JSON.parse(run(['docker','volume','inspect',named])),before);run(['docker','volume','rm',named]);
+const events=readFileSync(`${root}/events.jsonl`,'utf8').trim().split('\n').map(JSON.parse);
+const projects=[...new Set(events.filter(e=>e.command&&e.argv[1]==='/mnt/dist/cli.js').map(e=>e.cwd))] as string[];
+for(const cwd of projects) run([process.execPath,'/mnt/dist/cli.js','down','--delete-cluster','--clean','--json'],cwd);

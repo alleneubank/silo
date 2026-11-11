@@ -1,0 +1,48 @@
+import assert from "node:assert/strict";
+import { appendFileSync, writeFileSync } from "node:fs";
+
+const root = "/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign";
+const scratch = `${root}-tmp/addendum1`;
+const project = "d91467e8-cb7d-4b13-9331-2524245ffd9b";
+const cluster = "localnet-proof-p5lcbk-backend";
+const network = "720fc4b7614c66d141bbb72fae6f0987b650177b12e0eb27c986f807608c9902";
+const handles = [
+  ["43b582eeb5fdfcca3ef6572a8c82f2e5f1881d76b787f70c9c1549916e8ceccf", `${cluster}-registry.localhost`],
+  ["6286009950cdcb9ad6163afb69284cc40f517a5e8bb8fbe7ae3d49501fa05f90", `k3d-${cluster}-server-0`],
+  ["c5a992e9d4358dda91baa66d4c10ba416090efe169ee4a9d008ef10adc6887d0", `k3d-${cluster}-serverlb`],
+] as const;
+const docker = (argv: string[]) => {
+  const r = Bun.spawnSync(["/usr/bin/docker", ...argv], { stdout: "pipe", stderr: "pipe", timeout: 10_000 });
+  assert.equal(r.exitCode, 0, r.stderr.toString()); return r.stdout.toString().trim();
+};
+const journal = (line: string) => {
+  appendFileSync(`${root}/resources`, line + "\n");
+  appendFileSync("/home/ae/.handoffs/boss-mobile-release/silo-redesign/resources", line + "\n");
+};
+const snapshots: unknown[] = [];
+const volumes: string[] = [];
+for (const [id, name] of handles) {
+  const identity = JSON.parse(docker(["container", "inspect", id, "--format", '{"id":{{json .Id}},"name":{{json .Name}},"created":{{json .Created}},"project":{{json (index .Config.Labels "io.silo.project")}},"cluster":{{json (index .Config.Labels "k3d.cluster")}},"mounts":{{json .Mounts}}}']));
+  assert.equal(identity.id, id); assert.equal(identity.name, `/${name}`);
+  assert.equal(identity.cluster, cluster);
+  if (!name.endsWith("registry.localhost")) assert.equal(identity.project, project);
+  else assert.equal(identity.project, null);
+  snapshots.push(identity);
+  journal(`failed no-image-volume experiment container ${id} name=${name} created=${identity.created}; task creation request 0aa12790-dfa9-4efe-9919-5eb7565bd588 explicitly reported creation; author teardown exact ID --force --volumes`);
+  for (const mount of identity.mounts) if (mount.Type === "volume") {
+    assert.equal(typeof mount.Name, "string"); volumes.push(mount.Name);
+    journal(`failed experiment anonymous mount ${mount.Name} under exact parent ${id}; teardown only with parent --volumes`);
+  }
+}
+const net = JSON.parse(docker(["network", "inspect", network, "--format", '{{json .}}']));
+assert.equal(net.Id, network); assert.equal(net.Name, `k3d-${cluster}`);
+assert.equal(net.Labels["io.silo.project"], project);
+snapshots.push(net);
+writeFileSync(`${scratch}/evidence/no-image-volume-partial-resources.json`, JSON.stringify(snapshots, null, 2) + "\n");
+for (const [id] of handles) docker(["container", "rm", "--force", "--volumes", id]);
+docker(["network", "rm", network]);
+const remaining = new Set(docker(["volume", "ls", "--format", "{{.Name}}"] ).split("\n"));
+for (const name of volumes) assert(!remaining.has(name), `Residual ${name}`);
+writeFileSync(`${scratch}/evidence/no-image-volume-partial-cleanup.json`, JSON.stringify({ containers: handles.map(([id]) => id), network, volumes, absent: true, note: "The failed creation request remains unresolved in its disposable account store. This author teardown does not pretend to reconcile a failed product creation." }, null, 2) + "\n");
+journal(`failed no-image-volume experiment: all three exact containers, network and ${volumes.length} mounted anonymous volumes removed; no volume name deletion used`);
+console.log("partial experiment exact teardown passed");

@@ -1,0 +1,11 @@
+services:
+  redis:
+    image: redis:7-alpine
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID}"
+      io.silo.generation: "${SILO_GENERATION}"
+networks:
+  default:
+    labels:
+      io.silo.project: "${SILO_PROJECT_ID}"
+      io.silo.generation: "${SILO_GENERATION}"

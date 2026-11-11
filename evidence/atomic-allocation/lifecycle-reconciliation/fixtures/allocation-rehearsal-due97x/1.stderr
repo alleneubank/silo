@@ -1,0 +1,8 @@
+silo info: Generated env file at /tmp/fixtures/allocation-rehearsal-due97x/lost-completion/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info:   K3D_API_PORT: 49152
+silo info: Project b0910b43-e93f-4d32-936b-10eed7c80463, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/allocation-rehearsal-due97x/lost-completion/.localnet.env; set +a

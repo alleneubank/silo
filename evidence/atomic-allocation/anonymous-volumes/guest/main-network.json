@@ -1,0 +1,70 @@
+[
+    {
+        "Name": "guest-g6401main_default",
+        "Id": "8a63f7115f2a2accf6c5ea0cc7ccea156fbf9b994713666701340827a0b52ffd",
+        "Created": "2026-11-04T23:14:33.32164592Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.20.0.0/16",
+                    "Gateway": "172.20.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "com.docker.compose.config-hash": "776153510e1c92b13d86217c2093169da31f42ef02fb1f0aac43b16974189ae7",
+            "com.docker.compose.network": "default",
+            "com.docker.compose.project": "guest-g6401main",
+            "com.docker.compose.version": "5.6.1",
+            "io.silo.generation": "1",
+            "io.silo.project": "6e6de392-5401-480c-b5c8-4abcc1807b2e"
+        },
+        "Containers": {
+            "a75599063aecd79e908e86d0407b65ea03febe28c566246ab59032aeb7f1e5fd": {
+                "Name": "guest-g6401main-named-1",
+                "EndpointID": "b6ddc4426bf13e665b2d9a6e5451da26772a3e4ed1695440724abac8bc6a4756",
+                "MacAddress": "52:78:7c:93:a1:0a",
+                "IPv4Address": "172.20.0.3/16",
+                "IPv6Address": ""
+            },
+            "da215d63d62f2dd1b657649998648e08899cdd9a214daa79205bf2f6152fc98d": {
+                "Name": "guest-g6401main-redis-1",
+                "EndpointID": "bba59814f91e35113df368daa316a3345c5dd52ce5cdfc8072e64bcbc40ef606",
+                "MacAddress": "ea:7f:22:97:ef:ec",
+                "IPv4Address": "172.20.0.4/16",
+                "IPv6Address": ""
+            },
+            "efe832075a849abf752a21222ef58679ee615c616bb91b64f58025dd959ff8f3": {
+                "Name": "guest-g6401main-explicit-1",
+                "EndpointID": "673633f74bbe5b4ea57d66d2ce3c7b64e3e9ef88d7584e3b5576af120ca87af8",
+                "MacAddress": "2e:fa:49:b6:95:80",
+                "IPv4Address": "172.20.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.20.0.0/16": {
+                        "IPsInUse": 6,
+                        "DynamicIPsAvailable": 65530
+                    }
+                }
+            }
+        }
+    }
+]

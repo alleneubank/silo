@@ -1,0 +1,32 @@
+bun test v1.4.4 (38afee6c8)
+
+src/commands/ci.test.ts:
+88 |       const [retryExit, retryOutput] = await Promise.all([retry.exited, new Response(retry.stdout).text()]);
+89 |       expect(retryExit).toBe(1);
+90 |       expect(JSON.parse(retryOutput)).toMatchObject({ code: "BUSY" });
+91 |       const recover = Bun.spawn([...command, "down", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
+92 |       const [recoverExit, recoverOutput, recoverErrors] = await Promise.all([recover.exited, new Response(recover.stdout).text(), new Response(recover.stderr).text()]);
+93 |       if (recoverExit !== 0) throw new Error(`Recovery failed: ${recoverOutput}\n${recoverErrors}`);
+                                            ^
+error: Recovery failed: {"schemaVersion":1,"code":"ENGINE_UNAVAILABLE","message":"ENGINE_UNAVAILABLE: docker container ls failed; absence is not established"}
+
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:93:40)
+(fail) ci --json emits one complete result on SIGINT and status observes its dead launch without mutating ownership [4778.15ms]
+88 |       const [retryExit, retryOutput] = await Promise.all([retry.exited, new Response(retry.stdout).text()]);
+89 |       expect(retryExit).toBe(1);
+90 |       expect(JSON.parse(retryOutput)).toMatchObject({ code: "BUSY" });
+91 |       const recover = Bun.spawn([...command, "down", "--clean", "--json"], { cwd: root, env, stdout: "pipe", stderr: "pipe", timeout: 30_000 });
+92 |       const [recoverExit, recoverOutput, recoverErrors] = await Promise.all([recover.exited, new Response(recover.stdout).text(), new Response(recover.stderr).text()]);
+93 |       if (recoverExit !== 0) throw new Error(`Recovery failed: ${recoverOutput}\n${recoverErrors}`);
+                                            ^
+error: Recovery failed: {"schemaVersion":1,"code":"ENGINE_UNAVAILABLE","message":"ENGINE_UNAVAILABLE: docker container ls failed; absence is not established"}
+
+
+      at <anonymous> (/Users/allen/Work/alleneubank/boss-mobile-release-silo-guest-fixes/src/commands/ci.test.ts:93:40)
+(fail) ci --json emits one complete result on SIGTERM and status observes its dead launch without mutating ownership [2745.68ms]
+
+ 0 pass
+ 2 fail
+ 22 expect() calls
+Ran 2 tests across 1 file. [8.50s]

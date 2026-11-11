@@ -1,0 +1,24 @@
+3f87992621a06888ec32c55afe46ec9b71211005
+2e4f0501ccc6423900d902a70623a629917153cc7c0a772b6eef3cb779741ec6  /mnt/dist/cli.js
+Fri Nov  6 06:22:00 UTC 2026
+Linux onyx 6.8.0-147-generic #147-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep 24 11:33:16 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+1.4.4
+janitor 0.3.1 (f9d8de4)
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+k3d version v5.9.0
+k3s version v1.35.5-k3s1 (default)
+{"Client":{"Platform":{"Name":"Docker Engine - Community"},"Version":"29.9.2","ApiVersion":"1.56","DefaultAPIVersion":"1.56","GitCommit":"a82e528","GoVersion":"go1.26.10","Os":"linux","Arch":"amd64","BuildTime":"Tue Oct 20 18:44:40 2026","Context":"default"},"Server":{"Platform":{"Name":"Docker Engine - Community"},"Version":"29.9.2","ApiVersion":"1.56","MinAPIVersion":"1.40","Os":"linux","Arch":"amd64","Components":[{"Name":"Engine","Version":"29.9.2","Details":{"ApiVersion":"1.56","Arch":"amd64","BuildTime":"Tue Oct 20 18:44:40 2026","Experimental":"false","GitCommit":"0367cbe","GoVersion":"go1.26.10","KernelVersion":"6.8.0-147-generic","MinAPIVersion":"1.40","Module":"github.com/moby/moby/v2","ModuleVersion":"v2.0.0+unknown","Os":"linux"}},{"Name":"containerd","Version":"v2.4.2","Details":{"GitCommit":"b7a25261e029d68978bbf290df0a62fc819b3c51"}},{"Name":"runc","Version":"1.5.2","Details":{"GitCommit":"v1.5.2-0-g29dd3dc2"}},{"Name":"docker-init","Version":"0.19.0","Details":{"GitCommit":"de40ad0"}}],"GitCommit":"0367cbe","GoVersion":"go1.26.10","KernelVersion":"6.8.0-147-generic","BuildTime":"2026-10-20T18:44:40.000000000+00:00"}}
+{
+  "clientVersion": {
+    "major": "1",
+    "minor": "35",
+    "gitVersion": "v1.35.3+k3s1",
+    "gitCommit": "be38e8843c3498607d41ce583bdbb0ef1e63bba6",
+    "gitTreeState": "clean",
+    "buildDate": "2026-03-28T03:22:47Z",
+    "goVersion": "go1.25.7",
+    "compiler": "gc",
+    "platform": "linux/amd64"
+  },
+  "kustomizeVersion": "v5.7.1"
+}

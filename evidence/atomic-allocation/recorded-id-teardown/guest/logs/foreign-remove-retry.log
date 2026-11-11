@@ -1,0 +1,12 @@
+bac4a25de3fb7b9cfda9c369c72f740aa78ff0453dc9427a394eebf204069c3f
+REMOVE_CONTAINER_EXIT=0
+8479c389cdc7b4e3df66e3ad331374c97dfd000b9b4f695dfa1119b69345390c
+REMOVE_NETWORK_EXIT=0
+[]
+Error response from daemon: get 411c8c8be7c8c4a8257b44ab9cc8dc620b62683077759a43be678d84b54b9b2f: no such volume
+silo info: Removed owned snapshots and released this generation's claims.
+{"schemaVersion":1,"legacy":false,"changed":true,"project":{"schemaVersion":1,"projectId":"ee3df172-b5f1-4b6f-8441-09a7e12b48b3","root":"/tmp/foreign","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+CLEAN_RETRY_EXIT=0
+silo info: No allocated instance. Nothing to stop.
+{"schemaVersion":1,"legacy":false,"changed":false,"project":{"schemaVersion":1,"projectId":"ee3df172-b5f1-4b6f-8441-09a7e12b48b3","root":"/tmp/foreign","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+REPEATED_EXIT=0

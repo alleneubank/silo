@@ -1,0 +1,7 @@
+silo info: Generated env file at /tmp/fixtures/peertwo/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   REDIS_PORT: 39117
+silo info:   TILT_PORT: 39118
+silo info: Project e340f672-88e5-4e73-b782-59532c2f8b3c, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/fixtures/peertwo/.localnet.env; set +a

@@ -1,0 +1,5 @@
+silo info: Generated env file at /tmp/guest/fixtures/named/.localnet.env
+silo info: Wrote lockfile
+silo info: Stopped Tilt; resources and claims retained. Inspect status before clean.
+
+EXIT=0

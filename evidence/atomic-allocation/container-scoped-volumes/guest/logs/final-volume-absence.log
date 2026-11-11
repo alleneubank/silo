@@ -1,0 +1,8 @@
+[]
+Error response from daemon: get 01f248d822c537a26f3155177108e990b6a7cc1aded4711708d394ef9c94dceb: no such volume
+Error response from daemon: get sguest1105-guestnamed_named: no such volume
+Error response from daemon: get sguest1105-fixture-explicit: no such volume
+Error response from daemon: get 78ba5b06d604ea77422428b42e456bb0eef17470eb6f29928467d02c52b5b77f: no such volume
+Error response from daemon: get cff13966f0412ddd3164baa0d930858be408aba8c1d4aad84297ae62a83f22a9: no such volume
+
+EXIT=1

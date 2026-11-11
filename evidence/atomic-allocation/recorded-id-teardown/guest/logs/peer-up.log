@@ -1,0 +1,20 @@
+silo info: Generated env file at /tmp/peer/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/peer/.localnet.env
+silo info: Wrote lockfile
+silo info: Generated env file at /tmp/peer/.localnet.env
+silo info: Wrote lockfile
+silo info: Tilt API is on port 49155 (pid-alive is not resource health).
+silo info:   tilt get uiresources --port 49155
+silo info:   silo doc tilt
+Tilt started on http://127.0.0.1:49155/
+v0.37.8-fork.20261009.g753c01455, built 2026-10-09
+
+Initial Build
+Loading Tiltfile at: /tmp/peer/Tiltfile
+Successfully loaded Tiltfile (453.182µs)
+ERROR: [] "msg"="Reconciler error" "error"="Failed to update API server: create togglebuttons/listener-disable: togglebuttons.tilt.dev \"listener-disable\" already exists" "controller"="tiltfile" "controllerGroup"="tilt.dev" "controllerKind"="Tiltfile" "Tiltfile"={"name"="(Tiltfile)"} "namespace"="" "name"="(Tiltfile)" "reconcileID"="f60c9a31-9b0c-4f91-abb3-d358e687f536"
+     listener │ 
+     listener │ Initial Build
+     listener │ Running cmd: bun -e "Bun.serve({port:Number(process.env.APP_PORT),fetch:()=>new Response(\"peer\")})"
+EXIT=0

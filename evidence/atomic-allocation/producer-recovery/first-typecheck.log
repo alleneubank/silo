@@ -1,0 +1,5 @@
+$ bun run tsc --noEmit
+src/core/lease_store.test.ts(240,98): error TS2322: Type '"create"' is not assignable to type '"delete" | "none"'.
+src/core/lease_store.test.ts(256,37): error TS2322: Type '"create"' is not assignable to type '"delete" | "none"'.
+src/core/lease_store.test.ts(563,149): error TS2322: Type '"hook"' is not assignable to type '"delete" | "none"'.
+error: "tsc" exited with code 2

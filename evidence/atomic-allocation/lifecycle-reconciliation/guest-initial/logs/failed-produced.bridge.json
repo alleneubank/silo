@@ -1,0 +1,77 @@
+[
+    {
+        "Name": "bridge",
+        "Id": "4fdb79a9130c6570c1c62acc4ac570f754b2cb2c03c9fb411c84982550da0302",
+        "Created": "2026-10-24T00:09:30.938815054Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "127.0.0.1",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1500"
+        },
+        "Labels": {},
+        "Containers": {
+            "7a7c37285a447ffc7aa4147c77caa80aa2cc2fdb07ed8101d9a613f872c2ddad": {
+                "Name": "intelligent_wright",
+                "EndpointID": "77d76ce9c0797fc2de95b57bdb25a0d5e096dc3fb8721671feb72619b518bb4f",
+                "MacAddress": "76:8f:49:dd:c9:e6",
+                "IPv4Address": "172.17.0.4/16",
+                "IPv6Address": ""
+            },
+            "b4f58b8a4210850e9373ce680812fbf07aecf10985018906f59568698dd1530d": {
+                "Name": "nifty_faraday",
+                "EndpointID": "149e32732eba965f3bca2fc2137931cbfcfe7742664cca9a0078b83f46521052",
+                "MacAddress": "fa:5b:9d:68:d6:7a",
+                "IPv4Address": "172.17.0.3/16",
+                "IPv6Address": ""
+            },
+            "d08dd227f7be43390d820a492b2a73e31b7ae45c2f46b7cc2d49958a0c519141": {
+                "Name": "youthful_keller",
+                "EndpointID": "383db5efc40147d169495e5b44ce76791e8ae5393952d96a61aef38a92282123",
+                "MacAddress": "ce:76:87:01:5c:a1",
+                "IPv4Address": "172.17.0.2/16",
+                "IPv6Address": ""
+            },
+            "ec085f36caf1e90b39291265d1b5ebe053550b6804f6cff9904cd9091f88358d": {
+                "Name": "peaceful_einstein",
+                "EndpointID": "4693ef5a3114f38f6b7aaa5e1dd8141336041edcb7da23e2660eb48eaac0ac2d",
+                "MacAddress": "96:cc:75:36:5a:ae",
+                "IPv4Address": "172.17.0.5/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.17.0.0/16": {
+                        "IPsInUse": 7,
+                        "DynamicIPsAvailable": 65529
+                    }
+                }
+            }
+        }
+    }
+]

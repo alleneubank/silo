@@ -1,0 +1,43 @@
+[
+    {
+        "Name": "proof-m7l4v7-failed-network-create-ipam-blocker",
+        "Id": "ad40b8e4bb28aefdd17a0846d1b67dab965dbec8ce6e5c8eae4496b3833c712b",
+        "Created": "2026-11-06T05:15:10.860446232Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.29.0.0/16",
+                    "Gateway": "172.29.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.rehearsal": "allocation-rehearsal-m7l4V7"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.29.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]

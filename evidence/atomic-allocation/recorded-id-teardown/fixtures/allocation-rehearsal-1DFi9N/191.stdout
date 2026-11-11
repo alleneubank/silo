@@ -1,0 +1,11 @@
+[
+    {
+        "CreatedAt": "2026-11-06T01:21:48Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/silo-sentinel-allocation-rehearsal-1dfi9n/_data",
+        "Name": "silo-sentinel-allocation-rehearsal-1dfi9n",
+        "Options": null,
+        "Scope": "local"
+    }
+]

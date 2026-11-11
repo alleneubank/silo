@@ -1,0 +1,1 @@
+ae       2817127 /home/ae/.local/share/mise/installs/bun/1.4.4/bin/bun /mnt/dist/cli.js down --delete-cluster --clean --json

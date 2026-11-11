@@ -1,0 +1,47 @@
+process	capacity-clean	3852612	bun /opt/dist/cli.js --config /tmp/fixtures/capacity/silo.toml down --clean --json
+process	capacity-clean-repeat	3856712	bun /opt/dist/cli.js --config /tmp/fixtures/capacity/silo.toml down --clean --json
+process	restart-env	3878288	bun /opt/dist/cli.js env r7guest-restart --json
+observer	restart-container	3878462
+observer	restart-network	3878464
+process	restart-ci-1	3878466	bun /opt/dist/cli.js ci --timeout 90s --json
+process	restart-down-1	3887567	bun /opt/dist/cli.js down --json
+process	restart-ci-2	3889834	bun /opt/dist/cli.js ci --timeout 90s --json
+process	restart-clean	3892069	bun /opt/dist/cli.js down --clean --json
+process	restart-clean-repeat	3893806	bun /opt/dist/cli.js down --clean --json
+blocker-network	4b1ec0cb5e3687c825d194ef0f87446cda99dd1a4f326bdba7da79aec8a026bd
+process	network-env	3906164	bun /opt/dist/cli.js env r7guest-netfail --json
+observer	network-fail-container	3906264
+observer	network-fail-network	3906266
+process	network-ci-failure	3906268	bun /opt/dist/cli.js ci --timeout 60s --json
+process	network-clean	3906346	bun /opt/dist/cli.js down --clean --json
+process	network-clean-repeat	3906408	bun /opt/dist/cli.js down --clean --json
+process	network-env-fixed	3912546	bun /opt/dist/cli.js env r7guest-netfail --json
+observer	network-fixed-container	3912884
+process	network-ci-overlap-1	3912886	bun /opt/dist/cli.js ci --timeout 60s --json
+process	network-clean-real	3913617	bun /opt/dist/cli.js down --clean --json
+process	network-clean-real-repeat	3913908	bun /opt/dist/cli.js down --clean --json
+process	network-ci-overlap-2	3935732	bun /opt/dist/cli.js ci r7guest-netfail --timeout 60s --json
+process	network-clean-2	3936682	bun /opt/dist/cli.js down --clean --json
+process	network-clean-2-repeat	3936953	bun /opt/dist/cli.js down --clean --json
+process	interrupted-up	3941782	setsid timeout 180s bun /opt/dist/cli.js up
+process	interrupted-clean	3951924	bun /opt/dist/cli.js down --clean --json
+process	interrupted-clean-repeat	3956601	bun /opt/dist/cli.js down --clean --json
+process	ctrlc-up	3962884	setsid timeout 180s bun /opt/dist/cli.js up
+process	ctrlc-clean	3970418	bun /opt/dist/cli.js down --clean --json
+process	ctrlc-clean-repeat	3970493	bun /opt/dist/cli.js down --clean --json
+process	ctrlc-clean-retry	3975821	bun /opt/dist/cli.js down --clean --json
+process	ctrlc-clean-final-repeat	3978296	bun /opt/dist/cli.js down --clean --json
+process	k3d-env	3990529	bun /opt/dist/cli.js env r7guest-k3dfail --json
+listener	3990964	49155
+observer	k3d-container	4061193
+observer	k3d-network	4061196
+observer	k3d-cache	4061199
+process	k3d-ci-port-failure	4061203	bun /opt/dist/cli.js ci --timeout 60s --json
+process	k3d-down-delete	4093237	bun /opt/dist/cli.js down --delete-cluster --json
+process	k3d-clean-retained-cache	4098986	bun /opt/dist/cli.js down --clean --json
+process	k3d-clean-final	4124195	bun /opt/dist/cli.js down --clean --json
+process	k3d-clean-final-repeat	4125041	bun /opt/dist/cli.js down --clean --json
+process	k3d-clean-port-retry	4141004	bun /opt/dist/cli.js down --clean --json
+process	k3d-clean-port-repeat	4141531	bun /opt/dist/cli.js down --clean --json
+process	k3d-clean-timewait-retry	4165562	bun /opt/dist/cli.js down --clean --json
+process	k3d-clean-timewait-repeat	4166035	bun /opt/dist/cli.js down --clean --json

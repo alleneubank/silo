@@ -1,0 +1,43 @@
+[
+    {
+        "Name": "r7guest-overlap-blocker",
+        "Id": "4b1ec0cb5e3687c825d194ef0f87446cda99dd1a4f326bdba7da79aec8a026bd",
+        "Created": "2026-11-06T05:04:23.583866125Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "192.0.2.0/28",
+                    "Gateway": "192.0.2.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "r7.guest.owner": "network-blocker"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "192.0.2.0/28": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 13
+                    }
+                }
+            }
+        }
+    }
+]

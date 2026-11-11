@@ -1,0 +1,9 @@
+silo info: Generated env file at /tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter/.localnet.env
+silo info: Wrote lockfile
+silo info: Ports:
+silo info:   K3D_REGISTRY_PORT: 49152
+silo info:   APP_PORT: 48127
+silo info:   TILT_PORT: 48128
+silo info:   K3D_API_PORT: 49153
+silo info: Project 7519d691-ce49-4666-a686-1a06db4b2e56, generation 1: reserved
+silo info: Did not start Tilt or k3d. Run 'silo up' to start, or: set -a; source /tmp/rehearsal/allocation-rehearsal-GAEE6n/registry-hook-squatter/.localnet.env; set +a

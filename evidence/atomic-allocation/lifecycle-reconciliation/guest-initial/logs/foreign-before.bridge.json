@@ -1,0 +1,56 @@
+[
+    {
+        "Name": "bridge",
+        "Id": "4fdb79a9130c6570c1c62acc4ac570f754b2cb2c03c9fb411c84982550da0302",
+        "Created": "2026-10-24T00:09:30.938815054Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16",
+                    "Gateway": "172.17.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "127.0.0.1",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1500"
+        },
+        "Labels": {},
+        "Containers": {
+            "74081523b121ecb64c207a8fe98c31bc034a03c0ba46fba19104ef5ca8d6726b": {
+                "Name": "ecstatic_dijkstra",
+                "EndpointID": "8c74ce89170e708f4a518c328c994004cc9df657d2d0f984d4cdb8a85c77ea43",
+                "MacAddress": "32:da:af:17:45:03",
+                "IPv4Address": "172.17.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.17.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

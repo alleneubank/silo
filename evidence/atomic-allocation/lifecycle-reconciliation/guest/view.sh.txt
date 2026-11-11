@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+lane=/home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-redesign
+guest="$lane-tmp/r6/guest-confirmation"
+exec bwrap --ro-bind / / --dev-bind /dev /dev --proc /proc \
+  --bind "$guest/account" /home/ae \
+  --ro-bind /home/ae/.local/share/mise /home/ae/.local/share/mise \
+  --bind "$guest" /tmp --ro-bind "$lane" /opt --chdir /tmp \
+  --bind "$lane-tmp/pids" /tmp/pids --ro-bind "$lane-tmp/r6/bin" /tmp/bin \
+  --bind /home/ae/.handoffs/boss-mobile-release/silo-redesign/resources /tmp/shared-resources \
+  --setenv HOME /home/ae --setenv TMPDIR /tmp/tmp --setenv BUN_INSTALL_CACHE_DIR /tmp/cache/bun \
+  --setenv DOCKER_HOST unix:///var/run/docker.sock --unsetenv DOCKER_CONTEXT \
+  --setenv KUBECONFIG /tmp/no-global-kubeconfig --setenv CI false --setenv GITHUB_ENV "" --unsetenv GITHUB_ACTIONS --setenv SILO_PROFILE "" \
+  --setenv PATH /home/ae/.local/share/mise/installs/bun/1.4.4/bin:/home/ae/.local/share/mise/installs/github-alleneubank-janitor/0.3.1:/home/ae/.local/share/mise/installs/github-alleneubank-tilt/0.37.8-fork.20261009.g753c01455:/tmp/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin \
+  "$@"

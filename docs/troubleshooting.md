@@ -1,112 +1,154 @@
 # Troubleshooting
 
-This document lists common errors and fixes. It is bundled with the CLI and can
-be printed with:
+After a failed `ci` or while a Compose `up` is live, use `down --clean` to stop
+the recorded group and capture its finished owned producers before exact-ID
+cleanup. The producer's recording is sealed before deletion, so a retry cannot
+adopt a same-name replacement. Missing non-delete completion facts, inherited
+mount ambiguity and unsupported provenance still retain claims.
 
-```
-silo doc troubleshooting
-```
+A k3d create with a known failed exit records its labelled partial outputs before
+reporting the error. Use `down --delete-cluster` for exact cleanup, including
+its directly created image cache when its durable creation receipt still matches
+and no container references it. A cache left before receipt requires its owner. A failed network
+or volume create with no output can reconcile through complete namespace
+verification. Missing create completion facts remain unresolved.
 
-## Config File Not Found
+Resolved launch history is compacted at the 1024-record limit. `STORE_FULL` then
+means unresolved processes or effects occupy capacity; inspect their exact
+recorded targets and restore the original engine before retrying. Do not delete
+ownership state to clear the limit. Resource/mount audit history is retained.
 
-**Error:** `Config file not found`
+A failed exact-ID delete can recover after the target disappears independently.
+Retry down on its recorded engine. A lost completion may show a `resolved` /
+`target-absent` launch with null exit code; this is an absence proof, not a
+successful tool exit. Unknown creates remain unresolved.
 
-- Ensure `silo.toml` exists in the current directory, or pass `--config`.
+Unreleased proposal SQLite formats 1 and 2 are incompatible with format 3 and refuse
+with `LEASE_STORE_UNAVAILABLE` before application mutation. SQLite may first
+recover an interrupted transaction. Read-only status cannot perform that recovery;
+use `down` to recover a supported store. Use the matching old
+proposal to drain its projects; any real store recreation belongs to a separately
+authorized host cutover. Do not delete an unrecognized store to clear the error.
 
-## No Lockfile Found
+Use `silo status --json` and the error's code before changing anything.
+Errors preserve ownership when absence or attribution cannot be proved.
 
-**Error:** `No lockfile found. Nothing to stop.`
+## LEGACY_STATE
 
-- Run `silo up` first, or remove `--clean` if you intended to keep state.
+All allocation/lifecycle commands, including read-only status, refuse with a
+listing of old JSON registry entries or a legacy root lock. JSON output has
+`code: "LEGACY_STATE"`, `found` and `changed: false`; status exits nonzero.
+Malformed and lock-only entries block too. Nothing is migrated, deleted,
+recreated or automatically stopped.
 
-## Instance Already Running
+Before the host's first new allocation: announce cutover, upgrade or retire
+every permitted old invocation, and wait for every old operation to finish.
+Each project owner must stop and recreate its ephemeral environment. An old
+command paused before publication must be drained before the clean scan.
+Do not clear someone else's entry, run an old client after cutover, or change
+HOME to evade the refusal. See `silo doc ports`.
 
-`silo up` reports the running instance and exits 0 instead of starting a second
-stack:
+## BUSY / ALREADY_RUNNING / CONFIG_CHANGED
 
-```
-silo info: Instance 'feature-x' is already running (Tilt pid 12345)
-```
+`BUSY` means another operation owns this root. Wait for that operation; there
+is no timeout-based lock stealing. A repeated matching live `up` reports the
+existing instance and exits successfully. A changed name/profile/config or
+`--force` cannot disown it. Run `down` to reconcile first. For a retained
+cluster use explicit `down --delete-cluster` if deletion is intended.
+Then reconfigure the stopped generation with `--force`, or use `--clean` to
+retire it. Parallel stacks need separate roots and names.
+Clean before removing a generated-file role, such as disabling k3d after it
+published a kubeconfig, or changing any recorded path's spelling. Silo retains
+the prior generation until its recorded snapshots are cleaned.
 
-- Run `silo down` to stop it, or `silo up --force` to start a parallel stack on
-  new ports.
+## NAME_CONFLICT / PATH_CONFLICT / PATH_CHANGED
 
-**Error:** `Instance '<name>' is already running: it is running as '<other>', ...`
+Silo does not adopt same-name clusters, registries, networks, volumes,
+containers, or unreceipted output files. Read-only inspection commands and
+identities accompany backend conflicts. Ask the object's owner to resolve it
+or choose a different project name. Never delete a peer object to proceed.
 
-- `silo up <name>` or `silo up --profile <name>` asked for something other than
-  what is live. Run `silo down` first, or `silo up --force` to start a parallel
-  stack with the requested name or profile.
+Output and custom kubeconfig paths must be literal ASCII project-relative
+files. Separate roles cannot alias the same physical target, including case
+variants. Symlinks, hardlinks, traversal, config files and control paths
+refuse. A replaced snapshot or parent directory is not deleted. Restore the
+owner's original recorded object only when its identity is understood; do not
+edit `.silo.lock` or the SQLite store to manufacture permission.
 
-**Error:** `Instance '<name>' already running. Use 'silo down' first.`
+## PORT_BIND_CONFLICT
 
-- Raised by `silo ci`, which never reuses a running environment. Run
-  `silo down`, or stop the Tilt process and try again.
+A native process occupied a claimed port after probing, or a backend published
+an unclaimed port. Claims and snapshots keep their assignment. The listener
+is not killed and its HTTP response is not treated as readiness. Identify
+and resolve it through its owner, then run `down` to reconcile. A remaining
+TCP/UDP listener blocks clean and reallocation.
 
-## Another silo up Is Starting
+## CLEANUP_REQUIRED
 
-**Error:** `Another 'silo up' is starting this project (pid <pid>). Wait for it to finish.`
+After Ctrl+C, inspect `status`. A reconciled `retained` instance can restart
+with `up` and reuse its cluster. `cleanup-required` or an absent operation owner
+requires `down` before restarting: a stopped process alone does not establish
+reconciliation. Interrupts during preparation can leave partial resources;
+run `down --delete-cluster --clean` to remove owned cluster resources and release
+claims, or plain `down` to reconcile while retaining resources.
 
-- Two `silo up` runs overlapped. The second refuses rather than racing the first
-  into a duplicate stack. Wait for the first to record its Tilt, then retry.
-- If no `silo up` is actually running, the claim file `.silo.startup` was left
-  behind by a killed process; silo reclaims it automatically once the recorded
-  pid is gone, and removing the file by hand is safe.
-- silo waits on a live starter for as long as it runs -- hooks and k3d cluster
-  creation can take minutes -- rather than assuming a slow startup is dead.
+Retained resources, uncertain requests, missing executor completion facts or
+live/unknown groups prevent claim release. `status --json` lists the recorded
+launches, exact objects and problem. `down --clean` keeps snapshots and claims
+when proof is incomplete. `down --delete-cluster --clean` deletes only exact
+owned Docker IDs. Cleanup never evaluates the Tiltfile, runs teardown hooks or
+delegates a project-wide deletion. An uncertain request cannot
+be cancelled by process death or an empty listing. Escalate with those facts
+rather than deleting the ownership store.
 
-## Stacks Running That No Longer Own the Lockfile
+Container receipts include `anonymousVolumes` with each mount's name, creation
+time and destination for audit, never deletion authority. `down` removes exact
+receipted Compose container IDs with their anonymous volumes, then exact network
+IDs. Explicit cluster deletion does the same for k3d containers. Named
+mounts and anonymous volumes another container still references remain intact.
+Ordinary down retains k3d's image cache. Explicit cluster deletion removes only
+a cache directly created and durably receipted by this allocation, after the
+executor revalidates its active store receipt, exact identity, creation token,
+recorded labels and engine, and proves no container references it. Mismatches
+return CLEANUP_REQUIRED with claims retained. Other named/observed volumes
+still require their owner. Docker has no conditional volume delete; external
+replacement after the final inspection remains a disclosed API race.
 
-**Error:** `N stack(s) from this project are running but no longer own the lockfile`
+If another tool removed a parent without its volumes, or a shared mount remains,
+Silo reports each surviving name as leaked and never deletes it by name. The
+reported object may be replacement data. Plain down keeps the allocation and
+records the problem; clean and forced replacement refuse while that name is
+present. Resolve the data with its owner independently, then retry. Removing a
+borrower alone does not grant Silo cleanup authority for a missing parent.
+Inherited `volumes-from` provenance refuses before removal because Docker can
+delete an inherited anonymous volume when its last user is removed. Never
+prune or delete an unrecorded volume to clear a Silo error.
 
-- A `silo up --force` handover did not finish, or the replacement stack it
-  started has since exited, leaving an earlier stack running with no owner.
-- Stop the listed pids with `kill <pid>`, or run `silo up --force` to start a
-  new stack beside them.
+An interrupted or short CI environment append keeps its sink receipt and
+claims even through `down --clean`; cleanup cannot undo or replay an uncertain
+append. Inspect the runner file with its owner and preserve the recorded state
+when escalating. A failed parent-directory sync remains pending even when a
+rename or unlink is visible; retrying recovery must sync the parent successfully.
 
-## Down --clean With Stacks Still Running
+## ENGINE_UNAVAILABLE / ENGINE_CHANGED / STORE_ERROR
 
-**Error:** `--clean would erase the only record of N running stack(s)`
+A failed query is not proof of absence. Restore the original local Docker
+endpoint and engine before reconciliation. Remote engines are unsupported.
+SQLite busy, corrupt or unknown-version state refuses without resetting
+another project's claims. Preserve the original state and collect the error;
+never create a replacement empty store as a repair.
 
-- `silo down --clean` removes the lockfile and releases this project's port
-  reservations. While a disowned stack is running, that record is the only
-  thing naming its pid and keeping peer projects off its ports.
-- Stop the listed pids with `kill <pid>`, then re-run. Plain `silo down`
-  (without `--clean`) still works and leaves the records in place.
+## Tool/config errors
 
-## Disowned Stacks Still Running
+Use Bun 1.4.4, Janitor 0.3.1 with `--pgroup-only`, Tilt, Docker, and optional
+k3d/kubectl on PATH. Read `silo help <command>` or `silo doc config` for invalid
+arguments and profile names. `--config` selects the project through the
+config's directory. `silo init` refuses an existing config.
 
-**Warning:** `N stack(s) disowned by 'silo up --force' are still running`
-
-- A previous `silo up --force` started a parallel stack. The stack named in the
-  warning no longer owns the lockfile, so `silo down` will not stop it.
-- `silo status` lists each disowned pid with the ports it answers on. Stop one
-  with `kill <pid>`; the entry disappears from the lockfile once it exits.
-
-## Tilt Already Running Outside silo
-
-**Error:** `Tilt already running outside silo (pid <pid>). Stop it first.`
-
-- A Tilt whose working directory is this project root is running, and silo did
-  not start it. Stop the named pid and retry.
-- Stacks silo started are never reported here, including the `tilt up` running
-  under a supervisor and stacks disowned by `silo up --force`.
-
-## Profile Switch Requires --force
-
-**Error:** `Profile change requires --force (current: X, requested: Y)`
-
-- Re-run with `--force` when switching profiles:
-  `silo up --profile <name> --force`
-
-## Unknown or Missing Profile
-
-**Error:** `Unknown profile: <name>` or `No profiles defined in config`
-
-- Check `[profiles]` in `silo.toml`, or remove `--profile`.
-
-## Missing Tools
-
-**Error:** `tilt` or `k3d` not found
-
-- Ensure required tools are installed and on your PATH. The error names an
-  install URL for `janitor`, `tilt`, `k3d`, and `kubectl`.
+`LAUNCH_FAILED` includes the supervisor's exit status and diagnostic when it
+exits before the grant handshake. A version-manager shim can exist on PATH
+without a runnable Janitor version in the project's directory. Check
+`janitor version` from that directory and configure the required version there,
+or put the installed Janitor binary's directory ahead of its shim on PATH.
+The native launch tests also run this check from a disposable fixture directory;
+a repository-only version-manager setting does not configure that directory.

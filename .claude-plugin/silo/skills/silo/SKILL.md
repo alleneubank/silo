@@ -1,62 +1,73 @@
 ---
 name: silo
-description: Guides usage of the silo CLI for isolated Tilt and k3d dev environments. Use when working with silo.toml, silo commands, profile switching, port isolation, or Tilt/k3d bootstrap.
+description: Use when operating silo environments, editing silo.toml, switching profiles, or diagnosing Tilt/k3d allocation and cleanup.
 ---
 
 # silo
 
-Use this Skill when a project uses `silo.toml` or the user asks about `silo` commands, profiles, port isolation, or k3d/Tilt integration.
+Read the installed CLI's bundled reference with `silo doc <topic>` before
+changing its configuration or repairing an environment. Discover topics with
+`silo doc --list`; inspect commands with `silo help <command>`.
 
-## Instructions
+- `silo env [name]` atomically reserves ports, names and file targets, and
+  exports env plus `.silo.lock`. It starts no stack. `silo up [name]` prepares
+  the environment and supervises Tilt; repeating the same live `up` reuses it.
+  `silo ci [name] --timeout 300s` runs the supervised CI flow.
+- `silo status --json` reports authoritative project/generation ownership,
+  claims, resources and cleanup problems. A live supervisor is not resource
+  health: source the generated env and query
+  `tilt get uiresources --port "$TILT_PORT"`. Keep lifecycle changes in silo.
+- Stop with `silo down`. k3d resources and all reservations remain owned.
+  Receipted Compose containers are removed with their anonymous volumes.
+  Cleanup stops only verified recorded process groups and removes recorded
+  container/network IDs. It never evaluates Tiltfile or runs teardown hooks.
+  Kubernetes workloads remain in a retained cluster. Finished owned Tilt/hook
+  producers are recorded before deletion, including failed CI and stopped live
+  up; recording is sealed before any deletion and cannot renew on retry. Missing
+  non-delete facts or unsupported provenance require independent owner resolution.
+  Matching names/labels without a pending owned producer never grant authority.
+  `silo down --delete-cluster --clean` explicitly deletes the owned cluster,
+  removing each exact receipted container ID with its anonymous volumes, then
+  snapshots and claims once absence is proved. Only a directly created, durably
+  receipted image cache may use name-addressed deletion, after independent
+  executor receipt/token/identity/engine validation and an all-container reference
+  check. `status --json` lists audit-only `anonymousVolumes`, even after a parent
+  is gone. Named/explicit mounts and volumes still used elsewhere survive.
+  Leaked or replaced names keep claims and block clean/force until their owner
+  resolves them independently; Silo cannot clean a volume whose parent is gone.
+  Inherited `volumes-from` provenance refuses before container removal.
+  Ordinary down retains k3d's image cache; explicit cluster deletion removes its
+  verified unused cache. Missing creation receipts and mismatches retain claims.
+  Same-config ci/down/ci reuses its generation with new ID receipts and keeps
+  old mount history. A terminal exact-ID delete can resolve through verified
+  target absence; `resolved`/`target-absent` with null exit does not claim success.
+  Unreleased store formats 1 and 2 require matching-old-proposal drain and owner-led
+  recreation before format 3; format-2 clients also refuse format 3. No migration/reset is automatic.
+  Failed or uncertain teardown retains ownership. Inspect `status` and
+  `silo doc troubleshooting`; never delete the store, lock or peer reservation
+  to make allocation succeed. Never adopt or delete a conflicting object.
+- `--force` can reconfigure a stopped, reconciled generation. It refuses live,
+  retained or uncertain state. Stop/reconcile before changing name, profile,
+  ports or output paths. Parallel stacks require separate roots and names.
+  Clean before changing a recorded path (including capitalization) or removing
+  a generated-file role, such as disabling k3d with a published kubeconfig.
+  Profile selection is `--profile` > `SILO_PROFILE` > stored profile > base.
+- `LEGACY_STATE` is a host-wide, read-only refusal, including lock-only peers
+  with no listener. Read its listing. Before a host's first new allocation,
+  announce cutover, upgrade or retire every permitted old silo invocation,
+  and wait for all old operations to finish. Have each owner stop and recreate
+  its ephemeral environment. There is no migration or automatic old-client
+  drain; do not run old clients after cutover. Never manufacture a clean scan
+  by deleting another project's JSON entry or lock.
+- Output and custom kubeconfig paths are literal ASCII project-relative files,
+  without expansion, traversal, symlinks or hardlinks. Existing unreceipted
+  files refuse. Separate file roles cannot share a physical target. The
+  default kubeconfig alone may live under the invoking HOME's `.kube`.
+- Prefer `${name}.localhost` host templates for browser cookie isolation.
+  k3d registry needs `K3D_REGISTRY_PORT` in `[ports]`; map only declared allocated
+  ports in `k3d.args`. Let silo select the k3d API port and own its control flags.
 
-1. Prefer bundled docs for authoritative behavior: `silo doc <topic>` (see topics below).
-2. Use CLI commands directly; keep changes minimal and aligned with current config:
-   - `silo up [name]` starts an instance (k3d optional, Tilt starts). It is
-     idempotent: if this project's Tilt is already running it reports that
-     instance and exits 0. `--force` starts a parallel stack on new ports and
-     leaves the running one disowned (stop it with `kill <pid>`).
-   - `silo down` stops Tilt; `--delete-cluster` removes k3d; `--clean` removes env/lockfile.
-   - `silo env [name]` generates env + lockfile only.
-   - `silo profiles` lists profile names.
-   - `silo status` reports lockfile state (pid, ports, URLs), not Tilt
-     resource health. After `silo up`, poke the Tilt API with
-     `tilt get uiresources --port $TILT_PORT` (source the env file).
-     Do not run `tilt up` or `tilt down` while silo owns the stack.
-     See `silo doc tilt`.
-   - `silo version` prints CLI version.
-3. Profiles:
-   - Resolution order: `--profile` > `SILO_PROFILE` > lockfile > base config.
-   - Switching profiles requires `--force`.
-4. Hosts and URLs:
-   - Prefer `*.localhost` hostnames for cookie isolation (avoid `localhost:PORT`).
-5. k3d:
-   - If `k3d.registry.enabled = true`, ensure `K3D_REGISTRY_PORT` is defined in `[ports]`.
-6. Do not edit `.silo.lock` by hand; rerun `silo up` or `silo down --clean` instead.
-
-## Bundled Docs
-
-Use `silo doc [topic]` (or `--list` / `--json` for discovery):
-
-| Topic | Description |
-| --- | --- |
-| `config` | silo.toml reference |
-| `profiles` | Profile configuration |
-| `commands` | CLI command reference |
-| `lockfile` | Lockfile format and behavior |
-| `interpolation` | Template variables and phases |
-| `ports` | Port allocation and validation |
-| `hosts` | Hostnames and browser isolation |
-| `urls` | URL templates and derived vars |
-| `k3d` | k3d cluster integration |
-| `hooks` | Lifecycle hooks |
-| `logging` | Logging behavior and verbosity |
-| `troubleshooting` | Common errors and fixes |
-| `tilt` | Tilt integration and expectations |
-
-## Examples
-
-```bash
-silo up dev
-silo up --profile testnet --force
-silo doc profiles
-```
+The canonical per-account SQLite store ignores `HOME` and
+`SILO_PORT_REGISTRY_DIR` as allocation-store selectors. Changing those variables
+cannot create an independent silo domain. See `silo doc ports`, `lockfile`,
+`profiles`, `k3d`, `tilt`, and `troubleshooting` for details.

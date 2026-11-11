@@ -1,0 +1,5 @@
+runner PID=1377984
+1377984 1377984 1377984 sh -c printf "runner PID=%s\n" "$$"; ps -o pid=,pgid=,sid=,args= -p "$$"; timeout 120 /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/guest-r2-silo /tmp/guest-r2/retained down --delete-cluster --clean --json; result=$?; printf "exit=%s\n" "$result"; exit "$result"
+silo info: Removed owned snapshots and released this generation's claims.
+{"schemaVersion":1,"legacy":false,"changed":true,"project":{"schemaVersion":1,"projectId":"abfcd518-163d-46bd-8d9c-4a3d34f8b211","root":"/tmp/guest-r2/retained","generation":0,"phase":"unallocated","problem":null,"operation":null,"allocation":null,"claims":[],"resources":[],"launches":[],"files":[],"sinks":[],"completions":[]}}
+exit=0

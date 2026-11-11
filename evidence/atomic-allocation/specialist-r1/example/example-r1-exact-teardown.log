@@ -1,0 +1,28 @@
+{"removed":"container","id":"08a77148bcd18f333ecb1f549603bdd6189c8718caa09d5bb989a59cc0b1ce2f","name":"k3d-localnet-atomic-r1-example-server-0","createdAt":"2026-11-04T04:56:47.993706095Z"}
+{"removed":"container","id":"a898b661941b1375c7e62a3c9c51c02fc29295b87fd6c1d8875c44c35d2d0240","name":"k3d-localnet-atomic-r1-example-serverlb","createdAt":"2026-11-04T04:56:48.246029856Z"}
+{"removed":"container","id":"b4335f79f7c9a80b36737dadcbae2b1536a08f079d44bb318f4729617fab190c","name":"localnet-atomic-r1-example-registry.localhost","createdAt":"2026-11-04T04:56:46.918959557Z"}
+{"removed":"volume","id":"k3d-localnet-atomic-r1-example-images","name":"k3d-localnet-atomic-r1-example-images","createdAt":"2026-11-04T04:56:46Z"}
+ 9 |   return result.stdout.toString().trim();
+10 | }
+11 | for (const kind of ["container", "volume", "network"]) for (const receipt of inspection.resources.filter(r => r.kind === kind)) {
+12 |   const field = kind === "volume" ? "CreatedAt" : "Created";
+13 |   const created = await docker([kind, "inspect", receipt.id, "--format", `{{.${field}}}`]);
+14 |   assert.equal(created, receipt.createdAt);
+              ^
+AssertionError: Expected values to be strictly equal:
++ actual - expected
+
++ '2026-11-04 04:56:45.783092736 +0000 UTC'
+- '2026-11-04T04:56:45.783092736Z'
+             ^
+
+ generatedMessage: true,
+     actual: "2026-11-04 04:56:45.783092736 +0000 UTC",
+   expected: "2026-11-04T04:56:45.783092736Z",
+   operator: "strictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at /tmp/cleanup-example.ts:14:10
+
+Bun v1.4.4 (Linux x64)

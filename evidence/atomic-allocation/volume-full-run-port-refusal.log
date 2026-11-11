@@ -1,0 +1,81 @@
+{"environment":{"platform":"linux","arch":"x64","bun":"1.4.4","root":"/tmp/native/allocation-rehearsal-wEGZnH","accountHome":"/home/ae","artifact":"/mnt/dist/cli.js","sha256":"1a09c9812329a16342f95b7c006ddd5d844f611c6dbb3b5febca6a0e21396abc"}}
+{"command":1,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-wegznh-old"],"code":0}
+{"command":2,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":3,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":4,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":5,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":6,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":7,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":8,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":9,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":10,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":11,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":12,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"scenario":"legacy lock-only refuses all five commands in old and unrelated roots without writes","registry":"/home/ae/.silo/instances","pass":true}
+{"command":13,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-wegznh-old"],"code":0}
+{"command":14,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":15,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":16,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":17,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":18,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":19,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":20,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":21,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":22,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":23,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":24,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"scenario":"legacy lock-only refuses all five commands in old and unrelated roots without writes","registry":"/tmp/native/allocation-rehearsal-wEGZnH/invoking-home/.silo/instances","pass":true}
+{"command":25,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-wegznh-old"],"code":0}
+{"command":26,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":27,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":28,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":29,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":30,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":31,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":32,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","up","--json"],"code":1}
+{"command":33,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--json"],"code":1}
+{"command":34,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--json"],"code":1}
+{"command":35,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":36,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"scenario":"legacy lock-only refuses all five commands in old and unrelated roots without writes","registry":"/tmp/native/allocation-rehearsal-wEGZnH/old-registry","pass":true}
+{"command":37,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":38,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","--json"],"code":1}
+{"command":39,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"command":40,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-wegznh-legacy-peer","--json"],"code":0}
+{"command":41,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":42,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/late-09","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-wegznh-late-09"],"code":0}
+{"scenario":"unsupported old client after cutover","artifact":"/tmp/legacy/0.9.0/package/dist/cli.js","digest":"651730914fee9cdb165f1d0397c82b5160c6e5c42d55e21d193efae227780849","code":0,"oldPorts":{"APP_PORT":48127,"TILT_PORT":48128},"newClaimPorts":{"APP_PORT":48127,"TILT_PORT":48128},"storeUnchanged":true}
+{"command":43,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":44,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/late-09","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"command":45,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":46,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/late-05","argv":["/tmp/tools/bun","/tmp/legacy/0.5.9/package/dist/cli.js","env","proof-wegznh-late-05"],"code":0}
+{"scenario":"unsupported old client after cutover","artifact":"/tmp/legacy/0.5.9/package/dist/cli.js","digest":"d003a3a3bcff0e9abc60846e289a97133b69a87112be240bddb60d07a7410810","code":0,"oldPorts":{"APP_PORT":48127,"TILT_PORT":48128},"newClaimPorts":{"APP_PORT":48127,"TILT_PORT":48128},"storeUnchanged":true}
+{"command":47,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":1}
+{"command":48,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/late-05","argv":["/tmp/tools/bun","/tmp/legacy/0.5.9/package/dist/cli.js","down","--clean"],"code":0}
+{"command":49,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":50,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":51,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old-failed-teardown","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","env","proof-wegznh-old-failed-teardown"],"code":0}
+{"command":52,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old-failed-teardown","argv":["/tmp/tools/bun","/tmp/legacy/0.9.0/package/dist/cli.js","down","--clean"],"code":0}
+{"scenario":"0.9.0 red control: failed Tilt teardown still reports success and removes snapshots","observed":true}
+{"scenario":"paused old operation drained before cutover; reverse lock-only reservation refused until owner down","pass":true}
+{"command":54,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-wegznh-b","--json"],"code":0}
+{"command":53,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-wegznh-a","--json"],"code":0}
+{"command":55,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":56,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":0}
+{"command":57,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":58,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","env","proof-wegznh-a","--json"],"code":0}
+{"command":59,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":60,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","ci","--timeout=10s","--json"],"code":1}
+{"command":61,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"command":62,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","status","--json"],"code":0}
+{"command":63,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--clean","--json"],"code":1}
+{"result":"fail","error":"AssertionError [ERR_ASSERTION]: {\"schemaVersion\":1,\"code\":\"CLEANUP_REQUIRED\",\"message\":\"CLEANUP_REQUIRED: declared port 49152 still has a listener or cannot be proved free; no listener was stopped\"}\n\n\n1 !== 0\n","stack":"AssertionError [ERR_ASSERTION]: {\"schemaVersion\":1,\"code\":\"CLEANUP_REQUIRED\",\"message\":\"CLEANUP_REQUIRED: declared port 49152 still has a listener or cannot be proved free; no listener was stopped\"}\n\n\n1 !== 0\n\n    at silo (/mnt/scripts/allocation-rehearsal.ts:57:15)\n    at async live (/mnt/scripts/allocation-rehearsal.ts:102:9)"}
+{"command":64,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":65,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/legacy-peer","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":66,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/late-09","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":67,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/late-05","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":68,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/old-failed-teardown","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"command":69,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/a","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":1}
+{"cleanup":"/tmp/native/allocation-rehearsal-wEGZnH/a","retained":"AssertionError [ERR_ASSERTION]: {\"schemaVersion\":1,\"code\":\"CLEANUP_REQUIRED\",\"message\":\"CLEANUP_REQUIRED: declared port 49152 still has a listener or cannot be proved free; no listener was stopped\"}\n\n\n1 !== 0\n"}
+{"command":70,"cwd":"/tmp/native/allocation-rehearsal-wEGZnH/b","argv":["/tmp/tools/bun","/mnt/dist/cli.js","down","--delete-cluster","--clean","--json"],"code":0}
+{"resources":"/tmp/native/allocation-rehearsal-wEGZnH/resources","evidence":"/tmp/native/allocation-rehearsal-wEGZnH","retainedEvidence":true}

@@ -1,0 +1,44 @@
+[
+    {
+        "Name": "k3d-localnet-proof-hb-4a12d2cc-crash",
+        "Id": "d7b916828110fa31e282ab0dca7bec059d25aa083bdb94919d2aee450043b089",
+        "Created": "2026-11-05T03:01:49.629198372Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.25.0.0/16",
+                    "Gateway": "172.25.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {},
+        "Labels": {
+            "io.silo.generation": "1",
+            "io.silo.project": "e50efcf1-0637-4156-af6d-c500d1e57c3c"
+        },
+        "Containers": {},
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.25.0.0/16": {
+                        "IPsInUse": 3,
+                        "DynamicIPsAvailable": 65533
+                    }
+                }
+            }
+        }
+    }
+]

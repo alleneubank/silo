@@ -1,0 +1,191 @@
+╭─────────────────────────────────────╮
+│ lefthook  v2.1.10   hook:  [1mpre-push[m │
+╰─────────────────────────────────────╯
+┃  jscpd ❯ 
+[90m┌────────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
+[90m│[39m[31m Format     [39m[90m│[39m[31m Files analyzed [39m[90m│[39m[31m Total lines [39m[90m│[39m[31m Total tokens [39m[90m│[39m[31m Clones found [39m[90m│[39m[31m Duplicated lines [39m[90m│[39m[31m Duplicated tokens [39m[90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m typescript [90m│[39m 63             [90m│[39m 6063        [90m│[39m 79853        [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m [1mTotal:[22m     [90m│[39m 63             [90m│[39m 6063        [90m│[39m 79853        [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m└────────────[39m[90m┴────────────────[39m[90m┴─────────────[39m[90m┴──────────────[39m[90m┴──────────────[39m[90m┴──────────────────[39m[90m┴───────────────────┘[39m
+[90mFound 0 clones.[39m
+[3m[90mDetection time:[39m[23m: 652.881ms
+
+┃  knip ❯ 
+Configuration hints (1)
+changeset    knip.json  Remove from ignoreBinaries
+
+┃  test ❯ 
+bun test v1.4.4 (38afee6c8)
+
+src/utils/ci.test.ts:
+(pass) shouldExportCiEnv > is on when the flag was passed [0.16ms]
+(pass) shouldExportCiEnv > is off outside CI without the flag [0.03ms]
+(pass) shouldExportCiEnv > infers CI from the environment [0.03ms]
+(pass) shouldExportCiEnv > does not infer CI from falsy values [0.02ms]
+(pass) shouldExportCiEnv > infers CI from GITHUB_ACTIONS
+(pass) withCiEnv > marks the environment as CI [0.03ms]
+(pass) withCiEnv > overrides an inherited CI value
+(pass) withCiEnv > does not mutate the caller's env
+(pass) resolveGithubEnvPath > returns the path when set [0.03ms]
+(pass) resolveGithubEnvPath > returns null when unset and export was only inferred
+(pass) resolveGithubEnvPath > treats a blank path as unset
+(pass) resolveGithubEnvPath > throws when unset and export was requested explicitly [0.13ms]
+
+src/utils/breadcrumbs.test.ts:
+(pass) tiltApiHintLines > names the allocated port and the get command [0.06ms]
+(pass) tiltApiHintLines > omits --port when TILT_PORT was not allocated [0.01ms]
+(pass) tiltApiHintLines > treats a blank port as unset
+(pass) runningStackHintLines > when Tilt is running, prints API, kubeconfig, and URL isolation [0.16ms]
+(pass) runningStackHintLines > when Tilt is stopped, skips the API hint [0.01ms]
+(pass) runningStackHintLines > skips URL isolation when no HTTP URL uses *.localhost [0.03ms]
+(pass) envDidNotStartHint > names the env file to source [0.01ms]
+(pass) downKeptClusterHint > points at --delete-cluster [0.01ms]
+(pass) missingToolsMessage > includes install URLs for known tools [0.09ms]
+(pass) missingToolsMessage > omits a hint line for unknown tools [0.01ms]
+(pass) unknownDocTopicMessage > lists available topics
+(pass) configExistsMessage > points at up and config docs
+
+src/core/lease_store.test.ts:
+(pass) atomic account leases > export parent preparation never creates or enters a legacy registry tree [5.45ms]
+(pass) atomic account leases > two allocators probing the same port cannot commit duplicate claims or a partial name [8.98ms]
+(pass) atomic account leases > a peer's inspection and clean cannot release or rewrite another root [8.94ms]
+(pass) atomic account leases > root symlinks share one operation, and a finished capability is fenced [3.34ms]
+(pass) atomic account leases > prefix overlap refuses even when the exact namespace keys differ [3.35ms]
+(pass) atomic account leases > same-name and cross-role file aliases refuse, leaving the peer bytes intact [5.26ms]
+(pass) atomic account leases > unreceipted generated files are refused without alteration [3.04ms]
+(pass) atomic account leases > a failed creating tool keeps its port, even after its executor is absent [60.15ms]
+(pass) atomic account leases > a successful exact deletion retry reconciles terminal completed deletions [126.73ms]
+(pass) atomic account leases > corrupt stores refuse instead of opening an empty allocation domain [0.51ms]
+(pass) atomic account leases > a retired root obtains a fresh generation and an old writer cannot overwrite it [4.99ms]
+(pass) atomic account leases > database busy refuses without resetting another project's reservations [5008.41ms]
+(pass) atomic account leases > snapshot replacement, hardlinks and parent swaps refuse without deleting foreign bytes [10.25ms]
+(pass) atomic account leases > parent/final symlinks and absolute or escaping output paths are refused [4.22ms]
+(pass) atomic account leases > a config edit cannot redirect snapshot cleanup to its selected replacement path [5.63ms]
+(pass) atomic account leases > interrupted rename resumes its recorded inode, and refuses an unrelated replacement [5.53ms]
+(pass) atomic account leases > mixed-role output aliases and an active config target cannot receive two file capabilities [3.22ms]
+(pass) atomic account leases > a generation cannot drop a published file role before owner cleanup [7.54ms]
+(pass) atomic account leases > a folded file claim cannot transfer a receipt to a different path spelling [4.41ms]
+(pass) atomic account leases > pending publish retains ownership until parent synchronization succeeds on retry [5.17ms]
+(pass) atomic account leases > pending delete retains ownership until parent synchronization succeeds on retry [5.07ms]
+(pass) atomic account leases > a CI short write remains uncertain and blocks both claim transfer and retirement [6.21ms]
+(pass) atomic account leases > a CI interrupted write remains uncertain and blocks both claim transfer and retirement [6.35ms]
+silo info: Generated env file at /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/tmp/silo-leases-S7LEPF/a/.localnet.env
+silo info: Wrote lockfile
+silo info: Exported env vars to /home/ae/Work/0xbigboss/alleneubank/boss-mobile-release-silo-impl-tmp/tmp/silo-leases-S7LEPF/github-export.env
+(pass) atomic account leases > CI sinks reject snapshot aliases and concurrent writers while sequential appends remain append-only [11.31ms]
+(pass) atomic account leases > real gated commands see the durable grant, and a failed checkpoint never executes a tool [122.15ms]
+(pass) atomic account leases > a declared listener blocks both retirement and reallocation before snapshots are removed [9.27ms]
+(pass) atomic account leases > a physically replaced parent cannot redirect owned cleanup [4.35ms]
+
+src/core/hosts.test.ts:
+(pass) resolveHosts > preserves an explicit Tilt host independently of the app host [0.22ms]
+(pass) resolveHosts > uses the app host only when Tilt host is absent [0.03ms]
+(pass) resolveHosts > does not replace an explicitly empty Tilt host with the app hostname [0.01ms]
+
+src/core/registry.test.ts:
+(pass) resolveRegistryAdvertiseSettings > throws when k3d hostFrom override does not match resolved registry identity [0.47ms]
+(pass) resolveRegistryAdvertiseSettings > supports safe hostFrom override using K3D_CLUSTER_NAME [0.07ms]
+(pass) resolveRegistryAdvertiseSettings > throws when cluster-network host override does not match resolved registry identity [0.05ms]
+
+src/core/ports.test.ts:
+(pass) allocatePorts > allocates random ports from the ephemeral range in order [0.48ms]
+(pass) allocatePorts > reuses lockfile ports even when config uses random [0.09ms]
+(pass) allocatePorts > falls back to ephemeral when default port is occupied [0.09ms]
+(pass) allocatePorts > falls back to ephemeral when lockfile port is occupied [0.08ms]
+(pass) allocatePorts > skips occupied ports when scanning ephemeral range [0.06ms]
+(pass) allocatePorts > excludedPorts are skipped during ephemeral scan [0.05ms]
+(pass) allocatePorts > excludedPorts force the configured default to fall back to ephemeral [0.06ms]
+(pass) allocatePorts > excludedPorts force lockfile ports to fall back to ephemeral [0.06ms]
+(pass) allocatePorts > ephemeral scan wraps past EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START [1.27ms]
+(pass) checkPortFree (integration) > a UDP listener excludes the scalar host port [0.20ms]
+(pass) checkPortFree (integration) > an IPv6 loopback listener excludes the scalar host port [0.14ms]
+(pass) checkPortFree (integration) > detects port occupied on 127.0.0.1 [0.23ms]
+(pass) checkPortFree (integration) > detects port occupied on 0.0.0.0 [0.18ms]
+(pass) checkPortFree (integration) > accepts port that is free on both interfaces [0.13ms]
+
+src/core/instance.test.ts:
+(pass) one allocated state renders consistent env, URLs, registry, kubeconfig and final name claims [0.89ms]
+
+src/core/config.test.ts:
+(pass) loadConfig > accepts owned kubeconfig and production Tilt mode, including profile overrides [1.17ms]
+(pass) loadConfig > rejects kubeconfig path "" in base and profile config [0.68ms]
+(pass) loadConfig > rejects kubeconfig path "." in base and profile config [0.26ms]
+(pass) loadConfig > rejects kubeconfig path ".." in base and profile config [0.29ms]
+(pass) loadConfig > rejects kubeconfig path "../kubeconfig" in base and profile config [0.38ms]
+(pass) loadConfig > rejects kubeconfig path ".localnet/../../kubeconfig" in base and profile config [0.34ms]
+(pass) loadConfig > rejects kubeconfig path "/tmp/kubeconfig" in base and profile config [0.21ms]
+(pass) loadConfig > rejects kubeconfig path "~/kubeconfig" in base and profile config [0.25ms]
+(pass) loadConfig > rejects kubeconfig path "C:/kubeconfig" in base and profile config [0.22ms]
+(pass) loadConfig > rejects kubeconfig path "dir\\kubeconfig" in base and profile config [0.19ms]
+(pass) loadConfig > rejects kubeconfig path "a:b" in base and profile config [0.14ms]
+(pass) loadConfig > rejects kubeconfig path "${name}/kubeconfig" in base and profile config [0.18ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "local" [0.44ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "dev" [0.18ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "default" [0.30ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "" [0.23ms]
+(pass) loadConfig > rejects unsupported Tilt web mode "PROD" [0.23ms]
+(pass) loadConfig > accepts random ports and 0 as an alias [0.24ms]
+(pass) loadConfig > accepts registry advertisement settings [0.25ms]
+
+src/core/name.test.ts:
+(pass) sanitizeName > normalizes case and replaces invalid characters [0.10ms]
+(pass) sanitizeName > returns fallback for empty input
+(pass) shortenK3dClusterName > returns original name when within limit
+(pass) shortenK3dClusterName > shortens long names with hash and suffix [0.06ms]
+(pass) shortenK3dClusterName > produces distinct names for long inputs with shared prefix/suffix [0.02ms]
+
+src/core/allocation_domain.test.ts:
+(pass) native account store is invariant under a scrubbed HOME [7.13ms]
+
+src/core/legacy_check.test.ts:
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in account blocks an unrelated allocator before store creation [1.14ms]
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in home blocks an unrelated allocator before store creation [0.43ms]
+(pass) host-wide read-only legacy refusal > a lock-only peer entry in override blocks an unrelated allocator before store creation [0.30ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data { malformed remains a blocking listing [0.36ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data null remains a blocking listing [0.23ms]
+(pass) host-wide read-only legacy refusal > unparseable registry data [1, 2] remains a blocking listing [0.21ms]
+(pass) host-wide read-only legacy refusal > pre-registry root lock { truncated blocks without any registry entry [0.25ms]
+(pass) host-wide read-only legacy refusal > pre-registry root lock {"version":1,"instance":{"name":"old"}} blocks without any registry entry [0.21ms]
+(pass) host-wide read-only legacy refusal > a store-marked snapshot is not a legacy lock, and duplicate registry locations list once [0.52ms]
+(pass) host-wide read-only legacy refusal > a failed directory query refuses instead of proving the account clean [0.15ms]
+
+src/commands/doc.test.ts:
+(pass) doc topics > all doc files exist [0.15ms]
+(pass) doc topics > prints docs for each topic [1.07ms]
+(pass) doc topics > lists topics in plain text [0.21ms]
+(pass) doc topics > prints topics as json [0.11ms]
+(pass) doc topics > lists available topics when the topic is unknown [0.08ms]
+
+src/backends/tilt.test.ts:
+(pass) buildTiltCiArgv > emits one production web-mode flag alongside CI arguments [0.09ms]
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode=dev"]} [0.03ms]
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode","dev"]}
+(pass) buildTiltCiArgv > refuses a conflicting passthrough {"args":["--web-mode=prod"]}
+(pass) buildTiltCiArgv > retains passthrough and default behavior when no mode is selected [0.01ms]
+
+src/backends/k3d.test.ts:
+(pass) owned k3d arguments > preserves declared mapping grammar, including node filters and protocols [0.17ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --network=peer [0.03ms]
+(pass) owned k3d arguments > refuses identity/ownership escape --registry-create=peer
+(pass) owned k3d arguments > refuses identity/ownership escape --config=peer.yaml
+(pass) owned k3d arguments > refuses identity/ownership escape --runtime-label=io.silo.project=peer
+(pass) owned k3d arguments > refuses identity/ownership escape --kubeconfig-update-default=true
+(pass) owned k3d arguments > refuses identity/ownership escape --api-port=3000
+(pass) owned k3d arguments > refuses unclaimed publication --port=3001:80 [0.02ms]
+(pass) owned k3d arguments > refuses unclaimed publication --port=80
+(pass) owned k3d arguments > refuses unclaimed publication --port=0:80
+(pass) owned k3d arguments > refuses unclaimed publication --port=3000:0
+(pass) owned k3d arguments > filters diagnostic lines without changing kubeconfig data [0.07ms]
+
+ 129 pass
+ 0 fail
+ 331 expect() calls
+Ran 129 tests across 14 files. [5.50s]
+
+[38;2;56;56;56m  ────────────────────────────────────[m
+summary: (done in 7.02 seconds)
+✓ jscpd (0.86 seconds)
+✓ knip (0.65 seconds)
+✓ test (5.51 seconds)

@@ -1,0 +1,6 @@
+Initial setup observations occurred in tool output before the launch/capture runner existed; the exact messages below are copied notes rather than preserved raw stdout files.
+
+1. Binding the k3d file at nonexistent /usr/local/bin/k3d beneath a read-only / mount refused: `bwrap: Can't create file /usr/local/bin/k3d: Read-only file system`. Binding its existing parent bin directory at /tmp/bin fixed this without system edits.
+2. With only the host /proc and /dev inherited, Bun subprocess spawning in bwrap failed for both /usr/bin/getent and /bin/true: `EACCES: permission denied, posix_spawn '/usr/bin/getent'`. Direct getent worked in that same view. Adding fresh `--proc /proc --dev /dev` let Bun spawn getent and the CLI env proceed. No application stack had started.
+3. A fixture's hosts table initially declared only TILT_HOST. CLI env refused with `INVALID_CONFIG: hosts must include APP_HOST`. Adding the documented APP_HOST template fixed the config. The successful generated config/source is captured in compose-env.json.
+4. One closeout shell command used zsh's read-only variable name `status`; the shell stopped before the later closeout checks. Renaming the scratch loop variable to capture allowed them to run. This was guest tooling, not Silo behavior.

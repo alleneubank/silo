@@ -1,0 +1,5 @@
+3eed41542df44d9acdbc09c2f68c3df77ba3ab12f051e90e3ceb3fbc924ebb7f  dist/cli.js
+4d1bac32805a8a0b47e7583ad3dacc335f25832eda62cb75ddbd880428f1e11d  dist/silo-darwin-arm64
+6036f532aee8c479a2cfdd6a237bb888afab09c4746a8666b947ebbbac1481dd  dist/silo-darwin-x64
+66c6d8580765bf70d093923c3ef8325762ae6f3d0a525498ab247fd4f707119d  dist/silo-linux-arm64
+5d7ffd5d7e6aa62bc4ecb3ffd2c7a74aa8a42ac9473887376ad69d81b1e3463c  dist/silo-linux-x64

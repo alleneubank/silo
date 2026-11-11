@@ -1,21 +1,28 @@
+import { createSocket } from "node:dgram";
 import {
   EPHEMERAL_PORT_END,
   EPHEMERAL_PORT_START,
   PORT_CHECK_TIMEOUT_MS,
 } from "./constants";
-import { withTimeout } from "../utils/timeout";
+import { checkListenerAbsent } from "./socket_listeners";
+import { withTimeout, type Cancellable } from "../utils/timeout";
 import { SiloError } from "../utils/errors";
+import { operationSignal } from "../utils/interrupt";
 import type { PortConfigValue } from "./types";
 
 const isPortInRange = (port: number): boolean => port >= 1 && port <= 65535;
 
-type PortCheckFn = (port: number) => Promise<boolean>;
+export type PortCheckFn = (port: number) => Promise<boolean>;
 
 // Hostnames to check — a port is only free if binding succeeds on all of them.
 // 0.0.0.0 catches wildcard listeners; 127.0.0.1 catches loopback-only listeners
 // (e.g. Tilt). Checking only 0.0.0.0 misses ports bound exclusively to 127.0.0.1,
 // which causes "address already in use" when another process binds loopback.
-const PORT_CHECK_HOSTNAMES = ["0.0.0.0", "127.0.0.1"] as const;
+const PORT_CHECK_HOSTNAMES = ["0.0.0.0", "127.0.0.1", "::", "::1"] as const;
+
+const unsupportedIPv6 = (hostname: string, error: unknown): boolean =>
+  hostname.includes(":") && error instanceof Error && "code" in error &&
+  ["EAFNOSUPPORT", "EPROTONOSUPPORT", "EADDRNOTAVAIL"].includes(String(error.code));
 
 const tryBind = async (hostname: string, port: number): Promise<boolean> => {
   try {
@@ -28,23 +35,58 @@ const tryBind = async (hostname: string, port: number): Promise<boolean> => {
     });
     server.stop();
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    return unsupportedIPv6(hostname, error);
   }
 };
 
-const checkPortFree: PortCheckFn = async (port: number): Promise<boolean> => {
+const bindUdp = (hostname: string, port: number): Cancellable<boolean> => {
+  const socket = createSocket(hostname.includes(":") ? "udp6" : "udp4");
+  let finish: (free: boolean) => void;
+  let closed: Promise<void> | undefined;
+  const result = new Promise<boolean>(resolve => {
+    finish = resolve;
+    socket.once("error", error => resolve(unsupportedIPv6(hostname, error)));
+    socket.bind(port, hostname, () => resolve(true));
+  });
+  const cancel = (): Promise<void> => {
+    closed ??= new Promise<void>((resolve, reject) => {
+      try { socket.close(resolve); }
+      catch (error) {
+        if (error instanceof Error && "code" in error && error.code === "ERR_SOCKET_DGRAM_NOT_RUNNING") resolve();
+        else reject(error);
+      }
+    });
+    finish(false);
+    return closed;
+  };
+  return { result, cancel };
+};
+
+export const checkPortFree: PortCheckFn = async (port: number): Promise<boolean> => {
+  let cancelled = false;
+  let udp: Cancellable<boolean> | undefined;
   const attempt = async (): Promise<boolean> => {
     for (const hostname of PORT_CHECK_HOSTNAMES) {
-      if (!(await tryBind(hostname, port))) {
-        return false;
-      }
+      if (cancelled) throw new SiloError("Port check cancelled", "INTERRUPTED");
+      if (!(await tryBind(hostname, port))) return false;
+      udp = bindUdp(hostname, port);
+      try { if (!(await udp.result)) return false; }
+      finally { await udp.cancel(); udp = undefined; }
     }
     return true;
   };
-
-  return await withTimeout(attempt(), PORT_CHECK_TIMEOUT_MS, `port check ${port}`);
+  return withTimeout({ result: attempt(), cancel: async () => {
+    cancelled = true;
+    await udp?.cancel();
+  } }, PORT_CHECK_TIMEOUT_MS, "port check " + port, operationSignal());
 };
+
+/**
+ * Retirement proof: true only when no TCP listener and no peerless UDP socket
+ * remains on the port, on any address. Outgoing connections do not count.
+ */
+export const checkPortListenerAbsent: PortCheckFn = checkListenerAbsent;
 
 export type PortAllocationSource = "lockfile" | "default" | "ephemeral";
 
@@ -61,7 +103,7 @@ const EPHEMERAL_RANGE_SIZE = EPHEMERAL_PORT_END - EPHEMERAL_PORT_START + 1;
 // Scan the ephemeral range starting at startAt, wrapping back to
 // EPHEMERAL_PORT_START after hitting EPHEMERAL_PORT_END. Skips ports in
 // `used` (already-allocated in this call) and `excluded` (owned by other
-// live silo instances, per the port registry).
+// silo generations, per their committed claims).
 const findEphemeralPort = async (params: {
   used: Set<number>;
   excluded: Set<number>;
@@ -88,9 +130,7 @@ export const allocatePorts = async (params: {
   order: string[];
   lockfilePorts: Record<string, number> | undefined;
   force: boolean;
-  // Ports reserved by other live silo instances on this machine. The
-  // caller is expected to compute this from the port registry before
-  // invoking allocation. When omitted, treated as empty (tests).
+  // Candidate selection only: the lease transaction decides final ownership.
   excludedPorts?: Set<number>;
   onEvent?: (event: PortAllocationEvent) => void;
   isPortFree?: PortCheckFn;
