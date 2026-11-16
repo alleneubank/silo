@@ -20,9 +20,10 @@ import { OperationInterrupts } from "../utils/interrupt";
 const MAX_PROJECTS = 10_000;
 const MAX_CLAIMS = 4096;
 const MAX_LAUNCHES = 1024;
-const SCHEMA_VERSION = 4;
-/** The released 1.0.0 format; it differs from format 4 only by lacking the slot tables. */
+/** The released 1.0.0 format. Project-only use creates and keeps stores at this format. */
 const FORMAT_WITHOUT_SLOTS = 3;
+/** Format 3 plus the slot tables, added by the first slot run on the host. */
+const FORMAT_WITH_SLOTS = 4;
 const APPLICATION_ID = 0x53494c4f;
 
 // Slot runs are host-wide and outside every project generation. Tickets are
@@ -46,7 +47,7 @@ CREATE TABLE slot_ports (
 );
 CREATE INDEX slot_units_run ON slot_units(run_id);
 CREATE INDEX slot_ports_run ON slot_ports(run_id);
-PRAGMA user_version = ${SCHEMA_VERSION};
+PRAGMA user_version = ${FORMAT_WITH_SLOTS};
 `;
 
 const SCHEMA = `
@@ -127,6 +128,7 @@ CREATE TABLE sinks (
   PRIMARY KEY (project_id, generation, target_key),
   FOREIGN KEY (project_id, generation) REFERENCES allocations(project_id, generation)
 );
+PRAGMA user_version = ${FORMAT_WITHOUT_SLOTS};
 PRAGMA application_id = ${APPLICATION_ID};
 `;
 
@@ -208,16 +210,21 @@ const rootIdentity = (root: string): { canonical: string; physical: string; hash
 const databaseVersion = (db: Database, create: boolean): number => {
   const version = db.query<{ user_version: number }, []>("PRAGMA user_version").get()!.user_version;
   const application = db.query<{ application_id: number }, []>("PRAGMA application_id").get()!.application_id;
-  const known = version === SCHEMA_VERSION || version === FORMAT_WITHOUT_SLOTS;
+  const known = version === FORMAT_WITH_SLOTS || version === FORMAT_WITHOUT_SLOTS;
   if (version !== 0 && (!known || application !== APPLICATION_ID)) throw new Error("Unrecognized lease-store schema or application");
   if (version === 0 && (!create || application !== 0 || db.query<{ count: number }, []>("SELECT count(*) AS count FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").get()!.count !== 0)) throw new Error("Unrecognized database at lease-store path");
   return version;
 };
 
-/** Read-only opens of a format-3 store have no slot tables; such a store holds no slot run. */
-export const hasSlotTables = (db: Database): boolean => databaseVersion(db, false) === SCHEMA_VERSION;
+/** A format-3 store has no slot tables and therefore holds no slot run or slot port block. */
+export const hasSlotTables = (db: Database): boolean => databaseVersion(db, false) === FORMAT_WITH_SLOTS;
 
-export const openDatabase = (storePath: string, readonly: boolean, create = !readonly, busyTimeoutMs = STORE_BUSY_TIMEOUT_MS): Database => {
+/**
+ * `withSlots` is the one upgrade: only a slot run adds the slot tables to a
+ * format-3 store. Project lifecycle commands leave a format-3 store at format
+ * 3, so 1.0.0 clients sharing the host keep working until the first slot run.
+ */
+export const openDatabase = (storePath: string, readonly: boolean, create = !readonly, busyTimeoutMs = STORE_BUSY_TIMEOUT_MS, withSlots = false): Database => {
   let connection: Database | undefined;
   try {
     if (!readonly) {
@@ -233,11 +240,10 @@ export const openDatabase = (storePath: string, readonly: boolean, create = !rea
       db.transaction(() => {
         const version = databaseVersion(db, create);
         if (version === 0) db.exec(SCHEMA);
-        // The one additive upgrade: format 3 gains the slot tables. Clients
-        // that know only format 3 then refuse the store instead of allocating
-        // ports without seeing slot port blocks.
-        if (version === 0 || version === FORMAT_WITHOUT_SLOTS) db.exec(SLOT_SCHEMA);
-        assert(databaseVersion(db, false) === SCHEMA_VERSION, "Writable store opens at the current format");
+        // Clients that know only format 3 then refuse the store instead of
+        // allocating ports without seeing slot port blocks.
+        if (withSlots && version !== FORMAT_WITH_SLOTS) db.exec(SLOT_SCHEMA);
+        if (withSlots) assert(hasSlotTables(db), "A slot connection opens a format-4 store");
       }).immediate();
     }
     return db;
@@ -579,7 +585,7 @@ export class ProjectOperation {
   excludedPorts(): Set<number> {
     this.assertCurrent();
     const claimed = this.db.query<{ resource: string }, [string, number]>("SELECT resource FROM claims WHERE domain = 'host-port' AND NOT (project_id = ? AND generation = ?)").all(this.projectId, this.generation).map(r => Number(r.resource));
-    const slotted = this.db.query<{ port: number }, []>("SELECT port FROM slot_ports").all().map(r => r.port);
+    const slotted = hasSlotTables(this.db) ? this.db.query<{ port: number }, []>("SELECT port FROM slot_ports").all().map(r => r.port) : [];
     return new Set([...claimed, ...slotted]);
   }
 
@@ -590,7 +596,7 @@ export class ProjectOperation {
        OR (? = 1 AND substr(resource, 1, length(?)) = ?)) LIMIT 1`,
     ).get(claim.domain, claim.resource, claim.resource, claim.prefix ? 1 : 0, claim.resource, claim.resource);
     // Host ports are one domain across generation claims and slot port blocks.
-    const slotHolder = claim.domain === "host-port"
+    const slotHolder = claim.domain === "host-port" && hasSlotTables(this.db)
       ? this.db.query<{ root: string }, [number]>("SELECT json_extract(slot_runs.receipt, '$.root') AS root FROM slot_ports JOIN slot_runs ON slot_runs.id = slot_ports.run_id WHERE port = ?").get(Number(claim.resource))
       : null;
     if (conflict || slotHolder) {

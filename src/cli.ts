@@ -433,7 +433,8 @@ const main = async (): Promise<void> => {
   }
 
   const execute = async () => {
-    if (["env", "up", "ci", "down", "status", "run"].includes(command)) {
+    // run checks legacy state itself, and only when it would claim ports.
+    if (["env", "up", "ci", "down", "status"].includes(command)) {
       await assertNoLegacyState(path.dirname(path.resolve(values.config)));
     }
 

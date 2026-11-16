@@ -20,11 +20,13 @@ Unknown schemas, corruption, missing expected state and failed queries refuse;
 there is no empty-store fallback. Runtime CLI/env store overrides do not exist.
 Tests inject a private constructor store or run in a disposable OS account.
 
-The store format is 4: the released format 3 plus the slot tables. A writable
-open adds those tables to a format-3 store in place, in one transaction, and
-raises it to format 4; this additive step is the only upgrade, and format-3
-clients then refuse the store before application mutation. Read-only status
-reads a format-3 store as holding no slot run. Format-1 and format-2 proposal
+Project-only use creates and keeps stores at format 3, the released format.
+The first `silo run` on the host adds the slot tables to the store in place, in
+one transaction, and raises it to format 4 (owner decision 2026-11-16); this
+additive step is the only upgrade and has no downgrade. Format-3 clients then
+refuse the store before application mutation rather than allocate ports
+without seeing slot port blocks. Every slot-table read is guarded by the
+format, and read-only status reads a format-3 store as holding no slot run. Format-1 and format-2 proposal
 stores are refused before application mutation; no migration or reset occurs.
 Format-2 proposal clients also refuse format-3 stores before application
 mutation. SQLite may recover an interrupted transaction before schema
@@ -181,7 +183,12 @@ before any effect. There is no default cap and no per-project override. Each
 run holds one durable ticket; grants are first in, first out per slot and
 all-or-none across slots in one `BEGIN IMMEDIATE` transaction. A waiting ticket
 holds nothing; a contender may drop the ticket of a waiter proved absent by the
-rule below. Slot port blocks share the `host-port` claim domain with generation
+rule below. Each waiting pass may also release, under the same proof, up to
+eight rows of slots it does not request whose waiter no longer answers a null
+signal, so a crashed run of an unrequested slot cannot hold port blocks
+indefinitely. Caps are re-read for every grant attempt. Legacy-registry state
+refuses a run only when a requested slot declares `ports` (owner decision
+2026-11-16). Slot port blocks share the `host-port` claim domain with generation
 claims and follow the ephemeral-range rule. `run` takes no project operation
 token, generation or Docker engine; `on-acquire` steps and the command run in
 one Janitor-supervised executor group. Checks: `src/commands/run.test.ts`,
@@ -413,7 +420,8 @@ cover durable successful retry reconciliation. Named-volume behavior follows
   supported stores remain recoverable after interrupted SQLite transactions.
   Check: clean unsupported-format byte-preservation test and native hot-journal
   recovery probe. No automatic schema migration or reset is performed beyond
-  the additive format-3 to format-4 slot tables (`src/core/slot_store.test.ts`).
+  the additive format-3 to format-4 slot tables at the first slot run
+  (`src/core/slot_store.test.ts`).
 - REQ-LAUNCH-001: terminal reconciled launch history cannot exhaust cleanup
   capacity; unresolved facts and resource audit history survive compaction.
   Check: lease-store capacity test and native `--suite producers` at 1023 records.

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -56,16 +56,41 @@ const project = (slots: string): string => {
 };
 
 type Finished = { exitCode: number; stdout: string; stderr: string };
-type Started = { proc: Bun.Subprocess<"ignore", "pipe", "pipe">; finished: Promise<Finished> };
+type Started = { proc: Bun.Subprocess<"ignore", "pipe", "pipe">; finished: Promise<Finished>; stderrSoFar: () => string };
+
+const collect = async (stream: ReadableStream<Uint8Array>, onText: (text: string) => void): Promise<string> => {
+  const decoder = new TextDecoder();
+  let text = "";
+  for await (const chunk of stream) { text += decoder.decode(chunk, { stream: true }); onText(text); }
+  return text + decoder.decode();
+};
+
+// Every CLI process a test starts; afterEach kills survivors and the groups
+// they recorded, so a failing test leaks no process.
+const startedPids = new Set<number>();
+const started: Started[] = [];
+
+afterEach(async () => {
+  const leftover = started.splice(0).filter(s => s.proc.exitCode === null && s.proc.signalCode === null);
+  const groups = existsSync(storePath) ? runs().flatMap(q => q.run.phase === "held" && q.run.launch && startedPids.has(q.run.waiter.pid) ? [q.run.launch.groupId] : []) : [];
+  for (const s of leftover) s.proc.kill("SIGKILL");
+  for (const group of groups) { try { process.kill(-group, "SIGKILL"); } catch { /* already gone */ } }
+  await Promise.all(leftover.map(s => s.proc.exited));
+  startedPids.clear();
+});
 
 const start = (root: string, args: string[]): Started => {
   const proc = Bun.spawn([process.execPath, cli, ...args], {
     cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 60_000,
     env: { ...process.env, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry"), PATH: `${bin}:${process.env.PATH}` },
   });
-  const finished = Promise.all([proc.exited, new Response(proc.stdout).text(), new Response(proc.stderr).text()])
+  let stderrSoFar = "";
+  const finished = Promise.all([proc.exited, new Response(proc.stdout).text(), collect(proc.stderr, text => { stderrSoFar = text; })])
     .then(([exitCode, stdout, stderr]) => ({ exitCode, stdout, stderr }));
-  return { proc, finished };
+  const value = { proc, finished, stderrSoFar: () => stderrSoFar };
+  startedPids.add(proc.pid);
+  started.push(value);
+  return value;
 };
 
 const settle = (started: Started, label: string): Promise<Finished> =>
@@ -286,11 +311,93 @@ test("status names holders and waiters without changing the queue", async () => 
   const before = runs();
   const status = await runCli(root, ["status", "--json"]);
   expect(status.exitCode).toBe(0);
-  const observed = JSON.parse(status.stdout).slots.find((s: { slot: string }) => s.slot === "observed");
+  const observed = JSON.parse(status.stdout).slots.list.find((s: { slot: string }) => s.slot === "observed");
   expect(observed).toMatchObject({ slot: "observed", cap: 1, held: 1, waiting: 1, holders: [{ unit: 0, root, state: "held", command: holdUntil("release-observed"), pid: holder.proc.pid }] });
   const text = await runCli(root, ["status"]);
   expect(text.stdout).toMatch(/observed\s+1\s+1\s+#0 \S+\s+pid \d+/);
   expect(runs()).toEqual(before);
   writeFileSync(path.join(root, "release-observed"), "");
   expect((await Promise.all([settle(holder, "holder"), settle(waiter, "waiter")])).map(r => r.exitCode)).toEqual([0, 0]);
+}, 60_000);
+
+test("lowering a cap applies to runs already queued", async () => {
+  setCaps({ lowered: 2 });
+  const root = project("[slots.lowered]\n");
+  const first = start(root, ["run", "--slot", "lowered", "--", ...holdUntil("release-first")]);
+  const second = start(root, ["run", "--slot", "lowered", "--", ...holdUntil("release-second")]);
+  await waitFor(() => existsSync(path.join(root, "release-first.started")) && existsSync(path.join(root, "release-second.started")), "two holders");
+  const third = start(root, ["run", "--slot", "lowered", "--", "sh", "-c", "touch third-ran"]);
+  await waitFor(() => waitersFor("lowered").length === 1, "third queued");
+  setCaps({ lowered: 1 });
+  writeFileSync(path.join(root, "release-second"), "");
+  expect((await settle(second, "second")).exitCode).toBe(0);
+  // One unit is still held and the cap is now 1: the queued run re-reads the
+  // cap, reports it, and keeps waiting.
+  await waitFor(() => third.stderrSoFar().includes("waiting for lowered (1/1 held"), "third sees the lowered cap");
+  expect(existsSync(path.join(root, "third-ran"))).toBe(false);
+  expect(waitersFor("lowered").length).toBe(1);
+  writeFileSync(path.join(root, "release-first"), "");
+  const results = await Promise.all([settle(first, "first"), settle(third, "third")]);
+  expect(results.map(r => r.exitCode)).toEqual([0, 0]);
+  expect(existsSync(path.join(root, "third-ran"))).toBe(true);
+}, 60_000);
+
+test("units stay held while the group outlives its supervisor, and a later run releases them once it is gone", async () => {
+  setCaps({ outlives: 1 });
+  const root = project("[slots.outlives]\n");
+  const holder = start(root, ["run", "--slot", "outlives", "--json", "--", "sh", "-c", "trap '' TERM; touch started; while :; do sleep 0.05; done"]);
+  await waitFor(() => existsSync(path.join(root, "started")), "holder command");
+  const launch = launched("outlives")!;
+  const groupAlive = () => { try { process.kill(-launch.groupId, 0); return true; } catch { return false; } };
+  // Without its supervisor nothing drains the group; the run must not release.
+  process.kill(launch.supervisor.pid, "SIGKILL");
+  const result = await settle(holder, "holder");
+  expect(groupAlive()).toBe(true);
+  expect(JSON.parse(result.stdout).run.released).toBe(false);
+  expect(holderOf("outlives")).toBeDefined();
+  process.kill(-launch.groupId, "SIGKILL");
+  await waitFor(() => !groupAlive(), "group exit");
+  const next = await runCli(root, ["run", "--slot", "outlives", "--", "true"]);
+  expect(next.exitCode).toBe(0);
+  expect(next.stderr).toContain("released slot units of ended run");
+  expect(runs()).toEqual([]);
+}, 60_000);
+
+test("a run releases provably dead rows of slots it does not request, including their port blocks", async () => {
+  setCaps({ orphaned: 1, sweeper: 1 });
+  const root = project("[slots.sweeper]\n");
+  const ended = Bun.spawn(["true"]);
+  await ended.exited;
+  const queue = new SlotQueue(storePath);
+  const id = randomUUID();
+  queue.enqueue({ phase: "waiting", id, root: "/crashed", command: ["gone"], requests: [{ slot: "orphaned" as never, ports: 2 }], waiter: { pid: ended.pid, identity: "gone" }, enqueuedAt: "t" });
+  expect(queue.attemptGrant(id, new Map([["orphaned" as never, 1]]), new Map([["orphaned" as never, [40200, 40201]]]), "t").kind).toBe("granted");
+  const result = await runCli(root, ["run", "--slot", "sweeper", "--", "true"]);
+  expect(result.exitCode).toBe(0);
+  expect(result.stderr).toContain(`released slot units of ended run ${id}`);
+  expect(runs()).toEqual([]);
+}, 60_000);
+
+test("legacy state refuses a run only when a requested slot claims ports", async () => {
+  setCaps({ "no-ports": 1, "with-ports": 1 });
+  const root = project("[slots.no-ports]\n[slots.with-ports]\nports = 1\n");
+  const registry = path.join(account, ".silo/instances");
+  mkdirSync(registry, { recursive: true });
+  writeFileSync(path.join(registry, "legacy.json"), "{}");
+  try {
+    expect((await runCli(root, ["run", "--slot", "no-ports", "--", "true"])).exitCode).toBe(0);
+    const refused = await runCli(root, ["run", "--slot", "with-ports", "--json", "--", "true"]);
+    expect(refused.exitCode).toBe(1);
+    expect(JSON.parse(refused.stdout).code).toBe("LEGACY_STATE");
+  } finally { rmSync(path.join(registry, "legacy.json")); }
+}, 60_000);
+
+test("an invalid host file is reported in status's slots section without failing status", async () => {
+  writeFileSync(hostFile, "[slots]\nbad = 0\n");
+  try {
+    const root = project("");
+    const status = await runCli(root, ["status", "--json"]);
+    expect(status.exitCode).toBe(0);
+    expect(JSON.parse(status.stdout).slots).toMatchObject({ list: [], problem: { code: "INVALID_HOST_CONFIG" } });
+  } finally { setCaps({}); }
 }, 60_000);

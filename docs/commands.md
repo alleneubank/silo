@@ -49,10 +49,14 @@ for active receipts. The flag is stored knowledge; use immutable IDs for a fresh
 physical-presence check. At the 1024-launch limit, terminal reconciled launch and
 completion history can be compacted while uncertainty and resource history remain.
 
-The SQLite store format is 4: format 3 (silo 1.0.0) plus the slot tables. A
-writable command adds those tables to a format-3 store in place; afterwards
-1.0.0 clients refuse the store rather than allocate ports blind to slot port
-blocks. Read-only status reads a format-3 store as holding no slot runs.
+Project commands create and keep the SQLite store at format 3, the format
+silo 1.0.0 uses. The first `silo run` on the host adds the slot tables in place
+and raises the store to format 4, with no downgrade. After that, silo 1.0.0
+refuses the store with `LEASE_STORE_UNAVAILABLE: cannot open …; allocation
+refused`, including `status` and `down` of stacks it started: that message
+means a newer silo upgraded the store, and the fix is to upgrade silo, not to
+delete the store. Read-only status reads a format-3 store as holding no slot
+runs.
 Format-1 and format-2 stores refuse without migration/reset; format-2 clients
 also refuse format 3. Drain the matching old proposal and resolve its resources
 before owner-led recreation.
@@ -101,9 +105,27 @@ released, and `run` exits with that step's status and `SLOT_ACQUIRE_FAILED`
 naming the step and the tail of its stderr. There is no `on-release`: reset on
 acquire also covers a holder killed with SIGKILL.
 
-`run` exits with the command's status. The command's stdin is not connected.
-SIGINT or SIGTERM leaves the queue while waiting, or stops the whole group
-while running, and exits 130 or 143. Units are released by the run once its
+`run` exits with the command's status. Without `--json`, a command that itself
+exits 2 or 75 is indistinguishable from `SLOT_UNAVAILABLE` or
+`SLOT_WAIT_TIMEOUT` by status alone; use `--json` (an error has `code`, a
+result has `run.exitCode`) when that matters. The command's stdin is not
+connected. SIGINT or SIGTERM leaves the queue while waiting, or stops the whole
+group while running, and exits 130 or 143. The command runs in its own process
+group, so a terminal's Ctrl-C reaches it as Janitor's SIGTERM to the group,
+followed by SIGKILL after a 5-second grace, not as SIGINT.
+
+Caps are re-read on every grant attempt, so lowering a cap applies to runs
+already queued; units already held above the new cap stay held until released.
+A waiter that cannot prove a holder gone (permission denied, or an unreadable
+identity) keeps waiting and says so once. Each waiting pass also releases, under
+the same proof, up to eight rows of other slots whose `silo run` process is
+gone, so a crashed run of a slot nobody requests does not hold its port block
+forever. The executor retries recording the command's completion within a
+bound while the store is busy; if it still cannot, the run keeps the command's
+exit status from the supervisor. Legacy registry state (`LEGACY_STATE`) refuses
+a run only when a requested slot declares `ports`. Waiting costs one store
+transaction plus one `ps` per live contending holder per poll, polled at most
+once a second; with many contenders a handoff can take up to a second. Units are released by the run once its
 group has no member; if the group outlives a short window, they stay held and
 the result reports `released: false`. A later `run` contending for the same
 slot releases a holder once its recorded processes are proved gone (`ESRCH`,
@@ -122,9 +144,11 @@ carries one schemaVersion-1 result:
  "waitedMs":1520,"exitCode":0,"released":true}}
 ```
 
-`status` (and `status --json` under `slots`) lists each capped or queued slot
-with its cap, holders (unit, root, command, silo run PID, group, since) and
-waiter count. A holder whose recorded processes are gone but whose row a
+`status` (and `status --json` under `slots.list`) lists each capped or queued
+slot with its cap, holders (unit, root, command, silo run PID, group, since) and
+waiter count. An unreadable host file or slot queue is reported in
+`slots.problem` (`code`, `message`) and never fails the project status or the
+JSON result of `env`, `up`, `ci` or `down`. A holder whose recorded processes are gone but whose row a
 contender has not yet released shows `ended (releasing)`; status never
 releases it.
 

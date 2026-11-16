@@ -33,13 +33,12 @@ export type Liveness = "absent" | "live" | "unknown";
 
 /**
  * Absence is ESRCH, or a readable identity that differs from the recorded
- * one (the PID now names another process). EPERM and an unreadable identity
- * stay unknown.
+ * one (the PID now names another process). A PID another account now owns
+ * (EPERM) is compared the same way, since `ps` still shows its owner and
+ * start time. An unreadable identity stays unknown.
  */
 export const recordedProcessLiveness = async (recorded: { pid: number; identity: string }): Promise<Liveness> => {
-  const probe = probeProcess(recorded.pid);
-  if (probe === "absent") return "absent";
-  if (probe === "uncertain") return "unknown";
+  if (probeProcess(recorded.pid) === "absent") return "absent";
   const identity = await processIdentity(recorded.pid);
   if (identity === null) return probeProcess(recorded.pid) === "absent" ? "absent" : "unknown";
   return identity === recorded.identity ? "live" : "absent";

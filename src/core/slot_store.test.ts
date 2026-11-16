@@ -124,18 +124,26 @@ describe("SlotQueue", () => {
     expect(lost.kind === "needs-ports" && lost.claimed.has(40102)).toBe(true);
   });
 
-  test("a format-3 store gains the slot tables on its first writable open", () => {
-    new SlotQueue(storePath).runs();
-    const db = new Database(storePath);
-    db.exec("DROP TABLE slot_ports; DROP TABLE slot_units; DROP TABLE slot_runs; PRAGMA user_version = 3;");
-    db.close();
+  test("project-only use keeps a format-3 store; the first slot run upgrades it", async () => {
+    const version = () => {
+      const db = new Database(storePath, { readonly: true });
+      try { return db.query<{ user_version: number }, []>("PRAGMA user_version").get()!.user_version; }
+      finally { db.close(); }
+    };
+    const root = path.join(base, "project-only");
+    mkdirSync(root);
+    const legacyInputs = { accountHome: path.join(base, "account"), home: path.join(base, "home"), registryDir: undefined };
+    (await ProjectOperation.open(root, { storePath, legacyInputs })).finish();
+    expect(version()).toBe(3);
     expect(SlotQueue.inspect(storePath)).toEqual([]);
+    (await ProjectOperation.open(root, { storePath, legacyInputs })).finish();
+    expect(version()).toBe(3);
     const run = waiting([{ slot: A }]);
     new SlotQueue(storePath).enqueue(run);
-    const upgraded = new Database(storePath, { readonly: true });
-    expect(upgraded.query<{ user_version: number }, []>("PRAGMA user_version").get()!.user_version).toBe(4);
-    upgraded.close();
+    expect(version()).toBe(4);
     expect(SlotQueue.inspect(storePath).map(q => q.run.id)).toEqual([run.id]);
+    (await ProjectOperation.open(root, { storePath, legacyInputs })).finish();
+    expect(version()).toBe(4);
   });
 });
 
@@ -156,6 +164,28 @@ describe("runLiveness", () => {
     const ended = Bun.spawn(["true"]);
     await ended.exited;
     expect(await runLiveness(waiting([{ slot: A }], { pid: ended.pid, identity: "anything" }))).toBe("absent");
+  });
+
+  test("a held run whose supervisor PID now names an unrelated process is absent", async () => {
+    const unrelated = Bun.spawn(["sleep", "30"], { stdout: "ignore", stderr: "ignore" });
+    const ended = Bun.spawn(["true"]);
+    await ended.exited;
+    try {
+      const run: SlotRun = {
+        ...waiting([{ slot: A }], { pid: ended.pid, identity: "gone" }), phase: "held",
+        grants: [{ slot: A, unit: 0, ports: [] }], grantedAt: "t",
+        launch: { supervisor: { pid: unrelated.pid, identity: "501 1 Thu Jan  1 00:00:00 2026 janitor" }, leaderPid: ended.pid, groupId: ended.pid },
+      };
+      expect(await runLiveness(run)).toBe("absent");
+    } finally { unrelated.kill("SIGKILL"); await unrelated.exited; }
+  });
+
+  test("a PID another account now owns is compared by identity, not treated as unknown", async () => {
+    // A root-owned process answers a null signal with EPERM for this account.
+    const listing = Bun.spawnSync(["ps", "-axo", "pid=,uid="], { stdout: "pipe" }).stdout.toString();
+    const rootPid = listing.split("\n").map(line => line.trim().split(/\s+/).map(Number)).find(([pid, uid]) => uid === 0 && pid! > 1)?.[0];
+    expect(rootPid).toBeDefined();
+    expect(await runLiveness(waiting([{ slot: A }], { pid: rootPid!, identity: selfIdentity }))).toBe("absent");
   });
 
   test("a held run stays live while its executor group has a member", async () => {

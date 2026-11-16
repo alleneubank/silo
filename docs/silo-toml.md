@@ -111,7 +111,10 @@ read at allocation (`net.inet.ip.portrange.first`/`last` on macOS,
 `net.ipv4.ip_local_port_range` on Linux), scanned from the highest port down.
 A port inside the ephemeral range passes a bind probe and can still be taken by
 the kernel later, for example by an SSH forward. Existing generations keep
-their published ports; the rule applies to new allocations.
+their published ports; the rule applies to new allocations. A host whose
+ephemeral range covers all of 1024-65535 leaves no fallback port, and
+allocation refuses with `PORTS_EXHAUSTED`; an unreadable range refuses with
+`EPHEMERAL_RANGE_UNAVAILABLE`.
 
 Rules:
 - Ports must be within 1-65535.

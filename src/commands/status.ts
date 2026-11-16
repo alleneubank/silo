@@ -5,6 +5,7 @@ import { logger, logKeyValues } from "../utils/logger";
 import { commandRoot } from "./prepare";
 import { commandLiveness } from "../core/owned_command";
 import { SiloError } from "../utils/errors";
+import { ZodError } from "zod";
 import { accountStorePath } from "../core/allocation_domain";
 import { readHostCaps } from "../core/host_caps";
 import { SlotQueue, runEndedByEsrch } from "../core/slot_store";
@@ -72,13 +73,29 @@ export const readStatus = (config: string, changed = false) => {
   const cleanupRequired = project?.phase === "cleanup-required" || operationOwnerAbsent || launchStatus.some((observation, index) =>
     ["completed", "terminated"].includes(observation.state) && !project!.launches[index]!.reconciled,
   );
-  const slots = readSlotStatus(accountStorePath(), readHostCaps());
+  const slots = slotSection();
   return { schemaVersion: 1 as const, legacy: false as const, changed, project, launchStatus, operationOwnerAbsent, cleanupRequired, slots };
+};
+
+type SlotSection = { list: SlotStatus[]; problem: { code: string; message: string } | null };
+
+/**
+ * Slot state is host-wide; an unreadable host file or slot queue is reported
+ * here and never fails a project's status or lifecycle result.
+ */
+const slotSection = (): SlotSection => {
+  try { return { list: readSlotStatus(accountStorePath(), readHostCaps()), problem: null }; }
+  catch (error) {
+    if (error instanceof SiloError) return { list: [], problem: { code: error.code, message: error.message } };
+    if (error instanceof ZodError) return { list: [], problem: { code: "SLOT_STATE_INVALID", message: `slot queue row does not parse: ${error.issues[0]?.message ?? "invalid"}` } };
+    throw error;
+  }
 };
 
 const time = (iso: string): string => `${iso.slice(11, 19)}Z`;
 
-const logSlots = (slots: SlotStatus[]): void => {
+const logSlots = ({ list: slots, problem }: SlotSection): void => {
+  if (problem) logger.warn(`Slots unavailable: ${problem.message}`);
   if (slots.length === 0) return;
   const rows = [["slot", "cap", "held", "holder", "since", "waiting"]];
   for (const slot of slots) {

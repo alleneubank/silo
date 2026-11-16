@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { loadConfig } from "../core/config";
+import { assertNoLegacyState } from "../core/legacy_check";
 import { accountStorePath } from "../core/allocation_domain";
 import { hostConfigPath, readHostCaps } from "../core/host_caps";
 import { startGate } from "../core/owned_command";
@@ -8,7 +9,7 @@ import { probeProcess, processIdentity } from "../core/process_identity";
 import { SlotQueue, runLiveness, type GrantAttempt, type GrantDecision, type QueuedRun } from "../core/slot_store";
 import {
   MAX_RUN_SLOTS, SlotNameSchema, renderSlotValue,
-  type HeldSlotRun, type SlotCompletion, type SlotConfig, type SlotExecutorGrant, type SlotGrant, type SlotName, type SlotRequest,
+  type HeldSlotRun, type HostCaps, type SlotCompletion, type SlotConfig, type SlotExecutorGrant, type SlotGrant, type SlotName, type SlotRequest,
 } from "../core/slot_types";
 import { TILT_DRAIN_GRACE_MS } from "../core/constants";
 import { SiloError } from "../utils/errors";
@@ -64,7 +65,17 @@ const unavailable = (slot: string, where: string): SiloError => new SiloError(
   `SLOT_UNAVAILABLE: slot '${slot}' is not ${where}`, "SLOT_UNAVAILABLE", { details: { slot, exitCode: SLOT_UNAVAILABLE_EXIT } },
 );
 
-type Plan = { root: string; requests: SlotRequest[]; configs: ReadonlyMap<SlotName, SlotConfig>; caps: ReadonlyMap<SlotName, number> };
+type Plan = { root: string; requests: SlotRequest[]; configs: ReadonlyMap<SlotName, SlotConfig> };
+
+const notCapped = (slot: string): SiloError => unavailable(slot, `capped on this host; add it under [slots] in ${hostConfigPath()}`);
+
+/** Caps are re-read for every grant attempt, so an operator's change applies to queued runs. */
+const currentCaps = (slots: readonly SlotName[]): HostCaps => {
+  const caps = readHostCaps();
+  const missing = slots.find(slot => !caps.has(slot));
+  if (missing !== undefined) throw notCapped(missing);
+  return caps;
+};
 
 /** Every refusal here happens before any store effect. */
 const plan = async (options: RunOptions): Promise<Plan> => {
@@ -73,19 +84,18 @@ const plan = async (options: RunOptions): Promise<Plan> => {
   if (options.slots.length > MAX_RUN_SLOTS) throw new SiloError(`INVALID_ARGUMENT: at most ${MAX_RUN_SLOTS} --slot values`, "INVALID_ARGUMENT");
   if (new Set(options.slots).size !== options.slots.length) throw new SiloError("INVALID_ARGUMENT: each --slot may be named once; a run holds one unit of each", "INVALID_ARGUMENT");
   const config = await loadConfig(options.config);
-  const caps = readHostCaps();
   const configs = new Map<SlotName, SlotConfig>();
   for (const name of [...options.slots].sort()) {
     const slot = SlotNameSchema.safeParse(name);
     const declared = slot.success ? config.slots[slot.data] : undefined;
     if (!slot.success || declared === undefined) throw unavailable(name, `declared in ${config.configPath} ([slots.${name}])`);
-    if (!caps.has(slot.data)) throw unavailable(name, `capped on this host; add it under [slots] in ${hostConfigPath()}`);
     configs.set(slot.data, declared);
   }
+  currentCaps([...configs.keys()]);
   const keys = [...configs.values()].flatMap(slot => Object.keys(slot.env));
   if (new Set(keys).size !== keys.length) throw new SiloError("INVALID_CONFIG: the requested slots inject the same env variable", "INVALID_CONFIG");
   return {
-    root: commandRoot(options.config), configs, caps,
+    root: commandRoot(options.config), configs,
     requests: [...configs.entries()].map(([slot, declared]) => ({ slot, ports: declared.ports })),
   };
 };
@@ -103,19 +113,32 @@ const waitingMessage = (decision: Extract<GrantDecision, { kind: "wait" }>): str
   return `waiting for ${decision.slot} (${decision.held}/${decision.cap} held; ${next})`;
 };
 
-/** Releases contending peers whose every recorded process is proved absent. */
-const releaseAbsentPeers = async (queue: SlotQueue, runId: string, slots: readonly SlotName[]): Promise<void> => {
+// Rows of other slots a pass may also inspect, so crashed runs of a slot
+// nobody requests do not hold port blocks forever.
+const MAX_SWEEP_PER_PASS = 8;
+
+/**
+ * Releases rows whose every recorded process is proved absent: contending
+ * peers on this run's slots first, then a bounded sweep of other rows whose
+ * waiter no longer answers a null signal. Uncertain liveness keeps the row,
+ * and the waiter says so once per row.
+ */
+const releaseAbsentPeers = async (queue: SlotQueue, runId: string, slots: readonly SlotName[], reported: Set<string>): Promise<void> => {
   const runs = queue.runs();
   const self = runs.find(queued => queued.run.id === runId);
   if (!self) return;
-  const contends = (queued: QueuedRun) => queued.run.id !== runId && queued.run.requests.some(request => slots.includes(request.slot)) &&
+  const contends = (queued: QueuedRun) => queued.run.requests.some(request => slots.includes(request.slot)) &&
     (queued.run.phase === "held" || queued.ticket < self.ticket);
-  for (const peer of runs.filter(contends)) {
+  const peers = runs.filter(queued => queued.run.id !== runId);
+  const contending = peers.filter(contends);
+  const sweep = peers.filter(queued => !contends(queued) && probeProcess(queued.run.waiter.pid) !== "exists").slice(0, MAX_SWEEP_PER_PASS);
+  for (const peer of [...contending, ...sweep]) {
     const liveness = await runLiveness(peer.run);
     if (liveness === "absent" && queue.release(peer.run.id, peer.revision)) {
       logger.progress(`released ${peer.run.phase === "held" ? "slot units" : "the queue ticket"} of ended run ${peer.run.id} (${peer.run.root})`);
-    } else if (liveness === "unknown") {
-      logger.verbose(`run ${peer.run.id} liveness is uncertain; its claim is kept`);
+    } else if (liveness === "unknown" && contends(peer) && !reported.has(peer.run.id)) {
+      reported.add(peer.run.id);
+      logger.progress(`keeping the claim of run ${peer.run.id} (${peer.run.root}, pid ${peer.run.waiter.pid}): its liveness is uncertain (permission denied or identity unreadable); inspect that PID`);
     }
   }
 };
@@ -139,10 +162,11 @@ const waitForGrant = async (queue: SlotQueue, runId: string, planned: Plan, wait
   let lastMessage = "";
   let delay = POLL_MS_MIN;
   let portRaces = 0;
+  const reported = new Set<string>();
   for (;;) {
     signal?.throwIfAborted();
-    await releaseAbsentPeers(queue, runId, slots);
-    const attempt: GrantAttempt = queue.attemptGrant(runId, planned.caps, blocks, new Date().toISOString());
+    await releaseAbsentPeers(queue, runId, slots, reported);
+    const attempt: GrantAttempt = queue.attemptGrant(runId, currentCaps(slots), blocks, new Date().toISOString());
     if (attempt.kind === "granted") return attempt.run;
     if (attempt.kind === "needs-ports") {
       if (++portRaces > MAX_PORT_RACES) throw new SiloError("PORTS_EXHAUSTED: slot port blocks kept losing to concurrent claims", "PORTS_EXHAUSTED");
@@ -197,6 +221,8 @@ const acquireFailure = (completion: SlotCompletion, step: string, stderrTail: st
 export const run = async (options: RunOptions): Promise<RunResult> => {
   const waitMs = options.wait === undefined ? null : parseWait(options.wait);
   const planned = await plan(options);
+  // Legacy clients can only collide with slot port blocks (owner decision 2026-11-16).
+  if (planned.requests.some(request => request.ports > 0)) await assertNoLegacyState(planned.root);
   const identity = await processIdentity(process.pid);
   if (identity === null) throw new SiloError("Cannot read this process's start identity", "PROCESS_IDENTITY_UNAVAILABLE");
   const queue = new SlotQueue(accountStorePath());

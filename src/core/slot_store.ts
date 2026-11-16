@@ -93,6 +93,7 @@ const selectRun = (db: Database, runId: string): QueuedRun | null => {
   return row ? parseRow(row) : null;
 };
 
+// Only reached through a slot connection, which guarantees the slot tables.
 const claimedPorts = (db: Database): Set<number> => new Set([
   ...db.query<{ resource: string }, []>("SELECT resource FROM claims WHERE domain = 'host-port'").all().map(row => Number(row.resource)),
   ...db.query<{ port: number }, []>("SELECT port FROM slot_ports").all().map(row => row.port),
@@ -107,7 +108,7 @@ export class SlotQueue {
   constructor(readonly storePath: string) {}
 
   private write<T>(work: (db: Database) => T): T {
-    const db = openDatabase(this.storePath, false, true);
+    const db = openDatabase(this.storePath, false, true, undefined, true);
     try { return db.transaction(() => work(db)).immediate(); }
     finally { db.close(); }
   }
