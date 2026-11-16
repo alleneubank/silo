@@ -176,6 +176,14 @@ test("a run without slots needs no silo.toml, host caps or store, and keeps its 
   expect(existsSync(path.join(base, "docker-called"))).toBe(false);
 });
 
+test("a run without slots ignores a malformed silo.toml it never reads", async () => {
+  const root = bareDirectory();
+  writeFileSync(path.join(root, "silo.toml"), "this is = = not toml [\n");
+  const result = await runCli(root, ["run", "--json", "--", "sh", "-c", "exit 4"]);
+  expect(result.exitCode).toBe(4);
+  expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 4, timedOut: false } });
+});
+
 test("--timeout, --kill-after and --wait refuse values outside their bounds before running", async () => {
   const root = bareDirectory();
   for (const args of [["--timeout", "500ms"], ["--timeout", "169h"], ["--timeout", "soon"], ["--kill-after", "11m"], ["--kill-after", "0"], ["--wait", "1s"]]) {
@@ -215,6 +223,57 @@ test("a command that ignores SIGTERM at the deadline is SIGKILLed after the --ki
   // The deadline plus the grace, well short of the default 5 s grace.
   expect(elapsed).toBeGreaterThanOrEqual(2000);
   expect(elapsed).toBeLessThan(4500);
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+test("--timeout also ends a descendant that left the group with setsid", async () => {
+  const root = bareDirectory();
+  const escaping = `${recordGroup("group")}; perl -e 'use POSIX; POSIX::setsid(); exec "sleep", "600"' & echo $! > escaped; wait`;
+  const running = start(root, ["run", "--timeout", "1s", "--", "sh", "-c", escaping]);
+  const group = await recordedGroup(root, "group");
+  const escaped = await recordedGroup(root, "escaped");
+  // It leads its own session and group, outside the command's group.
+  await waitFor(() => Bun.spawnSync(["ps", "-o", "pgid=", "-p", String(escaped)]).stdout.toString().trim() === String(escaped), "setsid");
+  expect((await settle(running, "run with an escaped descendant")).exitCode).toBe(124);
+  expect([alive(escaped), alive(-group)]).toEqual([false, false]);
+}, 60_000);
+
+test("a command whose own process exits before the deadline is not timed out while a straggler drains", async () => {
+  const root = bareDirectory();
+  const straggler = `${recordGroup("group")}; sh -c 'trap "" TERM; exec sleep 600' & exit 0`;
+  const result = await runCli(root, ["run", "--timeout", "1s", "--kill-after", "3s", "--json", "--", "sh", "-c", straggler]);
+  expect(result.exitCode).toBe(0);
+  expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 0, timedOut: false } });
+  expect(result.stderr).not.toContain("reached");
+}, 60_000);
+
+test("SIGINT after the deadline fired keeps the timeout's 124", async () => {
+  const root = bareDirectory();
+  const stubborn = `${recordGroup("group")}; trap 'echo term >> got-term' TERM; while :; do sleep 0.05; done`;
+  const running = start(root, ["run", "--timeout", "1s", "--kill-after", "3s", "--json", "--", "sh", "-c", stubborn]);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => existsSync(path.join(root, "got-term")), "deadline stop began");
+  running.proc.kill("SIGINT");
+  const result = await settle(running, "interrupted after the deadline");
+  expect(result.exitCode).toBe(124);
+  expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 124, timedOut: true } });
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+test("--kill-after sets the grace of an interrupt's stop", async () => {
+  const root = bareDirectory();
+  const stubborn = `${recordGroup("group")}; trap 'echo term >> got-term' TERM; touch started; while :; do sleep 0.05; done`;
+  const running = start(root, ["run", "--kill-after", "1s", "--", "sh", "-c", stubborn]);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => existsSync(path.join(root, "started")), "command started");
+  const interruptedAt = Date.now();
+  running.proc.kill("SIGINT");
+  expect((await settle(running, "interrupted stubborn run")).exitCode).toBe(130);
+  const elapsed = Date.now() - interruptedAt;
+  expect(existsSync(path.join(root, "got-term"))).toBe(true);
+  // One second of grace, well short of the default five.
+  expect(elapsed).toBeGreaterThanOrEqual(1000);
+  expect(elapsed).toBeLessThan(4000);
   expect(alive(-group)).toBe(false);
 }, 60_000);
 
@@ -266,7 +325,8 @@ test("with cap 1 the second run waits, then runs once the first exits", async ()
   const first = start(root, ["run", "--slot", "contended", "--", ...holdUntil("release-first")]);
   await waitFor(() => existsSync(path.join(root, "release-first.started")), "first command");
   const second = start(root, ["run", "--slot", "contended", "--", "sh", "-c", "touch second-ran"]);
-  await waitFor(() => waitersFor("contended").length === 1, "second run queued");
+  // Queued is not yet waiting: the run reports its wait once a grant attempt has failed.
+  await waitFor(() => second.stderrSoFar().includes("waiting for contended (1/1 held; next: #0"), "second run waiting");
   expect(existsSync(path.join(root, "second-ran"))).toBe(false);
   writeFileSync(path.join(root, "release-first"), "");
   const [a, b] = await Promise.all([settle(first, "first"), settle(second, "second")]);
@@ -387,6 +447,52 @@ test("a run stopped by --timeout releases its unit to the next waiter", async ()
   expect(existsSync(path.join(root, "waiter-ran"))).toBe(true);
   expect(runs()).toEqual([]);
 }, 60_000);
+
+test("a deadline during on-acquire stops the step, never starts the command, and releases", async () => {
+  setCaps({ "acquire-deadline": 1 });
+  const root = project(`[slots.acquire-deadline]
+on-acquire = ["touch acquiring; sleep 600"]`);
+  const result = await runCli(root, ["run", "--slot", "acquire-deadline", "--timeout", "1s", "--json", "--", "sh", "-c", "touch command-ran"]);
+  expect(result.exitCode).toBe(124);
+  expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 124, timedOut: true, released: true } });
+  expect([existsSync(path.join(root, "acquiring")), existsSync(path.join(root, "command-ran"))]).toEqual([true, false]);
+  expect(runs()).toEqual([]);
+}, 60_000);
+
+test("an on-acquire failure before the deadline stays SLOT_ACQUIRE_FAILED while a straggler drains", async () => {
+  setCaps({ "acquire-straggler": 1 });
+  const root = project(`[slots.acquire-straggler]
+on-acquire = ["sh -c 'trap \\"\\" TERM; exec sleep 600' & exit 9"]`);
+  const result = await runCli(root, ["run", "--slot", "acquire-straggler", "--timeout", "1s", "--kill-after", "3s", "--json", "--", "true"]);
+  expect(result.exitCode).toBe(9);
+  expect(JSON.parse(result.stdout)).toMatchObject({ code: "SLOT_ACQUIRE_FAILED", exitCode: 9 });
+  expect(runs()).toEqual([]);
+}, 60_000);
+
+for (const fault of ["SIGKILL", "SIGSTOP"] as const) {
+  test(`a supervisor lost to ${fault} mid-run: the deadline signals the recorded group itself, then releases`, async () => {
+    const name = `supervisor-${fault.toLowerCase()}`;
+    setCaps({ [name]: 1 });
+    const root = project(`[slots.${name}]\n`);
+    const startedAt = Date.now();
+    const holder = start(root, ["run", "--slot", name, "--timeout", "2s", "--kill-after", "1s", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 600 & wait`]);
+    const group = await recordedGroup(root, "group");
+    await waitFor(() => launched(name) !== null, "holder launch");
+    const supervisor = launched(name)!.supervisor.pid;
+    // Janitor leads its own session; tracking it lets cleanup reach a stopped one.
+    trackedGroups.add(supervisor);
+    process.kill(supervisor, fault);
+    const result = await settle(holder, "holder without a supervisor");
+    expect(result.exitCode).toBe(124);
+    expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 124, timedOut: true, released: true } });
+    expect(result.stderr).toContain(`sending SIGTERM to process group ${group} directly`);
+    expect(alive(-group)).toBe(false);
+    expect(alive(supervisor)).toBe(false);
+    // A stalled supervisor costs its drain window (1 s grace + 5 s) past the deadline, no more.
+    expect(Date.now() - startedAt).toBeLessThan(fault === "SIGSTOP" ? 15_000 : 8000);
+    expect(runs()).toEqual([]);
+  }, 60_000);
+}
 
 test("--wait bounds the wait with SLOT_WAIT_TIMEOUT and leaves the queue", async () => {
   setCaps({ bounded: 1 });

@@ -206,6 +206,11 @@ export type Gate<Fact extends { exitCode: number }> = {
   timeoutMs: number | null;
   /** Janitor's SIGTERM-to-SIGKILL grace for every stop of this group. */
   graceMs: number;
+  /**
+   * What a stop reaches: the executor group only, or also the descendants
+   * Janitor proves still descend from the executor when the stop begins.
+   */
+  teardown: "group" | "descendants";
   capture: boolean;
   output: OutputSink;
   signal: AbortSignal | undefined;
@@ -215,7 +220,16 @@ export type Gate<Fact extends { exitCode: number }> = {
   failureDetails: Readonly<Record<string, unknown>>;
 };
 export type GateResult<Fact> = { exitCode: number; stdout: string; stderr: string; completion: Fact | null };
-type RunningGate<Fact> = { identity: GateIdentity; exited: Promise<GateResult<Fact>>; stop: () => void };
+type RunningGate<Fact> = {
+  identity: GateIdentity;
+  exited: Promise<GateResult<Fact>>;
+  /** Resolves when this launch's own supervisor has exited. */
+  supervisorExited: Promise<number>;
+  /** SIGTERM to the supervisor, which drains the group. */
+  stop: () => void;
+  /** SIGKILL to the supervisor itself, for one that does not drain; the group is left as it is. */
+  kill: () => void;
+};
 
 export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fact>): Promise<RunningGate<Fact>> => {
   gate.signal?.throwIfAborted();
@@ -226,7 +240,7 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
     return remaining;
   };
   const proc = Bun.spawn([
-    TILT_SUPERVISOR_BIN, "--pgroup-only", "--watch-pid", String(process.pid), "--grace-ms", String(gate.graceMs),
+    TILT_SUPERVISOR_BIN, ...(gate.teardown === "group" ? ["--pgroup-only"] : []), "--watch-pid", String(process.pid), "--grace-ms", String(gate.graceMs),
     "--", ...executorCommand(gate.executorEntrypoint), ...gate.executorArgs,
   ], {
     cwd: gate.root, env: { ...process.env, ...gate.env }, detached: true,
@@ -234,7 +248,8 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
   });
   // Bun reaps the supervisor itself; once it has, the handle's PID may be
   // reused, so only a handle with no recorded exit is signalled.
-  const stopSupervisor = () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGTERM"); };
+  const signalSupervisor = (signal: "SIGTERM" | "SIGKILL") => { if (proc.exitCode === null && proc.signalCode === null) proc.kill(signal); };
+  const stopSupervisor = () => signalSupervisor("SIGTERM");
   const stdoutReader = proc.stdout.getReader();
   const stderrReader = proc.stderr.getReader();
   const stderr = drain(stderrReader, gate.capture);
@@ -285,7 +300,7 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
       throw error;
     }).finally(journal.stop);
     const exited = withTimeout({ result: completed, cancel: stopAndDrain }, gate.timeoutMs, gate.kind, gate.signal);
-    return { identity, exited, stop: stopSupervisor };
+    return { identity, exited, supervisorExited: proc.exited, stop: stopSupervisor, kill: () => signalSupervisor("SIGKILL") };
   } catch (error) {
     proc.stdin.end();
     await stopAndDrain();
@@ -306,7 +321,7 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
   const running = await startGate<ExecutorCompletion>({
     id: intent.id, root: owner.root, executorEntrypoint: owner.executorEntrypoint,
     executorArgs: [intent.id, owner.root, owner.projectId, String(owner.generation), owner.completionJournal],
-    kind: options.kind, env: options.env, timeoutMs: options.timeoutMs, graceMs: TILT_DRAIN_GRACE_MS, capture: options.capture ?? true, output: "stderr",
+    kind: options.kind, env: options.env, timeoutMs: options.timeoutMs, graceMs: TILT_DRAIN_GRACE_MS, teardown: "group", capture: options.capture ?? true, output: "stderr",
     signal: owner.signal,
     grant: identity => {
       granted = { ...intent, phase: "granted", reconciled: false, terminal: false, exitCode: null, ...identity };

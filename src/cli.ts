@@ -209,8 +209,10 @@ in the config's directory (the current one by default) under supervision.
 
 --timeout bounds the run from its grant (on-acquire and the command), not the
 wait: at the deadline the whole group gets SIGTERM, then SIGKILL after the
---kill-after grace, slots are released, and run exits 124 (--json:
-run.timedOut is true). SIGINT/SIGTERM to silo stop the group the same way.
+--kill-after grace, descendants that left it with setsid included; slots are
+released, and run exits 124 (--json: run.timedOut is true). A command that
+exits first keeps its status. If the group cannot be proved gone, run fails
+with RUN_STOP_INCOMPLETE. SIGINT/SIGTERM to silo stop the group the same way.
 
 Exit status: the command's; 124 when --timeout stopped it; 2 SLOT_UNAVAILABLE;
 75 SLOT_WAIT_TIMEOUT; an on-acquire step's own status with SLOT_ACQUIRE_FAILED;
@@ -529,7 +531,8 @@ const main = async (): Promise<void> => {
           config: values.config, slots: values.slot ?? [], wait: values.wait, timeout: values.timeout, killAfter: values["kill-after"], command: passthroughArgs,
           json: values.json, executorEntrypoint: import.meta.path, signal: operationInterrupts?.signal,
         });
-        operationInterrupts?.throwIfAborted();
+        // Once the deadline has stopped the command, a later interrupt does not change the outcome.
+        if (!result.run.timedOut) operationInterrupts?.throwIfAborted();
         process.exitCode = result.run.exitCode;
         if (values.json) await writeJsonResult({ kind: "result", value: result });
         return;

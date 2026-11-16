@@ -150,13 +150,30 @@ carries one schemaVersion-1 result:
 `--timeout` bounds a run from its grant: every `on-acquire` step and the
 command, not the time spent waiting for slots (`--wait` bounds that). It takes
 the same durations as `--wait`, from 1 second to 7 days. At the deadline silo
-sends SIGTERM to the command's whole process group, children and grandchildren
-included, then SIGKILL after the grace, releases its slots as after any exit,
-and exits 124, like coreutils `timeout`; with `--json`, `run.timedOut` is
-`true` and `run.exitCode` is 124. A command that finishes first keeps its own
-status. `--kill-after` sets the grace between SIGTERM and SIGKILL for every
-stop of the group, deadline or interrupt: 1 second to 10 minutes, default 5
-seconds.
+stops the command's process group, children and grandchildren included, and
+the descendants that left it with `setsid` while still descending from the
+command: SIGTERM, then SIGKILL after the grace. It then releases its slots as
+after any exit and exits 124, like coreutils `timeout`; with `--json`,
+`run.timedOut` is `true` and `run.exitCode` is 124. A process that double-forks
+and calls `setsid` before the deadline is no longer a descendant and escapes.
+
+The deadline counts as a timeout only if the command is still running when it
+passes. A command that exits first keeps its own status, even while left-over
+members of its group are still being drained. Once the deadline has stopped
+the command, a later Ctrl-C does not change the outcome. If Janitor itself is
+gone or stalled, silo signals the command's group directly, but only while the
+command's executor is still the process it recorded. If the group cannot be
+proved gone, the run fails with `RUN_STOP_INCOMPLETE` rather than reporting a
+timeout, and any slots stay held until a later run proves the group gone.
+
+`--kill-after` sets the grace between SIGTERM and SIGKILL for every stop of the
+group: a deadline, an interrupt, or the drain of members left behind after the
+command exits. It takes 1 second to 10 minutes and defaults to 5 seconds; how
+long `run` waits for a stopped group follows it.
+
+Without `--json`, a command that itself exits 124, 130 or 143 looks the same
+by status as a timeout or an interrupt; use `--json` (`run.timedOut`, or an
+`INTERRUPTED` error) when that matters.
 
 Unlike wrapping the command in `timeout -k`, which moves it into a new process
 group, `silo run` itself stays in its caller's group: a terminal's Ctrl-C or a

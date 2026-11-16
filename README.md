@@ -103,7 +103,8 @@ When silo launches child processes (Tilt, hooks, k3d, kubectl), it injects:
 
 ## Process supervision
 
-All mutating tools use durable gated Janitor groups with `--pgroup-only`.
+All mutating tools use durable gated Janitor groups with `--pgroup-only`;
+`silo run` also ends descendants that left its group.
 Owner loss drains the recorded group; uncertain effects retain ownership.
 A missing supervisor refuses startup. `--force` reconfigures only a stopped,
 reconciled generation; parallel stacks need separate roots and names.

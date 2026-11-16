@@ -6,7 +6,9 @@ Add `silo run --timeout <dur>` and runs without slots. `--timeout` bounds a
 run from its grant (on-acquire and the command, not the slot wait): at the
 deadline silo sends SIGTERM to the command's whole process group, SIGKILL
 after the grace, releases its slots and exits 124; `--json` reports
-`run.timedOut`. `--kill-after <dur>` sets the SIGTERM-to-SIGKILL grace for
+`run.timedOut`. The stop also reaches descendants that left the group with
+`setsid`, and silo signals the group itself if Janitor is gone or stalled.
+A command that exits before the deadline keeps its own status. `--kill-after <dur>` sets the SIGTERM-to-SIGKILL grace for
 every stop (default 5s). `--timeout` takes 1s to 7 days, `--kill-after` 1s to
 10m. `silo run` stays in its caller's process group, so Ctrl-C or a group
 signal still stops the command (exit 130/143), unlike wrapping it in

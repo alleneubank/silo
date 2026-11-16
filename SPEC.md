@@ -70,7 +70,13 @@ Each mutating command receives a durable planned launch, then a real
 Janitor-supervised executor group. The executor reports its actual group,
 Silo commits the grant, and only then opens the execution gate. Grant failure
 or EOF before grant executes nothing. Janitor uses `--pgroup-only`, never
-process-tree discovery. Identity checks use the recorded supervisor PID,
+process-tree discovery, except for `silo run`: its supervisor also ends the
+executor's descendants that left the group (`setsid`), which a deadline must
+not leave running. Janitor targets only processes whose parent chain it proves
+leads to the executor when the stop begins, each re-verified by start identity
+before it is signalled, so no unrelated or reused process is reached; a process
+already reparented away from that chain before the stop (double fork plus
+`setsid`) escapes. Identity checks use the recorded supervisor PID,
 start identity and launch token before signalling that group. Dead PIDs alone
 do not prove an external request cancelled. Unknown groups/requests retain
 claims and cleanup state.
@@ -204,19 +210,37 @@ Docker call; its status reaches silo only through the supervisor's exit, and
 grant (every `on-acquire` step and the command), never the wait, which `--wait`
 bounds. Durations use `--wait`'s parser; `--timeout` is 1 s to 7 days and
 `--kill-after` 1 s to 10 minutes, and a value outside its bounds refuses with
-`INVALID_ARGUMENT` before any effect. At the deadline silo stops its supervisor,
-which sends SIGTERM to the command's process group and SIGKILL after the grace;
-`--kill-after` sets that grace for every stop of the group, deadline or
-interrupt, and defaults to the 5-second drain grace. Held slots are then
-released as after any exit, and the run exits 124 with `run.timedOut: true`
-next to `run.exitCode` in `--json` (a step stopped by the deadline reports the
-timeout, not `SLOT_ACQUIRE_FAILED`). A command that exits before its deadline
-keeps its own status and `timedOut: false`. `silo run` stays in its caller's
-process group, so a terminal's Ctrl-C or a signal to the caller's group reaches
-it; only the command's group is new. SIGINT or SIGTERM to silo stops the group
-the same way and exits 130 or 143. SIGHUP is not handled: silo exits by the
-signal, Janitor's watch of silo drains the group, and held units are released
-by the next contending run. Checks: `src/commands/run.test.ts`.
+`INVALID_ARGUMENT` before any effect. `--kill-after` sets Janitor's grace
+between SIGTERM and SIGKILL for every stop of the group, deadline, interrupt,
+or the drain of members left after the command exits, and defaults to the
+5-second drain grace; the windows silo waits for a stop scale with it.
+
+A deadline is a timeout only when it finds the command still running: no
+completion fact recorded and the executor still the recorded process, and no
+interrupt received first. A command that exits first keeps its own status and
+`timedOut: false`, even while left-over group members drain. On a timeout silo
+stops its supervisor, which ends the group and the descendants it proves (see
+the `run` exception under Lifecycle authority) with SIGTERM, then SIGKILL after
+the grace, and waits at most the drain window. A supervisor that is gone or
+has not drained by then is SIGKILLed through silo's own handle, and silo
+signals the recorded group itself (SIGTERM, the grace, SIGKILL), each signal
+only after re-reading the executor's start identity, so the group ID cannot
+name a reused group. Only when the supervisor and the group are proved gone
+does the run report `run.timedOut: true` and exit 124, with slots released;
+otherwise it fails with `RUN_STOP_INCOMPLETE` (exit 1) and held units stay
+held until a later run proves the group gone. A supervisor lost before the
+deadline does not cancel it: while the executor lives, the deadline still
+applies. Once a deadline has stopped the command, a later SIGINT or SIGTERM to
+silo does not change the outcome. Without `--json`, a command that itself
+exits 124, 130 or 143 is indistinguishable by status from a timeout or an
+interrupt.
+
+`silo run` stays in its caller's process group, so a terminal's Ctrl-C or a
+signal to the caller's group reaches it; only the command's group is new.
+SIGINT or SIGTERM to silo stops the group through the supervisor and exits 130
+or 143. SIGHUP is not handled: silo exits by the signal, Janitor's watch of
+silo drains the group, and held units are released by the next contending run.
+Checks: `src/commands/run.test.ts`.
 
 **Slot claims.** A slot unit is claimed by one run's launch record and held
 while that run's supervised process group may exist. It is released by the
