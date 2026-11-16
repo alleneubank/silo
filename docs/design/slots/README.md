@@ -178,11 +178,12 @@ blocks the next one) the owner wants gone.
 
 ## Allocation without Docker
 
-`allocateProject` calls `captureEngine` unconditionally
-(`src/core/allocation.ts:61`). Proposed: capture the engine only when the
-resolved config declares a Docker-backed feature (Compose identities, k3d,
-Tilt), and record `engine: none` in the generation otherwise. A config with
-none of those allocates with Docker stopped. `silo run` never needs it.
+Slot allocation (`silo run`) never captures the Docker engine and works with
+Docker stopped. Project allocation (`env`, `up`, `ci`) still captures it:
+Compose names are always rendered and claimed, and Tilt comes from the
+command rather than the config, so a config cannot declare "no Docker
+feature" (owner, 2026-11-16, Decision log). The earlier proposal to skip
+`captureEngine` for such configs is withdrawn.
 
 ## Alternatives considered
 
@@ -208,7 +209,7 @@ account per the existing rehearsal rule:
   prevents the command and releases the unit;
 - two runs needing slots {A, B} and {B, A} on cap-1 slots both complete;
 - `status` names holders and waiters and changes nothing;
-- a config with no Docker feature allocates, and `silo run` works, with Docker
+- `silo run` allocates slot units and port blocks, and runs, with Docker
   stopped;
 - interrupt during wait, during `on-acquire` and during the command: 130/143,
   no unit left held.
@@ -241,6 +242,14 @@ are in the decision log.
   Legacy state "Only for slots with ports (Recommended)": `silo run` refuses
   on legacy `~/.silo/instances` state only when a requested slot declares
   `ports`.
+- 2026-11-16 (owner, question tool, on #68): no-Docker "Slots only; amend
+  design (Recommended)": only `silo run` allocates without Docker; `env`,
+  `up` and `ci` keep the engine capture. Builder calls "Accept all three
+  (Recommended)": `ports` is optional in `silo.toml`; a declared default port
+  inside the ephemeral range is skipped for a fallback; a waiting run also
+  releases up to 8 provably dead rows of other slots per pass. Agent call
+  (provisional, within "Format 4, upgrade in place"): only a slot run
+  upgrades a format-3 store, so project-only use stays 1.0.0-compatible.
 
 - 2026-11-16T03:1xZ (owner, question tool): ephemeral-range exclusion
   "Everywhere (Recommended)": `silo run` port blocks and `env`/`up` fallback,
