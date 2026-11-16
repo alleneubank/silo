@@ -1,6 +1,6 @@
 # Design: host slots and `silo run`
 
-Status: **proposed, awaiting the owner's approval.** Nothing here is built.
+Status: **approved by the owner 2026-11-16T01:11Z** (question tool: "Approve both (Recommended)"): `silo run`, slots, host caps at `<account home>/.silo/host.toml`, allocation without Docker, and the release-rule SPEC amendment as drafted. Nothing here is built.
 Drafted 2026-11-15 from `origin/main` 2257097 (silo 1.0.0). Approval of this
 record authorizes the build PR; the SPEC amendment in [Release rule](#release-rule-spec-amendment)
 is the owner's separate decision, and silo's own release gates (matching
@@ -235,6 +235,8 @@ head, artifact digest, versions, scenarios and gaps.
   artificial cap"), or a default bound.
 
 ## Decision log
+
+- 2026-11-16T01:11Z (owner, question tool): "Approve both (Recommended)": design and SPEC amendment approved. Still open: port blocks outside the ephemeral range for `env`/`up` too, and the wait default.
 
 - 2026-11-15 (owner, ratified): slots live in silo; the project dictates what
   silo injects; per-host caps.
