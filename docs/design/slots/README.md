@@ -70,6 +70,9 @@ env = { OPF_E2E_PHONE_PORT_BASE = "${ports.0}" }
   existing fallback range, 49152-65535, is exactly macOS's ephemeral range:
   op-forward #468 was phone ports taken by SSH masters' kernel-assigned
   forwards there. A bind probe passes at allocation and loses later.
+  The owner decided (2026-11-16, "Everywhere (Recommended)") that the same
+  rule applies to every silo port allocation, `env`/`up` fallback included,
+  for new allocations only; existing generations keep their published ports.
 - `on-acquire` runs after the unit is granted and before the command, in the
   project root, with the injected env, under the same supervised group. It
   must reset the unit to a known state whatever the previous holder left.
@@ -228,13 +231,17 @@ head, artifact digest, versions, scenarios and gaps.
 - Approve allocation without Docker.
 - Confirm the host file location and that the host operator (the fleet
   watch, for fleet hosts) sets caps.
-- Port blocks outside the ephemeral range (above): applies to `silo run`
-  only, or also to `env`/`up` port fallback (a behavior change for existing
-  projects).
-- Wait default: unbounded unless `--wait` (recommended, matching "no
-  artificial cap"), or a default bound.
+- Decided 2026-11-16: ports outside the ephemeral range apply everywhere
+  (below); the wait default is unbounded (provisional, below).
 
 ## Decision log
+
+- 2026-11-16T03:1xZ (owner, question tool): ephemeral-range exclusion
+  "Everywhere (Recommended)": `silo run` port blocks and `env`/`up` fallback,
+  new allocations only, in the slots build PR.
+- 2026-11-16 (provisional, agent call under "no artificial cap"): no default
+  wait bound; op-forward requires a Moon `options.timeout` on every task, which
+  bounds a waiting `silo run` from outside. `--wait` stays available.
 
 - 2026-11-16T01:11Z (owner, question tool): "Approve both (Recommended)": design and SPEC amendment approved. Still open: port blocks outside the ephemeral range for `env`/`up` too, and the wait default.
 
