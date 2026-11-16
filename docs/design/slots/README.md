@@ -227,12 +227,9 @@ head, artifact digest, versions, scenarios and gaps.
 
 ## Open for the owner
 
-- Approve or change the release rule amendment text.
-- Approve allocation without Docker.
-- Confirm the host file location and that the host operator (the fleet
-  watch, for fleet hosts) sets caps.
-- Decided 2026-11-16: ports outside the ephemeral range apply everywhere
-  (below); the wait default is unbounded (provisional, below).
+None. Approved 2026-11-16: the design, the release-rule amendment, allocation
+without Docker and the host file location; the port range and wait default
+are in the decision log.
 
 ## Decision log
 
