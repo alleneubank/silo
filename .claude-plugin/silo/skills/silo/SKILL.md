@@ -13,6 +13,12 @@ changing its configuration or repairing an environment. Discover topics with
   exports env plus `.silo.lock`. It starts no stack. `silo up [name]` prepares
   the environment and supervises Tilt; repeating the same live `up` reuses it.
   `silo ci [name] --timeout 300s` runs the supervised CI flow.
+- `silo run --slot <name> [--wait 30m] -- <cmd>` runs one command while
+  holding a unit of each host slot (simulator, emulator, GUI session, port
+  block). Projects declare `[slots.<name>]` in `silo.toml`; caps live only in
+  `<account home>/.silo/host.toml`. Exit 2 `SLOT_UNAVAILABLE` means no cap
+  here; 75 `SLOT_WAIT_TIMEOUT` means the wait ran out. `silo status` names
+  holders and waiters. See `silo doc commands`.
 - `silo status --json` reports authoritative project/generation ownership,
   claims, resources and cleanup problems. A live supervisor is not resource
   health: source the generated env and query

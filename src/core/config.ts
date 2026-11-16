@@ -10,6 +10,7 @@ import {
 import type { LifecycleHooks, ResolvedConfig, SiloConfig } from "./types";
 import { SiloError } from "../utils/errors";
 import { ProjectRelativePathSchema } from "./file_target";
+import { SlotsConfigSchema } from "./slot_types";
 
 const PortValueSchema = z.preprocess(
   (value) => (value === 0 ? "random" : value),
@@ -97,7 +98,9 @@ const SiloConfigSchema = z
     version: z.literal(CONFIG_VERSION),
     prefix: z.string().optional(),
     output: ProjectRelativePathSchema.optional(),
-    ports: PortsSchema,
+    // Required for env, up and ci (checked at allocation); a slots-only
+    // project that uses just `silo run` declares none.
+    ports: PortsSchema.optional(),
     hosts: z.record(z.string()).optional(),
     urls: z.record(z.string()).optional(),
     k3d: K3dSchema.optional(),
@@ -105,6 +108,7 @@ const SiloConfigSchema = z
     hooks: HooksSchema.optional(),
     profiles: z.record(ProfileConfigSchema).optional(),
     registry: RegistryAdvertiseSchema.optional(),
+    slots: SlotsConfigSchema.optional(),
   })
   .strict();
 
@@ -121,7 +125,7 @@ export const parseConfig = (rawText: string, resolvedPath: string): ResolvedConf
   }
 
   const parsed = SiloConfigSchema.parse(rawParsed) as SiloConfig;
-  const ports = parsed.ports;
+  const ports = parsed.ports ?? {};
   const portOrder = Object.keys(ports);
 
   const hosts = parsed.hosts ? { ...parsed.hosts } : { ...DEFAULT_HOSTS };
@@ -150,6 +154,7 @@ export const parseConfig = (rawText: string, resolvedPath: string): ResolvedConf
     hooks,
     profiles: parsed.profiles,
     registry: parsed.registry,
+    slots: parsed.slots ?? {},
     configPath: resolvedPath,
     projectRoot: configDir,
   };

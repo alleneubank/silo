@@ -23,6 +23,11 @@ Retry down on its recorded engine. A lost completion may show a `resolved` /
 `target-absent` launch with null exit code; this is an absence proof, not a
 successful tool exit. Unknown creates remain unresolved.
 
+A store at format 4 was upgraded by a newer silo's first `silo run`. silo 1.0.0
+refuses it with `LEASE_STORE_UNAVAILABLE: cannot open …; allocation refused`,
+even for `status` and `down`. Upgrade silo on that host; do not delete or
+edit the store. There is no downgrade.
+
 Unreleased proposal SQLite formats 1 and 2 are incompatible with format 3 and refuse
 with `LEASE_STORE_UNAVAILABLE` before application mutation. SQLite may first
 recover an interrupted transaction. Read-only status cannot perform that recovery;

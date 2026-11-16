@@ -3,23 +3,37 @@ import net from "node:net";
 import { once } from "node:events";
 import { networkInterfaces } from "node:os";
 import { connectedUdp } from "./fixtures/connected_udp";
-import { EPHEMERAL_PORT_END, EPHEMERAL_PORT_START } from "./constants";
-import { allocatePorts, checkPortFree, checkPortListenerAbsent, type PortAllocationEvent } from "./ports";
+import { allocatePorts, checkPortFree, checkPortListenerAbsent, livePortSpace, type PortAllocationEvent, type PortSpace } from "./ports";
+import { fallbackPorts, insideRange, kernelEphemeralRange } from "./port_range";
+
+// A fixture space whose fallback candidates are one contiguous ascending run,
+// so scan order and wrap-around are easy to state.
+const FALLBACK_START = 20000;
+const FALLBACK_END = 20999;
+const space: PortSpace = {
+  ephemeral: { first: 49152, last: 65535 },
+  fallback: Array.from({ length: FALLBACK_END - FALLBACK_START + 1 }, (_, index) => FALLBACK_START + index),
+};
+
+// OS-assigned test ports usually fall inside the real ephemeral range; this
+// space admits them so the native probe, not the range, decides.
+const probeSpace: PortSpace = { ephemeral: { first: 1, last: 1 }, fallback: space.fallback };
 
 const alwaysFree = async (_port: number): Promise<boolean> => true;
 
 describe("allocatePorts", () => {
-  test("allocates random ports from the ephemeral range in order", async () => {
+  test("allocates random ports from the fallback space in order", async () => {
     const allocated = await allocatePorts({
       ports: { APP_PORT: "random", API_PORT: "random" },
       order: ["APP_PORT", "API_PORT"],
       lockfilePorts: undefined,
       force: false,
+      space,
       isPortFree: alwaysFree,
     });
 
-    expect(allocated.APP_PORT).toBe(EPHEMERAL_PORT_START);
-    expect(allocated.API_PORT).toBe(EPHEMERAL_PORT_START + 1);
+    expect(allocated.APP_PORT).toBe(FALLBACK_START);
+    expect(allocated.API_PORT).toBe(FALLBACK_START + 1);
   });
 
   test("reuses lockfile ports even when config uses random", async () => {
@@ -27,18 +41,19 @@ describe("allocatePorts", () => {
     const allocated = await allocatePorts({
       ports: { APP_PORT: "random" },
       order: ["APP_PORT"],
-      lockfilePorts: { APP_PORT: 62000 },
+      lockfilePorts: { APP_PORT: 30000 },
       force: false,
+      space,
       isPortFree: alwaysFree,
       onEvent: (event) => events.push(event),
     });
 
-    expect(allocated.APP_PORT).toBe(62000);
+    expect(allocated.APP_PORT).toBe(30000);
     expect(events[0]?.source).toBe("lockfile");
     expect(events[0]?.requestedDefault).toBe("random");
   });
 
-  test("falls back to ephemeral when default port is occupied", async () => {
+  test("falls back to the fallback space when default port is occupied", async () => {
     // Simulate port 3000 being occupied (e.g. bound on 127.0.0.1)
     const occupiedPorts = new Set([3000]);
     const mockCheck = async (port: number): Promise<boolean> =>
@@ -50,16 +65,17 @@ describe("allocatePorts", () => {
       order: ["WEB_PORT"],
       lockfilePorts: undefined,
       force: false,
+      space,
       isPortFree: mockCheck,
       onEvent: (event) => events.push(event),
     });
 
-    expect(allocated.WEB_PORT).toBe(EPHEMERAL_PORT_START);
-    expect(events[0]?.source).toBe("ephemeral");
+    expect(allocated.WEB_PORT).toBe(FALLBACK_START);
+    expect(events[0]?.source).toBe("fallback");
   });
 
-  test("falls back to ephemeral when lockfile port is occupied", async () => {
-    const occupiedPorts = new Set([62000]);
+  test("falls back to the fallback space when lockfile port is occupied", async () => {
+    const occupiedPorts = new Set([30000]);
     const mockCheck = async (port: number): Promise<boolean> =>
       !occupiedPorts.has(port);
 
@@ -67,21 +83,22 @@ describe("allocatePorts", () => {
     const allocated = await allocatePorts({
       ports: { APP_PORT: "random" },
       order: ["APP_PORT"],
-      lockfilePorts: { APP_PORT: 62000 },
+      lockfilePorts: { APP_PORT: 30000 },
       force: false,
+      space,
       isPortFree: mockCheck,
       onEvent: (event) => events.push(event),
     });
 
-    expect(allocated.APP_PORT).toBe(EPHEMERAL_PORT_START);
-    expect(events[0]?.source).toBe("ephemeral");
+    expect(allocated.APP_PORT).toBe(FALLBACK_START);
+    expect(events[0]?.source).toBe("fallback");
   });
 
-  test("skips occupied ports when scanning ephemeral range", async () => {
-    // First two ephemeral ports are taken
+  test("skips occupied ports when scanning the fallback space", async () => {
+    // First two fallback ports are taken
     const occupiedPorts = new Set([
-      EPHEMERAL_PORT_START,
-      EPHEMERAL_PORT_START + 1,
+      FALLBACK_START,
+      FALLBACK_START + 1,
     ]);
     const mockCheck = async (port: number): Promise<boolean> =>
       !occupiedPorts.has(port);
@@ -91,31 +108,33 @@ describe("allocatePorts", () => {
       order: ["APP_PORT"],
       lockfilePorts: undefined,
       force: false,
+      space,
       isPortFree: mockCheck,
     });
 
-    expect(allocated.APP_PORT).toBe(EPHEMERAL_PORT_START + 2);
+    expect(allocated.APP_PORT).toBe(FALLBACK_START + 2);
   });
 
-  test("excludedPorts are skipped during ephemeral scan", async () => {
+  test("excludedPorts are skipped during the fallback scan", async () => {
     const excluded = new Set<number>([
-      EPHEMERAL_PORT_START,
-      EPHEMERAL_PORT_START + 1,
-      EPHEMERAL_PORT_START + 2,
+      FALLBACK_START,
+      FALLBACK_START + 1,
+      FALLBACK_START + 2,
     ]);
     const allocated = await allocatePorts({
       ports: { A: "random", B: "random" },
       order: ["A", "B"],
       lockfilePorts: undefined,
       force: false,
+      space,
       excludedPorts: excluded,
       isPortFree: alwaysFree,
     });
-    expect(allocated.A).toBe(EPHEMERAL_PORT_START + 3);
-    expect(allocated.B).toBe(EPHEMERAL_PORT_START + 4);
+    expect(allocated.A).toBe(FALLBACK_START + 3);
+    expect(allocated.B).toBe(FALLBACK_START + 4);
   });
 
-  test("excludedPorts force the configured default to fall back to ephemeral", async () => {
+  test("excludedPorts force the configured default to the fallback space", async () => {
     const excluded = new Set<number>([3000]);
     const events: PortAllocationEvent[] = [];
     const allocated = await allocatePorts({
@@ -123,49 +142,78 @@ describe("allocatePorts", () => {
       order: ["WEB_PORT"],
       lockfilePorts: undefined,
       force: false,
+      space,
       excludedPorts: excluded,
       isPortFree: alwaysFree,
       onEvent: (event) => events.push(event),
     });
-    expect(allocated.WEB_PORT).toBe(EPHEMERAL_PORT_START);
-    expect(events[0]?.source).toBe("ephemeral");
+    expect(allocated.WEB_PORT).toBe(FALLBACK_START);
+    expect(events[0]?.source).toBe("fallback");
   });
 
-  test("excludedPorts force lockfile ports to fall back to ephemeral", async () => {
-    const excluded = new Set<number>([62000]);
+  test("excludedPorts force lockfile ports to the fallback space", async () => {
+    const excluded = new Set<number>([30000]);
     const events: PortAllocationEvent[] = [];
     const allocated = await allocatePorts({
       ports: { APP_PORT: "random" },
       order: ["APP_PORT"],
-      lockfilePorts: { APP_PORT: 62000 },
+      lockfilePorts: { APP_PORT: 30000 },
       force: false,
+      space,
       excludedPorts: excluded,
       isPortFree: alwaysFree,
       onEvent: (event) => events.push(event),
     });
-    expect(allocated.APP_PORT).toBe(EPHEMERAL_PORT_START);
-    expect(events[0]?.source).toBe("ephemeral");
+    expect(allocated.APP_PORT).toBe(FALLBACK_START);
+    expect(events[0]?.source).toBe("fallback");
   });
 
-  test("ephemeral scan wraps past EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START", async () => {
-    // Everything except the very first port is "occupied" — scan needs to
-    // wrap from EPHEMERAL_PORT_END back to EPHEMERAL_PORT_START (trivially,
-    // since scanning starts at EPHEMERAL_PORT_START, but we exercise the
-    // wrap path by pushing the first candidate to the tail via excluded).
+  test("fallback scan wraps past the last candidate", async () => {
     const excluded = new Set<number>();
-    for (let p = EPHEMERAL_PORT_START; p < EPHEMERAL_PORT_END; p += 1) {
+    for (let p = FALLBACK_START; p < FALLBACK_END; p += 1) {
       excluded.add(p);
     }
-    // Only EPHEMERAL_PORT_END is free.
+    // Only FALLBACK_END is free.
     const allocated = await allocatePorts({
       ports: { A: "random" },
       order: ["A"],
       lockfilePorts: undefined,
       force: false,
+      space,
       excludedPorts: excluded,
       isPortFree: alwaysFree,
     });
-    expect(allocated.A).toBe(EPHEMERAL_PORT_END);
+    expect(allocated.A).toBe(FALLBACK_END);
+  });
+});
+
+describe("ports outside the kernel ephemeral range", () => {
+  test("a declared default inside the ephemeral range is never assigned", async () => {
+    const events: PortAllocationEvent[] = [];
+    const allocated = await allocatePorts({
+      ports: { WEB_PORT: 50000 }, order: ["WEB_PORT"], lockfilePorts: undefined, force: false,
+      space, isPortFree: alwaysFree, onEvent: event => events.push(event),
+    });
+    expect(allocated.WEB_PORT).toBe(FALLBACK_START);
+    expect(events[0]?.source).toBe("fallback");
+  });
+
+  test("fallback candidates exclude the whole ephemeral range and privileged ports", () => {
+    const candidates = fallbackPorts({ first: 32768, last: 60999 });
+    expect(candidates[0]).toBe(65535);
+    expect(candidates.some(port => port >= 32768 && port <= 60999)).toBe(false);
+    expect(Math.min(...candidates)).toBe(1024);
+    expect(candidates.length).toBe(65535 - 1024 + 1 - (60999 - 32768 + 1));
+  });
+
+  test("live allocation reads this host's range and stays outside it", async () => {
+    const ephemeral = kernelEphemeralRange();
+    expect(ephemeral.first).toBeLessThanOrEqual(ephemeral.last);
+    const allocated = await allocatePorts({
+      ports: { A: "random", B: "random", C: ephemeral.first }, order: ["A", "B", "C"], lockfilePorts: undefined, force: false,
+      space: livePortSpace(),
+    });
+    for (const port of Object.values(allocated)) expect(insideRange(port, ephemeral)).toBe(false);
   });
 });
 
@@ -202,13 +250,14 @@ describe("checkPortFree (integration)", () => {
         order: ["TEST_PORT"],
         lockfilePorts: undefined,
         force: false,
-        // No isPortFree — uses real checkPortFree with dual-bind check
+        space: probeSpace,
+        // No isPortFree: the real checkPortFree runs.
         onEvent: (event) => events.push(event),
       });
 
-      // The allocator should detect the port is occupied and fall back to ephemeral
+      // The allocator should detect the port is occupied and fall back
       expect(allocated.TEST_PORT).not.toBe(boundPort);
-      expect(events[0]?.source).toBe("ephemeral");
+      expect(events[0]?.source).toBe("fallback");
     } finally {
       server.stop();
     }
@@ -232,11 +281,12 @@ describe("checkPortFree (integration)", () => {
         order: ["TEST_PORT"],
         lockfilePorts: undefined,
         force: false,
+        space: probeSpace,
         onEvent: (event) => events.push(event),
       });
 
       expect(allocated.TEST_PORT).not.toBe(boundPort);
-      expect(events[0]?.source).toBe("ephemeral");
+      expect(events[0]?.source).toBe("fallback");
     } finally {
       server.stop();
     }
@@ -260,6 +310,7 @@ describe("checkPortFree (integration)", () => {
       order: ["TEST_PORT"],
       lockfilePorts: undefined,
       force: false,
+      space: probeSpace,
       onEvent: (event) => events.push(event),
     });
 

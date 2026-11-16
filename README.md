@@ -71,10 +71,16 @@ silo down            # Stop environment (stops Tilt, keeps k3d by default)
 silo status          # Show current instance state
 silo env [name]      # Generate env file only, don't start anything
 silo ci [name]       # Run Tilt in CI mode (tilt ci) after env + k3d setup
+silo run --slot <name> -- <cmd>  # Run a command while holding host slots
 silo profiles        # List available profiles
 silo doc [topic]     # Print bundled docs (config, profiles, k3d, hooks, etc.)
 silo version         # Print version
 ```
+
+The first `silo run` on a host upgrades the account store to format 4. After
+that, silo 1.0.0 on the same account refuses the store with
+`LEASE_STORE_UNAVAILABLE` (a newer silo upgraded it): upgrade every silo on
+the host before the first `silo run`.
 
 ## Configuration
 
