@@ -349,13 +349,17 @@ test("units stay held while the group outlives its supervisor, and a later run r
   await waitFor(() => existsSync(path.join(root, "started")), "holder command");
   const launch = launched("outlives")!;
   const groupAlive = () => { try { process.kill(-launch.groupId, 0); return true; } catch { return false; } };
-  // Without its supervisor nothing drains the group; the run must not release.
-  process.kill(launch.supervisor.pid, "SIGKILL");
-  const result = await settle(holder, "holder");
-  expect(groupAlive()).toBe(true);
-  expect(JSON.parse(result.stdout).run.released).toBe(false);
-  expect(holderOf("outlives")).toBeDefined();
-  process.kill(-launch.groupId, "SIGKILL");
+  try {
+    // Without its supervisor nothing drains the group; the run must not release.
+    process.kill(launch.supervisor.pid, "SIGKILL");
+    const result = await settle(holder, "holder");
+    expect(groupAlive()).toBe(true);
+    expect(JSON.parse(result.stdout).run.released).toBe(false);
+    expect(holderOf("outlives")).toBeDefined();
+  } finally {
+    // This group has no supervisor; nothing else would ever stop it.
+    if (groupAlive()) process.kill(-launch.groupId, "SIGKILL");
+  }
   await waitFor(() => !groupAlive(), "group exit");
   const next = await runCli(root, ["run", "--slot", "outlives", "--", "true"]);
   expect(next.exitCode).toBe(0);
