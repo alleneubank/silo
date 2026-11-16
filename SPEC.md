@@ -20,7 +20,11 @@ Unknown schemas, corruption, missing expected state and failed queries refuse;
 there is no empty-store fallback. Runtime CLI/env store overrides do not exist.
 Tests inject a private constructor store or run in a disposable OS account.
 
-The unreleased proposal store format is 3. Format-1 and format-2 proposal
+The store format is 4: the released format 3 plus the slot tables. A writable
+open adds those tables to a format-3 store in place, in one transaction, and
+raises it to format 4; this additive step is the only upgrade, and format-3
+clients then refuse the store before application mutation. Read-only status
+reads a format-3 store as holding no slot run. Format-1 and format-2 proposal
 stores are refused before application mutation; no migration or reset occurs.
 Format-2 proposal clients also refuse format-3 stores before application
 mutation. SQLite may recover an interrupted transaction before schema
@@ -37,8 +41,11 @@ Claims have non-null unique `(domain, resource)` keys and foreign-key owners
 identity. No replace/upsert can take a peer's claim. Inspections never expire,
 release, repair or garbage-collect peer state.
 
-Port selection tries defaults in declaration order, then 49152–65535;
-`random`/`0` skips defaults. Native TCP/UDP probes across IPv4/IPv6 are hints.
+Port selection tries defaults in declaration order, then 1024–65535 from the
+top down; `random`/`0` skips defaults. No new allocation, default or fallback,
+takes a port inside the kernel's live ephemeral range, read at allocation
+(`net.inet.ip.portrange.first..last` on macOS, `net.ipv4.ip_local_port_range`
+on Linux; unreadable refuses). Existing generations keep their published ports. Native TCP/UDP probes across IPv4/IPv6 are hints.
 Only the transaction grants ownership. A losing port contender retries;
 explicit name/path conflicts refuse. Generated names have a bounded retry.
 Published generation ports never drift to match a backend's accidental bind.
@@ -163,6 +170,33 @@ claims or snapshots are released. Unsupported platforms refuse. This is an obser
 reservation: the accepted later-bind race remains. Allocation keeps its native
 bind availability check. Checks: `src/core/socket_listeners.test.ts` and
 `src/core/lease_store.test.ts`, “retains claims and snapshots” cases.
+
+## Slots
+
+`silo run --slot <name> ... -- <command>` runs one command while it holds one
+unit of each named slot. Caps live only in `<account home>/.silo/host.toml`,
+resolved like the store; a slot without a cap there, or not declared under
+`[slots.<name>]` in the project config, refuses with `SLOT_UNAVAILABLE` (exit 2)
+before any effect. There is no default cap and no per-project override. Each
+run holds one durable ticket; grants are first in, first out per slot and
+all-or-none across slots in one `BEGIN IMMEDIATE` transaction. A waiting ticket
+holds nothing; a contender may drop the ticket of a waiter proved absent by the
+rule below. Slot port blocks share the `host-port` claim domain with generation
+claims and follow the ephemeral-range rule. `run` takes no project operation
+token, generation or Docker engine; `on-acquire` steps and the command run in
+one Janitor-supervised executor group. Checks: `src/commands/run.test.ts`,
+`src/core/slot_store.test.ts`.
+
+**Slot claims.** A slot unit is claimed by one run's launch record and held
+while that run's supervised process group may exist. It is released by the
+run when its group is terminal, or by any later `silo run` contending for
+that slot once the holder's recorded supervisor is proved absent (`ESRCH`,
+or a start identity that differs from the recorded one) and its executor
+group has no member. Uncertain liveness keeps the claim. No expiry, TTL or
+force takeover exists. This is the only claim kind another process may
+release; "Inspections never expire, release, repair or garbage-collect peer
+state" continues to hold for every other domain, and `status` stays
+read-only for slots too.
 
 ## File authority
 
@@ -378,7 +412,8 @@ cover durable successful retry reconciliation. Named-volume behavior follows
 - REQ-STORE-001: unsupported proposal stores refuse before application mutation;
   supported stores remain recoverable after interrupted SQLite transactions.
   Check: clean unsupported-format byte-preservation test and native hot-journal
-  recovery probe. No automatic schema migration or reset is performed.
+  recovery probe. No automatic schema migration or reset is performed beyond
+  the additive format-3 to format-4 slot tables (`src/core/slot_store.test.ts`).
 - REQ-LAUNCH-001: terminal reconciled launch history cannot exhaust cleanup
   capacity; unresolved facts and resource audit history survive compaction.
   Check: lease-store capacity test and native `--suite producers` at 1023 records.

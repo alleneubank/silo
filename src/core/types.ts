@@ -2,6 +2,7 @@ import type { BRAND } from "zod";
 import type { z } from "zod";
 import type { InstanceStateSchema } from "./lease_types";
 import type { LockfileSchema } from "./lockfile";
+import type { SlotConfig } from "./slot_types";
 
 export type PortConfigValue = number | "random";
 export type ProjectRelativePath = string & BRAND<"ProjectRelativePath">;
@@ -14,7 +15,7 @@ export interface SiloConfig {
   version: 1;
   prefix?: string;
   output?: ProjectRelativePath;
-  ports: Record<string, PortConfigValue>;
+  ports?: Record<string, PortConfigValue>;
   hosts?: Record<string, string>;
   urls?: Record<string, string>;
   k3d?: K3dConfig;
@@ -22,6 +23,7 @@ export interface SiloConfig {
   hooks?: LifecycleHooks;
   profiles?: Record<string, ProfileConfig>;
   registry?: RegistryConfig;
+  slots?: Record<string, SlotConfig>;
 }
 
 export interface K3dConfig {
@@ -84,6 +86,7 @@ export interface ResolvedConfig {
   hooks: LifecycleHooks;
   profiles: Record<string, ProfileConfig> | undefined;
   registry: RegistryConfig | undefined;
+  slots: Record<string, SlotConfig>;
   configPath: string;
   projectRoot: string;
 }

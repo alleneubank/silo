@@ -6,9 +6,6 @@ export const DEFAULT_URLS: Record<string, string> = {};
 
 export const LOCKFILE_NAME = ".silo.lock";
 
-export const EPHEMERAL_PORT_START = 49152;
-export const EPHEMERAL_PORT_END = 65535;
-
 export const PORT_CHECK_TIMEOUT_MS = 100;
 // Maximum interactive wait for one complete native socket observation under load.
 export const SOCKET_TABLE_TIMEOUT_MS = 30_000;

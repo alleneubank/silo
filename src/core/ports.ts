@@ -1,9 +1,6 @@
 import { createSocket } from "node:dgram";
-import {
-  EPHEMERAL_PORT_END,
-  EPHEMERAL_PORT_START,
-  PORT_CHECK_TIMEOUT_MS,
-} from "./constants";
+import { PORT_CHECK_TIMEOUT_MS } from "./constants";
+import { fallbackPorts, insideRange, kernelEphemeralRange, type PortRange } from "./port_range";
 import { checkListenerAbsent } from "./socket_listeners";
 import { withTimeout, type Cancellable } from "../utils/timeout";
 import { SiloError } from "../utils/errors";
@@ -88,7 +85,7 @@ export const checkPortFree: PortCheckFn = async (port: number): Promise<boolean>
  */
 export const checkPortListenerAbsent: PortCheckFn = checkListenerAbsent;
 
-export type PortAllocationSource = "lockfile" | "default" | "ephemeral";
+export type PortAllocationSource = "lockfile" | "default" | "fallback";
 
 export type PortAllocationEvent = {
   key: string;
@@ -98,31 +95,41 @@ export type PortAllocationEvent = {
   source: PortAllocationSource;
 };
 
-const EPHEMERAL_RANGE_SIZE = EPHEMERAL_PORT_END - EPHEMERAL_PORT_START + 1;
+/** Where new ports may come from: never inside the kernel's live ephemeral range. */
+export type PortSpace = {
+  ephemeral: PortRange;
+  // Ordered fallback candidates, all outside `ephemeral`.
+  fallback: readonly number[];
+};
 
-// Scan the ephemeral range starting at startAt, wrapping back to
-// EPHEMERAL_PORT_START after hitting EPHEMERAL_PORT_END. Skips ports in
-// `used` (already-allocated in this call) and `excluded` (owned by other
-// silo generations, per their committed claims).
-const findEphemeralPort = async (params: {
+export const livePortSpace = (): PortSpace => {
+  const ephemeral = kernelEphemeralRange();
+  return { ephemeral, fallback: fallbackPorts(ephemeral) };
+};
+
+// Scan the fallback candidates from cursor `startAt`, wrapping once. Skips
+// ports in `used` (already allocated in this call) and `excluded` (owned by
+// other silo generations or slot runs, per their committed claims).
+const findFallbackPort = async (params: {
+  space: PortSpace;
   used: Set<number>;
   excluded: Set<number>;
   startAt: number;
   isPortFree: PortCheckFn;
-}): Promise<number> => {
-  const { used, excluded, startAt, isPortFree } = params;
-  for (let offset = 0; offset < EPHEMERAL_RANGE_SIZE; offset += 1) {
-    const port =
-      EPHEMERAL_PORT_START +
-      ((startAt - EPHEMERAL_PORT_START + offset) % EPHEMERAL_RANGE_SIZE);
+}): Promise<{ port: number; index: number }> => {
+  const { space, used, excluded, startAt, isPortFree } = params;
+  const candidates = space.fallback;
+  for (let offset = 0; offset < candidates.length; offset += 1) {
+    const index = (startAt + offset) % candidates.length;
+    const port = candidates[index]!;
     if (used.has(port) || excluded.has(port)) {
       continue;
     }
     if (await isPortFree(port)) {
-      return port;
+      return { port, index };
     }
   }
-  throw new SiloError("No free ports available in ephemeral range", "PORTS_EXHAUSTED");
+  throw new SiloError("No free ports available outside the ephemeral range", "PORTS_EXHAUSTED");
 };
 
 export const allocatePorts = async (params: {
@@ -130,17 +137,18 @@ export const allocatePorts = async (params: {
   order: string[];
   lockfilePorts: Record<string, number> | undefined;
   force: boolean;
+  space: PortSpace;
   // Candidate selection only: the lease transaction decides final ownership.
   excludedPorts?: Set<number>;
   onEvent?: (event: PortAllocationEvent) => void;
   isPortFree?: PortCheckFn;
 }): Promise<Record<string, number>> => {
-  const { ports, order, lockfilePorts, force, excludedPorts, onEvent, isPortFree } = params;
+  const { ports, order, lockfilePorts, force, space, excludedPorts, onEvent, isPortFree } = params;
   const portFree = isPortFree ?? checkPortFree;
   const excluded = excludedPorts ?? new Set<number>();
   const allocated: Record<string, number> = {};
   const used = new Set<number>();
-  let nextEphemeral = EPHEMERAL_PORT_START;
+  let nextFallback = 0;
 
   for (const key of order) {
     const defaultPort = ports[key];
@@ -163,7 +171,9 @@ export const allocatePorts = async (params: {
     let assigned: number | undefined;
     let source: PortAllocationSource = "default";
     for (const candidate of candidates) {
-      if (used.has(candidate.port) || excluded.has(candidate.port)) {
+      // A declared port inside the ephemeral range is never handed out: the
+      // kernel can take it after the probe passes.
+      if (used.has(candidate.port) || excluded.has(candidate.port) || insideRange(candidate.port, space.ephemeral)) {
         continue;
       }
       if (await portFree(candidate.port)) {
@@ -174,16 +184,16 @@ export const allocatePorts = async (params: {
     }
 
     if (!assigned) {
-      assigned = await findEphemeralPort({
+      const found = await findFallbackPort({
+        space,
         used,
         excluded,
-        startAt: nextEphemeral,
+        startAt: nextFallback,
         isPortFree: portFree,
       });
-      // Advance past the assigned port, wrapping when we fall off the end.
-      nextEphemeral =
-        assigned >= EPHEMERAL_PORT_END ? EPHEMERAL_PORT_START : assigned + 1;
-      source = "ephemeral";
+      assigned = found.port;
+      nextFallback = (found.index + 1) % space.fallback.length;
+      source = "fallback";
     }
 
     allocated[key] = assigned;
@@ -201,4 +211,31 @@ export const allocatePorts = async (params: {
   }
 
   return allocated;
+};
+
+/**
+ * A contiguous block of `size` ports, all fallback candidates (so outside the
+ * ephemeral range), none excluded, each passing the native probe. Probes are
+ * hints; the store transaction grants the block.
+ */
+export const findPortBlock = async (params: {
+  size: number;
+  space: PortSpace;
+  excluded: ReadonlySet<number>;
+  isPortFree?: PortCheckFn;
+}): Promise<number[]> => {
+  const { size, space, excluded } = params;
+  const portFree = params.isPortFree ?? checkPortFree;
+  const candidates = new Set(space.fallback);
+  const usable = (port: number) => candidates.has(port) && !excluded.has(port);
+  for (const base of space.fallback) {
+    const block = Array.from({ length: size }, (_, index) => base + index);
+    if (!block.every(usable)) continue;
+    let free = true;
+    for (const port of block) {
+      if (!(await portFree(port))) { free = false; break; }
+    }
+    if (free) return block;
+  }
+  throw new SiloError(`PORTS_EXHAUSTED: no free block of ${size} ports outside the ephemeral range`, "PORTS_EXHAUSTED");
 };

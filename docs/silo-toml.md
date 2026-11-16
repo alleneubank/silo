@@ -83,14 +83,17 @@ post-up = ["./scripts/seed-db.sh", "./scripts/generate-certs.sh"]
 - `output` (optional): Literal ASCII project-relative env file path. Default:
   `.localnet.env`. No traversal, expansion, symlinks, hardlinks or physical
   aliases with another file role. Existing unreceipted outputs refuse.
-- `ports` (required): Map of port names to default values (at least one entry).
-  Use `random` or `0` to always allocate from the ephemeral range.
+- `ports` (required for `env`, `up` and `ci`): Map of port names to default
+  values (at least one entry). Use `random` or `0` to always allocate from the
+  fallback space outside the kernel's ephemeral range. A project that only uses
+  `silo run` may omit it.
 - `hosts` (optional): Hostname templates. Default: `APP_HOST = "${name}.localhost"`.
 - `urls` (optional): URL templates. Default: empty.
 - `k3d` (optional): k3d cluster integration settings.
 - `tilt` (optional): Tilt launch settings.
 - `hooks` (optional): Lifecycle hook commands.
 - `registry` (optional): registry advertisement settings for non-k3d clusters.
+- `slots` (optional): host slots this project's `silo run` commands hold.
 
 ## Ports
 
@@ -98,15 +101,22 @@ Ports are allocated in declaration order. For each port key:
 
 1. An existing generation retains its committed ports; a lockfile is only a
    snapshot. Reconfiguration requires stopped/reconciled state and `--force`.
-2. For a new generation, if the configured value is `random`/`0`, a free ephemeral port
-   (49152-65535) is allocated.
-3. Otherwise, the configured default is tried. If occupied, the next free
-   ephemeral port (49152-65535) is allocated.
+2. For a new generation, if the configured value is `random`/`0`, a free
+   fallback port is allocated.
+3. Otherwise, the configured default is tried. If it is occupied, claimed or
+   inside the kernel's ephemeral range, the next free fallback port is allocated.
+
+The fallback space is 1024-65535 minus the kernel's live ephemeral range,
+read at allocation (`net.inet.ip.portrange.first`/`last` on macOS,
+`net.ipv4.ip_local_port_range` on Linux), scanned from the highest port down.
+A port inside the ephemeral range passes a bind probe and can still be taken by
+the kernel later, for example by an SSH forward. Existing generations keep
+their published ports; the rule applies to new allocations.
 
 Rules:
 - Ports must be within 1-65535.
-- Duplicate defaults are allowed; the first gets the default, the second gets an ephemeral port.
-- `random`/`0` skips the default check and always uses an ephemeral port.
+- Duplicate defaults are allowed; the first gets the default, the second gets a fallback port.
+- `random`/`0` skips the default check and always uses a fallback port.
 
 ## Hosts
 
@@ -211,6 +221,36 @@ post-up = ["./scripts/seed-db.sh"]
 ```
 
 Hooks inherit all generated env vars (ports, hosts, URLs, etc).
+
+## Slots
+
+Slots are host resources `silo run` holds for one command (see `silo doc
+commands`). The host operator caps them in `<account home>/.silo/host.toml`;
+a project declares only what each slot needs:
+
+```toml
+[slots.ios-simulator]
+env = { OPF_SIM_DEVICE = "opf-slot-${slot}" }
+on-acquire = ["./scripts/acquire-simulator.sh"]
+
+[slots.phone-ports]
+ports = 6
+env = { OPF_E2E_PHONE_PORT_BASE = "${ports.0}" }
+```
+
+- `env` (optional): variables injected into `on-acquire` and the command.
+  `${slot}` is the unit index (`0 .. cap-1`, stable per unit); `${ports.i}` is
+  the i-th port of the slot's block. Other placeholders refuse. Two requested
+  slots may not inject the same variable.
+- `on-acquire` (optional): shell commands run in order, in the project root,
+  after the unit is granted and before the command. Each must reset the unit to
+  a known state whatever the previous holder left. Up to 32 steps.
+- `ports` (optional): size of a contiguous host-port block held for the run
+  (1-256), outside the kernel's ephemeral range. Default: none.
+
+Slot names use lowercase letters, digits and `-`. `silo run --slot <name>`
+refuses with `SLOT_UNAVAILABLE` when the name is not declared here or not
+capped in the host file.
 
 ## Interpolation
 

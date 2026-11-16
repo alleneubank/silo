@@ -18,6 +18,7 @@ const baseConfig: ResolvedConfig = {
   hooks: {},
   profiles: undefined,
   registry: undefined,
+  slots: {},
   configPath: "/repo/silo.toml",
   projectRoot: "/repo",
 };

@@ -17,6 +17,8 @@ export const logger = {
   info: ((...args) => (structuredOutput ? console.error : console.log)(formatPrefix("info"), ...args)) as LogFn,
   warn: ((...args) => console.warn(formatPrefix("warn"), ...args)) as LogFn,
   error: ((...args) => console.error(formatPrefix("error"), ...args)) as LogFn,
+  // Progress that must never mix with a command's stdout or a JSON result.
+  progress: ((...args) => console.error(formatPrefix("info"), ...args)) as LogFn,
   verbose: ((...args) => {
     if (verboseEnabled) {
       (structuredOutput ? console.error : console.log)(formatPrefix("verbose"), ...args);
@@ -26,16 +28,16 @@ export const logger = {
 
 export const logPortAllocations = (events: PortAllocationEvent[]): void => {
   events.forEach((event) => {
-    if (event.source === "ephemeral") {
+    if (event.source === "fallback") {
       if (event.requestedDefault !== "random") {
         logger.warn(
-          `Port ${event.key} in use (${event.requestedDefault}), allocated ${event.assigned}`
+          `Port ${event.key} unavailable (${event.requestedDefault} is in use, claimed or inside the kernel ephemeral range), allocated ${event.assigned}`
         );
         logger.verbose(`Port ${event.key} source: ${event.source}`);
         return;
       }
       logger.verbose(
-        `Port ${event.key} allocated from ephemeral range (${event.assigned})`
+        `Port ${event.key} allocated outside the kernel ephemeral range (${event.assigned})`
       );
       logger.verbose(`Port ${event.key} source: ${event.source}`);
       return;

@@ -12,7 +12,8 @@ Use `silo help [command]` for options and `silo doc --list` for references.
 | `down` | Stop verified recorded Tilt groups; record finished owned producers before deletion, including stopped live up; remove receipted Compose containers/networks by exact ID. Retain clusters, Kubernetes workloads and claims. No Tiltfile evaluation or teardown hooks. |
 | `down --delete-cluster` | Also delete exact owned cluster objects. No name-wide adoption or deletion. |
 | `down --clean` | Retire only after all requests/groups/resources/listeners are proved absent; delete receipted snapshots and release own claims. |
-| `status [--json]` | Read authoritative ownership without repair. Supervisor liveness is not Tilt resource health. |
+| `status [--json]` | Read authoritative ownership without repair. Supervisor liveness is not Tilt resource health. Lists host-wide slot holders and waiters. |
+| `run --slot <name> ... [--wait <dur>] -- <cmd>` | Wait first in, first out for one unit of every named slot, run `on-acquire` then the command in one supervised group, release when it ends. No project lock, generation or Docker. |
 | `profiles` | List configured profiles. |
 | `doc [topic]` | Print bundled reference; `--list` or `--json` discovers topics. |
 | `version` | Print CLI version. |
@@ -48,9 +49,84 @@ for active receipts. The flag is stored knowledge; use immutable IDs for a fresh
 physical-presence check. At the 1024-launch limit, terminal reconciled launch and
 completion history can be compacted while uncertainty and resource history remain.
 
-The unreleased SQLite proposal format is 3. Format-1 and format-2 stores refuse
-without migration/reset; format-2 clients also refuse format 3. Drain the matching
-old proposal and resolve its resources before owner-led recreation.
+The SQLite store format is 4: format 3 (silo 1.0.0) plus the slot tables. A
+writable command adds those tables to a format-3 store in place; afterwards
+1.0.0 clients refuse the store rather than allocate ports blind to slot port
+blocks. Read-only status reads a format-3 store as holding no slot runs.
+Format-1 and format-2 stores refuse without migration/reset; format-2 clients
+also refuse format 3. Drain the matching old proposal and resolve its resources
+before owner-led recreation.
+
+## Slots and `silo run`
+
+```text
+silo run --slot <name> [--slot <name> ...] [--wait <duration>] [--json] -- <command> [args...]
+```
+
+A slot is a host resource several projects share, such as a simulator, an
+emulator or a GUI session. The project declares what isolation each slot needs
+in `silo.toml` (`[slots.<name>]`: `env`, `on-acquire`, `ports`; see `silo doc
+config`). The host operator caps each slot in
+`<account home>/.silo/host.toml`, resolved through the native account home like
+the store:
+
+```toml
+[slots]
+ios-simulator = 2
+gui-session = 1
+```
+
+There is no default cap and no per-project override: a slot with no cap on
+this host is unavailable, and `run` refuses with `SLOT_UNAVAILABLE` (exit 2)
+naming the slot and the host file before any effect.
+
+`run` joins the queue with one durable ticket and waits. Tickets are granted
+first in, first out: a run takes a unit of a slot only while more units are
+free than earlier waiters need from it. Several slots are granted together in
+one transaction or not at all, so two runs naming the same slots in opposite
+orders cannot deadlock. Waiting holds nothing. While waiting, `run` prints
+which slot and holder it waits on, once and again when that changes. `--wait`
+bounds the wait (`500ms`, `30s`, `5m`, `2h`; a bare number is seconds); when it
+runs out, `run` leaves the queue and exits 75 with `SLOT_WAIT_TIMEOUT` naming
+the slot and its holders. Without `--wait` it waits until granted or signalled.
+
+On grant, `${slot}` is the unit index (`0 .. cap-1`, stable per unit), and a
+slot with `ports = N` holds a contiguous block of N host ports, `${ports.0}`
+to `${ports.N-1}`. Port blocks share the `host-port` domain with every
+generation's port claims and come from outside the kernel's live ephemeral
+range. Each `on-acquire` step then runs with `/bin/sh -c` in the project root
+with the slot env, followed by the command, in one Janitor-supervised process
+group. A failing step stops the run: the command never starts, the units are
+released, and `run` exits with that step's status and `SLOT_ACQUIRE_FAILED`
+naming the step and the tail of its stderr. There is no `on-release`: reset on
+acquire also covers a holder killed with SIGKILL.
+
+`run` exits with the command's status. The command's stdin is not connected.
+SIGINT or SIGTERM leaves the queue while waiting, or stops the whole group
+while running, and exits 130 or 143. Units are released by the run once its
+group has no member; if the group outlives a short window, they stay held and
+the result reports `released: false`. A later `run` contending for the same
+slot releases a holder once its recorded processes are proved gone (`ESRCH`,
+or a start identity that differs from the recorded one) and its group has no
+member; uncertain liveness keeps the claim. It also drops the ticket of a
+waiter that is gone. No expiry or force takeover exists.
+
+`run` does not take the project's operation token: several runs from one root
+proceed concurrently, bounded only by caps. It needs no generation, env file,
+Tilt or Docker. With `--json`, the command's stdout goes to stderr and stdout
+carries one schemaVersion-1 result:
+
+```json
+{"schemaVersion":1,"run":{"id":"…","root":"/repo","command":["./e2e.sh"],
+ "slots":[{"slot":"phone-ports","unit":0,"ports":[49140,49141]}],
+ "waitedMs":1520,"exitCode":0,"released":true}}
+```
+
+`status` (and `status --json` under `slots`) lists each capped or queued slot
+with its cap, holders (unit, root, command, silo run PID, group, since) and
+waiter count. A holder whose recorded processes are gone but whose row a
+contender has not yet released shows `ended (releasing)`; status never
+releases it.
 
 `ci --timeout 300s` forwards the timeout. Passthrough cannot override managed
 listener ports/hosts or an explicit web mode. `env`/`ci --export-ci` require

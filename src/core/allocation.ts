@@ -5,7 +5,7 @@ import type { ProjectOperation } from "./lease_store";
 import { digest, processAbsent } from "./lease_store";
 import { parseConfig } from "./config";
 import { buildInstanceState } from "./instance";
-import { allocatePorts, type PortAllocationEvent } from "./ports";
+import { allocatePorts, livePortSpace, type PortAllocationEvent } from "./ports";
 import { logPortAllocations } from "../utils/logger";
 import { generateName, sanitizeName } from "./name";
 import { applyProfile, resolveAndApplyProfile } from "./profile";
@@ -18,7 +18,8 @@ import type { Allocation } from "./lease_types";
 import type { Lockfile, PortConfigValue, ResolvedConfig } from "./types";
 
 const MAX_NAME_ATTEMPTS = 32;
-const MAX_PORT_ATTEMPTS = 65535 - 49152 + 1;
+// Each attempt follows a lost port claim race; no more ports exist than this.
+const MAX_PORT_ATTEMPTS = 65535;
 const MAX_CONFIG_BYTES = 1024 * 1024;
 
 export const storedConfig = (allocation: Allocation): ResolvedConfig => {
@@ -55,6 +56,7 @@ export const allocateProject = async (owner: ProjectOperation, nameArg: string |
     generatedAt: current.allocation.state.createdAt, instance: current.allocation.state,
   } : null;
   const { config, profileName } = resolveAndApplyProfile({ baseConfig, profileFlag: options.profile, lockfile: snapshot, force: options.force });
+  if (Object.keys(config.ports).length === 0) throw new SiloError("INVALID_CONFIG: ports must define at least one entry for env, up and ci", "INVALID_CONFIG");
   validateConfig?.(config);
   const name = nameArg ? sanitizeName(nameArg) : current?.allocation.state.name ?? generateName(owner.root);
   const fingerprint = digest(JSON.stringify({ configSource, name, profile: profileName ?? null, home: config.k3d?.enabled && config.k3d.kubeconfigPath === undefined ? os.homedir() : null }));
@@ -78,10 +80,11 @@ export const allocateProject = async (owner: ProjectOperation, nameArg: string |
   };
   const generated = nameArg === undefined && current === null;
   let chosenName = name;
+  const space = livePortSpace();
   for (let nameAttempt = 0; nameAttempt < MAX_NAME_ATTEMPTS; nameAttempt++) {
     for (let portAttempt = 0; portAttempt < MAX_PORT_ATTEMPTS; portAttempt++) {
       const events: PortAllocationEvent[] = [];
-      const ports = await allocatePorts({ ports: portsConfig, order: Object.keys(portsConfig), lockfilePorts: undefined, force: options.force, excludedPorts: owner.excludedPorts(), onEvent: event => events.push(event) });
+      const ports = await allocatePorts({ ports: portsConfig, order: Object.keys(portsConfig), lockfilePorts: undefined, force: options.force, space, excludedPorts: owner.excludedPorts(), onEvent: event => events.push(event) });
       const rendered = buildInstanceState({ config, name: chosenName, profile: profileName, ports });
       const allocation: Allocation = {
         ...rendered, configPath, configSource,

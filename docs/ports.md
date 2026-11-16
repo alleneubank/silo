@@ -3,9 +3,14 @@
 Run `silo doc ports` for this reference.
 
 A new generation tries configured defaults in declaration order, then scans
-49152–65535. `random` or `0` skips the default. Duplicate defaults fall back
-independently. Ports are scalar host-wide claims: TCP, UDP, IPv4 and IPv6 use
-the same number domain. Native binds are availability hints, not reservations.
+1024–65535 from the top down, skipping the kernel's live ephemeral range
+(read at allocation from `net.inet.ip.portrange.first`/`last` on macOS or
+`net.ipv4.ip_local_port_range` on Linux). A default inside that range is not
+used: the kernel can assign it to an outgoing connection or an SSH forward
+after the probe passes. `random` or `0` skips the default. Duplicate defaults
+fall back independently. Existing generations keep their published ports.
+Ports are scalar host-wide claims: TCP, UDP, IPv4 and IPv6 use the same number
+domain, shared with `silo run` slot port blocks. Native binds are availability hints, not reservations.
 A non-silo process can win a later bind; silo fails rather than renumbering an
 exported generation, killing the listener, or treating its response as success.
 

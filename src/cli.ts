@@ -31,6 +31,7 @@ Commands:
   status          Show current instance state
   env [name]      Generate env file only, don't start anything
   ci [name]       Run Tilt in CI mode (tilt ci) after env + k3d setup
+  run             Run a command while holding host slots (silo run --slot X -- cmd)
   profiles        List available profiles from silo.toml
   version         Print silo version
 
@@ -69,6 +70,11 @@ Command Options:
     --timeout        Passed through to tilt ci --timeout
     --export-ci      Export env vars to $GITHUB_ENV (auto in CI)
     --              Pass remaining args to tilt ci
+
+  run:
+    --slot <name>    Hold one unit of this slot (repeatable; all granted together)
+    --wait <dur>     Give up after this long waiting (e.g. 30s, 5m); default waits
+    --              The command to run
 Before first allocation: announce host cutover, upgrade/retire all old clients,
 and wait for every old operation to finish. Legacy state refuses read-only;
 each owner stops/recreates its ephemeral projects. See silo doc troubleshooting.
@@ -182,6 +188,32 @@ Options:
   -v, --verbose   Show verbose output
   -h, --help      Show help
 `,
+  run: `silo run --slot <name> [--slot <name> ...] [--wait <duration>] [--json] -- <command> [args...]
+
+Run a command while holding one unit of each named slot.
+
+Slots are declared in silo.toml ([slots.<name>]: env, on-acquire, ports) and
+capped per host in <account home>/.silo/host.toml ([slots] <name> = <cap>).
+A slot with no cap on this host is unavailable (exit 2, SLOT_UNAVAILABLE).
+Runs queue first in, first out; several slots are granted together or not
+at all. Waiting holds nothing. On grant, each on-acquire step runs in the
+project root with the slot env, then the command, in one supervised process
+group. Units are released when that group ends, or by a later run once the
+holder is proved gone. run takes no project lock and needs no Docker.
+
+Exit status: the command's; 2 SLOT_UNAVAILABLE; 75 SLOT_WAIT_TIMEOUT;
+an on-acquire step's own status with SLOT_ACQUIRE_FAILED; 130/143 when
+interrupted. With --json, the command's stdout goes to stderr and stdout
+carries one schemaVersion-1 result.
+
+Options:
+  --slot <name>   Slot to hold (repeatable)
+  --wait <dur>    Bound the wait: 500ms, 30s, 5m, 2h; a bare number is seconds
+  --json          Print one JSON result or error on stdout
+  -c, --config    Path to config file (default: silo.toml)
+  -v, --verbose   Show verbose output
+  -h, --help      Show help
+`,
   profiles: `silo profiles [options]
 
 List available profiles from silo.toml.
@@ -268,6 +300,7 @@ Examples:
   silo down --delete-cluster    # Stop Tilt and delete k3d
   silo status                   # Show what's running
   silo profiles                 # List available profiles
+  silo run --slot ios-simulator -- ./e2e.sh   # Run while holding a slot
   silo version                  # Print silo version
 `);
 };
@@ -365,6 +398,8 @@ const main = async (): Promise<void> => {
       clean: { type: "boolean", default: false },
       timeout: { type: "string" },
       "export-ci": { type: "boolean", default: false },
+      slot: { type: "string", multiple: true },
+      wait: { type: "string" },
     },
     allowPositionals: true,
     strict: true,
@@ -392,13 +427,13 @@ const main = async (): Promise<void> => {
   }
 
   if (command === "ci") removeInterruptHandlers = handleCiInterrupts();
-  if (command === "up" || command === "down") {
+  if (command === "up" || command === "down" || command === "run") {
     operationInterrupts = new OperationInterrupts(command);
     removeInterruptHandlers = () => operationInterrupts!.close();
   }
 
   const execute = async () => {
-    if (["env", "up", "ci", "down", "status"].includes(command)) {
+    if (["env", "up", "ci", "down", "status", "run"].includes(command)) {
       await assertNoLegacyState(path.dirname(path.resolve(values.config)));
     }
 
@@ -473,6 +508,17 @@ const main = async (): Promise<void> => {
         await printJsonResult(values.config, values.json, changed);
         return;
       }
+      case "run": {
+        const mod = await import("./commands/run");
+        const result = await mod.run({
+          config: values.config, slots: values.slot ?? [], wait: values.wait, command: passthroughArgs,
+          json: values.json, executorEntrypoint: import.meta.path, signal: operationInterrupts?.signal,
+        });
+        operationInterrupts?.throwIfAborted();
+        process.exitCode = result.run.exitCode;
+        if (values.json) await writeJsonResult({ kind: "result", value: result });
+        return;
+      }
       case "profiles": {
         const mod = await import("./commands/profiles");
         await mod.profiles({ config: values.config });
@@ -504,9 +550,19 @@ const main = async (): Promise<void> => {
   return operationInterrupts ? operationInterrupts.run(execute) : execute();
 };
 
+/** Errors that carry their own documented exit status (slot runs); everything else exits 1. */
+const STATUS_CARRYING_ERRORS = new Set(["SLOT_UNAVAILABLE", "SLOT_WAIT_TIMEOUT", "SLOT_ACQUIRE_FAILED"]);
+
+const exitCodeFor = (error: unknown): number => {
+  if (!(error instanceof SiloError)) return 1;
+  if (error.code === "INTERRUPTED") return error.details.signal === "SIGINT" ? 130 : 143;
+  const carried = error.details.exitCode;
+  if (STATUS_CARRYING_ERRORS.has(error.code) && typeof carried === "number" && Number.isInteger(carried) && carried > 0) return carried;
+  return 1;
+};
+
 main().catch(async (error: unknown) => {
-  process.exitCode = error instanceof SiloError && error.code === "INTERRUPTED"
-    ? (error.details.signal === "SIGINT" ? 130 : 143) : 1;
+  process.exitCode = exitCodeFor(error);
   if (jsonOutput) {
     if (jsonResultStarted) console.error(`silo error: ${error instanceof Error ? error.message : "JSON output failed"}`);
     else {

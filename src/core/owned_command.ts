@@ -1,6 +1,6 @@
 import { ProjectOperation, processAbsent, type CacheDeletionCapability, type CompletionKey } from "./lease_store";
 import type { DockerDeletionTarget, ExecutorCompletion, Launch } from "./lease_types";
-import { runCommand } from "../utils/exec";
+import { processIdentity } from "./process_identity";
 import { SiloError } from "../utils/errors";
 import { withTimeout, observe, raceOperations, type Cancellable } from "../utils/timeout";
 import { sleep } from "../utils/sleep";
@@ -17,12 +17,10 @@ const executorCommand = (entrypoint: string): string[] =>
     ? [process.execPath, "__silo_execute"]
     : [process.execPath, entrypoint, "__silo_execute"];
 
+/** A supervisor is this account's process and leads its own group. */
 const supervisorIdentity = async (pid: number, timeoutMs = LAUNCH_START_TIMEOUT_MS): Promise<string | null> => {
-  const result = await runCommand(["ps", "-ww", "-p", String(pid), "-o", "uid=,pgid=,lstart=,command="], {
-    env: { LC_ALL: "C", TZ: "UTC" }, timeoutMs, context: "inspect recorded supervisor", stdio: "pipe",
-  });
-  if (result.exitCode !== 0) return null;
-  const value = result.stdout.trim();
+  const value = await processIdentity(pid, timeoutMs);
+  if (value === null) return null;
   const [uid, group] = value.split(/\s+/, 2);
   if (Number(uid) !== process.geteuid?.() || Number(group) !== pid) return null;
   return value;
@@ -66,9 +64,12 @@ const firstLine = async (reader: ReadableStreamDefaultReader<Uint8Array>): Promi
   throw new SiloError("Oversized launch handshake", "LAUNCH_FAILED");
 };
 
-const drain = (reader: ReadableStreamDefaultReader<Uint8Array>, capture: boolean): Cancellable<string> => {
+/** Where uncaptured output goes: stderr keeps stdout free for structured results. */
+type OutputSink = "stdout" | "stderr";
+
+const drain = (reader: ReadableStreamDefaultReader<Uint8Array>, capture: boolean, target: OutputSink = "stderr"): Cancellable<string> => {
   const decoder = new TextDecoder();
-  const sink = capture ? null : Bun.stderr.writer();
+  const sink = capture ? null : (target === "stdout" ? Bun.stdout : Bun.stderr).writer();
   let ending: Promise<number> | undefined;
   const end = () => ending ??= Promise.resolve(sink?.end() ?? 0);
   let text = "";
@@ -105,7 +106,7 @@ const drain = (reader: ReadableStreamDefaultReader<Uint8Array>, capture: boolean
     try {
       // Normal EOF awaits the flush above. On abandonment, end stops new
       // writes and unref releases the native flush from process lifetime.
-      // The shared stderr descriptor stays with the caller.
+      // The shared output descriptor stays with the caller.
       observe(end()).cancel();
     } finally {
       sink?.unref();
@@ -115,7 +116,7 @@ const drain = (reader: ReadableStreamDefaultReader<Uint8Array>, capture: boolean
   return { result, cancel: async () => { abandon(text); await result; } };
 };
 
-type CompletionWatch = { completion: Promise<ExecutorCompletion>; stop: () => void };
+type CompletionWatch<T> = { completion: Promise<T>; stop: () => void };
 
 /**
  * The store offers no change event, so the executor's fact is polled with
@@ -128,18 +129,18 @@ type CompletionWatch = { completion: Promise<ExecutorCompletion>; stop: () => vo
  * afterwards. A failed read therefore just yields no fact for that poll and
  * cannot, by itself, end or signal the command.
  */
-const watchCompletion = (key: CompletionKey): CompletionWatch => {
+const watchCompletion = <T>(label: string, read: () => T | null): CompletionWatch<T> => {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false;
   let readFailureLogged = false;
-  const completion = new Promise<ExecutorCompletion>(resolve => {
+  const completion = new Promise<T>(resolve => {
     const poll = (delayMs: number) => {
       timer = setTimeout(() => {
         if (stopped) return;
-        let fact: ExecutorCompletion | null = null;
-        try { fact = ProjectOperation.readExecutorCompletion(key); }
+        let fact: T | null = null;
+        try { fact = read(); }
         catch (error) {
-          if (!readFailureLogged) logger.verbose(`Completion read for launch ${key.launchId} failed; retrying:`, error instanceof Error ? error.message : String(error));
+          if (!readFailureLogged) logger.verbose(`Completion read for ${label} failed; retrying:`, error instanceof Error ? error.message : String(error));
           readFailureLogged = true;
         }
         if (fact) resolve(fact);
@@ -184,9 +185,36 @@ export const runImageCacheDeletion = async (owner: ProjectOperation, capability:
   return completed;
 };
 
-const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Launch, { phase: "planned" }>, options: CommandOptions): Promise<RunningCommand> => {
-  owner.signal?.throwIfAborted();
-  const startupDeadline = Date.now() + Math.min(options.timeoutMs ?? LAUNCH_START_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS);
+/** The executor group a gate reported and the parent verified, before any grant. */
+type GateIdentity = { supervisorPid: number; supervisorIdentity: string; leaderPid: number; groupId: number };
+
+/**
+ * One Janitor-supervised executor group: what to launch, how its grant is
+ * durably recorded, and where its completion fact is read. Project launches
+ * and slot runs differ only in these bindings.
+ */
+type Gate<Fact extends { exitCode: number }> = {
+  id: string;
+  root: string;
+  executorEntrypoint: string;
+  executorArgs: readonly string[];
+  kind: string;
+  env: Record<string, string> | undefined;
+  timeoutMs: number | null;
+  capture: boolean;
+  output: OutputSink;
+  signal: AbortSignal | undefined;
+  /** Records the verified group as the launch's owner; returns the grant line the executor receives. */
+  grant: (identity: GateIdentity) => string;
+  readCompletion: () => Fact | null;
+  failureDetails: Readonly<Record<string, unknown>>;
+};
+type GateResult<Fact> = { exitCode: number; stdout: string; stderr: string; completion: Fact | null };
+type RunningGate<Fact> = { identity: GateIdentity; exited: Promise<GateResult<Fact>>; stop: () => void };
+
+export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fact>): Promise<RunningGate<Fact>> => {
+  gate.signal?.throwIfAborted();
+  const startupDeadline = Date.now() + Math.min(gate.timeoutMs ?? LAUNCH_START_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS);
   const startupRemaining = () => {
     const remaining = startupDeadline - Date.now();
     if (remaining <= 0) throw new SiloError("Timed out waiting for launch identity", "TIMEOUT");
@@ -194,19 +222,17 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
   };
   const proc = Bun.spawn([
     TILT_SUPERVISOR_BIN, "--pgroup-only", "--watch-pid", String(process.pid), "--grace-ms", String(TILT_DRAIN_GRACE_MS),
-    "--", ...executorCommand(owner.executorEntrypoint), intent.id, owner.root,
-    owner.projectId, String(owner.generation), owner.completionJournal,
+    "--", ...executorCommand(gate.executorEntrypoint), ...gate.executorArgs,
   ], {
-    cwd: owner.root, env: { ...process.env, ...options.env }, detached: true,
+    cwd: gate.root, env: { ...process.env, ...gate.env }, detached: true,
     stdin: "pipe", stdout: "pipe", stderr: "pipe",
   });
   // Bun reaps the supervisor itself; once it has, the handle's PID may be
   // reused, so only a handle with no recorded exit is signalled.
   const stopSupervisor = () => { if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGTERM"); };
-  const capture = options.capture ?? true;
   const stdoutReader = proc.stdout.getReader();
   const stderrReader = proc.stderr.getReader();
-  const stderr = drain(stderrReader, capture);
+  const stderr = drain(stderrReader, gate.capture);
   let stdout: Cancellable<string> | undefined;
   const stopAndDrain = async () => {
     stopSupervisor();
@@ -215,47 +241,45 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
   };
   try {
     const handshakeTimeout = startupRemaining();
-    const handshake = await withTimeout({ result: firstLine(stdoutReader), cancel: () => stdoutReader.cancel() }, handshakeTimeout, "launch gate", owner.signal);
+    const handshake = await withTimeout({ result: firstLine(stdoutReader), cancel: () => stdoutReader.cancel() }, handshakeTimeout, "launch gate", gate.signal);
     const parts = /^SILO_GATE (\S+) (\d+) (\d+)$/.exec(handshake);
     const leaderPid = Number(parts?.[2]);
     const groupId = Number(parts?.[3]);
-    if (parts?.[1] !== intent.id || !Number.isSafeInteger(leaderPid) || leaderPid <= 1 || groupId !== leaderPid) {
+    if (parts?.[1] !== gate.id || !Number.isSafeInteger(leaderPid) || leaderPid <= 1 || groupId !== leaderPid) {
       throw new SiloError("Launch gate did not report its actual group leader", "LAUNCH_FAILED");
     }
-    const identity = await supervisorIdentity(proc.pid, startupRemaining());
-    if (!identity?.includes(intent.id)) throw new SiloError("Cannot verify launch supervisor", "LAUNCH_FAILED");
+    const supervisor = await supervisorIdentity(proc.pid, startupRemaining());
+    if (!supervisor?.includes(gate.id)) throw new SiloError("Cannot verify launch supervisor", "LAUNCH_FAILED");
     startupRemaining();
-    owner.signal?.throwIfAborted();
-    const launch: Extract<Launch, { phase: "granted" }> = { ...intent, phase: "granted", reconciled: false, terminal: false, exitCode: null, supervisorPid: proc.pid, supervisorIdentity: identity, leaderPid, groupId };
-    owner.checkpointLaunch(launch);
-    proc.stdin.write(`${JSON.stringify(launch)}\n`);
+    gate.signal?.throwIfAborted();
+    const identity: GateIdentity = { supervisorPid: proc.pid, supervisorIdentity: supervisor, leaderPid, groupId };
+    proc.stdin.write(`${gate.grant(identity)}\n`);
     proc.stdin.end();
-    stdout = drain(stdoutReader, capture);
+    stdout = drain(stdoutReader, gate.capture, gate.output);
     const finished = Promise.all([proc.exited, stdout.result, stderr.result]);
-    const journal = watchCompletion({ storePath: owner.storePath, projectId: owner.projectId, generation: owner.generation, launchId: launch.id });
+    const journal = watchCompletion(`${gate.kind} ${gate.id}`, gate.readCompletion);
     // The result is known once the supervisor exits or the executor's fact is
     // journaled. Neither a supervisor that misses its child's exit nor an
     // escaped descendant holding the inherited pipes may then hold the command
     // open: both get one stop window, after which only this launch's own
     // supervisor handle is signalled and the pipes are abandoned.
-    const complete = async (): Promise<OwnedCommandResult> => {
-      const journaled = await raceOperations<ExecutorCompletion | null>([
+    const complete = async (): Promise<GateResult<Fact>> => {
+      const journaled = await raceOperations<Fact | null>([
         observe(proc.exited.then(() => null)), observe(finished.then(() => null)),
         { result: journal.completion, cancel: journal.stop },
       ]);
       if (!(await settlesWithin(finished, STOP_TIMEOUT_MS))) {
         await stopAndDrain();
       }
-      const [supervisorExitCode, stdout, stderrText] = await finished;
-      const exitCode = journaled?.exitCode ?? supervisorExitCode;
-      return { exitCode, stdout, stderr: stderrText, launch: { ...launch, phase: "exited", started: true, exitCode, reconciled: options.effect === "none" } };
+      const [supervisorExitCode, stdoutText, stderrText] = await finished;
+      return { exitCode: journaled?.exitCode ?? supervisorExitCode, stdout: stdoutText, stderr: stderrText, completion: journaled };
     };
     const completed = complete().catch(async error => {
       await stopAndDrain();
       throw error;
     }).finally(journal.stop);
-    const exited = withTimeout({ result: completed, cancel: stopAndDrain }, options.timeoutMs, options.kind, owner.signal);
-    return { launch, exited, stop: stopSupervisor };
+    const exited = withTimeout({ result: completed, cancel: stopAndDrain }, gate.timeoutMs, gate.kind, gate.signal);
+    return { identity, exited, stop: stopSupervisor };
   } catch (error) {
     proc.stdin.end();
     await stopAndDrain();
@@ -263,11 +287,34 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
     const diagnostic = await stderr.result;
     if (error instanceof SiloError && error.code === "LAUNCH_FAILED") {
       throw new SiloError(`${error.message}; supervisor exited ${exitCode}. ${diagnostic.slice(-4096)}`.trimEnd(), error.code, {
-        cause: error, details: { ...error.details, launchId: intent.id, generation: owner.generation, supervisorExitCode: exitCode },
+        cause: error, details: { ...error.details, ...gate.failureDetails, supervisorExitCode: exitCode },
       });
     }
     throw error;
   }
+};
+
+const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Launch, { phase: "planned" }>, options: CommandOptions): Promise<RunningCommand> => {
+  let granted: Extract<Launch, { phase: "granted" }> | undefined;
+  const key: CompletionKey = { storePath: owner.storePath, projectId: owner.projectId, generation: owner.generation, launchId: intent.id };
+  const running = await startGate<ExecutorCompletion>({
+    id: intent.id, root: owner.root, executorEntrypoint: owner.executorEntrypoint,
+    executorArgs: [intent.id, owner.root, owner.projectId, String(owner.generation), owner.completionJournal],
+    kind: options.kind, env: options.env, timeoutMs: options.timeoutMs, capture: options.capture ?? true, output: "stderr",
+    signal: owner.signal,
+    grant: identity => {
+      granted = { ...intent, phase: "granted", reconciled: false, terminal: false, exitCode: null, ...identity };
+      owner.checkpointLaunch(granted);
+      return JSON.stringify(granted);
+    },
+    readCompletion: () => ProjectOperation.readExecutorCompletion(key),
+    failureDetails: { launchId: intent.id, generation: owner.generation },
+  });
+  const launch = granted!;
+  const exited = running.exited.then(({ exitCode, stdout, stderr }): OwnedCommandResult => ({
+    exitCode, stdout, stderr, launch: { ...launch, phase: "exited", started: true, exitCode, reconciled: options.effect === "none" },
+  }));
+  return { launch, exited, stop: running.stop };
 };
 
 export const runOwnedCommand = async (owner: ProjectOperation, command: string[], options: CommandOptions & { effect: "none" | "delete" }): Promise<OwnedCommandResult> => {
