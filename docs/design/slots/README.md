@@ -233,6 +233,15 @@ are in the decision log.
 
 ## Decision log
 
+- 2026-11-16 (owner, question tool, on build PR #68): store "Format 4,
+  upgrade in place (Recommended)": the first writable open upgrades a
+  format-3 store to format 4; 1.0.0 clients refuse a format-4 store rather
+  than allocate ports without seeing slot port blocks; no downgrade path;
+  REQ-STORE-001's "no automatic migration" is amended; minor version bump.
+  Legacy state "Only for slots with ports (Recommended)": `silo run` refuses
+  on legacy `~/.silo/instances` state only when a requested slot declares
+  `ports`.
+
 - 2026-11-16T03:1xZ (owner, question tool): ephemeral-range exclusion
   "Everywhere (Recommended)": `silo run` port blocks and `env`/`up` fallback,
   new allocations only, in the slots build PR.
