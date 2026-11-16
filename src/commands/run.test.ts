@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -18,7 +18,8 @@ let storePath: string;
 let hostFile: string;
 
 beforeAll(async () => {
-  base = mkdtempSync(path.join(os.tmpdir(), "silo-run-"));
+  // silo records resolved project roots; macOS TMPDIR sits behind the /var symlink.
+  base = realpathSync(mkdtempSync(path.join(os.tmpdir(), "silo-run-")));
   account = path.join(base, "account");
   bin = path.join(base, "bin");
   mkdirSync(path.join(account, ".silo"), { recursive: true });
