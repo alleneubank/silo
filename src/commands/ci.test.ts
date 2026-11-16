@@ -365,7 +365,11 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
     await invoke(["env", `probe-${signal.toLowerCase()}`]);
     // A completed hook requires backend reconciliation during down, even
     // though this fixture created no Docker objects.
-    const owner = await ProjectOperation.open(root, { storePath: path.join(account, ".silo/leases.sqlite"), executorEntrypoint: path.join(base, "cli.js") });
+    const owner = await ProjectOperation.open(root, {
+      storePath: path.join(account, ".silo/leases.sqlite"),
+      legacyInputs: { accountHome: account, home: account, registryDir: undefined },
+      executorEntrypoint: path.join(base, "cli.js"),
+    });
     try {
       const running = await startOwnedCommand(owner, [process.execPath, "-e", ""], { kind: "hook-pre-up", effect: "hook", timeoutMs: 5000 });
       owner.recordCommandResult((await running.exited).launch);
