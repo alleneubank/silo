@@ -31,7 +31,7 @@ Commands:
   status          Show current instance state
   env [name]      Generate env file only, don't start anything
   ci [name]       Run Tilt in CI mode (tilt ci) after env + k3d setup
-  run             Run a command while holding host slots (silo run --slot X -- cmd)
+  run             Run a supervised command, with optional host slots and deadline
   profiles        List available profiles from silo.toml
   version         Print silo version
 
@@ -72,9 +72,11 @@ Command Options:
     --              Pass remaining args to tilt ci
 
   run:
-    --slot <name>    Hold one unit of this slot (repeatable; all granted together)
-    --wait <dur>     Give up after this long waiting (e.g. 30s, 5m); default waits
-    --              The command to run
+    --slot <name>       Hold one unit of this slot (repeatable; all granted together)
+    --wait <dur>        Give up after this long waiting (e.g. 30s, 5m); default waits
+    --timeout <dur>     Stop the command's whole group this long after grant; exit 124
+    --kill-after <dur>  Grace from SIGTERM to SIGKILL when stopping (default 5s)
+    --                  The command to run
 Before first allocation: announce host cutover, upgrade/retire all old clients,
 and wait for every old operation to finish. Legacy state refuses read-only;
 each owner stops/recreates its ephemeral projects. See silo doc troubleshooting.
@@ -188,9 +190,10 @@ Options:
   -v, --verbose   Show verbose output
   -h, --help      Show help
 `,
-  run: `silo run --slot <name> [--slot <name> ...] [--wait <duration>] [--json] -- <command> [args...]
+  run: `silo run [--slot <name>]... [--wait <duration>] [--timeout <duration>] [--kill-after <duration>] [--json] -- <command> [args...]
 
-Run a command while holding one unit of each named slot.
+Run a command in one supervised process group, optionally holding host slots
+and under a deadline.
 
 Slots are declared in silo.toml ([slots.<name>]: env, on-acquire, ports) and
 capped per host in <account home>/.silo/host.toml ([slots] <name> = <cap>).
@@ -201,18 +204,28 @@ project root with the slot env, then the command, in one supervised process
 group. Units are released when that group ends, or by a later run once the
 holder is proved gone. run takes no project lock and needs no Docker.
 
-Exit status: the command's; 2 SLOT_UNAVAILABLE; 75 SLOT_WAIT_TIMEOUT;
-an on-acquire step's own status with SLOT_ACQUIRE_FAILED; 130/143 when
-interrupted. With --json, the command's stdout goes to stderr and stdout
-carries one schemaVersion-1 result.
+Without --slot, run reads no silo.toml and opens no store: the command runs
+in the config's directory (the current one by default) under supervision.
+
+--timeout bounds the run from its grant (on-acquire and the command), not the
+wait: at the deadline the whole group gets SIGTERM, then SIGKILL after the
+--kill-after grace, slots are released, and run exits 124 (--json:
+run.timedOut is true). SIGINT/SIGTERM to silo stop the group the same way.
+
+Exit status: the command's; 124 when --timeout stopped it; 2 SLOT_UNAVAILABLE;
+75 SLOT_WAIT_TIMEOUT; an on-acquire step's own status with SLOT_ACQUIRE_FAILED;
+130/143 when interrupted. With --json, the command's stdout goes to stderr and
+stdout carries one schemaVersion-1 result.
 
 Options:
-  --slot <name>   Slot to hold (repeatable)
-  --wait <dur>    Bound the wait: 500ms, 30s, 5m, 2h; a bare number is seconds
-  --json          Print one JSON result or error on stdout
-  -c, --config    Path to config file (default: silo.toml)
-  -v, --verbose   Show verbose output
-  -h, --help      Show help
+  --slot <name>       Slot to hold (repeatable)
+  --wait <dur>        Bound the wait for slots: 500ms, 30s, 5m, 2h; a bare number is seconds
+  --timeout <dur>     Bound the run from grant, 1s to 7 days
+  --kill-after <dur>  Grace between SIGTERM and SIGKILL on any stop, 1s to 10m (default 5s)
+  --json              Print one JSON result or error on stdout
+  -c, --config        Path to config file (default: silo.toml)
+  -v, --verbose       Show verbose output
+  -h, --help          Show help
 `,
   profiles: `silo profiles [options]
 
@@ -400,6 +413,7 @@ const main = async (): Promise<void> => {
       "export-ci": { type: "boolean", default: false },
       slot: { type: "string", multiple: true },
       wait: { type: "string" },
+      "kill-after": { type: "string" },
     },
     allowPositionals: true,
     strict: true,
@@ -512,7 +526,7 @@ const main = async (): Promise<void> => {
       case "run": {
         const mod = await import("./commands/run");
         const result = await mod.run({
-          config: values.config, slots: values.slot ?? [], wait: values.wait, command: passthroughArgs,
+          config: values.config, slots: values.slot ?? [], wait: values.wait, timeout: values.timeout, killAfter: values["kill-after"], command: passthroughArgs,
           json: values.json, executorEntrypoint: import.meta.path, signal: operationInterrupts?.signal,
         });
         operationInterrupts?.throwIfAborted();

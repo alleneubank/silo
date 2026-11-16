@@ -16,6 +16,7 @@ let bin: string;
 let cli: string;
 let storePath: string;
 let hostFile: string;
+let caller: string;
 
 beforeAll(async () => {
   // silo records resolved project roots; macOS TMPDIR sits behind the /var symlink.
@@ -40,6 +41,15 @@ beforeAll(async () => {
   const build = await Bun.build({ entrypoints: [path.resolve(import.meta.dir, "../cli.ts")], target: "bun", outdir: base, plugins: [privateAccount] });
   if (!build.success) throw new AggregateError(build.logs, "Private CLI build failed");
   cli = path.join(base, "cli.js");
+  // Stands in for a terminal or task runner: it leads its own process group,
+  // survives a signal to that group, and exits with its child's status.
+  caller = path.join(base, "caller.ts");
+  writeFileSync(caller, `for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => {});
+const [pidFile, ...argv] = process.argv.slice(2);
+const child = Bun.spawn(argv, { stdin: "ignore", stdout: "inherit", stderr: "inherit" });
+await Bun.write(pidFile, String(child.pid));
+process.exit(await child.exited);
+`);
 }, 60_000);
 
 afterAll(() => { if (base) rmSync(base, { recursive: true }); });
@@ -67,22 +77,27 @@ const collect = async (stream: ReadableStream<Uint8Array>, onText: (text: string
 };
 
 // Every CLI process a test starts; afterEach kills survivors and the groups
-// they recorded, so a failing test leaks no process.
+// they recorded or the test tracked, so a failing test leaks no process.
 const startedPids = new Set<number>();
 const started: Started[] = [];
+const trackedGroups = new Set<number>();
 
 afterEach(async () => {
   const leftover = started.splice(0).filter(s => s.proc.exitCode === null && s.proc.signalCode === null);
   const groups = existsSync(storePath) ? runs().flatMap(q => q.run.phase === "held" && q.run.launch && startedPids.has(q.run.waiter.pid) ? [q.run.launch.groupId] : []) : [];
   for (const s of leftover) s.proc.kill("SIGKILL");
-  for (const group of groups) { try { process.kill(-group, "SIGKILL"); } catch { /* already gone */ } }
+  for (const group of [...groups, ...trackedGroups]) { try { process.kill(-group, "SIGKILL"); } catch { /* already gone */ } }
   await Promise.all(leftover.map(s => s.proc.exited));
   startedPids.clear();
+  trackedGroups.clear();
 });
 
-const start = (root: string, args: string[]): Started => {
-  const proc = Bun.spawn([process.execPath, cli, ...args], {
-    cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 60_000,
+const start = (root: string, args: string[]): Started => startArgv(root, [process.execPath, cli, ...args], false);
+
+/** `detached` starts the process as the leader of a new process group. */
+const startArgv = (root: string, argv: string[], detached: boolean): Started => {
+  const proc = Bun.spawn(argv, {
+    cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 60_000, detached,
     env: { ...process.env, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry"), PATH: `${bin}:${process.env.PATH}` },
   });
   let stderrSoFar = "";
@@ -115,6 +130,25 @@ const launched = (slot: string) => {
   return queued?.run.phase === "held" ? queued.run.launch : null;
 };
 
+const alive = (pid: number): boolean => { try { process.kill(pid, 0); return true; } catch { return false; } };
+
+/** The process group a command recorded in `file`, tracked for cleanup. */
+const recordedGroup = async (root: string, file: string): Promise<number> => {
+  const target = path.join(root, file);
+  await waitFor(() => existsSync(target) && readFileSync(target, "utf8").trim().length > 0, `${file} written`);
+  const group = Number(readFileSync(target, "utf8").trim());
+  trackedGroups.add(group);
+  return group;
+};
+const recordGroup = (file: string): string => `ps -o pgid= -p $$ > ${file}`;
+
+/** A directory with no silo.toml. */
+const bareDirectory = (): string => {
+  const root = path.join(base, `bare-${randomUUID().slice(0, 8)}`);
+  mkdirSync(root);
+  return root;
+};
+
 // A command that holds its slot until the test creates `file`.
 const holdUntil = (file: string): string[] => ["sh", "-c", `touch ${file}.started; while [ ! -f ${file} ]; do sleep 0.02; done`];
 
@@ -129,6 +163,81 @@ test("an uncapped slot is SLOT_UNAVAILABLE before any store effect", async () =>
   expect(existsSync(storePath)).toBe(false);
 });
 
+test("a run without slots needs no silo.toml, host caps or store, and keeps its exit code before the deadline", async () => {
+  // Runs before any slot test creates the store.
+  expect(existsSync(storePath)).toBe(false);
+  rmSync(hostFile, { force: true });
+  const root = bareDirectory();
+  const result = await runCli(root, ["run", "--timeout", "60s", "--json", "--", "sh", "-c", "echo plain; exit 7"]);
+  expect(result.exitCode).toBe(7);
+  expect(JSON.parse(result.stdout)).toMatchObject({ schemaVersion: 1, run: { root, slots: [], exitCode: 7, timedOut: false, released: true } });
+  expect(result.stderr).toContain("plain");
+  expect(existsSync(storePath)).toBe(false);
+  expect(existsSync(path.join(base, "docker-called"))).toBe(false);
+});
+
+test("--timeout, --kill-after and --wait refuse values outside their bounds before running", async () => {
+  const root = bareDirectory();
+  for (const args of [["--timeout", "500ms"], ["--timeout", "169h"], ["--timeout", "soon"], ["--kill-after", "11m"], ["--kill-after", "0"], ["--wait", "1s"]]) {
+    const result = await runCli(root, ["run", ...args, "--json", "--", "sh", "-c", "touch ran"]);
+    expect([args, result.exitCode]).toEqual([args, 1]);
+    expect(JSON.parse(result.stdout)).toMatchObject({ code: "INVALID_ARGUMENT", message: expect.stringContaining(args[0]!) });
+  }
+  expect(existsSync(path.join(root, "ran"))).toBe(false);
+});
+
+test("--timeout ends the command's children and grandchildren and exits 124", async () => {
+  const root = bareDirectory();
+  const tree = `${recordGroup("group")}; sh -c 'sleep 600 & echo $! > grandchild; wait' & echo $! > child; sleep 600 & echo $! > sibling; wait`;
+  const running = start(root, ["run", "--timeout", "1s", "--json", "--", "sh", "-c", tree]);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => ["child", "grandchild", "sibling"].every(file => existsSync(path.join(root, file))), "tree started");
+  const pids = ["child", "grandchild", "sibling"].map(file => Number(readFileSync(path.join(root, file), "utf8")));
+  expect(pids.every(alive)).toBe(true);
+  const result = await settle(running, "timed-out run");
+  expect(result.exitCode).toBe(124);
+  expect(JSON.parse(result.stdout)).toMatchObject({ schemaVersion: 1, run: { exitCode: 124, timedOut: true } });
+  expect(result.stderr).toContain("--timeout 1s reached");
+  expect(pids.filter(alive)).toEqual([]);
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+test("a command that ignores SIGTERM at the deadline is SIGKILLed after the --kill-after grace", async () => {
+  const root = bareDirectory();
+  const stubborn = `${recordGroup("group")}; trap 'echo term >> got-term' TERM; while :; do sleep 0.05; done`;
+  const startedAt = Date.now();
+  const running = start(root, ["run", "--timeout", "1s", "--kill-after", "1s", "--", "sh", "-c", stubborn]);
+  const group = await recordedGroup(root, "group");
+  const result = await settle(running, "stubborn run");
+  const elapsed = Date.now() - startedAt;
+  expect(result.exitCode).toBe(124);
+  expect(existsSync(path.join(root, "got-term"))).toBe(true);
+  // The deadline plus the grace, well short of the default 5 s grace.
+  expect(elapsed).toBeGreaterThanOrEqual(2000);
+  expect(elapsed).toBeLessThan(4500);
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  test(`${signal} to the caller's process group reaches silo, which stops the command before its deadline`, async () => {
+    const root = bareDirectory();
+    const pidFile = path.join(root, "silo-pid");
+    const running = startArgv(root, [process.execPath, caller, pidFile, process.execPath, cli, "run", "--timeout", "60s", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 600 & wait`], true);
+    trackedGroups.add(running.proc.pid);
+    const group = await recordedGroup(root, "group");
+    const siloPid = Number(readFileSync(pidFile, "utf8"));
+    // silo stays in its caller's group; only the command has its own.
+    const siloGroup = Number((await Bun.$`ps -o pgid= -p ${siloPid}`.text()).trim());
+    expect(siloGroup).toBe(running.proc.pid);
+    expect(group).not.toBe(siloGroup);
+    process.kill(-running.proc.pid, signal);
+    const result = await settle(running, "interrupted caller");
+    expect(result.exitCode).toBe(signal === "SIGINT" ? 130 : 143);
+    expect(JSON.parse(result.stdout)).toMatchObject({ schemaVersion: 1, code: "INTERRUPTED", signal });
+    expect(alive(-group)).toBe(false);
+  }, 60_000);
+}
+
 test("a granted run injects slot env, runs on-acquire first, and reports one JSON result", async () => {
   setCaps({ "json-shape": 2 });
   const root = project(`[slots.json-shape]
@@ -139,7 +248,7 @@ ports = 3`);
   expect(result.exitCode).toBe(7);
   const value = JSON.parse(result.stdout);
   expect(Object.keys(value).sort()).toEqual(["run", "schemaVersion"]);
-  expect(Object.keys(value.run).sort()).toEqual(["command", "exitCode", "id", "released", "root", "slots", "waitedMs"]);
+  expect(Object.keys(value.run).sort()).toEqual(["command", "exitCode", "id", "released", "root", "slots", "timedOut", "waitedMs"]);
   const [grant] = value.run.slots;
   expect(value).toMatchObject({ schemaVersion: 1, run: { exitCode: 7, released: true, command: ["sh", "-c", expect.any(String)], slots: [{ slot: "json-shape", unit: 0 }] } });
   expect(grant.ports).toEqual([grant.ports[0], grant.ports[0] + 1, grant.ports[0] + 2]);
@@ -261,6 +370,21 @@ on-acquire = ["true", "echo reset failed >&2; exit 9"]`);
   expect(error).toMatchObject({ schemaVersion: 1, code: "SLOT_ACQUIRE_FAILED", failedStep: 1, exitCode: 9 });
   expect(error.message).toContain("reset failed");
   expect(existsSync(path.join(root, "command-ran"))).toBe(false);
+  expect(runs()).toEqual([]);
+}, 60_000);
+
+test("a run stopped by --timeout releases its unit to the next waiter", async () => {
+  setCaps({ "timed-out": 1 });
+  const root = project("[slots.timed-out]\n");
+  const holder = start(root, ["run", "--slot", "timed-out", "--timeout", "2s", "--json", "--", "sleep", "600"]);
+  await waitFor(() => launched("timed-out") !== null, "holder launch");
+  const waiter = start(root, ["run", "--slot", "timed-out", "--", "sh", "-c", "touch waiter-ran"]);
+  await waitFor(() => waitersFor("timed-out").length === 1, "waiter queued");
+  const [h, w] = await Promise.all([settle(holder, "holder"), settle(waiter, "waiter")]);
+  expect(h.exitCode).toBe(124);
+  expect(JSON.parse(h.stdout)).toMatchObject({ run: { exitCode: 124, timedOut: true, released: true } });
+  expect(w.exitCode).toBe(0);
+  expect(existsSync(path.join(root, "waiter-ran"))).toBe(true);
   expect(runs()).toEqual([]);
 }, 60_000);
 

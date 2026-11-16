@@ -8,7 +8,10 @@ import { logger } from "../utils/logger";
 import { LAUNCH_START_TIMEOUT_MS, TILT_DRAIN_GRACE_MS, TILT_SUPERVISOR_BIN } from "./constants";
 
 const MAX_OUTPUT_BYTES = 1024 * 1024;
-const STOP_TIMEOUT_MS = TILT_DRAIN_GRACE_MS + 5000;
+
+/** How long a stopped group may take to leave: Janitor's grace plus margin for the process table. */
+export const drainWindowMs = (graceMs: number): number => graceMs + 5000;
+const STOP_TIMEOUT_MS = drainWindowMs(TILT_DRAIN_GRACE_MS);
 const JOURNAL_POLL_MS_MIN = 50;
 const JOURNAL_POLL_MS_MAX = 1000;
 
@@ -193,7 +196,7 @@ type GateIdentity = { supervisorPid: number; supervisorIdentity: string; leaderP
  * durably recorded, and where its completion fact is read. Project launches
  * and slot runs differ only in these bindings.
  */
-type Gate<Fact extends { exitCode: number }> = {
+export type Gate<Fact extends { exitCode: number }> = {
   id: string;
   root: string;
   executorEntrypoint: string;
@@ -201,6 +204,8 @@ type Gate<Fact extends { exitCode: number }> = {
   kind: string;
   env: Record<string, string> | undefined;
   timeoutMs: number | null;
+  /** Janitor's SIGTERM-to-SIGKILL grace for every stop of this group. */
+  graceMs: number;
   capture: boolean;
   output: OutputSink;
   signal: AbortSignal | undefined;
@@ -209,7 +214,7 @@ type Gate<Fact extends { exitCode: number }> = {
   readCompletion: () => Fact | null;
   failureDetails: Readonly<Record<string, unknown>>;
 };
-type GateResult<Fact> = { exitCode: number; stdout: string; stderr: string; completion: Fact | null };
+export type GateResult<Fact> = { exitCode: number; stdout: string; stderr: string; completion: Fact | null };
 type RunningGate<Fact> = { identity: GateIdentity; exited: Promise<GateResult<Fact>>; stop: () => void };
 
 export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fact>): Promise<RunningGate<Fact>> => {
@@ -221,7 +226,7 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
     return remaining;
   };
   const proc = Bun.spawn([
-    TILT_SUPERVISOR_BIN, "--pgroup-only", "--watch-pid", String(process.pid), "--grace-ms", String(TILT_DRAIN_GRACE_MS),
+    TILT_SUPERVISOR_BIN, "--pgroup-only", "--watch-pid", String(process.pid), "--grace-ms", String(gate.graceMs),
     "--", ...executorCommand(gate.executorEntrypoint), ...gate.executorArgs,
   ], {
     cwd: gate.root, env: { ...process.env, ...gate.env }, detached: true,
@@ -234,9 +239,10 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
   const stderrReader = proc.stderr.getReader();
   const stderr = drain(stderrReader, gate.capture);
   let stdout: Cancellable<string> | undefined;
+  const stopTimeoutMs = drainWindowMs(gate.graceMs);
   const stopAndDrain = async () => {
     stopSupervisor();
-    try { await withTimeout(observe(proc.exited), STOP_TIMEOUT_MS, "supervisor drain"); }
+    try { await withTimeout(observe(proc.exited), stopTimeoutMs, "supervisor drain"); }
     finally { await Promise.all([stdout ? stdout.cancel() : stdoutReader.cancel(), stderr.cancel()]); }
   };
   try {
@@ -268,7 +274,7 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
         observe(proc.exited.then(() => null)), observe(finished.then(() => null)),
         { result: journal.completion, cancel: journal.stop },
       ]);
-      if (!(await settlesWithin(finished, STOP_TIMEOUT_MS))) {
+      if (!(await settlesWithin(finished, stopTimeoutMs))) {
         await stopAndDrain();
       }
       const [supervisorExitCode, stdoutText, stderrText] = await finished;
@@ -300,7 +306,7 @@ const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Laun
   const running = await startGate<ExecutorCompletion>({
     id: intent.id, root: owner.root, executorEntrypoint: owner.executorEntrypoint,
     executorArgs: [intent.id, owner.root, owner.projectId, String(owner.generation), owner.completionJournal],
-    kind: options.kind, env: options.env, timeoutMs: options.timeoutMs, capture: options.capture ?? true, output: "stderr",
+    kind: options.kind, env: options.env, timeoutMs: options.timeoutMs, graceMs: TILT_DRAIN_GRACE_MS, capture: options.capture ?? true, output: "stderr",
     signal: owner.signal,
     grant: identity => {
       granted = { ...intent, phase: "granted", reconciled: false, terminal: false, exitCode: null, ...identity };

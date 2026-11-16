@@ -72,6 +72,7 @@ silo status          # Show current instance state
 silo env [name]      # Generate env file only, don't start anything
 silo ci [name]       # Run Tilt in CI mode (tilt ci) after env + k3d setup
 silo run --slot <name> -- <cmd>  # Run a command while holding host slots
+silo run --timeout 20m -- <cmd>  # Run a supervised command; stop its whole group at the deadline
 silo profiles        # List available profiles
 silo doc [topic]     # Print bundled docs (config, profiles, k3d, hooks, etc.)
 silo version         # Print version
@@ -106,6 +107,9 @@ All mutating tools use durable gated Janitor groups with `--pgroup-only`.
 Owner loss drains the recorded group; uncertain effects retain ownership.
 A missing supervisor refuses startup. `--force` reconfigures only a stopped,
 reconciled generation; parallel stacks need separate roots and names.
+`silo run --timeout` uses the same supervisor to stop a command's whole process
+group at a deadline while silo stays in its caller's group, so Ctrl-C still
+reaches the command.
 
 See `silo doc tilt` for the details.
 

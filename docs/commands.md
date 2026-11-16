@@ -13,7 +13,7 @@ Use `silo help [command]` for options and `silo doc --list` for references.
 | `down --delete-cluster` | Also delete exact owned cluster objects. No name-wide adoption or deletion. |
 | `down --clean` | Retire only after all requests/groups/resources/listeners are proved absent; delete receipted snapshots and release own claims. |
 | `status [--json]` | Read authoritative ownership without repair. Supervisor liveness is not Tilt resource health. Lists host-wide slot holders and waiters. |
-| `run --slot <name> ... [--wait <dur>] -- <cmd>` | Wait first in, first out for one unit of every named slot, run `on-acquire` then the command in one supervised group, release when it ends. No project lock, generation or Docker. |
+| `run [--slot <name>]... [--wait <dur>] [--timeout <dur>] -- <cmd>` | Wait first in, first out for one unit of every named slot, run `on-acquire` then the command in one supervised group, release when it ends. `--timeout` stops the whole group at a deadline (exit 124). Without `--slot`, no config, store or queue. No project lock, generation or Docker. |
 | `profiles` | List configured profiles. |
 | `doc [topic]` | Print bundled reference; `--list` or `--json` discovers topics. |
 | `version` | Print CLI version. |
@@ -64,7 +64,7 @@ before owner-led recreation.
 ## Slots and `silo run`
 
 ```text
-silo run --slot <name> [--slot <name> ...] [--wait <duration>] [--json] -- <command> [args...]
+silo run [--slot <name>]... [--wait <duration>] [--timeout <duration>] [--kill-after <duration>] [--json] -- <command> [args...]
 ```
 
 A slot is a host resource several projects share, such as a simulator, an
@@ -112,7 +112,8 @@ result has `run.exitCode`) when that matters. The command's stdin is not
 connected. SIGINT or SIGTERM leaves the queue while waiting, or stops the whole
 group while running, and exits 130 or 143. The command runs in its own process
 group, so a terminal's Ctrl-C reaches it as Janitor's SIGTERM to the group,
-followed by SIGKILL after a 5-second grace, not as SIGINT.
+followed by SIGKILL after the `--kill-after` grace (5 seconds by default), not
+as SIGINT.
 
 Caps are re-read on every grant attempt, so lowering a cap applies to runs
 already queued; units already held above the new cap stay held until released.
@@ -141,7 +142,37 @@ carries one schemaVersion-1 result:
 ```json
 {"schemaVersion":1,"run":{"id":"…","root":"/repo","command":["./e2e.sh"],
  "slots":[{"slot":"phone-ports","unit":0,"ports":[49140,49141]}],
- "waitedMs":1520,"exitCode":0,"released":true}}
+ "waitedMs":1520,"exitCode":0,"timedOut":false,"released":true}}
+```
+
+### Deadlines and runs without slots
+
+`--timeout` bounds a run from its grant: every `on-acquire` step and the
+command, not the time spent waiting for slots (`--wait` bounds that). It takes
+the same durations as `--wait`, from 1 second to 7 days. At the deadline silo
+sends SIGTERM to the command's whole process group, children and grandchildren
+included, then SIGKILL after the grace, releases its slots as after any exit,
+and exits 124, like coreutils `timeout`; with `--json`, `run.timedOut` is
+`true` and `run.exitCode` is 124. A command that finishes first keeps its own
+status. `--kill-after` sets the grace between SIGTERM and SIGKILL for every
+stop of the group, deadline or interrupt: 1 second to 10 minutes, default 5
+seconds.
+
+Unlike wrapping the command in `timeout -k`, which moves it into a new process
+group, `silo run` itself stays in its caller's group: a terminal's Ctrl-C or a
+task runner's signal to its group reaches silo, which stops the command's group
+and exits 130 or 143. SIGHUP ends silo itself; Janitor then drains the group,
+and a later run releases any slots it held.
+
+With no `--slot`, `run` is a plain supervised run: it reads no `silo.toml` or
+host file and opens no store, so it needs no slots, caps or Docker. The command
+runs in the directory of `--config` (the current directory by default), and
+`--wait` is refused because there is nothing to wait for. Task runners can wrap
+every task the same way:
+
+```bash
+silo run --timeout 20m -- zig build test
+silo run --slot ios-simulator --wait 30m --timeout 1h -- ./e2e.sh
 ```
 
 `status` (and `status --json` under `slots.list`) lists each capped or queued

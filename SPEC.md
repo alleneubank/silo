@@ -194,6 +194,30 @@ token, generation or Docker engine; `on-acquire` steps and the command run in
 one Janitor-supervised executor group. Checks: `src/commands/run.test.ts`,
 `src/core/slot_store.test.ts`.
 
+**Runs without slots and deadlines.** `silo run [--slot <name>]... [--wait
+<dur>] [--timeout <dur>] [--kill-after <dur>] [--json] -- <command>` accepts
+zero slots: the command alone runs in one Janitor-supervised executor group in
+the config's directory (the current directory by default). Such a run reads no
+`silo.toml` or host file, opens no store, checks no legacy state and makes no
+Docker call; its status reaches silo only through the supervisor's exit, and
+`--wait` refuses with `INVALID_ARGUMENT`. `--timeout` bounds the run from its
+grant (every `on-acquire` step and the command), never the wait, which `--wait`
+bounds. Durations use `--wait`'s parser; `--timeout` is 1 s to 7 days and
+`--kill-after` 1 s to 10 minutes, and a value outside its bounds refuses with
+`INVALID_ARGUMENT` before any effect. At the deadline silo stops its supervisor,
+which sends SIGTERM to the command's process group and SIGKILL after the grace;
+`--kill-after` sets that grace for every stop of the group, deadline or
+interrupt, and defaults to the 5-second drain grace. Held slots are then
+released as after any exit, and the run exits 124 with `run.timedOut: true`
+next to `run.exitCode` in `--json` (a step stopped by the deadline reports the
+timeout, not `SLOT_ACQUIRE_FAILED`). A command that exits before its deadline
+keeps its own status and `timedOut: false`. `silo run` stays in its caller's
+process group, so a terminal's Ctrl-C or a signal to the caller's group reaches
+it; only the command's group is new. SIGINT or SIGTERM to silo stops the group
+the same way and exits 130 or 143. SIGHUP is not handled: silo exits by the
+signal, Janitor's watch of silo drains the group, and held units are released
+by the next contending run. Checks: `src/commands/run.test.ts`.
+
 **Slot claims.** A slot unit is claimed by one run's launch record and held
 while that run's supervised process group may exist. It is released by the
 run when its group is terminal, or by any later `silo run` contending for

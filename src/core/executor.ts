@@ -10,7 +10,7 @@ import { prepareCacheRemoval } from "./cache_executor";
 import assert from "node:assert/strict";
 import { accountStorePath } from "./allocation_domain";
 import { SlotQueue } from "./slot_store";
-import { SlotExecutorGrantSchema, type SlotCompletion } from "./slot_types";
+import { RunExecutorGrantSchema, SlotExecutorGrantSchema, type RunExecutorGrant, type SlotCompletion } from "./slot_types";
 
 const MAX_GRANT_BYTES = 1024 * 1024;
 const ArgumentsSchema = z.tuple([z.string().uuid(), z.string().max(4096), z.string().uuid(), z.coerce.number().int().positive(), z.enum(["account", "parent"])]);
@@ -59,6 +59,7 @@ const stopRequests = () => {
 /** The group leader stays alive to publish completion even when its owning CLI dies. */
 export const executorMain = async (args: string[]): Promise<void> => {
   if (args[0] === "slot") return slotExecutorMain(args.slice(1));
+  if (args[0] === "run") return runExecutorMain(args.slice(1));
   const [id, root, projectId, generation, journal] = ArgumentsSchema.parse(args);
   await assertGroupLeader();
   const context: ExecutorContext = { launchId: id, root, projectId, generation, leaderPid: process.pid, groupId: process.pid };
@@ -110,17 +111,54 @@ export const executorMain = async (args: string[]): Promise<void> => {
 // Each attempt already waits the store's 5 s busy timeout.
 const COMPLETION_RECORD_ATTEMPTS = 3;
 const COMPLETION_RETRY_MS = 250;
-const SlotArgumentsSchema = z.tuple([z.string().uuid(), z.string().max(4096)]);
+const RunArgumentsSchema = z.tuple([z.string().uuid(), z.string().max(4096)]);
+const SPAWN_REFUSED_EXIT = 77;
+
+/** Reports this group to the parent, then reads its grant; null when stopped or closed without one. */
+const awaitRunGrant = async (runId: string, stop: AbortSignal): Promise<string | null> => {
+  console.log(`SILO_GATE ${runId} ${process.pid} ${process.pid}`);
+  let payload: string;
+  try { payload = await withTimeout(readGrant(), EXECUTOR_GRANT_TIMEOUT_MS, "executor grant", stop); }
+  catch (error) {
+    if (stop.aborted && error === stop.reason) return null;
+    throw error;
+  }
+  // EOF without a grant executes nothing and records nothing.
+  return payload.trim().length === 0 ? null : payload;
+};
+
+const assertOwnGrant = (grant: RunExecutorGrant, runId: string): void => {
+  if (grant.runId !== runId || grant.leaderPid !== process.pid || grant.groupId !== process.pid) throw new SiloError("Executor received another run's grant", "INVALID_GRANT");
+};
+
+/** A run without slots: the command alone, its status carried only by this process's exit. */
+const runExecutorMain = async (args: string[]): Promise<void> => {
+  const [runId, root] = RunArgumentsSchema.parse(args);
+  await assertGroupLeader();
+  const stop = stopRequests();
+  try {
+    const payload = await awaitRunGrant(runId, stop.signal);
+    if (payload === null) { process.exitCode = SPAWN_REFUSED_EXIT; return; }
+    const grant = RunExecutorGrantSchema.parse(JSON.parse(payload));
+    assertOwnGrant(grant, runId);
+    // Let a queued stop signal run before authorizing the spawn.
+    await setImmediate();
+    if (stop.signal.aborted) { process.exitCode = SPAWN_REFUSED_EXIT; return; }
+    const child = Bun.spawn(grant.command, { cwd: root, env: process.env, stdin: "ignore", stdout: "inherit", stderr: "inherit" });
+    process.exitCode = await child.exited;
+  } finally {
+    stop.close();
+  }
+};
 
 /**
  * A slot run's group: each on-acquire step, then the command, in the project
  * root. The first failing step stops the run before the command starts.
  */
 const slotExecutorMain = async (args: string[]): Promise<void> => {
-  const [runId, root] = SlotArgumentsSchema.parse(args);
+  const [runId, root] = RunArgumentsSchema.parse(args);
   await assertGroupLeader();
   const stop = stopRequests();
-  console.log(`SILO_GATE ${runId} ${process.pid} ${process.pid}`);
   const storePath = accountStorePath();
   // The exit status is set first: if the store stays busy past every retry,
   // the parent still reads the command's status from the supervisor's exit.
@@ -142,23 +180,17 @@ const slotExecutorMain = async (args: string[]): Promise<void> => {
     }
   };
   try {
-    let payload: string;
-    try { payload = await withTimeout(readGrant(), EXECUTOR_GRANT_TIMEOUT_MS, "executor grant", stop.signal); }
-    catch (error) {
-      if (stop.signal.aborted && error === stop.signal.reason) { process.exitCode = 77; return; }
-      throw error;
-    }
-    // EOF without a grant executes nothing and records nothing.
-    if (payload.trim().length === 0) { process.exitCode = 77; return; }
+    const payload = await awaitRunGrant(runId, stop.signal);
+    if (payload === null) { process.exitCode = SPAWN_REFUSED_EXIT; return; }
     const grant = SlotExecutorGrantSchema.parse(JSON.parse(payload));
-    if (grant.runId !== runId || grant.leaderPid !== process.pid || grant.groupId !== process.pid) throw new SiloError("Executor received another run's grant", "INVALID_GRANT");
+    assertOwnGrant(grant, runId);
     const holder = SlotQueue.recordedHolder(storePath, runId, process.pid);
     assert.deepEqual([holder.command, holder.root], [grant.command, root], "Slot grant differs from its durable run");
     const steps = [...grant.onAcquire.map(step => ["/bin/sh", "-c", step]), grant.command];
     for (const [index, command] of steps.entries()) {
       // Let a queued stop signal run before authorizing the next spawn.
       await setImmediate();
-      if (stop.signal.aborted) { await record({ started: false, exitCode: 77, failedStep: index < grant.onAcquire.length ? index : null }); return; }
+      if (stop.signal.aborted) { await record({ started: false, exitCode: SPAWN_REFUSED_EXIT, failedStep: index < grant.onAcquire.length ? index : null }); return; }
       const child = Bun.spawn(command, { cwd: root, env: process.env, stdin: "ignore", stdout: "inherit", stderr: "inherit" });
       const exitCode = await child.exited;
       const isCommand = index === grant.onAcquire.length;
