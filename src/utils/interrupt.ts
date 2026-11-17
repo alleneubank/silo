@@ -33,6 +33,9 @@ export class OperationInterrupts {
 
   static current(): OperationInterrupts | undefined { return this.scope.getStore(); }
 
+  /** Runs work that an interrupt must not cut short, such as stopping a group whose deadline passed. */
+  static outside<T>(work: () => T): T { return this.scope.exit(work); }
+
   async run<T>(work: () => Promise<T>): Promise<T> {
     return OperationInterrupts.scope.run(this, async () => {
       this.throwIfAborted();

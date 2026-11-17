@@ -13,7 +13,7 @@ Use `silo help [command]` for options and `silo doc --list` for references.
 | `down --delete-cluster` | Also delete exact owned cluster objects. No name-wide adoption or deletion. |
 | `down --clean` | Retire only after all requests/groups/resources/listeners are proved absent; delete receipted snapshots and release own claims. |
 | `status [--json]` | Read authoritative ownership without repair. Supervisor liveness is not Tilt resource health. Lists host-wide slot holders and waiters. |
-| `run --slot <name> ... [--wait <dur>] -- <cmd>` | Wait first in, first out for one unit of every named slot, run `on-acquire` then the command in one supervised group, release when it ends. No project lock, generation or Docker. |
+| `run [--slot <name>]... [--wait <dur>] [--timeout <dur>] -- <cmd>` | Wait first in, first out for one unit of every named slot, run `on-acquire` then the command in one supervised group, release when it ends. `--timeout` stops the whole group at a deadline (exit 124). Without `--slot`, no config, store or queue. No project lock, generation or Docker. |
 | `profiles` | List configured profiles. |
 | `doc [topic]` | Print bundled reference; `--list` or `--json` discovers topics. |
 | `version` | Print CLI version. |
@@ -64,7 +64,7 @@ before owner-led recreation.
 ## Slots and `silo run`
 
 ```text
-silo run --slot <name> [--slot <name> ...] [--wait <duration>] [--json] -- <command> [args...]
+silo run [--slot <name>]... [--wait <duration>] [--timeout <duration>] [--kill-after <duration>] [--json] -- <command> [args...]
 ```
 
 A slot is a host resource several projects share, such as a simulator, an
@@ -112,7 +112,8 @@ result has `run.exitCode`) when that matters. The command's stdin is not
 connected. SIGINT or SIGTERM leaves the queue while waiting, or stops the whole
 group while running, and exits 130 or 143. The command runs in its own process
 group, so a terminal's Ctrl-C reaches it as Janitor's SIGTERM to the group,
-followed by SIGKILL after a 5-second grace, not as SIGINT.
+followed by SIGKILL after the `--kill-after` grace (5 seconds by default), not
+as SIGINT.
 
 Caps are re-read on every grant attempt, so lowering a cap applies to runs
 already queued; units already held above the new cap stay held until released.
@@ -126,8 +127,8 @@ exit status from the supervisor. Legacy registry state (`LEGACY_STATE`) refuses
 a run only when a requested slot declares `ports`. Waiting costs one store
 transaction plus one `ps` per live contending holder per poll, polled at most
 once a second; with many contenders a handoff can take up to a second. Units are released by the run once its
-group has no member; if the group outlives a short window, they stay held and
-the result reports `released: false`. A later `run` contending for the same
+supervisor has exited on its own and its group has no member; otherwise the
+run fails with `RUN_STOP_INCOMPLETE` and they stay held (see below). A later `run` contending for the same
 slot releases a holder once its recorded processes are proved gone (`ESRCH`,
 or a start identity that differs from the recorded one) and its group has no
 member; uncertain liveness keeps the claim. It also drops the ticket of a
@@ -141,7 +142,77 @@ carries one schemaVersion-1 result:
 ```json
 {"schemaVersion":1,"run":{"id":"…","root":"/repo","command":["./e2e.sh"],
  "slots":[{"slot":"phone-ports","unit":0,"ports":[49140,49141]}],
- "waitedMs":1520,"exitCode":0,"released":true}}
+ "waitedMs":1520,"exitCode":0,"timedOut":false,"released":true}}
+```
+
+### Deadlines and runs without slots
+
+`--timeout` bounds a run from its grant: every `on-acquire` step and the
+command, not the time spent waiting for slots (`--wait` bounds that). It takes
+the same durations as `--wait`, from 1 second to 7 days. At the deadline silo
+stops the command's process group, children and grandchildren included, and,
+through Janitor, the descendants that left it with `setsid` that Janitor proves
+still descend from the command: SIGTERM, then SIGKILL after the grace. It then releases its slots as
+after any exit and exits 124, like coreutils `timeout`; with `--json`,
+`run.timedOut` is `true` and `run.exitCode` is 124. A process that double-forks
+and calls `setsid` before the deadline is no longer a descendant and escapes.
+
+`setsid` descendants are reached only by a stop (deadline or interrupt). When
+the command exits on its own, its executor is already gone by the time Janitor
+drains, so a `setsid` descendant it left behind is never signalled, and the run
+still releases its slots and reports the command's status while that process
+lives. This is a documented escape: a command that starts a daemon with
+`setsid` must stop it itself.
+
+The deadline counts as a timeout only if the command is still running when it
+passes. A command that exits first keeps its own status, even while left-over
+members of its group are still being drained. Whichever comes first, the
+command's exit, the deadline or a Ctrl-C, decides; a later signal does not
+change the outcome.
+
+`run` reports a stop only once Janitor has exited on its own and the command's
+process group has no member. If Janitor is killed, or does not finish draining
+within the grace plus 5 seconds, silo kills it and stops the group itself:
+SIGTERM, the grace, then SIGKILL, and only while the command's executor is
+still running, since its life is what keeps the group ID from naming another
+group. Without Janitor, silo cannot prove that descendants which left the group
+with `setsid` are gone. Every such end, and any group that still has members,
+fails with `RUN_STOP_INCOMPLETE` (exit 1) instead of a result: `--json` names
+the `cause` (`exited`, `timed-out`, `interrupted`) and the `reason`
+(`supervisor-lost`, `leader-exited`, `group-survived-kill`,
+`group-outlived-supervisor`, `liveness-unknown`), and any slots stay held
+until a later run proves the group gone. `run` notices the executor's exit even
+when Janitor is stalled and has not reaped it, with or without `--timeout`, so
+a stalled Janitor never holds a run open. Each `ps` read silo makes during a
+run runs in its own process group, so a Ctrl-C to the caller's group cannot
+end it; a read that fails or is killed is retried, and if the executor's state
+stays unreadable the run reports `liveness-unknown` rather than guessing.
+
+`--kill-after` sets the grace between SIGTERM and SIGKILL for every stop of the
+group: a deadline, an interrupt, or the drain of members left behind after the
+command exits. It takes 1 second to 10 minutes and defaults to 5 seconds. The same grace
+applies when Janitor is lost and silo signals the group itself. How long `run`
+waits for a stopped group follows it: the grace plus 5 seconds.
+
+Without `--json`, a command that itself exits 124, 130 or 143 looks the same
+by status as a timeout or an interrupt; use `--json` (`run.timedOut`, or an
+`INTERRUPTED` error) when that matters.
+
+Unlike wrapping the command in `timeout -k`, which moves it into a new process
+group, `silo run` itself stays in its caller's group: a terminal's Ctrl-C or a
+task runner's signal to its group reaches silo, which stops the command's group
+and exits 130 or 143. SIGHUP ends silo itself; Janitor then drains the group,
+and a later run releases any slots it held.
+
+With no `--slot`, `run` is a plain supervised run: it reads no `silo.toml` or
+host file and opens no store, so it needs no slots, caps or Docker. The command
+runs in the directory of `--config` (the current directory by default), and
+`--wait` is refused because there is nothing to wait for. Task runners can wrap
+every task the same way:
+
+```bash
+silo run --timeout 20m -- zig build test
+silo run --slot ios-simulator --wait 30m --timeout 1h -- ./e2e.sh
 ```
 
 `status` (and `status --json` under `slots.list`) lists each capped or queued

@@ -16,6 +16,8 @@ let bin: string;
 let cli: string;
 let storePath: string;
 let hostFile: string;
+let caller: string;
+let fakeJanitorBin: string;
 
 beforeAll(async () => {
   // silo records resolved project roots; macOS TMPDIR sits behind the /var symlink.
@@ -40,6 +42,26 @@ beforeAll(async () => {
   const build = await Bun.build({ entrypoints: [path.resolve(import.meta.dir, "../cli.ts")], target: "bun", outdir: base, plugins: [privateAccount] });
   if (!build.success) throw new AggregateError(build.logs, "Private CLI build failed");
   cli = path.join(base, "cli.js");
+  // Stands in for a terminal or task runner: it leads its own process group,
+  // survives a signal to that group, and exits with its child's status.
+  caller = path.join(base, "caller.ts");
+  writeFileSync(caller, `for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => {});
+const [pidFile, ...argv] = process.argv.slice(2);
+const child = Bun.spawn(argv, { stdin: "ignore", stdout: "inherit", stderr: "inherit" });
+await Bun.write(pidFile, String(child.pid));
+process.exit(await child.exited);
+`);
+  // A supervisor that exits 0 on SIGTERM without draining its group: the one
+  // way a Janitor that ends on its own can leave members behind.
+  fakeJanitorBin = path.join(base, "fake-janitor");
+  mkdirSync(fakeJanitorBin);
+  const fake = path.join(fakeJanitorBin, "fake-janitor.ts");
+  writeFileSync(fake, `const argv = process.argv.slice(2);
+const child = Bun.spawn(argv.slice(argv.indexOf("--") + 1), { detached: true, stdin: "inherit", stdout: "inherit", stderr: "inherit" });
+process.on("SIGTERM", () => process.exit(0));
+process.exit(await child.exited);
+`);
+  writeFileSync(path.join(fakeJanitorBin, "janitor"), `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(fake)} "$@"\n`, { mode: 0o755 });
 }, 60_000);
 
 afterAll(() => { if (base) rmSync(base, { recursive: true }); });
@@ -67,23 +89,28 @@ const collect = async (stream: ReadableStream<Uint8Array>, onText: (text: string
 };
 
 // Every CLI process a test starts; afterEach kills survivors and the groups
-// they recorded, so a failing test leaks no process.
+// they recorded or the test tracked, so a failing test leaks no process.
 const startedPids = new Set<number>();
 const started: Started[] = [];
+const trackedGroups = new Set<number>();
 
 afterEach(async () => {
   const leftover = started.splice(0).filter(s => s.proc.exitCode === null && s.proc.signalCode === null);
   const groups = existsSync(storePath) ? runs().flatMap(q => q.run.phase === "held" && q.run.launch && startedPids.has(q.run.waiter.pid) ? [q.run.launch.groupId] : []) : [];
   for (const s of leftover) s.proc.kill("SIGKILL");
-  for (const group of groups) { try { process.kill(-group, "SIGKILL"); } catch { /* already gone */ } }
+  for (const group of [...groups, ...trackedGroups]) { try { process.kill(-group, "SIGKILL"); } catch { /* already gone */ } }
   await Promise.all(leftover.map(s => s.proc.exited));
   startedPids.clear();
+  trackedGroups.clear();
 });
 
-const start = (root: string, args: string[]): Started => {
-  const proc = Bun.spawn([process.execPath, cli, ...args], {
-    cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 60_000,
-    env: { ...process.env, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry"), PATH: `${bin}:${process.env.PATH}` },
+const start = (root: string, args: string[], pathPrefix = bin): Started => startArgv(root, [process.execPath, cli, ...args], false, pathPrefix);
+
+/** `detached` starts the process as the leader of a new process group. */
+const startArgv = (root: string, argv: string[], detached: boolean, pathPrefix = bin): Started => {
+  const proc = Bun.spawn(argv, {
+    cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 60_000, detached,
+    env: { ...process.env, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry"), PATH: `${pathPrefix === bin ? bin : `${pathPrefix}:${bin}`}:${process.env.PATH}` },
   });
   let stderrSoFar = "";
   const finished = Promise.all([proc.exited, new Response(proc.stdout).text(), collect(proc.stderr, text => { stderrSoFar = text; })])
@@ -115,6 +142,25 @@ const launched = (slot: string) => {
   return queued?.run.phase === "held" ? queued.run.launch : null;
 };
 
+const alive = (pid: number): boolean => { try { process.kill(pid, 0); return true; } catch { return false; } };
+
+/** The process group a command recorded in `file`, tracked for cleanup. */
+const recordedGroup = async (root: string, file: string): Promise<number> => {
+  const target = path.join(root, file);
+  await waitFor(() => existsSync(target) && readFileSync(target, "utf8").trim().length > 0, `${file} written`);
+  const group = Number(readFileSync(target, "utf8").trim());
+  trackedGroups.add(group);
+  return group;
+};
+const recordGroup = (file: string): string => `ps -o pgid= -p $$ > ${file}`;
+
+/** A directory with no silo.toml. */
+const bareDirectory = (): string => {
+  const root = path.join(base, `bare-${randomUUID().slice(0, 8)}`);
+  mkdirSync(root);
+  return root;
+};
+
 // A command that holds its slot until the test creates `file`.
 const holdUntil = (file: string): string[] => ["sh", "-c", `touch ${file}.started; while [ ! -f ${file} ]; do sleep 0.02; done`];
 
@@ -129,6 +175,140 @@ test("an uncapped slot is SLOT_UNAVAILABLE before any store effect", async () =>
   expect(existsSync(storePath)).toBe(false);
 });
 
+test("a run without slots needs no silo.toml, host caps or store, and keeps its exit code before the deadline", async () => {
+  // Runs before any slot test creates the store.
+  expect(existsSync(storePath)).toBe(false);
+  rmSync(hostFile, { force: true });
+  const root = bareDirectory();
+  const result = await runCli(root, ["run", "--timeout", "60s", "--json", "--", "sh", "-c", "echo plain; exit 7"]);
+  expect(result.exitCode).toBe(7);
+  expect(JSON.parse(result.stdout)).toMatchObject({ schemaVersion: 1, run: { root, slots: [], exitCode: 7, timedOut: false, released: true } });
+  expect(result.stderr).toContain("plain");
+  expect(existsSync(storePath)).toBe(false);
+  expect(existsSync(path.join(base, "docker-called"))).toBe(false);
+});
+
+test("a run without slots ignores a malformed silo.toml it never reads", async () => {
+  const root = bareDirectory();
+  writeFileSync(path.join(root, "silo.toml"), "this is = = not toml [\n");
+  const result = await runCli(root, ["run", "--json", "--", "sh", "-c", "exit 4"]);
+  expect(result.exitCode).toBe(4);
+  expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 4, timedOut: false } });
+});
+
+test("--timeout, --kill-after and --wait refuse values outside their bounds before running", async () => {
+  const root = bareDirectory();
+  for (const args of [["--timeout", "500ms"], ["--timeout", "169h"], ["--timeout", "soon"], ["--kill-after", "11m"], ["--kill-after", "0"], ["--wait", "1s"]]) {
+    const result = await runCli(root, ["run", ...args, "--json", "--", "sh", "-c", "touch ran"]);
+    expect([args, result.exitCode]).toEqual([args, 1]);
+    expect(JSON.parse(result.stdout)).toMatchObject({ code: "INVALID_ARGUMENT", message: expect.stringContaining(args[0]!) });
+  }
+  expect(existsSync(path.join(root, "ran"))).toBe(false);
+});
+
+test("--timeout ends the command's children and grandchildren and exits 124", async () => {
+  const root = bareDirectory();
+  const tree = `${recordGroup("group")}; sh -c 'sleep 600 & echo $! > grandchild; wait' & echo $! > child; sleep 600 & echo $! > sibling; wait`;
+  const running = start(root, ["run", "--timeout", "1s", "--json", "--", "sh", "-c", tree]);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => ["child", "grandchild", "sibling"].every(file => existsSync(path.join(root, file))), "tree started");
+  const pids = ["child", "grandchild", "sibling"].map(file => Number(readFileSync(path.join(root, file), "utf8")));
+  expect(pids.every(alive)).toBe(true);
+  const result = await settle(running, "timed-out run");
+  expect(result.exitCode).toBe(124);
+  expect(JSON.parse(result.stdout)).toMatchObject({ schemaVersion: 1, run: { exitCode: 124, timedOut: true } });
+  expect(result.stderr).toContain("--timeout 1s reached");
+  expect(pids.filter(alive)).toEqual([]);
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+test("a command that ignores SIGTERM at the deadline is SIGKILLed after the --kill-after grace", async () => {
+  const root = bareDirectory();
+  const stubborn = `${recordGroup("group")}; trap 'echo term >> got-term' TERM; while :; do sleep 0.05; done`;
+  const startedAt = Date.now();
+  const running = start(root, ["run", "--timeout", "1s", "--kill-after", "1s", "--", "sh", "-c", stubborn]);
+  const group = await recordedGroup(root, "group");
+  const result = await settle(running, "stubborn run");
+  const elapsed = Date.now() - startedAt;
+  expect(result.exitCode).toBe(124);
+  expect(existsSync(path.join(root, "got-term"))).toBe(true);
+  // The deadline plus the grace, well short of the default 5 s grace.
+  expect(elapsed).toBeGreaterThanOrEqual(2000);
+  expect(elapsed).toBeLessThan(4500);
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+test("--timeout also ends a descendant that left the group with setsid", async () => {
+  const root = bareDirectory();
+  const escaping = `${recordGroup("group")}; perl -e 'use POSIX; POSIX::setsid(); exec "sleep", "600"' & echo $! > escaped; wait`;
+  const running = start(root, ["run", "--timeout", "1s", "--", "sh", "-c", escaping]);
+  const group = await recordedGroup(root, "group");
+  const escaped = await recordedGroup(root, "escaped");
+  // It leads its own session and group, outside the command's group.
+  await waitFor(() => Bun.spawnSync(["ps", "-o", "pgid=", "-p", String(escaped)]).stdout.toString().trim() === String(escaped), "setsid");
+  expect((await settle(running, "run with an escaped descendant")).exitCode).toBe(124);
+  expect([alive(escaped), alive(-group)]).toEqual([false, false]);
+}, 60_000);
+
+test("a command whose own process exits before the deadline is not timed out while a straggler drains", async () => {
+  const root = bareDirectory();
+  const straggler = `${recordGroup("group")}; sh -c 'trap "" TERM; exec sleep 600' & exit 0`;
+  const result = await runCli(root, ["run", "--timeout", "1s", "--kill-after", "3s", "--json", "--", "sh", "-c", straggler]);
+  expect(result.exitCode).toBe(0);
+  expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 0, timedOut: false } });
+  expect(result.stderr).not.toContain("reached");
+}, 60_000);
+
+test("SIGINT after the deadline fired keeps the timeout's 124", async () => {
+  const root = bareDirectory();
+  const stubborn = `${recordGroup("group")}; trap 'echo term >> got-term' TERM; while :; do sleep 0.05; done`;
+  const running = start(root, ["run", "--timeout", "1s", "--kill-after", "3s", "--json", "--", "sh", "-c", stubborn]);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => existsSync(path.join(root, "got-term")), "deadline stop began");
+  running.proc.kill("SIGINT");
+  const result = await settle(running, "interrupted after the deadline");
+  expect(result.exitCode).toBe(124);
+  expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 124, timedOut: true } });
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+test("--kill-after sets the grace of an interrupt's stop", async () => {
+  const root = bareDirectory();
+  const stubborn = `${recordGroup("group")}; trap 'echo term >> got-term' TERM; touch started; while :; do sleep 0.05; done`;
+  const running = start(root, ["run", "--kill-after", "1s", "--", "sh", "-c", stubborn]);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => existsSync(path.join(root, "started")), "command started");
+  const interruptedAt = Date.now();
+  running.proc.kill("SIGINT");
+  expect((await settle(running, "interrupted stubborn run")).exitCode).toBe(130);
+  const elapsed = Date.now() - interruptedAt;
+  expect(existsSync(path.join(root, "got-term"))).toBe(true);
+  // One second of grace, well short of the default five.
+  expect(elapsed).toBeGreaterThanOrEqual(1000);
+  expect(elapsed).toBeLessThan(4000);
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  test(`${signal} to the caller's process group reaches silo, which stops the command before its deadline`, async () => {
+    const root = bareDirectory();
+    const pidFile = path.join(root, "silo-pid");
+    const running = startArgv(root, [process.execPath, caller, pidFile, process.execPath, cli, "run", "--timeout", "60s", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 600 & wait`], true);
+    trackedGroups.add(running.proc.pid);
+    const group = await recordedGroup(root, "group");
+    const siloPid = Number(readFileSync(pidFile, "utf8"));
+    // silo stays in its caller's group; only the command has its own.
+    const siloGroup = Number((await Bun.$`ps -o pgid= -p ${siloPid}`.text()).trim());
+    expect(siloGroup).toBe(running.proc.pid);
+    expect(group).not.toBe(siloGroup);
+    process.kill(-running.proc.pid, signal);
+    const result = await settle(running, "interrupted caller");
+    expect(result.exitCode).toBe(signal === "SIGINT" ? 130 : 143);
+    expect(JSON.parse(result.stdout)).toMatchObject({ schemaVersion: 1, code: "INTERRUPTED", signal });
+    expect(alive(-group)).toBe(false);
+  }, 60_000);
+}
+
 test("a granted run injects slot env, runs on-acquire first, and reports one JSON result", async () => {
   setCaps({ "json-shape": 2 });
   const root = project(`[slots.json-shape]
@@ -139,7 +319,7 @@ ports = 3`);
   expect(result.exitCode).toBe(7);
   const value = JSON.parse(result.stdout);
   expect(Object.keys(value).sort()).toEqual(["run", "schemaVersion"]);
-  expect(Object.keys(value.run).sort()).toEqual(["command", "exitCode", "id", "released", "root", "slots", "waitedMs"]);
+  expect(Object.keys(value.run).sort()).toEqual(["command", "exitCode", "id", "released", "root", "slots", "timedOut", "waitedMs"]);
   const [grant] = value.run.slots;
   expect(value).toMatchObject({ schemaVersion: 1, run: { exitCode: 7, released: true, command: ["sh", "-c", expect.any(String)], slots: [{ slot: "json-shape", unit: 0 }] } });
   expect(grant.ports).toEqual([grant.ports[0], grant.ports[0] + 1, grant.ports[0] + 2]);
@@ -157,7 +337,8 @@ test("with cap 1 the second run waits, then runs once the first exits", async ()
   const first = start(root, ["run", "--slot", "contended", "--", ...holdUntil("release-first")]);
   await waitFor(() => existsSync(path.join(root, "release-first.started")), "first command");
   const second = start(root, ["run", "--slot", "contended", "--", "sh", "-c", "touch second-ran"]);
-  await waitFor(() => waitersFor("contended").length === 1, "second run queued");
+  // Queued is not yet waiting: the run reports its wait once a grant attempt has failed.
+  await waitFor(() => second.stderrSoFar().includes("waiting for contended (1/1 held; next: #0"), "second run waiting");
   expect(existsSync(path.join(root, "second-ran"))).toBe(false);
   writeFileSync(path.join(root, "release-first"), "");
   const [a, b] = await Promise.all([settle(first, "first"), settle(second, "second")]);
@@ -264,6 +445,42 @@ on-acquire = ["true", "echo reset failed >&2; exit 9"]`);
   expect(runs()).toEqual([]);
 }, 60_000);
 
+test("a run stopped by --timeout releases its unit to the next waiter", async () => {
+  setCaps({ "timed-out": 1 });
+  const root = project("[slots.timed-out]\n");
+  const holder = start(root, ["run", "--slot", "timed-out", "--timeout", "2s", "--json", "--", "sleep", "600"]);
+  await waitFor(() => launched("timed-out") !== null, "holder launch");
+  const waiter = start(root, ["run", "--slot", "timed-out", "--", "sh", "-c", "touch waiter-ran"]);
+  await waitFor(() => waitersFor("timed-out").length === 1, "waiter queued");
+  const [h, w] = await Promise.all([settle(holder, "holder"), settle(waiter, "waiter")]);
+  expect(h.exitCode).toBe(124);
+  expect(JSON.parse(h.stdout)).toMatchObject({ run: { exitCode: 124, timedOut: true, released: true } });
+  expect(w.exitCode).toBe(0);
+  expect(existsSync(path.join(root, "waiter-ran"))).toBe(true);
+  expect(runs()).toEqual([]);
+}, 60_000);
+
+test("a deadline during on-acquire stops the step, never starts the command, and releases", async () => {
+  setCaps({ "acquire-deadline": 1 });
+  const root = project(`[slots.acquire-deadline]
+on-acquire = ["touch acquiring; sleep 600"]`);
+  const result = await runCli(root, ["run", "--slot", "acquire-deadline", "--timeout", "1s", "--json", "--", "sh", "-c", "touch command-ran"]);
+  expect(result.exitCode).toBe(124);
+  expect(JSON.parse(result.stdout)).toMatchObject({ run: { exitCode: 124, timedOut: true, released: true } });
+  expect([existsSync(path.join(root, "acquiring")), existsSync(path.join(root, "command-ran"))]).toEqual([true, false]);
+  expect(runs()).toEqual([]);
+}, 60_000);
+
+test("an on-acquire failure before the deadline stays SLOT_ACQUIRE_FAILED while a straggler drains", async () => {
+  setCaps({ "acquire-straggler": 1 });
+  const root = project(`[slots.acquire-straggler]
+on-acquire = ["sh -c 'trap \\"\\" TERM; exec sleep 600' & exit 9"]`);
+  const result = await runCli(root, ["run", "--slot", "acquire-straggler", "--timeout", "1s", "--kill-after", "3s", "--json", "--", "true"]);
+  expect(result.exitCode).toBe(9);
+  expect(JSON.parse(result.stdout)).toMatchObject({ code: "SLOT_ACQUIRE_FAILED", exitCode: 9 });
+  expect(runs()).toEqual([]);
+}, 60_000);
+
 test("--wait bounds the wait with SLOT_WAIT_TIMEOUT and leaves the queue", async () => {
   setCaps({ bounded: 1 });
   const root = project("[slots.bounded]\n");
@@ -343,29 +560,141 @@ test("lowering a cap applies to runs already queued", async () => {
   expect(existsSync(path.join(root, "third-ran"))).toBe(true);
 }, 60_000);
 
-test("units stay held while the group outlives its supervisor, and a later run releases them once it is gone", async () => {
-  setCaps({ outlives: 1 });
-  const root = project("[slots.outlives]\n");
-  const holder = start(root, ["run", "--slot", "outlives", "--json", "--", "sh", "-c", "trap '' TERM; touch started; while :; do sleep 0.05; done"]);
-  await waitFor(() => existsSync(path.join(root, "started")), "holder command");
-  const launch = launched("outlives")!;
-  const groupAlive = () => { try { process.kill(-launch.groupId, 0); return true; } catch { return false; } };
-  try {
-    // Without its supervisor nothing drains the group; the run must not release.
-    process.kill(launch.supervisor.pid, "SIGKILL");
-    const result = await settle(holder, "holder");
-    expect(groupAlive()).toBe(true);
-    expect(JSON.parse(result.stdout).run.released).toBe(false);
-    expect(holderOf("outlives")).toBeDefined();
-  } finally {
-    // This group has no supervisor; nothing else would ever stop it.
-    if (groupAlive()) process.kill(-launch.groupId, "SIGKILL");
-  }
-  await waitFor(() => !groupAlive(), "group exit");
-  const next = await runCli(root, ["run", "--slot", "outlives", "--", "true"]);
+type Holder = { root: string; started: Started; group: number; supervisor: number; leader: number };
+
+/** A slot run whose command records its group and starts `script`; its Janitor is tracked for cleanup. */
+const holdWith = async (name: string, script: string, extra: string[] = []): Promise<Holder> => {
+  setCaps({ [name]: 1 });
+  const root = project(`[slots.${name}]\n`);
+  const started = start(root, ["run", "--slot", name, ...extra, "--json", "--", "sh", "-c", `${recordGroup("group")}; ${script}`]);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => launched(name) !== null, "holder launch");
+  const launch = launched(name)!;
+  // Janitor leads its own session; tracking it lets cleanup reach a stopped one.
+  trackedGroups.add(launch.supervisor.pid);
+  return { root, started, group, supervisor: launch.supervisor.pid, leader: launch.leaderPid };
+};
+
+const incomplete = (result: Finished) => {
+  expect(result.exitCode).toBe(1);
+  return JSON.parse(result.stdout) as { code: string; reason: string; cause: string; message: string };
+};
+
+test("Janitor SIGKILLed mid-run: silo stops the group itself, reports RUN_STOP_INCOMPLETE, and keeps the units until a later run", async () => {
+  const name = "janitor-killed";
+  const escaping = "perl -e 'use POSIX; POSIX::setsid(); exec \"sleep\", \"600\"' & echo $! > escaped; trap '' TERM; while :; do sleep 0.05; done";
+  const holder = await holdWith(name, escaping, ["--timeout", "60s", "--kill-after", "1s"]);
+  const escaped = await recordedGroup(holder.root, "escaped");
+  await waitFor(() => Bun.spawnSync(["ps", "-o", "pgid=", "-p", String(escaped)]).stdout.toString().trim() === String(escaped), "setsid");
+  process.kill(holder.supervisor, "SIGKILL");
+  const error = incomplete(await settle(holder.started, "holder without its supervisor"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "exited", reason: "supervisor-lost" });
+  expect(error.message).toContain("units stay held");
+  // The group ignored SIGTERM and was SIGKILLed directly; the setsid descendant is the documented gap.
+  expect(alive(-holder.group)).toBe(false);
+  expect(alive(escaped)).toBe(true);
+  expect(holderOf(name)).toBeDefined();
+  const next = await runCli(holder.root, ["run", "--slot", name, "--", "true"]);
   expect(next.exitCode).toBe(0);
   expect(next.stderr).toContain("released slot units of ended run");
-  expect(runs()).toEqual([]);
+}, 60_000);
+
+test("a stalled Janitor after the command exited: the deadline's wait is bounded and reports RUN_STOP_INCOMPLETE", async () => {
+  const startedAt = Date.now();
+  const holder = await holdWith("janitor-stalled-exit", "sleep 1", ["--timeout", "3s", "--kill-after", "1s"]);
+  process.kill(holder.supervisor, "SIGSTOP");
+  const error = incomplete(await settle(holder.started, "holder with a stalled supervisor"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "exited", reason: "supervisor-lost" });
+  // Deadline, one drain window (1 s grace + 5 s), then the kill: no unbounded wait.
+  expect(Date.now() - startedAt).toBeLessThan(20_000);
+  expect(alive(holder.supervisor)).toBe(false);
+}, 60_000);
+
+test("SIGINT with a stalled Janitor stops the group directly and reports RUN_STOP_INCOMPLETE, never a clean stop", async () => {
+  const holder = await holdWith("janitor-stalled-interrupt", "sleep 600 & wait", ["--kill-after", "1s"]);
+  process.kill(holder.supervisor, "SIGSTOP");
+  holder.started.proc.kill("SIGINT");
+  const error = incomplete(await settle(holder.started, "interrupted holder with a stalled supervisor"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "interrupted", reason: "supervisor-lost" });
+  expect(holder.started.stderrSoFar()).toContain(`sending SIGTERM to process group ${holder.group} directly`);
+  expect(alive(-holder.group)).toBe(false);
+}, 60_000);
+
+/** The Janitor a slot-less silo run started: its child running `janitor`. */
+const janitorOf = (silo: number): number => {
+  const rows = Bun.spawnSync(["ps", "-A", "-o", "pid=,ppid=,command="]).stdout.toString().split("\n");
+  const row = rows.map(line => line.trim().split(/\s+/)).find(([, ppid, command]) => Number(ppid) === silo && command?.endsWith("janitor"));
+  if (!row) throw new Error(`no janitor child of ${silo}`);
+  return Number(row[0]);
+};
+
+test("without --timeout, a stalled Janitor after a slot run's command exited still ends the run, bounded", async () => {
+  const startedAt = Date.now();
+  const holder = await holdWith("janitor-stalled-no-deadline", "sleep 1", ["--kill-after", "1s"]);
+  process.kill(holder.supervisor, "SIGSTOP");
+  const error = incomplete(await settle(holder.started, "holder with a stalled supervisor and no deadline"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "exited", reason: "supervisor-lost" });
+  expect(Date.now() - startedAt).toBeLessThan(20_000);
+  expect(alive(holder.supervisor)).toBe(false);
+}, 60_000);
+
+test("without --timeout or slots, a stalled Janitor after the command exited still ends the run, bounded", async () => {
+  const root = bareDirectory();
+  const startedAt = Date.now();
+  const running = start(root, ["run", "--kill-after", "1s", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 1`]);
+  await recordedGroup(root, "group");
+  const supervisor = janitorOf(running.proc.pid);
+  trackedGroups.add(supervisor);
+  process.kill(supervisor, "SIGSTOP");
+  const error = incomplete(await settle(running, "slot-less run with a stalled supervisor"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "exited", reason: "supervisor-lost" });
+  // The unreaped executor is found by its changed identity within one identity poll.
+  expect(Date.now() - startedAt).toBeLessThan(25_000);
+  expect(alive(supervisor)).toBe(false);
+}, 60_000);
+
+test("repeated SIGINT to the caller's group cannot fake the executor's exit while Janitor is stalled", async () => {
+  const name = "interrupt-storm";
+  setCaps({ [name]: 1 });
+  const root = project(`[slots.${name}]\n`);
+  const pidFile = path.join(root, "silo-pid");
+  const running = startArgv(root, [process.execPath, caller, pidFile, process.execPath, cli, "run", "--slot", name, "--kill-after", "1s", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 300 & wait`], true);
+  trackedGroups.add(running.proc.pid);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => launched(name) !== null, "holder launch");
+  const supervisor = launched(name)!.supervisor.pid;
+  trackedGroups.add(supervisor);
+  process.kill(supervisor, "SIGSTOP");
+  // The caller ignores SIGINT; silo's own probes must not die with each one.
+  const storm = setInterval(() => { try { process.kill(-running.proc.pid, "SIGINT"); } catch { /* caller gone */ } }, 2);
+  try {
+    const error = incomplete(await settle(running, "caller under an interrupt storm"));
+    expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "interrupted", reason: "supervisor-lost" });
+  } finally { clearInterval(storm); }
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+test("a supervisor that exits on its own while group members remain is not proof of a stop", async () => {
+  const root = bareDirectory();
+  const running = start(root, ["run", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 300 & wait`], fakeJanitorBin);
+  const group = await recordedGroup(root, "group");
+  running.proc.kill("SIGINT");
+  const error = incomplete(await settle(running, "run under a supervisor that does not drain"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "interrupted", reason: "group-outlived-supervisor" });
+  expect(alive(-group)).toBe(true);
+}, 60_000);
+
+test("with Janitor and the executor both gone, silo sends the group no signal and reports RUN_STOP_INCOMPLETE", async () => {
+  const holder = await holdWith("leader-gone", "sleep 600 & wait", ["--timeout", "60s"]);
+  // Stopped, Janitor cannot reap or drain; the executor then dies and the group keeps its members.
+  process.kill(holder.supervisor, "SIGSTOP");
+  process.kill(holder.leader, "SIGKILL");
+  process.kill(holder.supervisor, "SIGKILL");
+  const error = incomplete(await settle(holder.started, "holder without supervisor or executor"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "exited", reason: "leader-exited" });
+  // The group's leader is gone, so its ID proves nothing: silo must not have signalled it.
+  expect(alive(-holder.group)).toBe(true);
+  expect(holder.started.stderrSoFar()).not.toContain("directly");
 }, 60_000);
 
 test("a run releases provably dead rows of slots it does not request, including their port blocks", async () => {

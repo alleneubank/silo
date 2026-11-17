@@ -96,10 +96,15 @@ export const SlotCompletionSchema = z.object({
 });
 export type SlotCompletion = z.infer<typeof SlotCompletionSchema>;
 
-/** What the gated executor receives once its group is durably recorded as the holder. */
-export const SlotExecutorGrantSchema = z.object({
+/** What the gated executor of a run without slots receives once its group is verified. */
+export const RunExecutorGrantSchema = z.object({
   runId: z.string().uuid(), leaderPid: z.number().int().min(2), groupId: z.number().int().min(2),
-  onAcquire: z.array(z.string().min(1)).max(MAX_ON_ACQUIRE_STEPS),
   command: z.array(z.string()).min(1).max(1024),
+});
+export type RunExecutorGrant = z.infer<typeof RunExecutorGrantSchema>;
+
+/** What the gated executor receives once its group is durably recorded as the holder. */
+export const SlotExecutorGrantSchema = RunExecutorGrantSchema.extend({
+  onAcquire: z.array(z.string().min(1)).max(MAX_ON_ACQUIRE_STEPS),
 });
 export type SlotExecutorGrant = z.infer<typeof SlotExecutorGrantSchema>;

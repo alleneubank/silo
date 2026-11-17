@@ -70,7 +70,13 @@ Each mutating command receives a durable planned launch, then a real
 Janitor-supervised executor group. The executor reports its actual group,
 Silo commits the grant, and only then opens the execution gate. Grant failure
 or EOF before grant executes nothing. Janitor uses `--pgroup-only`, never
-process-tree discovery. Identity checks use the recorded supervisor PID,
+process-tree discovery, except for `silo run`: its supervisor also ends the
+executor's descendants that left the group (`setsid`), which a deadline must
+not leave running. Janitor targets only processes whose parent chain it proves
+leads to the executor when the stop begins, each re-verified by start identity
+before it is signalled, so no unrelated or reused process is reached; a process
+already reparented away from that chain before the stop (double fork plus
+`setsid`) escapes. Identity checks use the recorded supervisor PID,
 start identity and launch token before signalling that group. Dead PIDs alone
 do not prove an external request cancelled. Unknown groups/requests retain
 claims and cleanup state.
@@ -193,6 +199,70 @@ claims and follow the ephemeral-range rule. `run` takes no project operation
 token, generation or Docker engine; `on-acquire` steps and the command run in
 one Janitor-supervised executor group. Checks: `src/commands/run.test.ts`,
 `src/core/slot_store.test.ts`.
+
+**Runs without slots and deadlines.** `silo run [--slot <name>]... [--wait
+<dur>] [--timeout <dur>] [--kill-after <dur>] [--json] -- <command>` accepts
+zero slots: the command alone runs in one Janitor-supervised executor group in
+the config's directory (the current directory by default). Such a run reads no
+`silo.toml` or host file, opens no store, checks no legacy state and makes no
+Docker call; its status reaches silo only through the supervisor's exit, and
+`--wait` refuses with `INVALID_ARGUMENT`. `--timeout` bounds the run from its
+grant (every `on-acquire` step and the command), never the wait, which `--wait`
+bounds. Durations use `--wait`'s parser; `--timeout` is 1 s to 7 days and
+`--kill-after` 1 s to 10 minutes, and a value outside its bounds refuses with
+`INVALID_ARGUMENT` before any effect. `--kill-after` sets Janitor's grace
+between SIGTERM and SIGKILL for every stop of the group, deadline, interrupt,
+or the drain of members left after the command exits, and defaults to the
+5-second drain grace; the windows silo waits for a stop scale with it.
+
+A run ends at the first of four events: its supervisor exits, its executor
+exits (seen from the completion fact, from ESRCH, or from an unreaped
+executor's changed start identity, so a stalled supervisor cannot hold the run
+open), its deadline passes, or silo receives SIGINT or SIGTERM. A deadline is a timeout only when
+it finds the command still running (no completion fact recorded and the
+executor still the recorded process); otherwise the command's own exit decides.
+The deadline and an interrupt share one stop: silo sends SIGTERM to its
+supervisor, which ends the group and the descendants it proves (see the `run`
+exception under Lifecycle authority) with SIGTERM, then SIGKILL after the
+grace. Every wait after the first event is bounded; a wait that runs out
+SIGKILLs the supervisor through silo's own handle and counts it as lost, and
+none of these waits is cut short by a later signal.
+
+The group is **proved gone** only when the supervisor exited on its own
+(not by a signal) and the executor group then has no member. Only a group
+proved gone yields a result (the command's status, or 124 with
+`run.timedOut: true`), an `INTERRUPTED` error (130/143) saying the group was
+stopped, or the release of held units. Every other end fails with
+`RUN_STOP_INCOMPLETE` (exit 1), names its `cause` (`exited`, `timed-out`,
+`interrupted`) and `reason`, and leaves held units held until a later run
+proves the group gone under the slot-claim rule:
+
+- `supervisor-lost`: the supervisor was killed or did not drain in its window.
+  silo then signals the recorded group itself (SIGTERM, the grace, SIGKILL) and
+  the group has no member, but descendants that left it with `setsid` cannot be
+  proved gone without the supervisor's snapshot.
+- `leader-exited`: the supervisor was lost and the executor had already exited.
+  silo signals the group only while the executor is still the recorded process,
+  whose life keeps the group ID from naming another group; with the executor
+  gone it sends no signal.
+- `liveness-unknown`: repeated, bounded reads could not tell whether the
+  executor still runs. Every `ps` read silo makes while supervising runs in its
+  own process group, so a signal to silo's group cannot end one; a failed or
+  signalled read is unknown, never absent.
+- `group-survived-kill`: the group still has members after SIGKILL.
+- `group-outlived-supervisor`: the supervisor exited but the group still has
+  members.
+
+Once one event has started the stop, a later SIGINT or SIGTERM does not change
+the outcome. Without `--json`, a command that itself exits 124, 130 or 143 is
+indistinguishable by status from a timeout or an interrupt.
+
+`silo run` stays in its caller's process group, so a terminal's Ctrl-C or a
+signal to the caller's group reaches it; only the command's group is new.
+SIGINT or SIGTERM to silo stops the group by the stop above and exits 130 or
+143 once the group is proved gone. SIGHUP is not handled: silo exits by the signal, Janitor's watch of
+silo drains the group, and held units are released by the next contending run.
+Checks: `src/commands/run.test.ts`.
 
 **Slot claims.** A slot unit is claimed by one run's launch record and held
 while that run's supervised process group may exist. It is released by the

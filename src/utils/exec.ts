@@ -10,6 +10,8 @@ export interface CommandOptions {
   context: string;
   stdio?: "inherit" | "pipe";
   signal?: AbortSignal;
+  /** Runs the command in its own process group even without a cancellable scope. */
+  ownGroup?: boolean;
 }
 
 export interface CommandResult {
@@ -41,7 +43,7 @@ export async function runCommand(cmd: string[], options: CommandOptions): Promis
     env: env ? { ...process.env, ...env } : process.env,
     // Cancellable command scopes own their probes. Without such a scope,
     // executor probes remain in Janitor's group and stop with the executor.
-    stdin: "ignore", stdout: stdio, stderr: stdio, detached: signal !== undefined,
+    stdin: "ignore", stdout: stdio, stderr: stdio, detached: options.ownGroup === true || signal !== undefined,
   });
   const stdout = typeof proc.stdout === "object" ? proc.stdout.getReader() : null;
   const stderr = typeof proc.stderr === "object" ? proc.stderr.getReader() : null;
