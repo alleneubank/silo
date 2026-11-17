@@ -1,4 +1,4 @@
-import { drainWindowMs, startRunGate, type RunGate, type SupervisorEnd } from "../core/owned_command";
+import { drainWindowMs, startRunGate, type RunGate } from "../core/owned_command";
 import { probeIdentity, probeProcess, type IdentityProbe } from "../core/process_identity";
 import { OperationInterrupts } from "../utils/interrupt";
 import { logger } from "../utils/logger";
@@ -106,8 +106,6 @@ export const supervise = async (
 const watch = async (running: RunGate, gate: RunGateLaunch, deadline: Deadline | null, commandRecorded: () => boolean): Promise<Supervised> => {
   const { leaderPid, groupId } = running.identity;
   const recorded = await readIdentity(leaderPid);
-  let supervisorEnd: SupervisorEnd | null = null;
-  void running.supervisorEnd.then(end => { supervisorEnd = end; });
   const groupAbsent = () => probeProcess(-groupId) === "absent";
   const executor = async (): Promise<Executor> => {
     if (recorded.kind !== "present") return recorded.kind === "absent" ? "gone" : "unknown";
