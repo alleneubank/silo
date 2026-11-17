@@ -191,12 +191,8 @@ export const runImageCacheDeletion = async (owner: ProjectOperation, capability:
 /** The executor group a gate reported and the parent verified, before any grant. */
 type GateIdentity = { supervisorPid: number; supervisorIdentity: string; leaderPid: number; groupId: number };
 
-/**
- * One Janitor-supervised executor group: what to launch, how its grant is
- * durably recorded, and where its completion fact is read. Project launches
- * and slot runs differ only in these bindings.
- */
-export type Gate<Fact extends { exitCode: number }> = {
+/** What to launch under one Janitor-supervised executor group, and how its grant is durably recorded. */
+type GateLaunch = {
   id: string;
   root: string;
   executorEntrypoint: string;
@@ -213,25 +209,38 @@ export type Gate<Fact extends { exitCode: number }> = {
   teardown: "group" | "descendants";
   capture: boolean;
   output: OutputSink;
+  /** Cancels startup; for a gate that stops itself, also the running command. */
   signal: AbortSignal | undefined;
   /** Records the verified group as the launch's owner; returns the grant line the executor receives. */
   grant: (identity: GateIdentity) => string;
-  readCompletion: () => Fact | null;
   failureDetails: Readonly<Record<string, unknown>>;
 };
-export type GateResult<Fact> = { exitCode: number; stdout: string; stderr: string; completion: Fact | null };
-type RunningGate<Fact> = {
+
+/**
+ * A gate that stops itself on its timeout or interrupt and reads its
+ * completion fact from the store. Project launches and slot runs differ only
+ * in these bindings.
+ */
+type Gate<Fact extends { exitCode: number }> = GateLaunch & { readCompletion: () => Fact | null };
+type GateResult<Fact> = { exitCode: number; stdout: string; stderr: string; completion: Fact | null };
+type RunningGate<Fact> = { identity: GateIdentity; exited: Promise<GateResult<Fact>>; stop: () => void };
+
+type OpenGate = {
+  proc: Bun.Subprocess<"pipe", "pipe", "pipe">;
   identity: GateIdentity;
-  exited: Promise<GateResult<Fact>>;
-  /** Resolves when this launch's own supervisor has exited. */
-  supervisorExited: Promise<number>;
-  /** SIGTERM to the supervisor, which drains the group. */
-  stop: () => void;
-  /** SIGKILL to the supervisor itself, for one that does not drain; the group is left as it is. */
-  kill: () => void;
+  stdout: Cancellable<string>;
+  stderr: Cancellable<string>;
+  /** The supervisor's exit status and both output streams. */
+  finished: Promise<[number, string, string]>;
+  /** SIGTERM to this launch's own supervisor, if Bun has not yet reaped it. */
+  signalSupervisor: (signal: "SIGTERM" | "SIGKILL") => void;
+  /** Stops the supervisor, waits one drain window for it, then abandons the output. */
+  stopAndDrain: () => Promise<void>;
+  stopTimeoutMs: number;
 };
 
-export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fact>): Promise<RunningGate<Fact>> => {
+/** Spawns the supervisor, verifies the group it reports, and grants it; every refusal stops and drains first. */
+const openGate = async (gate: GateLaunch): Promise<OpenGate> => {
   gate.signal?.throwIfAborted();
   const startupDeadline = Date.now() + Math.min(gate.timeoutMs ?? LAUNCH_START_TIMEOUT_MS, LAUNCH_START_TIMEOUT_MS);
   const startupRemaining = () => {
@@ -249,14 +258,13 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
   // Bun reaps the supervisor itself; once it has, the handle's PID may be
   // reused, so only a handle with no recorded exit is signalled.
   const signalSupervisor = (signal: "SIGTERM" | "SIGKILL") => { if (proc.exitCode === null && proc.signalCode === null) proc.kill(signal); };
-  const stopSupervisor = () => signalSupervisor("SIGTERM");
   const stdoutReader = proc.stdout.getReader();
   const stderrReader = proc.stderr.getReader();
   const stderr = drain(stderrReader, gate.capture);
   let stdout: Cancellable<string> | undefined;
   const stopTimeoutMs = drainWindowMs(gate.graceMs);
   const stopAndDrain = async () => {
-    stopSupervisor();
+    signalSupervisor("SIGTERM");
     try { await withTimeout(observe(proc.exited), stopTimeoutMs, "supervisor drain"); }
     finally { await Promise.all([stdout ? stdout.cancel() : stdoutReader.cancel(), stderr.cancel()]); }
   };
@@ -278,29 +286,7 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
     proc.stdin.end();
     stdout = drain(stdoutReader, gate.capture, gate.output);
     const finished = Promise.all([proc.exited, stdout.result, stderr.result]);
-    const journal = watchCompletion(`${gate.kind} ${gate.id}`, gate.readCompletion);
-    // The result is known once the supervisor exits or the executor's fact is
-    // journaled. Neither a supervisor that misses its child's exit nor an
-    // escaped descendant holding the inherited pipes may then hold the command
-    // open: both get one stop window, after which only this launch's own
-    // supervisor handle is signalled and the pipes are abandoned.
-    const complete = async (): Promise<GateResult<Fact>> => {
-      const journaled = await raceOperations<Fact | null>([
-        observe(proc.exited.then(() => null)), observe(finished.then(() => null)),
-        { result: journal.completion, cancel: journal.stop },
-      ]);
-      if (!(await settlesWithin(finished, stopTimeoutMs))) {
-        await stopAndDrain();
-      }
-      const [supervisorExitCode, stdoutText, stderrText] = await finished;
-      return { exitCode: journaled?.exitCode ?? supervisorExitCode, stdout: stdoutText, stderr: stderrText, completion: journaled };
-    };
-    const completed = complete().catch(async error => {
-      await stopAndDrain();
-      throw error;
-    }).finally(journal.stop);
-    const exited = withTimeout({ result: completed, cancel: stopAndDrain }, gate.timeoutMs, gate.kind, gate.signal);
-    return { identity, exited, supervisorExited: proc.exited, stop: stopSupervisor, kill: () => signalSupervisor("SIGKILL") };
+    return { proc, identity, stdout, stderr, finished, signalSupervisor, stopAndDrain, stopTimeoutMs };
   } catch (error) {
     proc.stdin.end();
     await stopAndDrain();
@@ -313,6 +299,67 @@ export const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fa
     }
     throw error;
   }
+};
+
+const startGate = async <Fact extends { exitCode: number }>(gate: Gate<Fact>): Promise<RunningGate<Fact>> => {
+  const { proc, identity, finished, stopAndDrain, stopTimeoutMs, signalSupervisor } = await openGate(gate);
+  const journal = watchCompletion(`${gate.kind} ${gate.id}`, gate.readCompletion);
+  // The result is known once the supervisor exits or the executor's fact is
+  // journaled. Neither a supervisor that misses its child's exit nor an
+  // escaped descendant holding the inherited pipes may then hold the command
+  // open: both get one stop window, after which only this launch's own
+  // supervisor handle is signalled and the pipes are abandoned.
+  const complete = async (): Promise<GateResult<Fact>> => {
+    const journaled = await raceOperations<Fact | null>([
+      observe(proc.exited.then(() => null)), observe(finished.then(() => null)),
+      { result: journal.completion, cancel: journal.stop },
+    ]);
+    if (!(await settlesWithin(finished, stopTimeoutMs))) {
+      await stopAndDrain();
+    }
+    const [supervisorExitCode, stdoutText, stderrText] = await finished;
+    return { exitCode: journaled?.exitCode ?? supervisorExitCode, stdout: stdoutText, stderr: stderrText, completion: journaled };
+  };
+  const completed = complete().catch(async error => {
+    await stopAndDrain();
+    throw error;
+  }).finally(journal.stop);
+  const exited = withTimeout({ result: completed, cancel: stopAndDrain }, gate.timeoutMs, gate.kind, gate.signal);
+  return { identity, exited, stop: () => signalSupervisor("SIGTERM") };
+};
+
+/** How the supervisor ended: its exit status, or the signal that killed it. */
+export type SupervisorEnd = { code: number | null; signal: string | null };
+
+/** Output still open this long after the supervisor exits is abandoned. */
+const REPORT_WINDOW_MS = 5000;
+
+/**
+ * A gate whose caller decides every stop: nothing here signals the
+ * supervisor except the caller's own `stop` and `kill`, and no promise here
+ * rejects for an interrupt. `report` settles once the supervisor has exited.
+ */
+export type RunGate = {
+  identity: GateIdentity;
+  supervisorEnd: Promise<SupervisorEnd>;
+  /** The supervisor's exit status and the command's output. */
+  report: Promise<{ exitCode: number; stderr: string }>;
+  /** SIGTERM to the supervisor, which drains the group. */
+  stop: () => void;
+  /** SIGKILL to the supervisor itself; the group is left as it is. */
+  kill: () => void;
+};
+
+export const startRunGate = async (gate: Omit<GateLaunch, "timeoutMs">): Promise<RunGate> => {
+  const { proc, identity, stdout, stderr, finished, signalSupervisor } = await openGate({ ...gate, timeoutMs: null });
+  const supervisorEnd = proc.exited.then((): SupervisorEnd => ({ code: proc.exitCode, signal: proc.signalCode }));
+  const report = proc.exited.then(async exitCode => {
+    // A descendant that escaped the group may still hold the inherited pipes.
+    if (!(await settlesWithin(finished, REPORT_WINDOW_MS))) await Promise.all([stdout.cancel(), stderr.cancel()]);
+    const [, , stderrText] = await finished;
+    return { exitCode, stderr: stderrText };
+  });
+  return { identity, supervisorEnd, report, stop: () => signalSupervisor("SIGTERM"), kill: () => signalSupervisor("SIGKILL") };
 };
 
 const startPlannedCommand = async (owner: ProjectOperation, intent: Extract<Launch, { phase: "planned" }>, options: CommandOptions): Promise<RunningCommand> => {

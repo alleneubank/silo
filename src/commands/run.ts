@@ -4,7 +4,7 @@ import { assertNoLegacyState } from "../core/legacy_check";
 import { accountStorePath } from "../core/allocation_domain";
 import { hostConfigPath, readHostCaps } from "../core/host_caps";
 import { drainWindowMs } from "../core/owned_command";
-import { supervise, waitUntil, type Deadline, type Supervised } from "./run_supervision";
+import { supervise, waitUntil, type Deadline, type Supervised, type UnprovedReason } from "./run_supervision";
 import { findPortBlock, livePortSpace, type PortSpace } from "../core/ports";
 import { probeProcess, processIdentity } from "../core/process_identity";
 import { SlotQueue, runLiveness, type GrantAttempt, type GrantDecision, type QueuedRun } from "../core/slot_store";
@@ -223,11 +223,11 @@ const slotEnvironment = (held: HeldSlotRun, configs: ReadonlyMap<SlotName, SlotC
 };
 
 const keepHeld = (held: HeldSlotRun): false => {
-  logger.warn(`slot units of run ${held.id} stay held: group ${held.launch?.groupId} still has members. A later silo run releases them once it is gone.`);
+  logger.warn(`slot units of run ${held.id} stay held: its processes could not be proved gone. A later silo run releases them once group ${held.launch?.groupId} is gone.`);
   return false;
 };
 
-/** After an interrupt, the run releases its units only once its executor group is terminal. */
+/** After a failed or interrupted start, the run releases its units only once its executor group is terminal. */
 const releaseWhenGroupEnds = async (queue: SlotQueue, held: HeldSlotRun, graceMs: number): Promise<boolean> => {
   const launch = held.launch;
   const ended = await waitUntil(() => launch === null || (probeProcess(launch.supervisor.pid) === "absent" && probeProcess(-launch.groupId) === "absent"), drainWindowMs(graceMs));
@@ -239,13 +239,22 @@ const acquireFailure = (completion: SlotCompletion, step: string, stderrTail: st
   "SLOT_ACQUIRE_FAILED", { details: { failedStep: completion.failedStep, exitCode: completion.exitCode } },
 );
 
-const stopIncomplete = (deadline: Deadline, runId: string, held: string): SiloError => new SiloError(
-  `RUN_STOP_INCOMPLETE: ${deadline.label} reached, but the command's process group could not be proved gone after SIGKILL; ${held}`,
-  "RUN_STOP_INCOMPLETE", { details: { runId } },
-);
+const UNPROVED: Record<UnprovedReason, (groupId: number) => string> = {
+  "supervisor-lost": group => `Janitor was lost, so descendants that left process group ${group} cannot be proved gone (the group itself has no member)`,
+  "leader-exited": group => `Janitor was lost and the executor had exited, so silo sent process group ${group} no signal; members may remain`,
+  "group-survived-kill": group => `process group ${group} still has members after SIGKILL`,
+  "group-outlived-supervisor": group => `process group ${group} still has members after its supervisor exited`,
+};
+
+const stopIncomplete = (supervised: Extract<Supervised, { end: "unproved" }>, deadline: Deadline | null, runId: string, held: string): SiloError => {
+  const when = { "exited": "the run ended", "timed-out": `${deadline?.label} reached`, "interrupted": "the run was interrupted" }[supervised.cause];
+  return new SiloError(`RUN_STOP_INCOMPLETE: ${when}; ${UNPROVED[supervised.reason](supervised.groupId)}${held}`, "RUN_STOP_INCOMPLETE", {
+    details: { runId, cause: supervised.cause, reason: supervised.reason, groupId: supervised.groupId },
+  });
+};
 
 const gateFor = (options: RunOptions, limits: Limits, id: string, root: string) => ({
-  id, root, executorEntrypoint: options.executorEntrypoint, graceMs: limits.graceMs,
+  id, root, executorEntrypoint: options.executorEntrypoint, graceMs: limits.graceMs, teardown: "descendants" as const, capture: false,
   output: options.json ? "stderr" as const : "stdout" as const, signal: options.signal,
 });
 
@@ -262,20 +271,22 @@ const runWithoutSlots = async (options: RunOptions, limits: Limits): Promise<Run
   const runId = randomUUID();
   const command = [...options.command];
   const deadline = deadlineFrom(Date.now(), options, limits);
-  let supervised: Supervised<never>;
+  let supervised: Supervised;
   try {
-    supervised = await supervise<never>({
+    supervised = await supervise({
       ...gateFor(options, limits, runId, root), executorArgs: ["run", runId, root], kind: "run", env: undefined,
       grant: gate => JSON.stringify({ runId, leaderPid: gate.leaderPid, groupId: gate.groupId, command } satisfies RunExecutorGrant),
-      readCompletion: () => null, failureDetails: { runId },
+      failureDetails: { runId },
     }, deadline, () => false);
   } catch (error) {
-    throw interrupted(error, "its group was stopped");
+    throw interrupted(error, "the command did not start");
   }
-  const run = { id: runId, root, command, slots: [], waitedMs: 0 };
-  if (supervised.kind === "exited") return { schemaVersion: 1, run: { ...run, exitCode: supervised.result.exitCode, timedOut: false, released: supervised.groupEnded } };
-  if (!supervised.groupEnded) throw stopIncomplete(deadline!, runId, "inspect it with ps");
-  return { schemaVersion: 1, run: { ...run, exitCode: TIMED_OUT_EXIT, timedOut: true, released: true } };
+  if (supervised.end === "unproved") throw stopIncomplete(supervised, deadline, runId, "");
+  const { cause } = supervised;
+  if (cause.kind === "interrupted") throw interrupted(cause.interruption, "its group was stopped");
+  const run = { id: runId, root, command, slots: [], waitedMs: 0, released: true };
+  if (cause.kind === "timed-out") return { schemaVersion: 1, run: { ...run, exitCode: TIMED_OUT_EXIT, timedOut: true } };
+  return { schemaVersion: 1, run: { ...run, exitCode: cause.exitCode, timedOut: false } };
 };
 
 /** Waits for one unit of every named slot, runs on-acquire then the command, and releases on exit. */
@@ -283,6 +294,16 @@ export const run = async (options: RunOptions): Promise<RunResult> => {
   if (options.command.length === 0) throw new SiloError("INVALID_ARGUMENT: silo run needs a command after --", "INVALID_ARGUMENT");
   const limits = parseLimits(options);
   return options.slots.length === 0 ? runWithoutSlots(options, limits) : runWithSlots(options, limits);
+};
+
+/** An unreadable fact counts as not recorded; the executor's own liveness then decides. */
+const recordedWithoutWaiting = (queue: SlotQueue, runId: string): boolean => {
+  try { return queue.completion(runId) !== null; }
+  catch (error) {
+    const busy = error instanceof Error && "code" in error && String(error.code).startsWith("SQLITE_BUSY");
+    if (busy || (error instanceof SiloError && error.code === "LEASE_STORE_UNAVAILABLE")) return false;
+    throw error;
+  }
 };
 
 const runWithSlots = async (options: RunOptions, limits: Limits): Promise<RunResult> => {
@@ -297,15 +318,17 @@ const runWithSlots = async (options: RunOptions, limits: Limits): Promise<RunRes
   const startedWaiting = Date.now();
   queue.enqueue({ phase: "waiting", id: runId, root: planned.root, command, requests: planned.requests, waiter: { pid: process.pid, identity }, enqueuedAt: new Date().toISOString() });
   let held: HeldSlotRun | null = null;
-  // Null until the run has decided whether its units are released.
-  let released: boolean | null = null;
+  let supervised: Supervised;
+  let deadline: Deadline | null;
+  let waitedMs: number;
+  let onAcquire: string[];
   try {
     held = await waitForGrant(queue, runId, planned, limits.waitMs, options.signal);
     const grantedAt = Date.now();
-    const waitedMs = grantedAt - startedWaiting;
-    const onAcquire = held.grants.flatMap(grant => planned.configs.get(grant.slot)!["on-acquire"]);
-    const deadline = deadlineFrom(grantedAt, options, limits);
-    const supervised = await supervise<SlotCompletion>({
+    waitedMs = grantedAt - startedWaiting;
+    onAcquire = held.grants.flatMap(grant => planned.configs.get(grant.slot)!["on-acquire"]);
+    deadline = deadlineFrom(grantedAt, options, limits);
+    supervised = await supervise({
       ...gateFor(options, limits, runId, planned.root), executorArgs: ["slot", runId, planned.root], kind: "slot-run",
       env: slotEnvironment(held, planned.configs),
       grant: gate => {
@@ -313,27 +336,27 @@ const runWithSlots = async (options: RunOptions, limits: Limits): Promise<RunRes
         const grant: SlotExecutorGrant = { runId, leaderPid: gate.leaderPid, groupId: gate.groupId, onAcquire, command };
         return JSON.stringify(grant);
       },
-      readCompletion: () => queue.completion(runId),
       failureDetails: { runId },
-    }, deadline, () => queue.completion(runId) !== null);
-    const run = { id: runId, root: planned.root, command, slots: held.grants, waitedMs };
-    // The supervisor's exit can win the race with the executor's fact; read
-    // the durable fact before the row is released with the units.
-    const completion = supervised.kind === "exited" ? supervised.result.completion ?? queue.recordedCompletion(runId) : null;
-    released = supervised.groupEnded ? queue.release(runId) : keepHeld(held);
-    if (supervised.kind === "timed-out") {
-      if (!released) throw stopIncomplete(deadline!, runId, "its units stay held until a later run proves it gone");
-      return { schemaVersion: 1, run: { ...run, exitCode: TIMED_OUT_EXIT, timedOut: true, released } };
-    }
-    if (completion !== null && !completion.started && completion.failedStep !== null) {
-      throw acquireFailure(completion, onAcquire[completion.failedStep] ?? "", supervised.result.stderr);
-    }
-    return { schemaVersion: 1, run: { ...run, exitCode: supervised.result.exitCode, timedOut: false, released } };
+    }, deadline, () => recordedWithoutWaiting(queue, runId));
   } catch (error) {
-    const wasHeld = held !== null;
-    // A waiting ticket holds nothing. Held units are released once the
-    // group is terminal; an interrupt has already stopped the supervisor.
-    released ??= held === null ? queue.release(runId) : await releaseWhenGroupEnds(queue, held, limits.graceMs);
-    throw interrupted(error, !wasHeld ? "left the queue" : released ? "its group was stopped and its units released" : "its group was stopped; its units stay held until the group is gone");
+    // A waiting ticket holds nothing; units of a run that failed to start are
+    // released once its group is terminal.
+    const released = held === null ? queue.release(runId) : await releaseWhenGroupEnds(queue, held, limits.graceMs);
+    throw interrupted(error, held === null ? "left the queue" : released ? "the command did not start and its units were released" : "the command did not start; its units stay held until the group is gone");
   }
+  if (supervised.end === "unproved") {
+    keepHeld(held);
+    throw stopIncomplete(supervised, deadline, runId, "; its slot units stay held until a later run proves the group gone");
+  }
+  const { cause } = supervised;
+  // Read the durable fact before the row is released with the units.
+  const completion = cause.kind === "exited" ? queue.recordedCompletion(runId) : null;
+  const released = queue.release(runId);
+  if (cause.kind === "interrupted") throw interrupted(cause.interruption, "its group was stopped and its units released");
+  const run = { id: runId, root: planned.root, command, slots: held.grants, waitedMs, released };
+  if (cause.kind === "timed-out") return { schemaVersion: 1, run: { ...run, exitCode: TIMED_OUT_EXIT, timedOut: true } };
+  if (completion !== null && !completion.started && completion.failedStep !== null) {
+    throw acquireFailure(completion, onAcquire[completion.failedStep] ?? "", cause.stderr);
+  }
+  return { schemaVersion: 1, run: { ...run, exitCode: cause.exitCode, timedOut: false } };
 };

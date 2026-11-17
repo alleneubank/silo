@@ -531,8 +531,7 @@ const main = async (): Promise<void> => {
           config: values.config, slots: values.slot ?? [], wait: values.wait, timeout: values.timeout, killAfter: values["kill-after"], command: passthroughArgs,
           json: values.json, executorEntrypoint: import.meta.path, signal: operationInterrupts?.signal,
         });
-        // Once the deadline has stopped the command, a later interrupt does not change the outcome.
-        if (!result.run.timedOut) operationInterrupts?.throwIfAborted();
+        // run settles its own interrupts: whichever of exit, deadline or signal came first decides.
         process.exitCode = result.run.exitCode;
         if (values.json) await writeJsonResult({ kind: "result", value: result });
         return;

@@ -215,30 +215,46 @@ between SIGTERM and SIGKILL for every stop of the group, deadline, interrupt,
 or the drain of members left after the command exits, and defaults to the
 5-second drain grace; the windows silo waits for a stop scale with it.
 
-A deadline is a timeout only when it finds the command still running: no
-completion fact recorded and the executor still the recorded process, and no
-interrupt received first. A command that exits first keeps its own status and
-`timedOut: false`, even while left-over group members drain. On a timeout silo
-stops its supervisor, which ends the group and the descendants it proves (see
-the `run` exception under Lifecycle authority) with SIGTERM, then SIGKILL after
-the grace, and waits at most the drain window. A supervisor that is gone or
-has not drained by then is SIGKILLed through silo's own handle, and silo
-signals the recorded group itself (SIGTERM, the grace, SIGKILL), each signal
-only after re-reading the executor's start identity, so the group ID cannot
-name a reused group. Only when the supervisor and the group are proved gone
-does the run report `run.timedOut: true` and exit 124, with slots released;
-otherwise it fails with `RUN_STOP_INCOMPLETE` (exit 1) and held units stay
-held until a later run proves the group gone. A supervisor lost before the
-deadline does not cancel it: while the executor lives, the deadline still
-applies. Once a deadline has stopped the command, a later SIGINT or SIGTERM to
-silo does not change the outcome. Without `--json`, a command that itself
-exits 124, 130 or 143 is indistinguishable by status from a timeout or an
-interrupt.
+A run ends at the first of three events: its supervisor exits, its deadline
+passes, or silo receives SIGINT or SIGTERM. A deadline is a timeout only when
+it finds the command still running (no completion fact recorded and the
+executor still the recorded process); otherwise the command's own exit decides.
+The deadline and an interrupt share one stop: silo sends SIGTERM to its
+supervisor, which ends the group and the descendants it proves (see the `run`
+exception under Lifecycle authority) with SIGTERM, then SIGKILL after the
+grace. Every wait after the first event is bounded; a wait that runs out
+SIGKILLs the supervisor through silo's own handle and counts it as lost, and
+none of these waits is cut short by a later signal.
+
+The group is **proved gone** only when the supervisor exited on its own
+(not by a signal) and the executor group then has no member. Only a group
+proved gone yields a result (the command's status, or 124 with
+`run.timedOut: true`), an `INTERRUPTED` error (130/143) saying the group was
+stopped, or the release of held units. Every other end fails with
+`RUN_STOP_INCOMPLETE` (exit 1), names its `cause` (`exited`, `timed-out`,
+`interrupted`) and `reason`, and leaves held units held until a later run
+proves the group gone under the slot-claim rule:
+
+- `supervisor-lost`: the supervisor was killed or did not drain in its window.
+  silo then signals the recorded group itself (SIGTERM, the grace, SIGKILL) and
+  the group has no member, but descendants that left it with `setsid` cannot be
+  proved gone without the supervisor's snapshot.
+- `leader-exited`: the supervisor was lost and the executor had already exited.
+  silo signals the group only while the executor is still the recorded process,
+  whose life keeps the group ID from naming another group; with the executor
+  gone it sends no signal.
+- `group-survived-kill`: the group still has members after SIGKILL.
+- `group-outlived-supervisor`: the supervisor exited but the group still has
+  members.
+
+Once one event has started the stop, a later SIGINT or SIGTERM does not change
+the outcome. Without `--json`, a command that itself exits 124, 130 or 143 is
+indistinguishable by status from a timeout or an interrupt.
 
 `silo run` stays in its caller's process group, so a terminal's Ctrl-C or a
 signal to the caller's group reaches it; only the command's group is new.
-SIGINT or SIGTERM to silo stops the group through the supervisor and exits 130
-or 143. SIGHUP is not handled: silo exits by the signal, Janitor's watch of
+SIGINT or SIGTERM to silo stops the group by the stop above and exits 130 or
+143 once the group is proved gone. SIGHUP is not handled: silo exits by the signal, Janitor's watch of
 silo drains the group, and held units are released by the next contending run.
 Checks: `src/commands/run.test.ts`.
 

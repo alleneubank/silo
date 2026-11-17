@@ -127,8 +127,8 @@ exit status from the supervisor. Legacy registry state (`LEGACY_STATE`) refuses
 a run only when a requested slot declares `ports`. Waiting costs one store
 transaction plus one `ps` per live contending holder per poll, polled at most
 once a second; with many contenders a handoff can take up to a second. Units are released by the run once its
-group has no member; if the group outlives a short window, they stay held and
-the result reports `released: false`. A later `run` contending for the same
+supervisor has exited on its own and its group has no member; otherwise the
+run fails with `RUN_STOP_INCOMPLETE` and they stay held (see below). A later `run` contending for the same
 slot releases a holder once its recorded processes are proved gone (`ESRCH`,
 or a start identity that differs from the recorded one) and its group has no
 member; uncertain liveness keeps the claim. It also drops the ticket of a
@@ -150,21 +150,31 @@ carries one schemaVersion-1 result:
 `--timeout` bounds a run from its grant: every `on-acquire` step and the
 command, not the time spent waiting for slots (`--wait` bounds that). It takes
 the same durations as `--wait`, from 1 second to 7 days. At the deadline silo
-stops the command's process group, children and grandchildren included, and
-the descendants that left it with `setsid` while still descending from the
-command: SIGTERM, then SIGKILL after the grace. It then releases its slots as
+stops the command's process group, children and grandchildren included, and,
+through Janitor, the descendants that left it with `setsid` that Janitor proves
+still descend from the command: SIGTERM, then SIGKILL after the grace. It then releases its slots as
 after any exit and exits 124, like coreutils `timeout`; with `--json`,
 `run.timedOut` is `true` and `run.exitCode` is 124. A process that double-forks
 and calls `setsid` before the deadline is no longer a descendant and escapes.
 
 The deadline counts as a timeout only if the command is still running when it
 passes. A command that exits first keeps its own status, even while left-over
-members of its group are still being drained. Once the deadline has stopped
-the command, a later Ctrl-C does not change the outcome. If Janitor itself is
-gone or stalled, silo signals the command's group directly, but only while the
-command's executor is still the process it recorded. If the group cannot be
-proved gone, the run fails with `RUN_STOP_INCOMPLETE` rather than reporting a
-timeout, and any slots stay held until a later run proves the group gone.
+members of its group are still being drained. Whichever comes first, the
+command's exit, the deadline or a Ctrl-C, decides; a later signal does not
+change the outcome.
+
+`run` reports a stop only once Janitor has exited on its own and the command's
+process group has no member. If Janitor is killed, or does not finish draining
+within the grace plus 5 seconds, silo kills it and stops the group itself:
+SIGTERM, the grace, then SIGKILL, and only while the command's executor is
+still running, since its life is what keeps the group ID from naming another
+group. Without Janitor, silo cannot prove that descendants which left the group
+with `setsid` are gone. Every such end, and any group that still has members,
+fails with `RUN_STOP_INCOMPLETE` (exit 1) instead of a result: `--json` names
+the `cause` (`exited`, `timed-out`, `interrupted`) and the `reason`
+(`supervisor-lost`, `leader-exited`, `group-survived-kill`,
+`group-outlived-supervisor`), and any slots stay held until a later run proves
+the group gone.
 
 `--kill-after` sets the grace between SIGTERM and SIGKILL for every stop of the
 group: a deadline, an interrupt, or the drain of members left behind after the
