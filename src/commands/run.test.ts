@@ -17,6 +17,7 @@ let cli: string;
 let storePath: string;
 let hostFile: string;
 let caller: string;
+let fakeJanitorBin: string;
 
 beforeAll(async () => {
   // silo records resolved project roots; macOS TMPDIR sits behind the /var symlink.
@@ -50,6 +51,17 @@ const child = Bun.spawn(argv, { stdin: "ignore", stdout: "inherit", stderr: "inh
 await Bun.write(pidFile, String(child.pid));
 process.exit(await child.exited);
 `);
+  // A supervisor that exits 0 on SIGTERM without draining its group: the one
+  // way a Janitor that ends on its own can leave members behind.
+  fakeJanitorBin = path.join(base, "fake-janitor");
+  mkdirSync(fakeJanitorBin);
+  const fake = path.join(fakeJanitorBin, "fake-janitor.ts");
+  writeFileSync(fake, `const argv = process.argv.slice(2);
+const child = Bun.spawn(argv.slice(argv.indexOf("--") + 1), { detached: true, stdin: "inherit", stdout: "inherit", stderr: "inherit" });
+process.on("SIGTERM", () => process.exit(0));
+process.exit(await child.exited);
+`);
+  writeFileSync(path.join(fakeJanitorBin, "janitor"), `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(fake)} "$@"\n`, { mode: 0o755 });
 }, 60_000);
 
 afterAll(() => { if (base) rmSync(base, { recursive: true }); });
@@ -92,13 +104,13 @@ afterEach(async () => {
   trackedGroups.clear();
 });
 
-const start = (root: string, args: string[]): Started => startArgv(root, [process.execPath, cli, ...args], false);
+const start = (root: string, args: string[], pathPrefix = bin): Started => startArgv(root, [process.execPath, cli, ...args], false, pathPrefix);
 
 /** `detached` starts the process as the leader of a new process group. */
-const startArgv = (root: string, argv: string[], detached: boolean): Started => {
+const startArgv = (root: string, argv: string[], detached: boolean, pathPrefix = bin): Started => {
   const proc = Bun.spawn(argv, {
     cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 60_000, detached,
-    env: { ...process.env, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry"), PATH: `${bin}:${process.env.PATH}` },
+    env: { ...process.env, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry"), PATH: `${pathPrefix === bin ? bin : `${pathPrefix}:${bin}`}:${process.env.PATH}` },
   });
   let stderrSoFar = "";
   const finished = Promise.all([proc.exited, new Response(proc.stdout).text(), collect(proc.stderr, text => { stderrSoFar = text; })])
@@ -573,6 +585,7 @@ test("Janitor SIGKILLed mid-run: silo stops the group itself, reports RUN_STOP_I
   const escaping = "perl -e 'use POSIX; POSIX::setsid(); exec \"sleep\", \"600\"' & echo $! > escaped; trap '' TERM; while :; do sleep 0.05; done";
   const holder = await holdWith(name, escaping, ["--timeout", "60s", "--kill-after", "1s"]);
   const escaped = await recordedGroup(holder.root, "escaped");
+  await waitFor(() => Bun.spawnSync(["ps", "-o", "pgid=", "-p", String(escaped)]).stdout.toString().trim() === String(escaped), "setsid");
   process.kill(holder.supervisor, "SIGKILL");
   const error = incomplete(await settle(holder.started, "holder without its supervisor"));
   expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "exited", reason: "supervisor-lost" });
@@ -605,6 +618,70 @@ test("SIGINT with a stalled Janitor stops the group directly and reports RUN_STO
   expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "interrupted", reason: "supervisor-lost" });
   expect(holder.started.stderrSoFar()).toContain(`sending SIGTERM to process group ${holder.group} directly`);
   expect(alive(-holder.group)).toBe(false);
+}, 60_000);
+
+/** The Janitor a slot-less silo run started: its child running `janitor`. */
+const janitorOf = (silo: number): number => {
+  const rows = Bun.spawnSync(["ps", "-A", "-o", "pid=,ppid=,command="]).stdout.toString().split("\n");
+  const row = rows.map(line => line.trim().split(/\s+/)).find(([, ppid, command]) => Number(ppid) === silo && command?.endsWith("janitor"));
+  if (!row) throw new Error(`no janitor child of ${silo}`);
+  return Number(row[0]);
+};
+
+test("without --timeout, a stalled Janitor after a slot run's command exited still ends the run, bounded", async () => {
+  const startedAt = Date.now();
+  const holder = await holdWith("janitor-stalled-no-deadline", "sleep 1", ["--kill-after", "1s"]);
+  process.kill(holder.supervisor, "SIGSTOP");
+  const error = incomplete(await settle(holder.started, "holder with a stalled supervisor and no deadline"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "exited", reason: "supervisor-lost" });
+  expect(Date.now() - startedAt).toBeLessThan(20_000);
+  expect(alive(holder.supervisor)).toBe(false);
+}, 60_000);
+
+test("without --timeout or slots, a stalled Janitor after the command exited still ends the run, bounded", async () => {
+  const root = bareDirectory();
+  const startedAt = Date.now();
+  const running = start(root, ["run", "--kill-after", "1s", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 1`]);
+  await recordedGroup(root, "group");
+  const supervisor = janitorOf(running.proc.pid);
+  trackedGroups.add(supervisor);
+  process.kill(supervisor, "SIGSTOP");
+  const error = incomplete(await settle(running, "slot-less run with a stalled supervisor"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "exited", reason: "supervisor-lost" });
+  // The unreaped executor is found by its changed identity within one identity poll.
+  expect(Date.now() - startedAt).toBeLessThan(25_000);
+  expect(alive(supervisor)).toBe(false);
+}, 60_000);
+
+test("repeated SIGINT to the caller's group cannot fake the executor's exit while Janitor is stalled", async () => {
+  const name = "interrupt-storm";
+  setCaps({ [name]: 1 });
+  const root = project(`[slots.${name}]\n`);
+  const pidFile = path.join(root, "silo-pid");
+  const running = startArgv(root, [process.execPath, caller, pidFile, process.execPath, cli, "run", "--slot", name, "--kill-after", "1s", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 300 & wait`], true);
+  trackedGroups.add(running.proc.pid);
+  const group = await recordedGroup(root, "group");
+  await waitFor(() => launched(name) !== null, "holder launch");
+  const supervisor = launched(name)!.supervisor.pid;
+  trackedGroups.add(supervisor);
+  process.kill(supervisor, "SIGSTOP");
+  // The caller ignores SIGINT; silo's own probes must not die with each one.
+  const storm = setInterval(() => { try { process.kill(-running.proc.pid, "SIGINT"); } catch { /* caller gone */ } }, 2);
+  try {
+    const error = incomplete(await settle(running, "caller under an interrupt storm"));
+    expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "interrupted", reason: "supervisor-lost" });
+  } finally { clearInterval(storm); }
+  expect(alive(-group)).toBe(false);
+}, 60_000);
+
+test("a supervisor that exits on its own while group members remain is not proof of a stop", async () => {
+  const root = bareDirectory();
+  const running = start(root, ["run", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 300 & wait`], fakeJanitorBin);
+  const group = await recordedGroup(root, "group");
+  running.proc.kill("SIGINT");
+  const error = incomplete(await settle(running, "run under a supervisor that does not drain"));
+  expect(error).toMatchObject({ code: "RUN_STOP_INCOMPLETE", cause: "interrupted", reason: "group-outlived-supervisor" });
+  expect(alive(-group)).toBe(true);
 }, 60_000);
 
 test("with Janitor and the executor both gone, silo sends the group no signal and reports RUN_STOP_INCOMPLETE", async () => {

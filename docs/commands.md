@@ -157,6 +157,13 @@ after any exit and exits 124, like coreutils `timeout`; with `--json`,
 `run.timedOut` is `true` and `run.exitCode` is 124. A process that double-forks
 and calls `setsid` before the deadline is no longer a descendant and escapes.
 
+`setsid` descendants are reached only by a stop (deadline or interrupt). When
+the command exits on its own, its executor is already gone by the time Janitor
+drains, so a `setsid` descendant it left behind is never signalled, and the run
+still releases its slots and reports the command's status while that process
+lives. This is a documented escape: a command that starts a daemon with
+`setsid` must stop it itself.
+
 The deadline counts as a timeout only if the command is still running when it
 passes. A command that exits first keeps its own status, even while left-over
 members of its group are still being drained. Whichever comes first, the
@@ -173,13 +180,19 @@ with `setsid` are gone. Every such end, and any group that still has members,
 fails with `RUN_STOP_INCOMPLETE` (exit 1) instead of a result: `--json` names
 the `cause` (`exited`, `timed-out`, `interrupted`) and the `reason`
 (`supervisor-lost`, `leader-exited`, `group-survived-kill`,
-`group-outlived-supervisor`), and any slots stay held until a later run proves
-the group gone.
+`group-outlived-supervisor`, `liveness-unknown`), and any slots stay held
+until a later run proves the group gone. `run` notices the executor's exit even
+when Janitor is stalled and has not reaped it, with or without `--timeout`, so
+a stalled Janitor never holds a run open. Each `ps` read silo makes during a
+run runs in its own process group, so a Ctrl-C to the caller's group cannot
+end it; a read that fails or is killed is retried, and if the executor's state
+stays unreadable the run reports `liveness-unknown` rather than guessing.
 
 `--kill-after` sets the grace between SIGTERM and SIGKILL for every stop of the
 group: a deadline, an interrupt, or the drain of members left behind after the
-command exits. It takes 1 second to 10 minutes and defaults to 5 seconds; how
-long `run` waits for a stopped group follows it.
+command exits. It takes 1 second to 10 minutes and defaults to 5 seconds. The same grace
+applies when Janitor is lost and silo signals the group itself. How long `run`
+waits for a stopped group follows it: the grace plus 5 seconds.
 
 Without `--json`, a command that itself exits 124, 130 or 143 looks the same
 by status as a timeout or an interrupt; use `--json` (`run.timedOut`, or an

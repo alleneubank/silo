@@ -215,8 +215,10 @@ between SIGTERM and SIGKILL for every stop of the group, deadline, interrupt,
 or the drain of members left after the command exits, and defaults to the
 5-second drain grace; the windows silo waits for a stop scale with it.
 
-A run ends at the first of three events: its supervisor exits, its deadline
-passes, or silo receives SIGINT or SIGTERM. A deadline is a timeout only when
+A run ends at the first of four events: its supervisor exits, its executor
+exits (seen from the completion fact, from ESRCH, or from an unreaped
+executor's changed start identity, so a stalled supervisor cannot hold the run
+open), its deadline passes, or silo receives SIGINT or SIGTERM. A deadline is a timeout only when
 it finds the command still running (no completion fact recorded and the
 executor still the recorded process); otherwise the command's own exit decides.
 The deadline and an interrupt share one stop: silo sends SIGTERM to its
@@ -243,6 +245,10 @@ proves the group gone under the slot-claim rule:
   silo signals the group only while the executor is still the recorded process,
   whose life keeps the group ID from naming another group; with the executor
   gone it sends no signal.
+- `liveness-unknown`: repeated, bounded reads could not tell whether the
+  executor still runs. Every `ps` read silo makes while supervising runs in its
+  own process group, so a signal to silo's group cannot end one; a failed or
+  signalled read is unknown, never absent.
 - `group-survived-kill`: the group still has members after SIGKILL.
 - `group-outlived-supervisor`: the supervisor exited but the group still has
   members.

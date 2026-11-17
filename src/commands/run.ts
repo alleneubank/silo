@@ -242,6 +242,7 @@ const acquireFailure = (completion: SlotCompletion, step: string, stderrTail: st
 const UNPROVED: Record<UnprovedReason, (groupId: number) => string> = {
   "supervisor-lost": group => `Janitor was lost, so descendants that left process group ${group} cannot be proved gone (the group itself has no member)`,
   "leader-exited": group => `Janitor was lost and the executor had exited, so silo sent process group ${group} no signal; members may remain`,
+  "liveness-unknown": group => `repeated reads could not tell whether the executor of process group ${group} still runs, so silo cannot prove how the command ended or that its processes are gone`,
   "group-survived-kill": group => `process group ${group} still has members after SIGKILL`,
   "group-outlived-supervisor": group => `process group ${group} still has members after its supervisor exited`,
 };
