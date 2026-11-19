@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import { z } from "zod";
 import { SiloError } from "../utils/errors";
@@ -19,6 +20,16 @@ const StoreMarkerSchema = z.object({
   generation: z.number().int().positive(),
 });
 
+/**
+ * Whether the entry's own silo 0.x `down` can remove it: 0.x removes
+ * `sha256(realpath(root)).json`, so an entry written before its root moved or
+ * became a symlink, or whose root is gone, outlives every `down`.
+ */
+type Reach =
+  | { reach: "reachable" }
+  | { reach: "moved"; resolvedRoot: string }
+  | { reach: "root-missing" };
+
 type LegacyFinding = {
   kind: "registry" | "lock";
   path: string;
@@ -26,7 +37,7 @@ type LegacyFinding = {
   ports?: number[];
   recordedPids?: number[];
   unrecognized?: true;
-};
+} & (Reach | { reach?: never });
 
 const defaultInputs = () => ({ accountHome: accountHome(), home: os.homedir(), registryDir: process.env.SILO_PORT_REGISTRY_DIR });
 
@@ -54,14 +65,25 @@ const readDisplay = async (file: string): Promise<unknown> => {
   }
 };
 
-const describe = (file: string, value: unknown): LegacyFinding => {
+const reachOf = async (file: string, root: string): Promise<Reach> => {
+  let resolvedRoot: string;
+  try { resolvedRoot = await fs.realpath(root); }
+  catch (error) {
+    if (missing(error) || (error instanceof Error && "code" in error && error.code === "ENOTDIR")) return { reach: "root-missing" };
+    throw error;
+  }
+  const key = createHash("sha256").update(resolvedRoot).digest("hex");
+  return path.basename(file) === `${key}.json` ? { reach: "reachable" } : { reach: "moved", resolvedRoot };
+};
+
+const describe = async (file: string, value: unknown): Promise<LegacyFinding> => {
   const parsed = DisplaySchema.safeParse(value);
   if (!parsed.success) return { kind: "registry", path: file, unrecognized: true };
   const { projectRoot, ports, pid, tiltPid } = parsed.data;
   const recordedPids = [pid, tiltPid].filter((p): p is number => p !== undefined);
   return {
     kind: "registry", path: file,
-    ...(projectRoot === undefined ? {} : { root: projectRoot }),
+    ...(projectRoot === undefined ? {} : { root: projectRoot, ...await reachOf(file, projectRoot) }),
     ...(ports === undefined ? {} : { ports: Object.values(ports) }),
     ...(recordedPids.length === 0 ? {} : { recordedPids }),
   };
@@ -83,7 +105,7 @@ export const findLegacyState = async (projectRoot: string, inputs = defaultInput
       for (const entry of entries.sort()) {
         if (!entry.endsWith(".json")) continue;
         const file = path.join(dir, entry);
-        found.push(describe(file, await readDisplay(file)));
+        found.push(await describe(file, await readDisplay(file)));
       }
     }
     const lockPath = path.join(projectRoot, ".silo.lock");
@@ -103,14 +125,32 @@ export const findLegacyState = async (projectRoot: string, inputs = defaultInput
   }
 };
 
+const nextStep = (finding: LegacyFinding, root: string): string | null => {
+  if (finding.reach === undefined) return null;
+  if (finding.reach === "reachable") return `stop it with that project's own silo 0.x (\`silo down --clean\` in ${root})`;
+  if (finding.reach === "moved") return `its root now resolves to ${finding.resolvedRoot}, so no silo 0.x down can remove it; if nothing uses it, delete the file`;
+  return "its root no longer exists, so no silo 0.x down can remove it; if nothing uses it, delete the file";
+};
+
+const listingLine = (finding: LegacyFinding): string => {
+  if (finding.root === undefined) return `  ${finding.path} (unrecognized)`;
+  const recorded = [
+    ...(finding.ports?.length ? [`ports ${finding.ports.join(",")}`] : []),
+    ...(finding.recordedPids?.length ? [`pids ${finding.recordedPids.join(",")}`] : []),
+  ];
+  const facts = `root: ${finding.root}${recorded.length ? `; ${recorded.join("; ")}` : ""}`;
+  const step = nextStep(finding, finding.root);
+  return step === null ? `  ${finding.path} (${facts})` : `  ${finding.path} (${facts})\n    ${step}`;
+};
+
 export const assertNoLegacyState = async (projectRoot: string, inputs?: Parameters<typeof findLegacyState>[1]): Promise<void> => {
   const found = await findLegacyState(projectRoot, inputs);
   if (found.length === 0) return;
-  const listing = found.map(item => `  ${item.path}${item.root ? ` (root: ${item.root})` : " (unrecognized)"}`).join("\n");
   throw new SiloError(
-    `LEGACY_STATE: legacy silo state blocks this account's allocations.\n${listing}\n` +
-    "Stop each listed project with the silo version it was created with (its own down), confirm no legacy registry entries remain, then recreate projects with this silo. " +
-    "Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal. " +
+    `LEGACY_STATE: legacy silo state blocks this account's allocations.\n${found.map(listingLine).join("\n")}\n` +
+    "Clear each entry as listed, confirm no legacy registry entries remain, then recreate projects with this silo. " +
+    "Before the first allocation, announce the cutover, upgrade or retire every old invocation, and ensure all old silo operations are terminal; " +
+    "a project whose silo still resolves to 0.x (check `silo version` in its root, and the host's global silo) recreates this state on its next up. " +
     "No data, ports, clusters or volumes carry over. Silo deleted nothing.",
     "LEGACY_STATE", { details: { found, changed: false, legacy: true } },
   );

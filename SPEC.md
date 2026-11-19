@@ -182,10 +182,30 @@ bind availability check. Checks: `src/core/socket_listeners.test.ts` and
 ## Slots
 
 `silo run --slot <name> ... -- <command>` runs one command while it holds one
-unit of each named slot. Caps live only in `<account home>/.silo/host.toml`,
-resolved like the store; a slot without a cap there, or not declared under
-`[slots.<name>]` in the project config, refuses with `SLOT_UNAVAILABLE` (exit 2)
-before any effect. There is no default cap and no per-project override. Each
+unit of each named slot. A slot not declared under `[slots.<name>]` in the
+project config refuses with `SLOT_UNAVAILABLE` (exit 2) before any effect.
+
+**Caps.** The owner decided (Allen, 2026-11-18, in conversation): "We forgot
+to onboard the hosts. silo should handle this automatically for users
+per-project, optionally per-host." This replaces the 2026-11-16 rule that caps
+live only in the host file with no default and no per-project override
+(design: `docs/design/host-onboarding/README.md`, approved 2026-11-18). A
+project declares a default `cap` per slot, 1-64, either one number or a table
+naming `macos` and/or `linux`. The optional `<account home>/.silo/host.toml`,
+resolved like the store, may set an entry 0-64 per slot. Each grant
+transaction resolves a slot's cap as: the host entry if present (0 turns the
+slot off); otherwise the smallest default recorded by the requesting run and
+every run holding or waiting for that slot; otherwise none. Off and none
+refuse with `SLOT_UNAVAILABLE` naming the source to change. Each queued run
+records its project's default for this OS in its request; runs that recorded
+none contribute nothing. No source yields an unbounded cap, and a typo'd
+`--slot` still refuses. `status` reports each slot's cap with `capSource`
+(`host`, `project` or null), `hostFile` and `projectCaps`, including the
+current project's declared defaults. Checks: `src/core/slot_store.test.ts`
+(smallest default, host override, off/none), `src/core/config.test.ts` (cap
+forms), `src/commands/run.test.ts` (no host file, override, per-OS, status).
+
+Each
 run holds one durable ticket; grants are first in, first out per slot and
 all-or-none across slots in one `BEGIN IMMEDIATE` transaction. A waiting ticket
 holds nothing; a contender may drop the ticket of a waiter proved absent by the
@@ -542,7 +562,15 @@ HOME's `.silo/instances`, plus a legacy lock in the selected root. Malformed,
 stale and lock-only entries block. A version-2 project/generation marker is
 recognized. The check lists findings read-only, performs no attribution and
 prints no generated delete commands. `LEGACY_STATE` exits nonzero with
-`changed:false`; status also reports `legacy:true`.
+`changed:false`; status also reports `legacy:true`. Each registry entry with a
+recorded root is classified, read-only, by whether its own 0.x `down` can
+remove it (0.x removes `sha256(realpath(root)).json`): `reachable`, `moved`
+(the root now resolves to a path whose hash is not the file name, with
+`resolvedRoot`), or `root-missing`. The listing prints the step that clears
+each class: the project's own 0.x `down` for reachable entries, removal by the
+operator for the others after checking the listed ports and PIDs (owner
+decision 2026-11-18, "Classify only": no deletion helper and no 0.x release).
+Checks: `src/core/legacy_check.test.ts`.
 
 Old clients started after cutover are outside the guarantee. They cannot read
 or mutate SQLite claims, but may take lock-only ports, change files or create

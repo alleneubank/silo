@@ -228,19 +228,26 @@ Hooks inherit all generated env vars (ports, hosts, URLs, etc).
 ## Slots
 
 Slots are host resources `silo run` holds for one command (see `silo doc
-commands`). The host operator caps them in `<account home>/.silo/host.toml`;
-a project declares only what each slot needs:
+commands`). A project declares what each slot needs and its default cap; a
+host operator may override caps in `<account home>/.silo/host.toml`:
 
 ```toml
 [slots.ios-simulator]
+cap = { macos = 2 }   # no default on Linux
 env = { OPF_SIM_DEVICE = "opf-slot-${slot}" }
 on-acquire = ["./scripts/acquire-simulator.sh"]
 
 [slots.phone-ports]
+cap = 4
 ports = 6
 env = { OPF_E2E_PHONE_PORT_BASE = "${ports.0}" }
 ```
 
+- `cap` (optional): how many runs may hold the slot at once on a host, 1-64.
+  One number for every OS, or a table naming `macos` and/or `linux`; an OS the
+  table omits has no default. A host file entry overrides it; with none, the
+  smallest default among the projects queued for the slot applies. A slot with
+  no cap from either source refuses with `SLOT_UNAVAILABLE`.
 - `env` (optional): variables injected into `on-acquire` and the command.
   `${slot}` is the unit index (`0 .. cap-1`, stable per unit); `${ports.i}` is
   the i-th port of the slot's block. Other placeholders refuse. Two requested

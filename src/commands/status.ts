@@ -7,9 +7,13 @@ import { commandLiveness } from "../core/owned_command";
 import { SiloError } from "../utils/errors";
 import { ZodError } from "zod";
 import { accountStorePath } from "../core/allocation_domain";
-import { readHostCaps } from "../core/host_caps";
+import { distinctDefaults, hostConfigPath, queuedDefaults, readHostCaps, resolveSlotCap, type ProjectDefault, type SlotCap } from "../core/host_caps";
 import { SlotQueue, runEndedByEsrch } from "../core/slot_store";
-import type { HostCaps, SlotName } from "../core/slot_types";
+import { SlotNameSchema, hostOs, projectCapOn, type HostCaps, type SlotName } from "../core/slot_types";
+import { parseConfig } from "../core/config";
+import type { ResolvedConfig } from "../core/types";
+import path from "node:path";
+import { existsSync, readFileSync } from "node:fs";
 
 type SlotHolder = {
   unit: number; runId: string; root: string; command: string[];
@@ -17,12 +21,32 @@ type SlotHolder = {
   // A fresh ESRCH-only observation; status never releases.
   state: "held" | "ended (releasing)";
 };
-type SlotStatus = { slot: string; cap: number | null; held: number; waiting: number; holders: SlotHolder[] };
+type SlotStatus = {
+  slot: string;
+  // The cap a grant would use now; 0 when the host turns the slot off, null when nothing caps it.
+  cap: number | null;
+  capSource: "host" | "project" | null;
+  hostFile: string | null;
+  // Every project default that applies: queued runs' and the current project's.
+  projectCaps: ProjectDefault[];
+  held: number; waiting: number; holders: SlotHolder[];
+};
 
-/** Host-wide slot holders and waiters; reads the store and host caps without changing either. */
-const readSlotStatus = (storePath: string, caps: HostCaps): SlotStatus[] => {
+/** The current project's defaults on this OS, as its next run would record them. */
+type CurrentProject = { root: string; defaults: ReadonlyMap<SlotName, number | undefined> };
+
+const capValue = (cap: SlotCap): number | null => {
+  switch (cap.kind) {
+    case "host": case "project": return cap.cap;
+    case "off": return 0;
+    case "none": return null;
+  }
+};
+
+/** Host-wide slot holders and waiters; reads the store, host caps and project config without changing any. */
+const readSlotStatus = (storePath: string, host: HostCaps, project: CurrentProject | null): SlotStatus[] => {
   const runs = SlotQueue.inspect(storePath);
-  const names = new Set<SlotName>([...caps.keys(), ...runs.flatMap(queued => queued.run.requests.map(request => request.slot))]);
+  const names = new Set<SlotName>([...host.keys(), ...(project?.defaults.keys() ?? []), ...runs.flatMap(queued => queued.run.requests.map(request => request.slot))]);
   return [...names].sort().map((slot): SlotStatus => {
     const holders = runs.flatMap(({ run }): SlotHolder[] => {
       if (run.phase !== "held") return [];
@@ -34,7 +58,15 @@ const readSlotStatus = (storePath: string, caps: HostCaps): SlotStatus[] => {
       }];
     }).sort((a, b) => a.unit - b.unit);
     const waiting = runs.filter(({ run }) => run.phase === "waiting" && run.requests.some(request => request.slot === slot)).length;
-    return { slot, cap: caps.get(slot) ?? null, held: holders.length, waiting, holders };
+    const own = project?.defaults.get(slot);
+    const projectCaps = [...queuedDefaults(runs, slot), ...(own === undefined ? [] : [{ root: project!.root, cap: own }])];
+    const resolved = resolveSlotCap(host, slot, projectCaps);
+    const fromHost = resolved.kind === "host" || resolved.kind === "off";
+    return {
+      slot, cap: capValue(resolved), capSource: fromHost ? "host" : resolved.kind === "project" ? "project" : null,
+      hostFile: fromHost ? hostConfigPath() : null, projectCaps: distinctDefaults(projectCaps),
+      held: holders.length, waiting, holders,
+    };
   });
 };
 
@@ -73,8 +105,24 @@ export const readStatus = (config: string, changed = false) => {
   const cleanupRequired = project?.phase === "cleanup-required" || operationOwnerAbsent || launchStatus.some((observation, index) =>
     ["completed", "terminated"].includes(observation.state) && !project!.launches[index]!.reconciled,
   );
-  const slots = slotSection();
+  const slots = slotSection(config);
   return { schemaVersion: 1 as const, legacy: false as const, changed, project, launchStatus, operationOwnerAbsent, cleanupRequired, slots };
+};
+
+/** A missing silo.toml declares nothing; an invalid one is a slot-section problem like an invalid host file. */
+const currentProject = (config: string): CurrentProject | null => {
+  const configPath = path.resolve(config);
+  if (!existsSync(configPath)) return null;
+  let slots: ResolvedConfig["slots"];
+  try { slots = parseConfig(readFileSync(configPath, "utf8"), configPath).slots; }
+  catch (error) {
+    if (error instanceof ZodError) throw new SiloError(`INVALID_CONFIG: ${configPath}: ${error.issues[0]?.message ?? "invalid"}`, "INVALID_CONFIG", { cause: error });
+    throw error;
+  }
+  const os = hostOs();
+  const defaults = new Map<SlotName, number | undefined>();
+  for (const [name, declared] of Object.entries(slots)) defaults.set(SlotNameSchema.parse(name), projectCapOn(declared.cap, os));
+  return { root: commandRoot(config), defaults };
 };
 
 type SlotSection = { list: SlotStatus[]; problem: { code: string; message: string } | null };
@@ -83,8 +131,8 @@ type SlotSection = { list: SlotStatus[]; problem: { code: string; message: strin
  * Slot state is host-wide; an unreadable host file or slot queue is reported
  * here and never fails a project's status or lifecycle result.
  */
-const slotSection = (): SlotSection => {
-  try { return { list: readSlotStatus(accountStorePath(), readHostCaps()), problem: null }; }
+const slotSection = (config: string): SlotSection => {
+  try { return { list: readSlotStatus(accountStorePath(), readHostCaps(), currentProject(config)), problem: null }; }
   catch (error) {
     if (error instanceof SiloError) return { list: [], problem: { code: error.code, message: error.message } };
     if (error instanceof ZodError) return { list: [], problem: { code: "SLOT_STATE_INVALID", message: `slot queue row does not parse: ${error.issues[0]?.message ?? "invalid"}` } };
@@ -92,21 +140,28 @@ const slotSection = (): SlotSection => {
   }
 };
 
+const sourceLabel = (slot: SlotStatus): string => {
+  if (slot.capSource === "project" && slot.projectCaps.length > 1) return `project (smallest of ${slot.projectCaps.length})`;
+  return slot.capSource ?? "none";
+};
+
 const time = (iso: string): string => `${iso.slice(11, 19)}Z`;
 
 const logSlots = ({ list: slots, problem }: SlotSection): void => {
   if (problem) logger.warn(`Slots unavailable: ${problem.message}`);
   if (slots.length === 0) return;
-  const rows = [["slot", "cap", "held", "holder", "since", "waiting"]];
+  const rows = [["slot", "cap", "source", "held", "holder", "since", "waiting"]];
   for (const slot of slots) {
     const [first, ...rest] = slot.holders;
     const holder = (h: SlotHolder | undefined) => h ? `#${h.unit} ${h.root}  pid ${h.pid}  ${h.state === "held" ? h.command.join(" ") : h.state}` : "";
-    rows.push([slot.slot, slot.cap === null ? "none" : String(slot.cap), String(slot.held), holder(first), first ? time(first.since) : "", String(slot.waiting)]);
-    for (const h of rest) rows.push(["", "", "", holder(h), time(h.since), ""]);
+    rows.push([slot.slot, slot.cap === null ? "none" : String(slot.cap), sourceLabel(slot), String(slot.held), holder(first), first ? time(first.since) : "", String(slot.waiting)]);
+    for (const h of rest) rows.push(["", "", "", "", holder(h), time(h.since), ""]);
   }
   const widths = rows[0]!.map((_, column) => Math.max(...rows.map(row => row[column]!.length)));
   logger.info("Slots (host-wide):");
   for (const row of rows) logger.info(row.map((cell, column) => cell.padEnd(widths[column]!)).join("  ").trimEnd());
+  const hostFile = slots.find(slot => slot.hostFile !== null)?.hostFile;
+  if (hostFile) logger.info(`Host caps: ${hostFile}`);
 };
 
 export const status = async (options: { config: string }): Promise<void> => {

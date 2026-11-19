@@ -26,9 +26,9 @@ beforeEach(async () => {
 });
 afterEach(() => rmSync(base, { recursive: true }));
 
-const waiting = (requests: { slot: SlotName; ports?: number }[], waiter = { pid: process.pid, identity: selfIdentity }): Extract<SlotRun, { phase: "waiting" }> => ({
-  phase: "waiting", id: randomUUID(), root: base, command: ["true"],
-  requests: requests.map(r => ({ slot: r.slot, ports: r.ports ?? 0 })), waiter, enqueuedAt: "2026-11-16T00:00:00Z",
+const waiting = (requests: { slot: SlotName; ports?: number; cap?: number }[], waiter = { pid: process.pid, identity: selfIdentity }, root = base): Extract<SlotRun, { phase: "waiting" }> => ({
+  phase: "waiting", id: randomUUID(), root, command: ["true"],
+  requests: requests.map(r => ({ slot: r.slot, ports: r.ports ?? 0, ...(r.cap === undefined ? {} : { cap: r.cap }) })), waiter, enqueuedAt: "2026-11-16T00:00:00Z",
 });
 
 const queued = (ticket: number, run: SlotRun): QueuedRun => ({ ticket, run, revision: JSON.stringify(run), completion: null });
@@ -79,6 +79,28 @@ describe("SlotQueue", () => {
     expect(queue.attemptGrant(second.id, caps, new Map(), "t").kind).toBe("waiting");
     expect(queue.release(first.id)).toBe(true);
     expect(queue.attemptGrant(second.id, caps, new Map(), "t").kind).toBe("granted");
+  });
+
+  test("without a host entry the smallest default of every queued project caps the slot; a host entry overrides it", () => {
+    const queue = new SlotQueue(storePath);
+    const noHost = new Map<SlotName, number>();
+    const wide = waiting([{ slot: A, cap: 2 }], undefined, "/projects/wide");
+    const narrow = waiting([{ slot: A, cap: 1 }], undefined, "/projects/narrow");
+    queue.enqueue(wide);
+    expect(queue.attemptGrant(wide.id, noHost, new Map(), "t").kind).toBe("granted");
+    queue.enqueue(narrow);
+    // The narrow project's queued run lowers the cap to 1 while it waits, and one unit is held.
+    const blocked = queue.attemptGrant(narrow.id, noHost, new Map(), "t");
+    expect(blocked.kind === "waiting" && [blocked.decision.cap, blocked.decision.held]).toEqual([1, 1]);
+    expect(queue.attemptGrant(narrow.id, new Map([[A, 2]]), new Map(), "t").kind).toBe("granted");
+  });
+
+  test("a run with no default and no host entry is unavailable; a host entry of 0 turns the slot off", () => {
+    const queue = new SlotQueue(storePath);
+    const run = waiting([{ slot: A }]);
+    queue.enqueue(run);
+    expect(queue.attemptGrant(run.id, new Map(), new Map(), "t")).toEqual({ kind: "unavailable", slot: A, cap: { kind: "none" } });
+    expect(queue.attemptGrant(run.id, new Map([[A, 0]]), new Map(), "t")).toEqual({ kind: "unavailable", slot: A, cap: { kind: "off" } });
   });
 
   test("a peer release only removes the exact revision it proved absent", () => {

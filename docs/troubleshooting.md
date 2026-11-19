@@ -53,6 +53,26 @@ command paused before publication must be drained before the clean scan.
 Do not clear someone else's entry, run an old client after cutover, or change
 HOME to evade the refusal. See `silo doc ports`.
 
+Each listed registry entry says which step clears it. silo 0.x names an entry
+after the SHA-256 of its root's resolved path when it was written, and its
+`down` removes only the entry named after the root's resolved path now:
+
+- **reachable**: stop it with that project's own silo 0.x (`silo down --clean`
+  in its root).
+- **moved**: the root now resolves elsewhere (it became a symlink, or a parent
+  did, or it moved), so no 0.x `down` can remove the entry. **Root missing**:
+  the root is gone, with the same result. For either, check that its listed
+  ports and PIDs are not in use, then delete the file by hand.
+
+Host cutover checklist:
+
+1. Run `silo status` (any 1.x) and clear each listed entry as above.
+2. Upgrade every project that still runs silo 0.x: its pinned version (mise,
+   package.json) and, for unpinned projects, the host's global silo. Check with
+   `silo version` in each project root. A 0.x `up` after cutover writes a new
+   entry and blocks the host again.
+3. Allocate with silo 1.x.
+
 ## BUSY / ALREADY_RUNNING / CONFIG_CHANGED
 
 `BUSY` means another operation owns this root. Wait for that operation; there

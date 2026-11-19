@@ -234,6 +234,11 @@ are in the decision log.
 
 ## Decision log
 
+- 2026-11-18 (owner, in conversation): "We forgot to onboard the hosts. silo
+  should handle this automatically for users per-project, optionally
+  per-host." Supersedes "caps only in the host file" and "no default cap and
+  no per-project override" below; see [host onboarding](../host-onboarding/README.md).
+
 - 2026-11-16 (owner, question tool, on build PR #68): store "Format 4,
   upgrade in place (Recommended)": the first writable open upgrades a
   format-3 store to format 4; 1.0.0 clients refuse a format-4 store rather

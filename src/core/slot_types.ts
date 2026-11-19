@@ -23,7 +23,27 @@ export const renderSlotValue = (template: string, grant: SlotGrant): string =>
     return String(port);
   });
 
+const SlotCapSchema = z.number().int().min(1).max(MAX_SLOT_CAP);
+
+/** The operating systems a project default may name; any other host has no project default. */
+type HostOs = "macos" | "linux";
+
+export const hostOs = (platform: NodeJS.Platform = process.platform): HostOs | null =>
+  platform === "darwin" ? "macos" : platform === "linux" ? "linux" : null;
+
+/** A project's default cap: one value for every OS, or one per OS; an OS it omits gets no default. */
+const ProjectCapSchema = z.union([
+  SlotCapSchema,
+  z.object({ macos: SlotCapSchema.optional(), linux: SlotCapSchema.optional() }).strict()
+    .refine(table => Object.keys(table).length > 0, "name at least one of macos, linux"),
+]);
+type ProjectCap = z.infer<typeof ProjectCapSchema>;
+
+export const projectCapOn = (cap: ProjectCap | undefined, os: HostOs | null): number | undefined =>
+  cap === undefined || typeof cap === "number" ? cap : os === null ? undefined : cap[os];
+
 const SlotConfigObjectSchema = z.object({
+  cap: ProjectCapSchema.optional(),
   env: z.record(z.string()).refine(env => Object.keys(env).length <= MAX_SLOT_ENV, `at most ${MAX_SLOT_ENV} env entries`).default({}),
   "on-acquire": z.array(z.string().min(1)).max(MAX_ON_ACQUIRE_STEPS).default([]),
   ports: z.number().int().min(0).max(MAX_SLOT_PORTS).default(0),
@@ -46,16 +66,20 @@ export const SlotsConfigSchema = z.record(z.string(), SlotConfigSchema).superRef
   }
 });
 
-/** `<account home>/.silo/host.toml`: the host operator's caps. No entry means unavailable. */
+/**
+ * `<account home>/.silo/host.toml`: the host operator's caps. An entry wins
+ * over every project default; 0 turns the slot off on this host.
+ */
 export const HostConfigSchema = z.object({
-  slots: z.record(z.string(), z.number().int().min(1).max(MAX_SLOT_CAP)).default({}),
+  slots: z.record(z.string(), z.number().int().min(0).max(MAX_SLOT_CAP)).default({}),
 }).strict();
 export type HostCaps = ReadonlyMap<SlotName, number>;
 
 /** One process recorded by a run: its PID and the `ps` start identity observed for it. */
 const RecordedProcessSchema = z.object({ pid: z.number().int().min(2), identity: z.string().min(1) });
 
-const SlotRequestSchema = z.object({ slot: SlotNameSchema, ports: z.number().int().min(0).max(MAX_SLOT_PORTS) });
+/** `cap` is the requesting project's default on this OS; runs recorded by silo 1.2.0 carry none. */
+const SlotRequestSchema = z.object({ slot: SlotNameSchema, ports: z.number().int().min(0).max(MAX_SLOT_PORTS), cap: SlotCapSchema.optional() });
 export type SlotRequest = z.infer<typeof SlotRequestSchema>;
 
 const SlotGrantSchema = z.object({

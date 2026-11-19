@@ -195,9 +195,12 @@ Options:
 Run a command in one supervised process group, optionally holding host slots
 and under a deadline.
 
-Slots are declared in silo.toml ([slots.<name>]: env, on-acquire, ports) and
-capped per host in <account home>/.silo/host.toml ([slots] <name> = <cap>).
-A slot with no cap on this host is unavailable (exit 2, SLOT_UNAVAILABLE).
+Slots are declared in silo.toml ([slots.<name>]: cap, env, on-acquire, ports).
+cap is the project's default, one number or { macos = <n>, linux = <n> }. An
+optional <account home>/.silo/host.toml ([slots] <name> = <cap>) overrides it
+on one host; 0 turns the slot off. Without a host entry, the smallest default
+among the projects queued for the slot applies. A slot with no cap from
+either is unavailable (exit 2, SLOT_UNAVAILABLE).
 Runs queue first in, first out; several slots are granted together or not
 at all. Waiting holds nothing. On grant, each on-acquire step runs in the
 project root with the slot env, then the command, in one supervised process

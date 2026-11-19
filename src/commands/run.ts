@@ -2,15 +2,15 @@ import { randomUUID } from "node:crypto";
 import { loadConfig } from "../core/config";
 import { assertNoLegacyState } from "../core/legacy_check";
 import { accountStorePath } from "../core/allocation_domain";
-import { hostConfigPath, readHostCaps } from "../core/host_caps";
+import { hostConfigPath, readHostCaps, resolveSlotCap, type SlotCap } from "../core/host_caps";
 import { drainWindowMs } from "../core/owned_command";
 import { supervise, waitUntil, type Deadline, type Supervised, type UnprovedReason } from "./run_supervision";
 import { findPortBlock, livePortSpace, type PortSpace } from "../core/ports";
 import { probeProcess, processIdentity } from "../core/process_identity";
 import { SlotQueue, runLiveness, type GrantAttempt, type GrantDecision, type QueuedRun } from "../core/slot_store";
 import {
-  MAX_RUN_SLOTS, SlotNameSchema, renderSlotValue,
-  type HeldSlotRun, type HostCaps, type RunExecutorGrant, type SlotCompletion, type SlotConfig, type SlotExecutorGrant, type SlotGrant, type SlotName, type SlotRequest,
+  MAX_RUN_SLOTS, SlotNameSchema, hostOs, projectCapOn, renderSlotValue,
+  type HeldSlotRun, type RunExecutorGrant, type SlotCompletion, type SlotConfig, type SlotExecutorGrant, type SlotGrant, type SlotName, type SlotRequest,
 } from "../core/slot_types";
 import { TILT_DRAIN_GRACE_MS } from "../core/constants";
 import { SiloError } from "../utils/errors";
@@ -90,41 +90,39 @@ const parseLimits = (options: RunOptions): Limits => {
   };
 };
 
-const unavailable = (slot: string, where: string): SiloError => new SiloError(
-  `SLOT_UNAVAILABLE: slot '${slot}' is not ${where}`, "SLOT_UNAVAILABLE", { details: { slot, exitCode: SLOT_UNAVAILABLE_EXIT } },
+const unavailable = (slot: string, reason: string): SiloError => new SiloError(
+  `SLOT_UNAVAILABLE: slot '${slot}' ${reason}`, "SLOT_UNAVAILABLE", { details: { slot, exitCode: SLOT_UNAVAILABLE_EXIT } },
 );
 
-type Plan = { root: string; requests: SlotRequest[]; configs: ReadonlyMap<SlotName, SlotConfig> };
+type Plan = { root: string; configPath: string; requests: SlotRequest[]; configs: ReadonlyMap<SlotName, SlotConfig> };
 
-const notCapped = (slot: string): SiloError => unavailable(slot, `capped on this host; add it under [slots] in ${hostConfigPath()}`);
-
-/** Caps are re-read for every grant attempt, so an operator's change applies to queued runs. */
-const currentCaps = (slots: readonly SlotName[]): HostCaps => {
-  const caps = readHostCaps();
-  const missing = slots.find(slot => !caps.has(slot));
-  if (missing !== undefined) throw notCapped(missing);
-  return caps;
-};
+const uncapped = (slot: SlotName, cap: Extract<SlotCap, { kind: "off" | "none" }>, configPath: string): SiloError => cap.kind === "off"
+  ? unavailable(slot, `is turned off on this host (${slot} = 0 in ${hostConfigPath()})`)
+  : unavailable(slot, `has no cap on this host (${hostOs() ?? process.platform}). Add \`cap = <n>\` under [slots.${slot}] in ${configPath}, or \`${slot} = <n>\` under [slots] in ${hostConfigPath()}`);
 
 /** Every refusal here happens before any store effect. */
 const plan = async (options: RunOptions): Promise<Plan> => {
   if (options.slots.length > MAX_RUN_SLOTS) throw new SiloError(`INVALID_ARGUMENT: at most ${MAX_RUN_SLOTS} --slot values`, "INVALID_ARGUMENT");
   if (new Set(options.slots).size !== options.slots.length) throw new SiloError("INVALID_ARGUMENT: each --slot may be named once; a run holds one unit of each", "INVALID_ARGUMENT");
   const config = await loadConfig(options.config);
+  const root = commandRoot(options.config);
+  const host = readHostCaps();
+  const os = hostOs();
   const configs = new Map<SlotName, SlotConfig>();
+  const requests: SlotRequest[] = [];
   for (const name of [...options.slots].sort()) {
     const slot = SlotNameSchema.safeParse(name);
     const declared = slot.success ? config.slots[slot.data] : undefined;
-    if (!slot.success || declared === undefined) throw unavailable(name, `declared in ${config.configPath} ([slots.${name}])`);
+    if (!slot.success || declared === undefined) throw unavailable(name, `is not declared in ${config.configPath} ([slots.${name}])`);
+    const projectCap = projectCapOn(declared.cap, os);
+    const cap = resolveSlotCap(host, slot.data, projectCap === undefined ? [] : [{ root, cap: projectCap }]);
+    if (cap.kind === "off" || cap.kind === "none") throw uncapped(slot.data, cap, config.configPath);
     configs.set(slot.data, declared);
+    requests.push({ slot: slot.data, ports: declared.ports, ...(projectCap === undefined ? {} : { cap: projectCap }) });
   }
-  currentCaps([...configs.keys()]);
   const keys = [...configs.values()].flatMap(slot => Object.keys(slot.env));
   if (new Set(keys).size !== keys.length) throw new SiloError("INVALID_CONFIG: the requested slots inject the same env variable", "INVALID_CONFIG");
-  return {
-    root: commandRoot(options.config), configs,
-    requests: [...configs.entries()].map(([slot, declared]) => ({ slot, ports: declared.ports })),
-  };
+  return { root, configPath: config.configPath, configs, requests };
 };
 
 const holderLabel = (queued: QueuedRun | undefined, slot: SlotName): string => {
@@ -193,8 +191,10 @@ const waitForGrant = async (queue: SlotQueue, runId: string, planned: Plan, wait
   for (;;) {
     signal?.throwIfAborted();
     await releaseAbsentPeers(queue, runId, slots, reported);
-    const attempt: GrantAttempt = queue.attemptGrant(runId, currentCaps(slots), blocks, new Date().toISOString());
+    // The host file is re-read for every attempt, so an operator's change applies to queued runs.
+    const attempt: GrantAttempt = queue.attemptGrant(runId, readHostCaps(), blocks, new Date().toISOString());
     if (attempt.kind === "granted") return attempt.run;
+    if (attempt.kind === "unavailable") throw uncapped(attempt.slot, attempt.cap, planned.configPath);
     if (attempt.kind === "needs-ports") {
       if (++portRaces > MAX_PORT_RACES) throw new SiloError("PORTS_EXHAUSTED: slot port blocks kept losing to concurrent claims", "PORTS_EXHAUSTED");
       blocks = await choosePorts(planned.requests, attempt.claimed, space!);
