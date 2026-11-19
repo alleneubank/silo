@@ -87,8 +87,9 @@ gui-session = 0      # this host has no GUI session: refuse
 Effective cap of a slot, decided inside each grant transaction:
 
 1. The host file entry, if present (re-read for every grant attempt, as today).
-2. Otherwise, the **smallest** project default among the requesting run and
-   every run that holds or waits for that slot (each queued run records the
+2. Otherwise, if the requesting project declares a default for this OS, the
+   **smallest** project default among the requesting run and every run that
+   holds or waits for that slot (each queued run records the
    default its project declared when it enqueued).
 3. Otherwise unavailable: `SLOT_UNAVAILABLE` before any effect.
 
@@ -140,6 +141,9 @@ SLOT_UNAVAILABLE: slot 'gui-session' is turned off on this host (gui-session = 0
   parses and ignores it; 1.2.0 runs record none and contribute nothing to the
   smallest-default rule. A 1.2.0 run on a host with no host entry refuses as it
   does today, so mixed versions never exceed a host entry.
+- A host-file `0` is rejected by silo 1.2.0 (its host schema requires 1+),
+  failing every 1.2.0 slot run on that host; write one only after every silo
+  on the host is upgraded. `status --json` `cap` may now be `0` (off).
 - No store format change.
 - aem5's and pixelproton's hand-written host files keep working unchanged
   (host entries win). Once op-forward declares `cap`, an operator may delete

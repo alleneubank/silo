@@ -101,6 +101,9 @@ describe("SlotQueue", () => {
     queue.enqueue(run);
     expect(queue.attemptGrant(run.id, new Map(), new Map(), "t")).toEqual({ kind: "unavailable", slot: A, cap: { kind: "none" } });
     expect(queue.attemptGrant(run.id, new Map([[A, 0]]), new Map(), "t")).toEqual({ kind: "unavailable", slot: A, cap: { kind: "off" } });
+    // Another project's queued default only lowers a cap; it never supplies one.
+    queue.enqueue(waiting([{ slot: A, cap: 1 }], undefined, "/projects/other"));
+    expect(queue.attemptGrant(run.id, new Map(), new Map(), "t")).toEqual({ kind: "unavailable", slot: A, cap: { kind: "none" } });
   });
 
   test("a peer release only removes the exact revision it proved absent", () => {

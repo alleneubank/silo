@@ -139,8 +139,9 @@ export class SlotQueue {
       if (self?.run.phase !== "waiting") throw new SiloError(`STALE_SLOT_RUN: run ${runId} is no longer waiting`, "STALE_SLOT_RUN");
       const waiting = self.run;
       const caps = new Map<SlotName, number>();
-      for (const { slot } of waiting.requests) {
-        const cap = resolveSlotCap(host, slot, queuedDefaults(runs, slot));
+      for (const { slot, cap: own } of waiting.requests) {
+        // A run needs a host entry or its own project's default; other projects' defaults only lower it.
+        const cap = !host.has(slot) && own === undefined ? { kind: "none" as const } : resolveSlotCap(host, slot, queuedDefaults(runs, slot));
         if (cap.kind === "off" || cap.kind === "none") return { kind: "unavailable", slot, cap };
         caps.set(slot, cap.cap);
       }

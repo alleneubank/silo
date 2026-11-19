@@ -13,7 +13,10 @@ names both places to set one. `silo status` shows each slot's cap source
 (`--json`: `capSource`, `hostFile`, `projectCaps`).
 
 `cap` is new in silo.toml and silo 1.2.0 rejects it: a project that adds it
-must require this release. Existing host files keep working unchanged.
+must require this release. Existing host files keep working unchanged, but
+silo 1.2.0 rejects a host file containing a `0` entry, for every slot: upgrade
+every silo on the host before writing one. In `status --json`, a slot's `cap`
+is `0` when the host turns it off.
 
 `LEGACY_STATE` now says, for each silo 0.x registry entry, whether that
 project's own 0.x `down` can remove it. An entry whose root moved or became a

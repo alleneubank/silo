@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
@@ -74,6 +74,18 @@ describe("host-wide read-only legacy refusal", () => {
     await expect(refusal).rejects.toThrow(`its root now resolves to ${real}, so no silo 0.x down can remove it`);
     await expect(refusal).rejects.toThrow(`\`silo down --clean\` in ${real}`);
     expect(readdirSync(inputs.registryDir).sort()).toEqual([path.basename(moved), path.basename(reachable)].sort());
+  });
+
+  test("a root that cannot be resolved stays listed as unresolvable", async () => {
+    const locked = path.join(base, "locked");
+    mkdirSync(path.join(locked, "proj"), { recursive: true });
+    mkdirSync(inputs.registryDir);
+    const entry = path.join(inputs.registryDir, "entry.json");
+    writeFileSync(entry, JSON.stringify({ projectRoot: path.join(locked, "proj") }));
+    chmodSync(locked, 0o000);
+    try {
+      expect(await findLegacyState(root, inputs)).toEqual([{ kind: "registry", path: entry, root: path.join(locked, "proj"), reach: "unresolvable", errorCode: "EACCES" }]);
+    } finally { chmodSync(locked, 0o755); }
   });
 
   test("a failed directory query refuses instead of proving the account clean", async () => {

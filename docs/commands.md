@@ -83,16 +83,20 @@ gui-session = 0     # this host has no GUI session
 A slot's cap comes from, in order:
 
 1. the host file's entry, up or down; `0` turns the slot off on this host;
-2. otherwise the smallest default among the requesting run and every run
-   holding or waiting for the slot, so one project cannot push the host past
-   what another queued project declared;
+2. otherwise, when the requesting project declares a default for this OS, the
+   smallest default among the requesting run and every run holding or waiting
+   for the slot, so one project cannot push the host past what another queued
+   project declared;
 3. otherwise none: `run` refuses with `SLOT_UNAVAILABLE` (exit 2) before any
    effect, naming the slot, the `silo.toml` and the host file.
 
 A `--slot` name the project does not declare also refuses with
 `SLOT_UNAVAILABLE`. `silo status` shows each slot's cap and its source
 (`host`, `project`, or `project (smallest of N)`); `--json` adds `capSource`,
-`hostFile` and `projectCaps` (`[{ root, cap }]`).
+`hostFile` and `projectCaps` (`[{ root, cap }]`); `cap` is `0` for a slot the
+host turned off and `null` for one nothing caps. A host-file `0` is new: silo
+1.2.0 rejects a host file containing it, for every slot, so upgrade every
+silo on the host before writing one.
 
 `run` joins the queue with one durable ticket and waits. Tickets are granted
 first in, first out: a run takes a unit of a slot only while more units are

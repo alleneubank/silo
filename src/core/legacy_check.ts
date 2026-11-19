@@ -28,7 +28,8 @@ const StoreMarkerSchema = z.object({
 type Reach =
   | { reach: "reachable" }
   | { reach: "moved"; resolvedRoot: string }
-  | { reach: "root-missing" };
+  | { reach: "root-missing" }
+  | { reach: "unresolvable"; errorCode: string };
 
 type LegacyFinding = {
   kind: "registry" | "lock";
@@ -69,8 +70,9 @@ const reachOf = async (file: string, root: string): Promise<Reach> => {
   let resolvedRoot: string;
   try { resolvedRoot = await fs.realpath(root); }
   catch (error) {
-    if (missing(error) || (error instanceof Error && "code" in error && error.code === "ENOTDIR")) return { reach: "root-missing" };
-    throw error;
+    // Any failure to resolve keeps the entry listed; only the listing's advice depends on why.
+    const code = error instanceof Error && "code" in error ? String(error.code) : "unknown";
+    return code === "ENOENT" || code === "ENOTDIR" ? { reach: "root-missing" } : { reach: "unresolvable", errorCode: code };
   }
   const key = createHash("sha256").update(resolvedRoot).digest("hex");
   return path.basename(file) === `${key}.json` ? { reach: "reachable" } : { reach: "moved", resolvedRoot };
@@ -129,6 +131,7 @@ const nextStep = (finding: LegacyFinding, root: string): string | null => {
   if (finding.reach === undefined) return null;
   if (finding.reach === "reachable") return `stop it with that project's own silo 0.x (\`silo down --clean\` in ${root})`;
   if (finding.reach === "moved") return `its root now resolves to ${finding.resolvedRoot}, so no silo 0.x down can remove it; if nothing uses it, delete the file`;
+  if (finding.reach === "unresolvable") return `its root cannot be resolved (${finding.errorCode}), so a silo 0.x down there may not remove it; if nothing uses it, delete the file`;
   return "its root no longer exists, so no silo 0.x down can remove it; if nothing uses it, delete the file";
 };
 

@@ -194,14 +194,17 @@ project declares a default `cap` per slot, 1-64, either one number or a table
 naming `macos` and/or `linux`. The optional `<account home>/.silo/host.toml`,
 resolved like the store, may set an entry 0-64 per slot. Each grant
 transaction resolves a slot's cap as: the host entry if present (0 turns the
-slot off); otherwise the smallest default recorded by the requesting run and
-every run holding or waiting for that slot; otherwise none. Off and none
+slot off); otherwise, when the requesting run recorded its own default, the
+smallest default recorded by it and every run holding or waiting for that
+slot; otherwise none. Off and none
 refuse with `SLOT_UNAVAILABLE` naming the source to change. Each queued run
 records its project's default for this OS in its request; runs that recorded
 none contribute nothing. No source yields an unbounded cap, and a typo'd
 `--slot` still refuses. `status` reports each slot's cap with `capSource`
 (`host`, `project` or null), `hostFile` and `projectCaps`, including the
-current project's declared defaults. Checks: `src/core/slot_store.test.ts`
+current project's declared defaults; `cap` is 0 when the host turns the slot
+off. An unreadable or invalid `silo.toml` becomes the slot section's problem
+and never fails status. silo 1.2.0 rejects a host file with a 0 entry. Checks: `src/core/slot_store.test.ts`
 (smallest default, host override, off/none), `src/core/config.test.ts` (cap
 forms), `src/commands/run.test.ts` (no host file, override, per-OS, status).
 

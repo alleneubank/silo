@@ -769,6 +769,13 @@ test("legacy state refuses a run only when a requested slot claims ports", async
   } finally { rmSync(path.join(registry, "legacy.json")); }
 }, 60_000);
 
+test("an unparseable silo.toml is reported in status's slots section without failing status", async () => {
+  const root = project("[slots.broken\n");
+  const status = await runCli(root, ["status", "--json"]);
+  expect(status.exitCode).toBe(0);
+  expect(JSON.parse(status.stdout).slots).toMatchObject({ list: [], problem: { code: "INVALID_CONFIG" } });
+}, 60_000);
+
 test("an invalid host file is reported in status's slots section without failing status", async () => {
   writeFileSync(hostFile, "[slots]\nbad = 65\n");
   try {

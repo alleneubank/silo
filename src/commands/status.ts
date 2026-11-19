@@ -114,10 +114,11 @@ const currentProject = (config: string): CurrentProject | null => {
   const configPath = path.resolve(config);
   if (!existsSync(configPath)) return null;
   let slots: ResolvedConfig["slots"];
+  // Unreadable, unparseable (SyntaxError) or invalid config all become the slot section's problem.
   try { slots = parseConfig(readFileSync(configPath, "utf8"), configPath).slots; }
   catch (error) {
-    if (error instanceof ZodError) throw new SiloError(`INVALID_CONFIG: ${configPath}: ${error.issues[0]?.message ?? "invalid"}`, "INVALID_CONFIG", { cause: error });
-    throw error;
+    const detail = error instanceof ZodError ? error.issues[0]?.message ?? "invalid" : error instanceof Error ? error.message : String(error);
+    throw new SiloError(`INVALID_CONFIG: ${configPath}: ${detail}`, "INVALID_CONFIG", { cause: error });
   }
   const os = hostOs();
   const defaults = new Map<SlotName, number | undefined>();
