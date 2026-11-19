@@ -2,6 +2,7 @@ import type { Database } from "bun:sqlite";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { SiloError } from "../utils/errors";
+import { queuedDefaults, resolveSlotCap, type SlotCap } from "./host_caps";
 import { hasSlotTables, openDatabase } from "./lease_store";
 import { probeProcess, recordedProcessLiveness, type Liveness } from "./process_identity";
 import {
@@ -30,11 +31,11 @@ const requestsSlot = (queued: QueuedRun, slot: SlotName): boolean =>
  * overtakes an earlier one on a slot both want, and a multi-slot run is granted
  * every slot at once or none.
  */
-export const decideGrant = (caps: HostCaps, runs: readonly QueuedRun[], ticket: number, slots: readonly SlotName[]): GrantDecision => {
+export const decideGrant = (caps: ReadonlyMap<SlotName, number>, runs: readonly QueuedRun[], ticket: number, slots: readonly SlotName[]): GrantDecision => {
   const units = new Map<SlotName, number>();
   for (const slot of slots) {
     const cap = caps.get(slot);
-    assert(cap !== undefined, `Slot ${slot} was validated against the host caps`);
+    assert(cap !== undefined && cap >= 1, `Slot ${slot} has a resolved cap`);
     const holders = runs.filter(queued => holdsSlot(queued, slot));
     const held = new Set(holders.flatMap(queued => queued.run.phase === "held" ? queued.run.grants.filter(g => g.slot === slot).map(g => g.unit) : []));
     const ahead = runs.filter(queued => queued.ticket < ticket && queued.run.phase === "waiting" && requestsSlot(queued, slot)).length;
@@ -50,6 +51,7 @@ export const decideGrant = (caps: HostCaps, runs: readonly QueuedRun[], ticket: 
 
 export type GrantAttempt =
   | { kind: "granted"; run: HeldSlotRun }
+  | { kind: "unavailable"; slot: SlotName; cap: Extract<SlotCap, { kind: "off" | "none" }> }
   | { kind: "waiting"; decision: Extract<GrantDecision, { kind: "wait" }> }
   // Port blocks are probed outside the store lock; the transaction only checks claims.
   | { kind: "needs-ports"; claimed: ReadonlySet<number> };
@@ -126,13 +128,23 @@ export class SlotQueue {
     });
   }
 
-  /** Grants every requested unit and port block in one transaction, or nothing. */
-  attemptGrant(runId: string, caps: HostCaps, blocks: ReadonlyMap<SlotName, readonly number[]>, grantedAt: string): GrantAttempt {
+  /**
+   * Grants every requested unit and port block in one transaction, or nothing.
+   * Caps resolve here, against the queue this transaction reads.
+   */
+  attemptGrant(runId: string, host: HostCaps, blocks: ReadonlyMap<SlotName, readonly number[]>, grantedAt: string): GrantAttempt {
     return this.write((db): GrantAttempt => {
       const runs = selectRuns(db);
       const self = runs.find(queued => queued.run.id === runId);
       if (self?.run.phase !== "waiting") throw new SiloError(`STALE_SLOT_RUN: run ${runId} is no longer waiting`, "STALE_SLOT_RUN");
       const waiting = self.run;
+      const caps = new Map<SlotName, number>();
+      for (const { slot, cap: own } of waiting.requests) {
+        // A run needs a host entry or its own project's default; other projects' defaults only lower it.
+        const cap = !host.has(slot) && own === undefined ? { kind: "none" as const } : resolveSlotCap(host, slot, queuedDefaults(runs, slot));
+        if (cap.kind === "off" || cap.kind === "none") return { kind: "unavailable", slot, cap };
+        caps.set(slot, cap.cap);
+      }
       const decision = decideGrant(caps, runs, self.ticket, waiting.requests.map(request => request.slot));
       if (decision.kind === "wait") return { kind: "waiting", decision };
       const claimed = claimedPorts(db);

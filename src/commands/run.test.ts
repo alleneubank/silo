@@ -172,6 +172,7 @@ test("an uncapped slot is SLOT_UNAVAILABLE before any store effect", async () =>
   const error = JSON.parse(result.stdout);
   expect(error).toMatchObject({ schemaVersion: 1, code: "SLOT_UNAVAILABLE", slot: "uncapped" });
   expect(error.message).toContain(hostFile);
+  expect(error.message).toContain(`under [slots.uncapped] in ${path.join(root, "silo.toml")}`);
   expect(existsSync(storePath)).toBe(false);
 });
 
@@ -519,6 +520,48 @@ for (const signal of ["SIGINT", "SIGTERM"] as const) {
   }, 60_000);
 }
 
+test("with no host file the project's default cap applies, and status names the project as its source", async () => {
+  rmSync(hostFile, { force: true });
+  const root = project("[slots.defaulted]\ncap = 1\n");
+  const holder = start(root, ["run", "--slot", "defaulted", "--", ...holdUntil("release-defaulted")]);
+  await waitFor(() => existsSync(path.join(root, "release-defaulted.started")), "holder command");
+  const waiter = start(root, ["run", "--slot", "defaulted", "--", "true"]);
+  await waitFor(() => waiter.stderrSoFar().includes("waiting for defaulted (1/1 held"), "waiter bounded by the project default");
+  const status = await runCli(root, ["status", "--json"]);
+  const listed = JSON.parse(status.stdout).slots.list.find((s: { slot: string }) => s.slot === "defaulted");
+  expect(listed).toMatchObject({ cap: 1, capSource: "project", hostFile: null, projectCaps: [{ root, cap: 1 }], held: 1, waiting: 1 });
+  expect((await runCli(root, ["status"])).stdout).toMatch(/defaulted\s+1\s+project\s+1\s+#0/);
+  writeFileSync(path.join(root, "release-defaulted"), "");
+  expect((await Promise.all([settle(holder, "holder"), settle(waiter, "waiter")])).map(r => r.exitCode)).toEqual([0, 0]);
+}, 60_000);
+
+test("a host entry overrides the project default either way, and 0 turns the slot off", async () => {
+  const root = project("[slots.overridden]\ncap = 1\n");
+  setCaps({ overridden: 0 });
+  const refused = await runCli(root, ["run", "--slot", "overridden", "--json", "--", "true"]);
+  expect(refused.exitCode).toBe(2);
+  expect(JSON.parse(refused.stdout)).toMatchObject({ code: "SLOT_UNAVAILABLE", message: `SLOT_UNAVAILABLE: slot 'overridden' is turned off on this host (overridden = 0 in ${hostFile})` });
+  setCaps({ overridden: 2 });
+  const status = JSON.parse((await runCli(root, ["status", "--json"])).stdout).slots.list.find((s: { slot: string }) => s.slot === "overridden");
+  expect(status).toMatchObject({ cap: 2, capSource: "host", hostFile, projectCaps: [{ root, cap: 1 }] });
+  const first = start(root, ["run", "--slot", "overridden", "--", ...holdUntil("release-1")]);
+  const second = start(root, ["run", "--slot", "overridden", "--", ...holdUntil("release-2")]);
+  await waitFor(() => existsSync(path.join(root, "release-1.started")) && existsSync(path.join(root, "release-2.started")), "two holders above the project default");
+  writeFileSync(path.join(root, "release-1"), "");
+  writeFileSync(path.join(root, "release-2"), "");
+  expect((await Promise.all([settle(first, "first"), settle(second, "second")])).map(r => r.exitCode)).toEqual([0, 0]);
+  setCaps({});
+}, 60_000);
+
+test("a per-OS default that omits this OS leaves the slot uncapped here", async () => {
+  rmSync(hostFile, { force: true });
+  const other = process.platform === "darwin" ? "linux" : "macos";
+  const root = project(`[slots.elsewhere]\ncap = { ${other} = 1 }\n`);
+  const result = await runCli(root, ["run", "--slot", "elsewhere", "--json", "--", "true"]);
+  expect(result.exitCode).toBe(2);
+  expect(JSON.parse(result.stdout).message).toContain(`slot 'elsewhere' has no cap on this host (${process.platform === "darwin" ? "macos" : "linux"})`);
+});
+
 test("status names holders and waiters without changing the queue", async () => {
   setCaps({ observed: 1 });
   const root = project("[slots.observed]\n");
@@ -530,9 +573,9 @@ test("status names holders and waiters without changing the queue", async () => 
   const status = await runCli(root, ["status", "--json"]);
   expect(status.exitCode).toBe(0);
   const observed = JSON.parse(status.stdout).slots.list.find((s: { slot: string }) => s.slot === "observed");
-  expect(observed).toMatchObject({ slot: "observed", cap: 1, held: 1, waiting: 1, holders: [{ unit: 0, root, state: "held", command: holdUntil("release-observed"), pid: holder.proc.pid }] });
+  expect(observed).toMatchObject({ slot: "observed", cap: 1, capSource: "host", hostFile, held: 1, waiting: 1, holders: [{ unit: 0, root, state: "held", command: holdUntil("release-observed"), pid: holder.proc.pid }] });
   const text = await runCli(root, ["status"]);
-  expect(text.stdout).toMatch(/observed\s+1\s+1\s+#0 \S+\s+pid \d+/);
+  expect(text.stdout).toMatch(/observed\s+1\s+host\s+1\s+#0 \S+\s+pid \d+/);
   expect(runs()).toEqual(before);
   writeFileSync(path.join(root, "release-observed"), "");
   expect((await Promise.all([settle(holder, "holder"), settle(waiter, "waiter")])).map(r => r.exitCode)).toEqual([0, 0]);
@@ -726,8 +769,15 @@ test("legacy state refuses a run only when a requested slot claims ports", async
   } finally { rmSync(path.join(registry, "legacy.json")); }
 }, 60_000);
 
+test("an unparseable silo.toml is reported in status's slots section without failing status", async () => {
+  const root = project("[slots.broken\n");
+  const status = await runCli(root, ["status", "--json"]);
+  expect(status.exitCode).toBe(0);
+  expect(JSON.parse(status.stdout).slots).toMatchObject({ list: [], problem: { code: "INVALID_CONFIG" } });
+}, 60_000);
+
 test("an invalid host file is reported in status's slots section without failing status", async () => {
-  writeFileSync(hostFile, "[slots]\nbad = 0\n");
+  writeFileSync(hostFile, "[slots]\nbad = 65\n");
   try {
     const root = project("");
     const status = await runCli(root, ["status", "--json"]);

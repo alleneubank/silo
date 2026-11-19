@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import os from "os";
 import path from "path";
 import { promises as fs } from "fs";
-import { loadConfig } from "./config";
+import { loadConfig, parseConfig } from "./config";
+import { projectCapOn } from "./slot_types";
 import { applyProfile } from "./profile";
 
 const withConfig = async (section: string, run: (configPath: string) => Promise<void>) => {
@@ -124,5 +125,20 @@ API_PORT = 0
     } finally {
       await fs.rm(tempDir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("slot default caps", () => {
+  const slotsOf = (cap: string) => parseConfig(`version = 1\n[slots.sim]\ncap = ${cap}\n`, "/p/silo.toml").slots;
+
+  test("accepts one cap for every OS or a per-OS table, and resolves it for this OS", () => {
+    expect(projectCapOn(slotsOf("2")["sim"]!.cap, "linux")).toBe(2);
+    const table = slotsOf("{ macos = 2, linux = 1 }")["sim"]!.cap;
+    expect([projectCapOn(table, "macos"), projectCapOn(table, "linux"), projectCapOn(table, null)]).toEqual([2, 1, undefined]);
+    expect(projectCapOn(slotsOf("{ macos = 2 }")["sim"]!.cap, "linux")).toBeUndefined();
+  });
+
+  test.each(["0", "65", "1.5", "{}", "{ windows = 1 }", "{ macos = 0 }", '"unlimited"'])("rejects cap = %s", cap => {
+    expect(() => slotsOf(cap)).toThrow();
   });
 });

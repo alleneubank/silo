@@ -69,20 +69,34 @@ silo run [--slot <name>]... [--wait <duration>] [--timeout <duration>] [--kill-a
 
 A slot is a host resource several projects share, such as a simulator, an
 emulator or a GUI session. The project declares what isolation each slot needs
-in `silo.toml` (`[slots.<name>]`: `env`, `on-acquire`, `ports`; see `silo doc
-config`). The host operator caps each slot in
-`<account home>/.silo/host.toml`, resolved through the native account home like
-the store:
+in `silo.toml` (`[slots.<name>]`: `cap`, `env`, `on-acquire`, `ports`; see
+`silo doc config`), including a default `cap`, so a new host needs no setup.
+A host operator may override any cap in `<account home>/.silo/host.toml`,
+resolved through the native account home like the store:
 
 ```toml
 [slots]
-ios-simulator = 2
-gui-session = 1
+ios-simulator = 1   # this host takes one simulator, whatever projects declare
+gui-session = 0     # this host has no GUI session
 ```
 
-There is no default cap and no per-project override: a slot with no cap on
-this host is unavailable, and `run` refuses with `SLOT_UNAVAILABLE` (exit 2)
-naming the slot and the host file before any effect.
+A slot's cap comes from, in order:
+
+1. the host file's entry, up or down; `0` turns the slot off on this host;
+2. otherwise, when the requesting project declares a default for this OS, the
+   smallest default among the requesting run and every run holding or waiting
+   for the slot, so one project cannot push the host past what another queued
+   project declared;
+3. otherwise none: `run` refuses with `SLOT_UNAVAILABLE` (exit 2) before any
+   effect, naming the slot, the `silo.toml` and the host file.
+
+A `--slot` name the project does not declare also refuses with
+`SLOT_UNAVAILABLE`. `silo status` shows each slot's cap and its source
+(`host`, `project`, or `project (smallest of N)`); `--json` adds `capSource`,
+`hostFile` and `projectCaps` (`[{ root, cap }]`); `cap` is `0` for a slot the
+host turned off and `null` for one nothing caps. A host-file `0` is new: silo
+1.2.0 rejects a host file containing it, for every slot, so upgrade every
+silo on the host before writing one.
 
 `run` joins the queue with one durable ticket and waits. Tickets are granted
 first in, first out: a run takes a unit of a slot only while more units are
@@ -115,8 +129,8 @@ group, so a terminal's Ctrl-C reaches it as Janitor's SIGTERM to the group,
 followed by SIGKILL after the `--kill-after` grace (5 seconds by default), not
 as SIGINT.
 
-Caps are re-read on every grant attempt, so lowering a cap applies to runs
-already queued; units already held above the new cap stay held until released.
+The host file is re-read and caps resolved on every grant attempt, so lowering
+a cap applies to runs already queued; units already held above the new cap stay held until released.
 A waiter that cannot prove a holder gone (permission denied, or an unreadable
 identity) keeps waiting and says so once. Each waiting pass also releases, under
 the same proof, up to eight rows of other slots whose `silo run` process is
