@@ -31,7 +31,7 @@ export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<R
     throw new SiloError("CLEANUP_REQUIRED: reconcile this generation with down before starting again", "CLEANUP_REQUIRED");
   }
   const config = storedConfig(current.allocation);
-  const tools = ["tilt", "janitor", "docker", ...(config.k3d?.enabled ? ["k3d"] : [])];
+  const tools = ["tilt", "docker", ...(config.k3d?.enabled ? ["k3d"] : [])];
   const advertise = resolveRegistryAdvertiseSettings({ config, state: current.allocation.state, urls: current.allocation.urls });
   if (advertise) tools.push("kubectl");
   await ensureToolsAvailable(tools);

@@ -31,7 +31,7 @@ Do not run `tilt up` or `tilt down` while silo owns the stack. Do not run
 ## Expectations
 
 - A `Tiltfile` is expected in the current directory.
-- `tilt` and [janitor](https://github.com/alleneubank/janitor) must be on PATH.
+- `tilt` must be on PATH. silo brings its own Janitor.
 - Config, hooks and Tiltfiles are trusted and must use the generated names,
   ports and kubeconfig. Silo does not sandbox arbitrary tool behavior.
 
@@ -53,16 +53,17 @@ that object. See the [Tilt API reference](https://docs.tilt.dev/api.html#api.doc
 ## Startup
 
 `silo up` starts Tilt in the foreground under
-[janitor](https://github.com/alleneubank/janitor):
+[Janitor](https://github.com/alleneubank/janitor) 0.3.1, which ships inside
+silo (`<janitor>` below is its copy under `~/.silo/janitor/`):
 
 ```sh
 # Source and bundled JavaScript
-janitor --pgroup-only --watch-pid <silo-pid> --grace-ms <ms> -- bun <silo-entrypoint> __silo_execute ...
+<janitor> --pgroup-only --watch-pid <silo-pid> --grace-ms <ms> -- bun <silo-entrypoint> __silo_execute ...
 # Standalone executable
-janitor --pgroup-only --watch-pid <silo-pid> --grace-ms <ms> -- <silo-binary> __silo_execute ...
+<janitor> --pgroup-only --watch-pid <silo-pid> --grace-ms <ms> -- <silo-binary> __silo_execute ...
 ```
 
-janitor is a required tool. A missing supervisor fails the run rather than
+A supervisor that cannot start fails the run rather than
 starting an unsupervised Tilt. The executor opens its tool gate only after a
 durable grant records the actual process group. The snapshot's `tiltPid` is
 the supervisor PID. Janitor drains its owned group on owner loss; uncertain

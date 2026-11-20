@@ -165,15 +165,16 @@ never create a replacement empty store as a repair.
 
 ## Tool/config errors
 
-Use Bun 1.4.4, Janitor 0.3.1 with `--pgroup-only`, Tilt, Docker, and optional
+Use Bun 1.4.4, Tilt, Docker, and optional
 k3d/kubectl on PATH. Read `silo help <command>` or `silo doc config` for invalid
 arguments and profile names. `--config` selects the project through the
 config's directory. `silo init` refuses an existing config.
 
 `LAUNCH_FAILED` includes the supervisor's exit status and diagnostic when it
-exits before the grant handshake. A version-manager shim can exist on PATH
-without a runnable Janitor version in the project's directory. Check
-`janitor version` from that directory and configure the required version there,
-or put the installed Janitor binary's directory ahead of its shim on PATH.
-The native launch tests also run this check from a disposable fixture directory;
-a repository-only version-manager setting does not configure that directory.
+exits before the grant handshake. silo runs its own Janitor 0.3.1 and never
+looks for `janitor` on PATH. On first use it copies that binary to
+`~/.silo/janitor/<version>-<digest>/janitor` in the account's home; a
+`LAUNCH_FAILED` naming that path means the copy could not be written there.
+Platforms other than macOS and Linux on arm64 or x86_64 have no bundled
+Janitor. `SILO_JANITOR=<path>` runs another Janitor binary instead, for testing
+a Janitor build.

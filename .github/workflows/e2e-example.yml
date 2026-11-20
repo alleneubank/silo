@@ -47,13 +47,6 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
           tilt version
 
-      - name: Install janitor
-        run: |
-          set -euo pipefail
-          curl -fsSL https://raw.githubusercontent.com/alleneubank/janitor/v0.3.1/install.sh | JANITOR_VERSION=v0.3.1 PREFIX="$RUNNER_TEMP/janitor" sh
-          echo "$RUNNER_TEMP/janitor/bin" >> "$GITHUB_PATH"
-          "$RUNNER_TEMP/janitor/bin/janitor" version
-
       - name: Build distributed CLI
         working-directory: .
         run: bun run build

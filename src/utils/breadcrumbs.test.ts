@@ -92,9 +92,9 @@ describe("downKeptClusterHint", () => {
 
 describe("missingToolsMessage", () => {
   test("includes install URLs for known tools", () => {
-    const message = missingToolsMessage(["janitor", "tilt", "docker"]);
-    expect(message).toContain("Missing required tools: janitor, tilt, docker");
-    expect(message).toContain("https://github.com/alleneubank/janitor");
+    const message = missingToolsMessage(["k3d", "tilt", "docker"]);
+    expect(message).toContain("Missing required tools: k3d, tilt, docker");
+    expect(message).toContain("https://k3d.io");
     expect(message).toContain("https://docs.tilt.dev/install.html");
     expect(message).toContain("https://docs.docker.com/get-docker/");
   });

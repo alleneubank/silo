@@ -17,7 +17,7 @@ let cli: string;
 let storePath: string;
 let hostFile: string;
 let caller: string;
-let fakeJanitorBin: string;
+let fakeJanitor: string;
 
 beforeAll(async () => {
   // silo records resolved project roots; macOS TMPDIR sits behind the /var symlink.
@@ -53,15 +53,16 @@ process.exit(await child.exited);
 `);
   // A supervisor that exits 0 on SIGTERM without draining its group: the one
   // way a Janitor that ends on its own can leave members behind.
-  fakeJanitorBin = path.join(base, "fake-janitor");
-  mkdirSync(fakeJanitorBin);
-  const fake = path.join(fakeJanitorBin, "fake-janitor.ts");
+  const fakeDir = path.join(base, "fake-janitor");
+  mkdirSync(fakeDir);
+  const fake = path.join(fakeDir, "fake-janitor.ts");
   writeFileSync(fake, `const argv = process.argv.slice(2);
 const child = Bun.spawn(argv.slice(argv.indexOf("--") + 1), { detached: true, stdin: "inherit", stdout: "inherit", stderr: "inherit" });
 process.on("SIGTERM", () => process.exit(0));
 process.exit(await child.exited);
 `);
-  writeFileSync(path.join(fakeJanitorBin, "janitor"), `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(fake)} "$@"\n`, { mode: 0o755 });
+  fakeJanitor = path.join(fakeDir, "janitor");
+  writeFileSync(fakeJanitor, `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(fake)} "$@"\n`, { mode: 0o755 });
 }, 60_000);
 
 afterAll(() => { if (base) rmSync(base, { recursive: true }); });
@@ -104,13 +105,13 @@ afterEach(async () => {
   trackedGroups.clear();
 });
 
-const start = (root: string, args: string[], pathPrefix = bin): Started => startArgv(root, [process.execPath, cli, ...args], false, pathPrefix);
+const start = (root: string, args: string[], env: Record<string, string> = {}): Started => startArgv(root, [process.execPath, cli, ...args], false, env);
 
 /** `detached` starts the process as the leader of a new process group. */
-const startArgv = (root: string, argv: string[], detached: boolean, pathPrefix = bin): Started => {
+const startArgv = (root: string, argv: string[], detached: boolean, env: Record<string, string> = {}): Started => {
   const proc = Bun.spawn(argv, {
     cwd: root, stdin: "ignore", stdout: "pipe", stderr: "pipe", timeout: 60_000, detached,
-    env: { ...process.env, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry"), PATH: `${pathPrefix === bin ? bin : `${pathPrefix}:${bin}`}:${process.env.PATH}` },
+    env: { ...process.env, HOME: account, SILO_PORT_REGISTRY_DIR: path.join(account, "registry"), PATH: `${bin}:${process.env.PATH}`, ...env },
   });
   let stderrSoFar = "";
   const finished = Promise.all([proc.exited, new Response(proc.stdout).text(), collect(proc.stderr, text => { stderrSoFar = text; })])
@@ -719,7 +720,7 @@ test("repeated SIGINT to the caller's group cannot fake the executor's exit whil
 
 test("a supervisor that exits on its own while group members remain is not proof of a stop", async () => {
   const root = bareDirectory();
-  const running = start(root, ["run", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 300 & wait`], fakeJanitorBin);
+  const running = start(root, ["run", "--json", "--", "sh", "-c", `${recordGroup("group")}; sleep 300 & wait`], { SILO_JANITOR: fakeJanitor });
   const group = await recordedGroup(root, "group");
   running.proc.kill("SIGINT");
   const error = incomplete(await settle(running, "run under a supervisor that does not drain"));
