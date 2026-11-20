@@ -46,3 +46,12 @@ test("an embedded binary that does not match the pinned digest is refused and no
 test("SILO_JANITOR replaces the bundled binary as given", () => {
   expect(janitorBinary({ SILO_JANITOR: "/opt/janitor-dev/janitor" })).toBe("/opt/janitor-dev/janitor");
 });
+
+test("a copy cut short is replaced by the full binary", () => {
+  if (host === null) throw new Error(`no bundled Janitor for ${process.platform}-${process.arch}`);
+  const home = path.join(base, "truncated");
+  const installed = installJanitor(host, home);
+  writeFileSync(installed, "");
+  expect(installJanitor(host, home)).toBe(installed);
+  expect(Bun.spawnSync([installed, "version"], { stdout: "pipe", timeout: 5000 }).exitCode).toBe(0);
+});

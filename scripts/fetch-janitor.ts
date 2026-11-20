@@ -66,7 +66,8 @@ const fetchPlatform = async (platform: JanitorPlatform, scratch: string): Promis
   writeAtomically(path.join(vendor, "LICENSE"), extract(platform, archivePath, "LICENSE"), 0o644);
 };
 
-const stale = JANITOR_PLATFORMS.filter(platform => !current(platform));
+// The LICENSE ships in the package, so its absence refetches every platform.
+const stale = existsSync(path.join(vendor, "LICENSE")) ? JANITOR_PLATFORMS.filter(platform => !current(platform)) : [...JANITOR_PLATFORMS];
 if (stale.length > 0) {
   const scratch = path.join(vendor, `.download-${process.pid}`);
   mkdirSync(scratch, { recursive: true });

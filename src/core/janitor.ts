@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { closeSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, statSync, writeSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import macosArm64 from "../../vendor/janitor/macos-arm64/janitor" with { type: "file" };
@@ -37,22 +37,40 @@ const assetPath = (asset: string): string => path.isAbsolute(asset) ? asset : pa
 const launchFailed = (message: string, cause?: unknown): SiloError =>
   new SiloError(`LAUNCH_FAILED: ${message}`, "LAUNCH_FAILED", cause === undefined ? undefined : { cause });
 
+/** The size of an existing file, or null when there is none. */
+const sizeOf = (file: string): number | null => {
+  try { return statSync(file).size; } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw launchFailed(`cannot read ${file}: ${error instanceof Error ? error.message : String(error)}`, error);
+  }
+};
+
+const writeDurably = (file: string, bytes: Uint8Array): void => {
+  const fd = openSync(file, "wx", 0o755);
+  try {
+    for (let written = 0; written < bytes.byteLength;) written += writeSync(fd, bytes, written);
+    fsyncSync(fd);
+  } finally { closeSync(fd); }
+};
+
 /**
  * Copies the platform's embedded Janitor to an executable file keyed by its
- * digest, once per account and Janitor build. The rename publishes only a
- * complete file, so concurrent first launches each install the same bytes.
+ * digest, once per account and Janitor build. The file is synced before the
+ * rename publishes it, so concurrent first launches each install the same
+ * complete bytes. A copy whose size differs from the embedded binary (one cut
+ * short by a crash, for example) is replaced.
  */
 export const installJanitor = (platform: JanitorPlatform, home: string, asset = assetPath(ASSETS[platform])): string => {
   const { binarySha256 } = JANITOR_ARTIFACTS[platform];
   const target = path.join(home, ".silo", "janitor", `${JANITOR_VERSION}-${binarySha256.slice(0, 12)}`, "janitor");
-  if (existsSync(target)) return target;
+  if (sizeOf(target) === statSync(asset).size) return target;
   const bytes = readFileSync(asset);
   const digest = new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
   if (digest !== binarySha256) throw launchFailed(`bundled Janitor ${JANITOR_VERSION} for ${platform} has SHA-256 ${digest}, expected ${binarySha256}; reinstall silo`);
   const temporary = `${target}.${randomUUID()}.tmp`;
   try {
     mkdirSync(path.dirname(target), { recursive: true });
-    writeFileSync(temporary, bytes, { mode: 0o755 });
+    writeDurably(temporary, bytes);
     renameSync(temporary, target);
   } catch (error) {
     rmSync(temporary, { force: true });
