@@ -10,8 +10,9 @@ let distributionRoot: string;
 
 beforeAll(async () => {
   distributionRoot = mkdtempSync(path.join(os.tmpdir(), "silo-doc-distributions-"));
-  for (const [name, flags] of [["cli.js", ["--target=bun"]], ["silo", ["--compile"]]] as const) {
-    const build = Bun.spawn(["nice", "-n", "15", process.execPath, "build", path.resolve(import.meta.dir, "../cli.ts"), ...flags, "--outfile", path.join(distributionRoot, name)], {
+  // A bundle carries asset files (the Janitor binaries), so it needs an output directory.
+  for (const flags of [["--target=bun", "--outdir", distributionRoot], ["--compile", "--outfile", path.join(distributionRoot, "silo")]]) {
+    const build = Bun.spawn(["nice", "-n", "15", process.execPath, "build", path.resolve(import.meta.dir, "../cli.ts"), ...flags], {
       stdout: "pipe", stderr: "pipe", timeout: 60_000,
     });
     const [exitCode, stderr] = await Promise.all([build.exited, new Response(build.stderr).text()]);

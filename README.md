@@ -13,8 +13,6 @@ Isolated local development environments. silo solves instance isolation and k3d 
 - Bun 1.4.4 (qualified runtime)
 - Docker with a local Unix endpoint
 - Tilt
-- [janitor](https://github.com/alleneubank/janitor) 0.3.1 (process-group supervisor; see
-  [Process supervision](#process-supervision))
 - k3d (optional, only if `k3d.enabled = true`)
 
 ## Install
@@ -103,7 +101,9 @@ When silo launches child processes (Tilt, hooks, k3d, kubectl), it injects:
 
 ## Process supervision
 
-All mutating tools use durable gated Janitor groups with `--pgroup-only`;
+All mutating tools use durable gated groups under
+[Janitor](https://github.com/alleneubank/janitor) 0.3.1, a process-group
+supervisor that ships inside silo (no separate install), with `--pgroup-only`;
 `silo run` also ends descendants that left its group.
 Owner loss drains the recorded group; uncertain effects retain ownership.
 A missing supervisor refuses startup. `--force` reconfigures only a stopped,

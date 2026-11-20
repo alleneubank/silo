@@ -3,8 +3,10 @@
 ## Development
 
 Requires [Bun](https://bun.sh) 1.4.4, [Tilt](https://tilt.dev), Docker, and
-[janitor](https://github.com/alleneubank/janitor) 0.3.1. k3d is optional unless the
-project under test enables it.
+`tar` and `unzip`. k3d is optional unless the project under test enables it.
+`bun install` runs `scripts/fetch-janitor.ts`, which downloads the pinned
+[Janitor](https://github.com/alleneubank/janitor) release binaries into
+`vendor/janitor/` and checks their SHA-256 (`src/core/janitor_release.ts`).
 
 ```bash
 bun install
@@ -15,7 +17,7 @@ bun run lint
 ```
 
 Nix users can enter the development tools with `nix develop` (or direnv, via
-the tracked `.envrc`). Verify Bun 1.4.4 and Janitor 0.3.1 before qualification.
+the tracked `.envrc`). Verify Bun 1.4.4 before qualification.
 
 The portable allocation rehearsal requires a disposable native account or
 filesystem view. Follow [macos-rehearsal.md](macos-rehearsal.md) for its

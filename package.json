@@ -17,12 +17,13 @@
     "test:allocation": "bun scripts/allocation-rehearsal.ts",
     "test:drain": "sh scripts/drain-test.sh",
     "test:duplicate": "sh scripts/duplicate-test.sh",
-    "build": "bun build --target=bun --outdir dist src/cli.ts",
+    "build": "rm -rf dist && bun build --target=bun --outdir dist src/cli.ts",
     "prepublishOnly": "bun run typecheck && bun run build",
     "changeset": "changeset",
     "version": "changeset version && bun run sync-versions",
     "sync-versions": "bun run scripts/sync-versions.ts",
-    "release": "bun run build && changeset publish"
+    "release": "bun run build && changeset publish",
+    "prepare": "bun scripts/fetch-janitor.ts"
   },
   "dependencies": {
     "zod": "^3.24.1"
@@ -44,7 +45,8 @@
     "tilt-extensions",
     "README.md",
     "LICENSE",
-    "SPEC.md"
+    "SPEC.md",
+    "vendor/janitor/LICENSE"
   ],
   "keywords": [
     "pi-package",

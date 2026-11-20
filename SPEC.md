@@ -589,6 +589,21 @@ The supported runtime is pinned Bun 1.4.4 (SQLite 3.53.4 in the Linux artifact)
 and Janitor 0.3.1 with process-group-only supervision. The package distributes
 `dist/cli.js`, built with `bun build --target=bun`, plus bundled docs, skill
 and Tilt extension. The same built entrypoint executes gated children.
+
+**Bundled Janitor.** silo ships the Janitor release pinned in
+`src/core/janitor_release.ts` (0.3.1; macOS arm64/x86_64, Linux
+aarch64/x86_64) as Bun file assets, beside `dist/cli.js` and inside standalone
+executables, and never resolves `janitor` from `PATH`. Owner decision, Allen,
+2026-11-20: "lets build that into silo then rather than requriing another
+CLI" ([design](docs/design/bundled-janitor/README.md)). Before its first launch
+for an account, silo checks the host binary's SHA-256 against the pin and
+copies it to `<account home>/.silo/janitor/<version>-<digest prefix>/janitor`
+(mode 0755, by rename); later launches reuse that file. A digest mismatch, an
+unsupported platform or a failed copy refuses with `LAUNCH_FAILED` before any
+effect. `SILO_JANITOR=<path>` substitutes another binary for one invocation.
+`bun install` in a checkout runs `scripts/fetch-janitor.ts` (`prepare`), which
+fetches the release archives and checks the archive and binary digests.
+Checks: `src/core/janitor.test.ts`, `src/core/owned_command.test.ts`.
 REQ-DOC-001: every listed documentation topic embeds its Markdown source as
 text in JavaScript and standalone builds, without runtime source-tree paths.
 Check: `src/commands/doc.test.ts`, public distribution topic tests.

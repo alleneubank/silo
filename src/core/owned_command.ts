@@ -5,7 +5,8 @@ import { SiloError } from "../utils/errors";
 import { withTimeout, observe, raceOperations, type Cancellable } from "../utils/timeout";
 import { sleep } from "../utils/sleep";
 import { logger } from "../utils/logger";
-import { LAUNCH_START_TIMEOUT_MS, TILT_DRAIN_GRACE_MS, TILT_SUPERVISOR_BIN } from "./constants";
+import { LAUNCH_START_TIMEOUT_MS, TILT_DRAIN_GRACE_MS } from "./constants";
+import { janitorBinary } from "./janitor";
 
 const MAX_OUTPUT_BYTES = 1024 * 1024;
 
@@ -248,11 +249,12 @@ const openGate = async (gate: GateLaunch): Promise<OpenGate> => {
     if (remaining <= 0) throw new SiloError("Timed out waiting for launch identity", "TIMEOUT");
     return remaining;
   };
+  const env = { ...process.env, ...gate.env };
   const proc = Bun.spawn([
-    TILT_SUPERVISOR_BIN, ...(gate.teardown === "group" ? ["--pgroup-only"] : []), "--watch-pid", String(process.pid), "--grace-ms", String(gate.graceMs),
+    janitorBinary(env), ...(gate.teardown === "group" ? ["--pgroup-only"] : []), "--watch-pid", String(process.pid), "--grace-ms", String(gate.graceMs),
     "--", ...executorCommand(gate.executorEntrypoint), ...gate.executorArgs,
   ], {
-    cwd: gate.root, env: { ...process.env, ...gate.env }, detached: true,
+    cwd: gate.root, env, detached: true,
     stdin: "pipe", stdout: "pipe", stderr: "pipe",
   });
   // Bun reaps the supervisor itself; once it has, the handle's PID may be

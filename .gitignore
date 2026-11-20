@@ -8,6 +8,9 @@ node_modules/
 # Build
 dist/
 
+# Janitor release binaries (scripts/fetch-janitor.ts)
+vendor/
+
 # Environment
 .env
 .env.*

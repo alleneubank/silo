@@ -11,10 +11,9 @@ const fixture = path.join(import.meta.dir, "fixtures", "owned_cli.ts");
 
 beforeAll(async () => {
   base = mkdtempSync(path.join(os.tmpdir(), "silo-entrypoints-"));
-  const preflight = Bun.spawnSync(["janitor", "version"], { cwd: base, stdout: "pipe", stderr: "pipe", timeout: 2000 });
-  if (preflight.exitCode !== 0) throw new Error(`Native launch tests require Janitor on PATH: ${preflight.stderr}`);
-  for (const [name, flags] of [["bundled.js", ["--target=bun"]], ["standalone", ["--compile"]]] as const) {
-    const build = Bun.spawn(["nice", "-n", "15", process.execPath, "build", fixture, ...flags, "--outfile", path.join(base, name)], {
+  // A bundle carries asset files (the Janitor binaries), so it needs an output directory.
+  for (const flags of [["--target=bun", "--outdir", path.join(base, "bundle")], ["--compile", "--outfile", path.join(base, "standalone")]]) {
+    const build = Bun.spawn(["nice", "-n", "15", process.execPath, "build", fixture, ...flags], {
       stdout: "pipe", stderr: "pipe", timeout: 60_000,
     });
     const [exitCode, stdout, stderr] = await Promise.all([build.exited, new Response(build.stdout).text(), new Response(build.stderr).text()]);
@@ -27,7 +26,7 @@ afterAll(() => { if (base) rmSync(base, { recursive: true }); });
 const entrypoint = (distribution: "source" | "bundled.js" | "standalone"): string[] => {
   if (distribution === "source") return [process.execPath, fixture];
   if (distribution === "standalone") return [path.join(base, distribution)];
-  return [process.execPath, path.join(base, distribution)];
+  return [process.execPath, path.join(base, "bundle", "owned_cli.js")];
 };
 
 const bundledExecutor = (root: string, timeout: number) => {

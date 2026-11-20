@@ -48,7 +48,6 @@ export const downKeptClusterHint = (): string =>
   "Tilt stopped; k3d cluster kept. Run 'silo down --delete-cluster' to remove it.";
 
 const TOOL_INSTALL_HINTS: Record<string, string> = {
-  janitor: "https://github.com/alleneubank/janitor",
   tilt: "https://docs.tilt.dev/install.html",
   k3d: "https://k3d.io",
   kubectl: "https://kubernetes.io/docs/tasks/tools/",

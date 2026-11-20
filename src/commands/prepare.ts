@@ -4,6 +4,7 @@ import { allocateProject, storedConfig } from "../core/allocation";
 import { buildEnvVars, buildSiloProcessEnv, writeEnvAndLockfile } from "../core/env";
 import { ProjectOperation } from "../core/lease_store";
 import { ensureToolsAvailable } from "../utils/validate";
+import { janitorBinary } from "../core/janitor";
 import { runHooks } from "../hooks/runner";
 import { ensureCluster, writeKubeconfig } from "../backends/k3d";
 import { advertiseLocalRegistry } from "../backends/registry";
@@ -31,10 +32,12 @@ export const prepareTiltEnvironment = async (owner: ProjectOperation): Promise<R
     throw new SiloError("CLEANUP_REQUIRED: reconcile this generation with down before starting again", "CLEANUP_REQUIRED");
   }
   const config = storedConfig(current.allocation);
-  const tools = ["tilt", "janitor", "docker", ...(config.k3d?.enabled ? ["k3d"] : [])];
+  const tools = ["tilt", "docker", ...(config.k3d?.enabled ? ["k3d"] : [])];
   const advertise = resolveRegistryAdvertiseSettings({ config, state: current.allocation.state, urls: current.allocation.urls });
   if (advertise) tools.push("kubectl");
   await ensureToolsAvailable(tools);
+  // Install the supervisor before any hook, cluster or registry effect.
+  janitorBinary(process.env);
   await assertEngine(owner);
   await assertNamesAvailable(owner.resourceClaims(), owner, owner.resources());
   writeEnvAndLockfile(owner);

@@ -16,11 +16,6 @@ export const LAUNCH_START_TIMEOUT_MS = 30_000;
 // checkpoint, including lock contention and scheduling after the handshake.
 export const EXECUTOR_GRANT_TIMEOUT_MS = LAUNCH_START_TIMEOUT_MS + STORE_BUSY_TIMEOUT_MS + 10_000;
 
-// Bare `tilt up` outlives silo whenever silo dies without running its signal
-// handlers (SIGKILL, SIGHUP, crash): Tilt reparents to init and keeps holding
-// the instance's allocated ports. janitor watches its parent and drains the
-// process group when silo goes away.
-export const TILT_SUPERVISOR_BIN = "janitor";
 // Larger than janitor's CLI default: dev servers need a beat to release ports
 // and flush on SIGTERM before the supervisor escalates to SIGKILL.
 export const TILT_DRAIN_GRACE_MS = 5000;

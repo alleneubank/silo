@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import { Database } from "bun:sqlite";
@@ -19,16 +19,6 @@ import { connectedUdp } from "./fixtures/connected_udp";
 let base: string;
 let storePath: string;
 let legacyInputs: { accountHome: string; home: string; registryDir: undefined };
-
-beforeAll(() => {
-  const root = mkdtempSync(path.join(os.tmpdir(), "silo-supervisor-preflight-"));
-  try {
-    const result = Bun.spawnSync(["janitor", "version"], { cwd: root, stdout: "pipe", stderr: "pipe", timeout: 2000 });
-    if (result.exitCode !== 0) {
-      throw new Error(`Native launch tests require runnable Janitor on PATH from fixture directories (see README prerequisites). ${result.stderr.toString().slice(-4096)}`.trimEnd());
-    }
-  } finally { rmSync(root, { recursive: true }); }
-});
 
 beforeEach(() => {
   base = mkdtempSync(path.join(os.tmpdir(), "silo-leases-"));
@@ -518,7 +508,7 @@ describe("atomic account leases", () => {
     try {
       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
       await expect(startOwnedCommand(op, ["/bin/sh", "-c", "printf executed > must-not-exist"], {
-        kind: "refused-supervisor", effect: "create", timeoutMs: 5000, env: { PATH: bin },
+        kind: "refused-supervisor", effect: "create", timeoutMs: 5000, env: { SILO_JANITOR: supervisor },
       })).rejects.toMatchObject({
         code: "LAUNCH_FAILED",
         message: expect.stringContaining("supervisor fixture: no runtime configured"),
@@ -548,7 +538,7 @@ describe("atomic account leases", () => {
     let running: Awaited<ReturnType<typeof startOwnedCommand>> | undefined;
     try {
       await op.allocate(allocation(root, "a"), claims("a", 3000), targets(root));
-      running = await startOwnedCommand(op, ["/bin/sh", "-c", `printf tool-done; touch '${ran}'`], { kind: "parked-supervisor", effect: "none", timeoutMs: 120_000, env: { PATH: `${bin}:${process.env.PATH}` } });
+      running = await startOwnedCommand(op, ["/bin/sh", "-c", `printf tool-done; touch '${ran}'`], { kind: "parked-supervisor", effect: "none", timeoutMs: 120_000, env: { SILO_JANITOR: path.join(bin, "janitor") } });
       const deadline = Date.now() + 10_000;
       while (!existsSync(ran)) { assert(Date.now() < deadline, "tool did not run"); await Bun.sleep(20); }
       // This store uses the parent journal, so the test writes the executor's
